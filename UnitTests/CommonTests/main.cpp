@@ -1,10 +1,12 @@
 #include "PrecompiledHeaders.h"
 
 #include <ClanLib/core.h>
+#include <ClanLib/display.h>
 #include "FusionPrerequisites.h"
 
 // Logging
 #include "FusionLogger.h"
+#include "FusionPaths.h"
 
 // Filesystem
 #include "FusionPhysFS.h"
@@ -15,27 +17,30 @@ using namespace FusionEngine;
 
 struct CommonTestsEnv : public testing::Environment
 {
-	CommonTestsEnv(std::string path)
-		: p(path)
-	{}
-
 	virtual void SetUp()
 	{
+		auto dataFolder = std::string("UnitTestData") + PHYSFS_getDirSeparator();
+		auto writep = std::string(CL_System::get_exe_path()) + dataFolder + "write_dir";
+
 		SetupPhysFS::init(CL_System::get_exe_path().c_str());
-		PHYSFS_setWriteDir(p.c_str());
+		ASSERT_TRUE(PHYSFS_setWriteDir(writep.c_str()) != 0);
+		ASSERT_TRUE(PHYSFS_mkdir(s_LogfilePath.c_str()) != 0);
+		ASSERT_TRUE(SetupPhysFS::mount(dataFolder, "", "zip"));
+		SetupPhysFS::mount_archives(dataFolder, "", "7z");
 	}
 	virtual void TearDown()
 	{
 		SetupPhysFS::deinit();
 	}
-
-	std::string p;
 };
 
 int main(int argc, char** argv)
 {
 	testing::InitGoogleTest(&argc, argv);
 
-	testing::AddGlobalTestEnvironment(new CommonTestsEnv(CL_System::get_exe_path()));
+	CL_SetupCore coreSetup;
+	CL_SetupDisplay displaySetup;
+
+	testing::AddGlobalTestEnvironment(new CommonTestsEnv);
 	return RUN_ALL_TESTS();
 }

@@ -876,7 +876,7 @@ public:
 							SendToConsole("Loading: Clearing cells...");
 							streamingMgr->Reset();
 							SendToConsole("Loading: Garbage-collecting...");
-							scriptManager->GetEnginePtr()->GarbageCollect();
+							int r = scriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
 							SendToConsole("Loading: Non-streaming entities (from map)...");
 							map->LoadNonStreamingEntities(false, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
 							cellArchivist->Load("quicksave");

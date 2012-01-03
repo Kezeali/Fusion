@@ -627,7 +627,7 @@ namespace FusionEngine
 		bool retrying = false;
 		while (true)
 		{
-			const int eventId = CL_Event::wait(m_Quit, m_NewData, m_TransactionEnded, retrying ? 100 : -1);
+			const int eventId = CL_Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
 			if (eventId == 2) // TransactionEnded
 			{
 				ClearReadyCells(readyCells);
@@ -658,7 +658,7 @@ namespace FusionEngine
 							if (lock)
 							{
 								// Check active_entries since the Store request may be stale
-								if (cell->waiting == Cell::Store)
+								if (cell->waiting == Cell::Store && cell->loaded)
 								{
 									try
 									{
@@ -771,11 +771,14 @@ namespace FusionEngine
 									FSN_ASSERT(!cell->loaded);
 									try
 									{
+										// Get the cached cell data (if available)
+										auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
+
 										// Last param makes the method load synched entities from the map if the cache file isn't available:
 										if (m_Map)
 										{
 											// Load synched entities if this cell is un-cached (hasn't been loaded before)
-											bool uncached = m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
+											const bool uncached = !filePtr;//m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
 
 											auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
 
@@ -796,7 +799,7 @@ namespace FusionEngine
 											}
 										}
 
-										auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
+										
 										if (filePtr && *filePtr && !filePtr->eof())
 										{
 											auto& file = *filePtr;
@@ -1002,6 +1005,8 @@ namespace FusionEngine
 				}
 			}
 		}
+
+		asThreadCleanup();
 	}
 
 	void RegionMapLoader::ClearReadyCells(std::list<CellCoord_t>& readyCells)

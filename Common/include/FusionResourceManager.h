@@ -48,19 +48,19 @@
 #include "FusionResource.h"
 #include "FusionResourceLoader.h"
 
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_priority_queue.h>
 #include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_unordered_set.h>
 
 namespace FusionEngine
 {
 
 	/*!
 	 * \brief
-	 * Loads and stores resources for gameplay.
+	 * Loads and stores resources.
 	 *
-	 * \todo Add XMLloader to default loaders
-	 *
-	 * \sa Resource | ResourcePointer | ResourceLoader
+	 * \sa ResourceContainer | ResourcePointer | ResourceLoader
 	 */
 	class ResourceManager : public Singleton<ResourceManager>
 	{
@@ -85,6 +85,8 @@ namespace FusionEngine
 		void StartLoaderThread();
 		//! Stops loading resources in the background
 		void StopLoaderThread();
+		//! Stops loading resources in the background
+		void StopLoaderThreadWhenDone();
 
 		//! Loads / unloads resources as they are added to the each queue
 		/*!
@@ -119,6 +121,17 @@ namespace FusionEngine
 		*/
 		void DeleteAllResources(CL_GraphicContext &gc);
 
+		//! Make sure resources with references are loaded, and resources without aren't
+		/*
+		* \param allow_queued
+		* If this is set to true, resources will be considered valid if they are at least in
+		* the correct queue (to be loaded / unloaded.) This should usually be set to true if
+		* the load thread is running.
+		*/
+		bool VerifyResources(const bool allow_queued) const;
+		//! Returns the path of each currently loaded resource
+		std::vector<std::string> ListLoadedResources() const;
+
 		//! Checks the filesystem and returns the filenames of all found
 		StringVector ListFiles();
 
@@ -148,8 +161,8 @@ namespace FusionEngine
 		//! Maps Resource types to ResourceLoader factory methods
 		typedef std::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
-		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceList;
-		typedef std::set<ResourceContainer*> UnreferencedResourceSet;
+		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceQueue;
+		typedef tbb::concurrent_unordered_set<ResourceContainer*> UnreferencedResourceSet;
 
 		struct ResourceToLoadData
 		{
@@ -158,9 +171,19 @@ namespace FusionEngine
 
 			ResourceToLoadData() {}
 
-			ResourceToLoadData(int _priority, const ResourceDataPtr &_resource)
+			ResourceToLoadData(int _priority, const ResourceDataPtr& _resource)
 				: priority(_priority),
 				resource(_resource)
+			{}
+
+			ResourceToLoadData(const ResourceToLoadData& other)
+				: priority(other.priority),
+				resource(other.resource)
+			{}
+
+			ResourceToLoadData(ResourceToLoadData&& other)
+				: priority(other.priority),
+				resource(std::move(other.resource))
 			{}
 
 			bool operator< (const ResourceToLoadData& rhs) const
@@ -169,34 +192,37 @@ namespace FusionEngine
 			}   
 		};
 
-		typedef std::priority_queue<ResourceToLoadData> ToLoadQueue;
-		typedef std::vector<ResourceDataPtr> ToUnloadList;
+		typedef tbb::concurrent_priority_queue<ResourceToLoadData> ToLoadQueue;
+		typedef tbb::concurrent_queue<ResourceContainer*> ToUnloadQueue;
 
 		CL_Event m_StopEvent; // Set to stop the worker thread
 		CL_Event m_ToLoadEvent; // Set when there is more data to load
 		CL_Event m_ToUnloadEvent;
-		CL_Thread m_Worker;
+		CL_Thread m_Thread;
+		bool m_Running;
+		bool m_Clearing;
+		bool m_FinishLoadingBeforeStopping;
 
 		CL_GraphicContext m_GC;
 
-		CL_Mutex m_ToLoadMutex;
+		//CL_Mutex m_ToLoadMutex;
 		ToLoadQueue m_ToLoad;
 
-		CL_Mutex m_ToUnloadMutex;
-		ToUnloadList m_ToUnload;
+		//CL_Mutex m_ToUnloadMutex;
+		ToUnloadQueue m_ToUnload;
+		ToUnloadQueue m_ToUnloadUsingGC;
 
 		// Resources
 		ResourceMap m_Resources;
 
-		bool m_Clearing;
-
 		CL_Mutex m_UnreferencedMutex;
+		
 		UnreferencedResourceSet m_Unreferenced;
 
-		CL_Mutex m_ToDeliverMutex;
-		ResourceList m_ToDeliver;
+		//CL_Mutex m_ToDeliverMutex;
+		ResourceQueue m_ToDeliver;
 
-		CL_Mutex m_LoaderMutex;
+		//CL_Mutex m_LoaderMutex;
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 
@@ -205,9 +231,9 @@ namespace FusionEngine
 		// TODO: use this, since intrusive_ptr supports move assignment (rvalue)
 		//ResourceDataPtr obtainResource(const std::string& type, const std::string& path);
 
-		void loadResource(ResourceDataPtr &resource);
+		void loadResource(const ResourceDataPtr &resource);
 
-		void loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit);
+		void loadResourceAndDeps(const ResourceDataPtr& resource, unsigned int depth_limit);
 
 		void getAndUnloadResource(const std::string &path);
 		void unloadResource(const ResourceDataPtr& resource);

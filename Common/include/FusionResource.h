@@ -34,10 +34,10 @@
 
 #include "FusionCommon.h"
 
+#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/signals2/signal.hpp>
-#ifndef _WIN32
-#include <boost/thread/mutex.hpp>
-#endif
+
+#include <tbb/atomic.h>
 
 #include <functional>
 
@@ -71,16 +71,14 @@ namespace FusionEngine
 		bool m_RequiresGC;
 
 		bool m_Loaded;
+
 		bool m_HasQuickLoadData;
 
-		volatile long m_RefCount;
+		tbb::atomic<long int> m_RefCount;
 
-#ifndef _WIN32
-		boost::mutex m_Mutex;
-#endif
-
-		bool m_ToLoad;
-		bool m_ToUnload;
+		// These are separate because a resource can be in both at once
+		tbb::atomic<bool> m_QueuedToLoad;
+		tbb::atomic<bool> m_QueuedToUnLoad;
 
 		std::vector<ResourceDataPtr> m_Dependencies;
 
@@ -96,10 +94,6 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		ResourceContainer();
-		//! Constructor
-		ResourceContainer(const char* type, const std::string& path, void* ptr);
-		//! Constructor (unicode)
-		ResourceContainer(const std::string& type, const std::wstring& path, void* ptr);
 		//! Constructor
 		ResourceContainer(const std::string& type, const std::string& path, void* ptr);
 
@@ -125,7 +119,7 @@ namespace FusionEngine
 		const std::vector<ResourceDataPtr>& GetDependencies() const;
 
 		//! Used by a resource loader when it requires access to the GC in order to finish loading the resource
-		void _setRequiresGC(const bool value);
+		void setRequiresGC(const bool value);
 		bool RequiresGC() const;
 
 		//! Sets the data
@@ -135,13 +129,13 @@ namespace FusionEngine
 
 		//! Validates / invalidates this resource
 		/*!
-		* A resource is valid if the pointer is valid. A resource becomes
+		* A resource is valid if data is loaded. A resource becomes
 		* invalid when it fails to load or it is cleaned up by garbage
 		* collection.
 		* This method is to be used by a ResourceLoader whenever it validates
 		* / invalidates a resource.
 		*/
-		void _setValid(bool valid);
+		void setLoaded(bool valid);
 
 		//! Returns true if the resource data is valid
 		bool IsLoaded() const;
@@ -159,19 +153,19 @@ namespace FusionEngine
 		* This method is to be used by a ResourceLoader whenever it validates
 		* / invalidates a resource.
 		*/
-		void _setHasQuickLoadData(bool has_data);
+		void setHasQuickLoadData(bool has_data);
 		//! Returns true if the resource data is valid
 		bool HasQuickLoadData() const;
 
 		//! Notifies the resource of its queue status
-		void _setQueuedToLoad(bool is_queued);
+		inline bool setQueuedToLoad(const bool is_queued);
 		//! Returns true if the resource is currently queued to load
-		bool IsQueuedToLoad() const;
+		inline bool IsQueuedToLoad() const;
 
 		//! Notifies the resource of its queue status
-		void _setQueuedToUnload(bool is_queued);
+		inline bool setQueuedToUnload(const bool is_queued);
 		//! Returns true if this resource is currently queued to load
-		bool IsQueuedToUnload() const;
+		inline bool IsQueuedToUnload() const;
 
 		//! Adds a reference
 		void AddReference();
@@ -188,9 +182,29 @@ namespace FusionEngine
 		long ReferenceCount() const;
 
 		//! Retures true if the given resource is not used (i.e. only referenced by the manager)
-		bool Unused() const;
+		bool Unused() const { return ReferenceCount() == 1; }
 
 	};
+
+	inline bool ResourceContainer::setQueuedToLoad(const bool is_queued)
+	{
+		return m_QueuedToLoad.fetch_and_store(is_queued);
+	}
+
+	inline bool ResourceContainer::IsQueuedToLoad() const
+	{
+		return m_QueuedToLoad;
+	}
+
+	inline bool ResourceContainer::setQueuedToUnload(const bool is_queued)
+	{
+		return m_QueuedToUnLoad.fetch_and_store(is_queued);
+	}
+
+	inline bool ResourceContainer::IsQueuedToUnload() const
+	{
+		return m_QueuedToUnLoad;
+	}
 
 }
 

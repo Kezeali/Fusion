@@ -166,13 +166,13 @@ namespace FusionEngine
 			const std::string &archiveExt = "",
 			bool archivesFirst = false);
 
-		//! Mounts the given path
-		static bool mount(const std::string &path, const std::string &mount_point,
+		//! Mounts the given (native-fs) path
+		static bool mount(const std::string &native_path, const std::string &mount_point,
 			const std::string &archive_ext = "",
 			bool archives_first = false);
 
 		//! Mounts all archives found below the given path
-		static bool mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool first = false);
+		static bool mount_archives(const std::string &physfs_path, const std::string &mount_point, const std::string &archive_ext, bool first = false);
 
 		//! Parses the given path relative to the given directory to get an abosulte path
 		static std::string parse_path(const std::string &working_directory, const std::string &path);

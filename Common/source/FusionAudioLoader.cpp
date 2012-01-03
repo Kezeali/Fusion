@@ -57,14 +57,14 @@ namespace FusionEngine
 		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
 		resource->SetDataPtr(p);
 
-		resource->_setValid(true);
+		resource->setLoaded(true);
 	}
 
 	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(NULL);
@@ -89,14 +89,14 @@ namespace FusionEngine
 		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
 		resource->SetDataPtr(p);
 
-		resource->_setValid(true);
+		resource->setLoaded(true);
 	}
 
 	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(NULL);

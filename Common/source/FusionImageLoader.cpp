@@ -50,23 +50,23 @@ namespace FusionEngine
 		{
 			sp = CL_ImageProviderFactory::load(resource->GetPath(), vdir, ext);
 		}
-		catch (CL_Exception&)
+		catch (CL_Exception& ex)
 		{
-			resource->_setValid(false);
-			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
+			resource->setLoaded(false);
+			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
 		resource->SetDataPtr(data);
 
-		resource->_setValid(true);
+		resource->setLoaded(true);
 	}
 
 	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
@@ -77,8 +77,8 @@ namespace FusionEngine
 		LoadImageResource(resource, vdir, user_data);
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
-			resource->_setRequiresGC(true);
+			resource->setLoaded(false);
+			resource->setRequiresGC(true);
 		}
 	}
 
@@ -86,13 +86,13 @@ namespace FusionEngine
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
-			resource->_setRequiresGC(false);
+			resource->setLoaded(false);
+			resource->setRequiresGC(false);
 			delete static_cast<CL_Texture*>(resource->GetDataPtr());
 		}
 		else if (resource->RequiresGC())
 		{
-			resource->_setRequiresGC(false);
+			resource->setRequiresGC(false);
 			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
@@ -108,8 +108,8 @@ namespace FusionEngine
 			data->set_image(*pre_gc_data);
 			delete pre_gc_data;
 			resource->SetDataPtr(data);
-			//resource->_setRequiresGC(false);
-			resource->_setValid(true);
+			//resource->setRequiresGC(false);
+			resource->setLoaded(true);
 		}
 	}
 
@@ -145,19 +145,19 @@ namespace FusionEngine
 		{
 			delete def;
 			resource->SetDataPtr(nullptr);
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
 		}
 		
 		resource->SetDataPtr(def);
-		resource->_setValid(true);
+		resource->setLoaded(true);
 	}
 
 	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 
 			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
 

@@ -217,7 +217,7 @@ namespace FusionEngine
 			delete static_cast<SpriteAnimation*>(resource->GetDataPtr());
 		}
 
-		resource->_setValid(false);
+		resource->setLoaded(false);
 
 		SpriteAnimation *data = new SpriteAnimation();
 		try
@@ -238,14 +238,14 @@ namespace FusionEngine
 
 		resource->SetDataPtr(data);
 
-		resource->_setValid(true);
+		resource->setLoaded(true);
 	}
 
 	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			delete static_cast<SpriteAnimation*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);

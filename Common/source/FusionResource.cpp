@@ -29,12 +29,6 @@
 
 #include "FusionResource.h"
 
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#include <boost/thread/locks.hpp>
-#endif
-
 #ifdef _DEBUG
 #include "FusionConsole.h"
 #endif
@@ -56,76 +50,39 @@ namespace FusionEngine
 	ResourceContainer::ResourceContainer()
 		: m_Type(""),
 		m_Path(""),
-		m_Data(NULL),
-		m_QuickLoadData(NULL),
-		m_HasQuickLoadData(false),
-		m_RefCount(0),
-		m_ToLoad(false),
-		m_ToUnload(false),
-		m_RequiresGC(false)
+		m_Data(nullptr),
+		m_QuickLoadData(nullptr),
+		m_RequiresGC(false),
+		m_HasQuickLoadData(false)
 	{
-		_setValid(false);
-	}
-
-	ResourceContainer::ResourceContainer(const char* type, const std::string& path, void* ptr)
-		: m_Type(type),
-		m_Path(path),
-		m_Data(ptr),
-		m_QuickLoadData(NULL),
-		m_HasQuickLoadData(false),
-		m_RefCount(0),
-		m_ToLoad(false),
-		m_ToUnload(false),
-		m_RequiresGC(false)
-	{
-		if (ptr != 0)
-			_setValid(true);
-		else
-			_setValid(false);
-	}
-
-	ResourceContainer::ResourceContainer(const std::string& type, const std::wstring& path, void* ptr)
-		: m_Type(type),
-		m_Path(fe_narrow(path)),
-		m_Data(ptr),
-		m_QuickLoadData(NULL),
-		m_HasQuickLoadData(false),
-		m_RefCount(0),
-		m_ToLoad(false),
-		m_ToUnload(false),
-		m_RequiresGC(false)
-	{
-		if (ptr != 0)
-			_setValid(true);
-		else
-			_setValid(false);
+		m_RefCount = 0;
+		m_QueuedToLoad = false;
+		m_QueuedToUnLoad = false;
+		setLoaded(false);
 	}
 
 	ResourceContainer::ResourceContainer(const std::string& type, const std::string& path, void* ptr)
 		: m_Type(type),
 		m_Path(path),
 		m_Data(ptr),
-		m_QuickLoadData(NULL),
-		m_HasQuickLoadData(false),
-		m_RefCount(0),
-		m_ToLoad(false),
-		m_ToUnload(false),
-		m_RequiresGC(false)
+		m_QuickLoadData(nullptr),
+		m_RequiresGC(false),
+		m_HasQuickLoadData(false)
 	{
-		if (ptr != 0)
-			_setValid(true);
-		else
-			_setValid(false);
+		m_RefCount = 0;
+		m_QueuedToLoad = false;
+		m_QueuedToUnLoad = false;
+		setLoaded(ptr != nullptr);
 	}
 
 	ResourceContainer::~ResourceContainer()
 	{
 #ifdef _DEBUG
-		if (m_Loaded || m_Data != NULL)
+		if (m_Loaded || m_Data != nullptr)
 		{
 			SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - Resource Data leaked.");
 		}
-		if (m_HasQuickLoadData || m_QuickLoadData != NULL)
+		if (m_HasQuickLoadData || m_QuickLoadData != nullptr)
 		{
 			SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
 		}
@@ -157,7 +114,7 @@ namespace FusionEngine
 		return m_Dependencies;
 	}
 
-	void ResourceContainer::_setRequiresGC(const bool value)
+	void ResourceContainer::setRequiresGC(const bool value)
 	{
 		m_RequiresGC = value;
 	}
@@ -177,7 +134,7 @@ namespace FusionEngine
 		return m_Data;
 	}
 
-	void ResourceContainer::_setValid(bool valid)
+	void ResourceContainer::setLoaded(bool valid)
 	{
 		m_Loaded = valid;
 	}
@@ -197,7 +154,7 @@ namespace FusionEngine
 		return m_QuickLoadData;
 	}
 
-	void ResourceContainer::_setHasQuickLoadData(bool has_data)
+	void ResourceContainer::setHasQuickLoadData(bool has_data)
 	{
 		m_HasQuickLoadData = has_data;
 	}
@@ -207,62 +164,31 @@ namespace FusionEngine
 		return m_HasQuickLoadData;
 	}
 
-	void ResourceContainer::_setQueuedToLoad(bool is_queued)
-	{
-		m_ToLoad = is_queued;
-	}
-
-	bool ResourceContainer::IsQueuedToLoad() const
-	{
-		return m_ToLoad;
-	}
-
-	void ResourceContainer::_setQueuedToUnload(bool is_queued)
-	{
-		m_ToUnload = is_queued;
-	}
-
-	bool ResourceContainer::IsQueuedToUnload() const
-	{
-		return m_ToUnload;
-	}
-
 	void ResourceContainer::AddReference()
 	{
-#ifdef _WIN32
-		InterlockedIncrement(&m_RefCount);
-#else
-		boost::mutex::scoped_lock lock(m_Mutex);
 		++m_RefCount;
-#endif
 	}
 
 	void ResourceContainer::RemoveReference()
 	{
-#ifdef _WIN32
-		long refCount = InterlockedDecrement(&m_RefCount);
-#else
-		boost::mutex::scoped_lock lock(m_Mutex);
-		long refCount = --m_RefCount;
-#endif
+		auto refCount = --m_RefCount;
 		if (refCount == 1)
 		{
 			if (NoReferences) NoReferences(this);
 		}
-#ifdef _DEBUG
 		else if (refCount == 0)
-			SendToConsole("Resource ref-count reached zero without being deleted. Path: " + m_Path);
+		{
+#ifdef _DEBUG
+			if (m_Data != nullptr)
+				SendToConsole("Resource ref-count reached zero without being unloaded. Path: " + m_Path);
 #endif
+			delete this;
+		}
 	}
 
 	long ResourceContainer::ReferenceCount() const
 	{
 		return m_RefCount;
-	}
-
-	bool ResourceContainer::Unused() const
-	{
-		return ReferenceCount() == 1;
 	}
 
 }

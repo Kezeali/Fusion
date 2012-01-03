@@ -21,8 +21,10 @@ namespace FusionEngine
 	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
 		: m_StopEvent(false),
 		m_ToLoadEvent(false),
-		m_ToUnloadEvent(false),
+		m_ToUnloadEvent(true),
+		m_Running(false),
 		m_Clearing(false),
+		m_FinishLoadingBeforeStopping(false),
 		m_GC(gc)
 	{
 	}
@@ -41,38 +43,54 @@ namespace FusionEngine
 
 	void ResourceManager::AddResourceLoader(const ResourceLoader &loader)
 	{
-		m_LoaderMutex.lock();
-		m_ResourceLoaders[loader.type] = loader;
-		m_LoaderMutex.unlock();
+		if (!m_Running)
+		//m_LoaderMutex.lock();
+			m_ResourceLoaders[loader.type] = loader;
+		//m_LoaderMutex.unlock();
+		else
+			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
 	}
 
 	void ResourceManager::AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData)
 	{
-		m_LoaderMutex.lock();
-		m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
-		m_LoaderMutex.unlock();
+		if (!m_Running)
+		//m_LoaderMutex.lock();
+			m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
+		//m_LoaderMutex.unlock();
+		else
+			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
 	}
 
 	void ResourceManager::StartLoaderThread()
 	{
-		m_Worker.start(this, &ResourceManager::Load);
+		m_Running = true;
+		m_ToUnloadEvent.reset();
+		m_Thread.start(this, &ResourceManager::Load);
 	}
 
 	void ResourceManager::StopLoaderThread()
 	{
+		m_FinishLoadingBeforeStopping = false;
 		m_StopEvent.set();
-		m_Worker.join();
+		m_Thread.join();
+		m_Running = false;
+		m_ToUnloadEvent.reset();
 	}
 
-	void ResourceManager::loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit)
+	void ResourceManager::StopLoaderThreadWhenDone()
+	{
+		m_FinishLoadingBeforeStopping = true;
+		m_StopEvent.set();
+		m_Thread.join();
+		m_Running = false;
+	}
+
+	void ResourceManager::loadResourceAndDeps(const ResourceDataPtr& resource, unsigned int depth_limit)
 	{
 		if (depth_limit == 0)
 		{
 			FSN_EXCEPT(FileSystemException, "Dependency tree for '" + resource->GetPath() + "' is too deep: it's probably circular");
 		}
-
-		// TODO: prevent loaders from being added after the Load thread has been started (make this mutex unnecessary)
-		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 
 		auto _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where == m_ResourceLoaders.end())
@@ -158,21 +176,24 @@ namespace FusionEngine
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
-			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToLoadEvent, m_ToUnloadEvent);
+			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent);
 			// 0 = stop event, -1 = error; otherwise, it is
 			//  a ToLoad / ToUnload Event, meaning the load loop below should resume
-			if (receivedEvent <= 0)
+			if (receivedEvent <= 0 && !m_FinishLoadingBeforeStopping)
 				break;
+
+			bool unloadTriggered = false;
+			if (receivedEvent == 1)
+			{
+				unloadTriggered = true;
+				m_ToUnloadEvent.reset();
+			}
 
 			// Load
 			{
-				CL_MutexSection toLoadMutexSection(&m_ToLoadMutex);
-				while (!m_ToLoad.empty())
+				ResourceToLoadData toLoadData;
+				while (m_ToLoad.try_pop(toLoadData))
 				{
-					ResourceToLoadData toLoadData = m_ToLoad.top();
-					m_ToLoad.pop();
-
-					toLoadMutexSection.unlock();
 					try
 					{
 						// Dependency tree can be no deeper than 6 (just an artificial way to detect circular
@@ -184,20 +205,33 @@ namespace FusionEngine
 						//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
 						logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
 					}
-					toLoadMutexSection.lock();
+
+					toLoadData.resource->setQueuedToLoad(false);
+
+					// Push this on to the outgoing queue (even if it failed to load)
+					m_ToDeliver.push(toLoadData.resource);
 				}
 			}
 
 			// Unload
+			if (unloadTriggered || receivedEvent == 0)
 			{
-				CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
-				for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+				//CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
+				//for (auto it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+				ResourceContainer* res;
+				while (m_ToUnload.try_pop(res))
 				{
-					unloadResource(*it);
-					(*it)->_setQueuedToUnload(false);
+					if (res->Unused())
+					{
+						unloadResource(res);
+					}
+					res->setQueuedToUnload(false);
 				}
-				m_ToUnload.clear();
+				//m_ToUnload.clear();
 			}
+
+			if (receivedEvent <= 0)
+				break;
 		}
 
 		//asThreadCleanup();
@@ -205,15 +239,12 @@ namespace FusionEngine
 
 	void ResourceManager::DeliverLoadedResources()
 	{
-		//ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end();
 		ResourceDataPtr res;
-		ResourceList notLoaded;
 		while (m_ToDeliver.try_pop(res))
 		{
-			//ResourceDataPtr &res = *it;
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
-				CL_MutexSection lock(&m_LoaderMutex);
+				//CL_MutexSection lock(&m_LoaderMutex);
 				auto _where = m_ResourceLoaders.find(res->GetType());
 				if (_where != m_ResourceLoaders.end())
 				{
@@ -221,44 +252,34 @@ namespace FusionEngine
 					loader.gcload(res.get(), m_GC, loader.userData);
 				}
 			}
+
 			if (res->IsLoaded())
 			{
-				
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
-
-				res->_setQueuedToLoad(false);
-
-				//it = m_ToDeliver.erase(it);
-				//end = m_ToDeliver.end();
 			}
 			else
-				notLoaded.push(res);//++it;
+			{
+				// TODO:
+				//res->SigFailed(res);
+				res->SigLoaded.disconnect_all_slots();
+			}
 		}
-		while (notLoaded.try_pop(res))
-			m_ToDeliver.push(res);
+		//while (notLoaded.try_pop(res))
+		//	m_ToDeliver.push(res);
 	}
 
 	void ResourceManager::UnloadUnreferencedResources()
 	{
 		{
-			CL_MutexSection lock1(&m_ToUnloadMutex);
-			CL_MutexSection lock2(&m_UnreferencedMutex);
-			for (UnreferencedResourceSet::iterator it = m_Unreferenced.begin(), end = m_Unreferenced.end(); it != end; ++it)
+			ResourceContainer* res;
+			while (m_ToUnloadUsingGC.try_pop(res))
 			{
-				auto& res = *it;
-				if (!res->RequiresGC())
-				{
-					m_ToUnload.push_back(res);
-					res->_setQueuedToUnload(true);
-				}
-				else
-				{
-					unloadResource(ResourceDataPtr(res));
-				}
+				FSN_ASSERT(res->RequiresGC());
+				if (res->Unused())
+					unloadResource(res);
 			}
 		}
-		m_Unreferenced.clear();
 		m_ToUnloadEvent.set();
 	}
 
@@ -271,40 +292,21 @@ namespace FusionEngine
 
 		boost::signals2::connection onLoadConnection;
 
-		if (resource->IsLoaded()) 
+		if (!resource->IsQueuedToUnload() && resource->IsLoaded()) 
 		{
 			if (on_load_callback)
 			{
 				on_load_callback(resource);
 			}
 		}
-		else
+		else // is QueuedToUnload || !Loaded
 		{
 			if (on_load_callback)
 				onLoadConnection = resource->SigLoaded.connect(on_load_callback);
 
-			if (!resource->IsQueuedToLoad())
+			if (!resource->setQueuedToLoad(true))
 			{
-				//m_ToDeliver.push_back(resource);
-				m_ToDeliver.push(resource);
-				resource->_setQueuedToLoad(true);
-
-				// A non-locking alternative would be to add these ToLoad jobs
-				//  to another queue only accessed by this thread, then using an
-				//  Update(dt) method (called each engine-step) push those entries
-				//  onto the ToLoad queue whenever the worker has nothing to do
-				//  (some var set to true.) There will have to be
-				//  a limit to how many load jobs can be pushed per interval of
-				//  time so that the Update method doesn't get bogged down.
-				//   Of course, the lock below and its counterpart in the worker
-				//  thread only happen for a moment, so it is most likely not
-				//  a big enough deal to look at a non-locking solution.
-				//  If I were to hazzard a guess, I'd say locking will actually
-				//  yeald better performance.
-				m_ToLoadMutex.lock();
 				m_ToLoad.push(ResourceToLoadData(priority, resource));
-				m_ToLoadMutex.unlock();
-
 				m_ToLoadEvent.set();
 			}
 		}
@@ -320,6 +322,8 @@ namespace FusionEngine
 	void ResourceManager::DeleteAllResources(CL_GraphicContext &gc)
 	{
 		m_Clearing = true;
+		m_ToLoad.clear();
+		m_ToUnload.clear();
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
 			unloadResource(it->second);
@@ -329,9 +333,39 @@ namespace FusionEngine
 		//  be invalidated by the previous step. In any case, the following
 		//  step means all ResourceContainers will be deleated ASAP.
 		m_Resources.clear();
-		CL_MutexSection lock(&m_UnreferencedMutex);
-		m_Unreferenced.clear();
+		//CL_MutexSection lock(&m_UnreferencedMutex);
+		//m_Unreferenced.clear();
 		m_Clearing = false;
+	}
+
+	bool ResourceManager::VerifyResources(const bool allow_queued) const
+	{
+		bool success = true;
+		for (auto it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
+		{
+			if (it->second->Unused() && it->second->IsLoaded() && !(allow_queued && it->second->IsQueuedToUnload()))
+			{
+				success = false;
+				SendToConsole(it->second->GetPath() + " is loaded but unused.");
+			}
+			else if (!it->second->Unused() && !it->second->IsLoaded() && !(allow_queued && it->second->IsQueuedToLoad()))
+			{
+				success = false;
+				SendToConsole(it->second->GetPath() + " is not loaded even though it is used.");
+			}
+		}
+		return success;
+	}
+
+	std::vector<std::string> ResourceManager::ListLoadedResources() const
+	{
+		std::vector<std::string> list;
+		for (auto it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
+		{
+			if (it->second->IsLoaded())
+				list.push_back(it->second->GetPath());
+		}
+		return list;
 	}
 
 	StringVector ResourceManager::ListFiles()
@@ -441,8 +475,11 @@ namespace FusionEngine
 	{
 		if (!m_Clearing)
 		{
-			CL_MutexSection lock(&m_UnreferencedMutex);
-			m_Unreferenced.insert(resource);
+			resource->setQueuedToUnload(true);
+			if (!resource->RequiresGC())
+				m_ToUnload.push(resource);
+			else
+				m_ToUnloadUsingGC.push(resource);
 			resource->NoReferences = ResourceContainer::ReleasedFn();
 		}
 	}
@@ -454,8 +491,9 @@ namespace FusionEngine
 		using namespace std::placeholders;
 
 		// Check whether the given resource already exists
-		ResourceMap::iterator existingEntry = m_Resources.find(path);
-		if (existingEntry != m_Resources.end() && existingEntry->second->GetPath() == path)
+		auto insertionResult = m_Resources.insert(std::make_pair(path, ResourceDataPtr(new ResourceContainer(type, path, nullptr))));
+		auto existingEntry = insertionResult.first;
+		if (!insertionResult.second && existingEntry->second && existingEntry->second->GetPath() == path)
 		{
 			const bool wasUnused = existingEntry->second->Unused();
 			resource = existingEntry->second;
@@ -463,38 +501,19 @@ namespace FusionEngine
 			// Remove matching entry from Unreferenced
 			if (wasUnused)
 			{
-				CL_MutexSection lock(&m_UnreferencedMutex);
-				m_Unreferenced.erase(resource.get());
 				resource->NoReferences = std::bind(&ResourceManager::_resourceUnreferenced, this, _1);
 			}
 		}
-		else
+		else // No existing entry or invalid existing entry
 		{
-			resource = ResourceDataPtr(new ResourceContainer(type, path, nullptr));
+			resource = existingEntry->second;
 			resource->NoReferences = std::bind(&ResourceManager::_resourceUnreferenced, this, _1);
-
-			m_Resources[path] = resource;
-		}
-
-		if (resource->IsQueuedToUnload())
-		{
-			// Stop the resource form unloading
-			CL_MutexSection lock(&m_ToUnloadMutex);
-			for (auto it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
-			{
-				if (*it == resource)
-				{
-					(*it)->_setQueuedToUnload(false);
-					m_ToUnload.erase(it);
-					break;
-				}
-			}
 		}
 	}
 
-	void ResourceManager::loadResource(ResourceDataPtr &resource)
+	void ResourceManager::loadResource(const ResourceDataPtr &resource)
 	{
-		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where == m_ResourceLoaders.end())
 		{
@@ -518,7 +537,7 @@ namespace FusionEngine
 
 	void ResourceManager::unloadResource(const ResourceDataPtr& resource)
 	{
-		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where != m_ResourceLoaders.end())

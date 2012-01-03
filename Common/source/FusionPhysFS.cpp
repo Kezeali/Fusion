@@ -328,16 +328,18 @@ namespace FusionEngine
 	{
 		bool added = false;
 
+		FSN_ASSERT(PHYSFS_getBaseDir() != NULL);
+
 		// Try to add the path relative to app
 		std::string full_path = std::string(PHYSFS_getBaseDir()) + path;
 		// Add the directory to the end of the search path
 		if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
 			added = true;
 
+		// Try to add the path relative to the write-dir
 		const char* dir = PHYSFS_getWriteDir();
 		if (dir != NULL)
 		{
-			// Try to add the path from anywhere we can
 			full_path = std::string(dir) + PHYSFS_getDirSeparator() + path;
 			// Add the directory to the end of the search path
 			if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)

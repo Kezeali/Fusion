@@ -87,7 +87,7 @@ namespace FusionEngine
 		if (resource->GetPath().empty())
 		{
 			resource->SetDataPtr(nullptr);
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 
@@ -107,19 +107,19 @@ namespace FusionEngine
 		catch (FusionEngine::FileSystemException &ex)
 		{
 			resource->SetDataPtr(nullptr);
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + ex.what());
 		}
 
 		if (r >= 0)
 		{
 			resource->SetDataPtr(module);
-			resource->_setValid(true);
+			resource->setLoaded(true);
 		}
 		else
 		{
 			resource->SetDataPtr(nullptr);
-			resource->_setValid(false);
+			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 	}
@@ -128,7 +128,7 @@ namespace FusionEngine
 	{
 		if (resource->IsLoaded())
 		{
-			resource->_setValid(false);
+			resource->setLoaded(false);
 
 			auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
