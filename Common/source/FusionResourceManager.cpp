@@ -87,38 +87,41 @@ namespace FusionEngine
 
 	void ResourceManager::loadResourceAndDeps(const ResourceDataPtr& resource, unsigned int depth_limit)
 	{
-		if (depth_limit == 0)
+		if (!resource->IsLoaded())
 		{
-			FSN_EXCEPT(FileSystemException, "Dependency tree for '" + resource->GetPath() + "' is too deep: it's probably circular");
-		}
-
-		auto _where = m_ResourceLoaders.find(resource->GetType());
-		if (_where == m_ResourceLoaders.end())
-		{
-			FSN_EXCEPT(FileTypeException, "Attempted to load unknown resource type '" + resource->GetType() + "'");
-		}
-		ResourceLoader& loader = _where->second;
-
-		if (loader.list_prereq != nullptr)
-		{
-			DepsList prereqs;
-			loader.list_prereq(resource.get(), prereqs, loader.userData);
-
-			for (auto it = prereqs.begin(), end = prereqs.end(); it != end; ++it)
+			if (depth_limit == 0)
 			{
-				ResourceDataPtr dep;
-				obtainResource(dep, it->first, it->second);
-				loadResourceAndDeps(dep, depth_limit - 1);
-
-				resource->AttachDependency(dep);
+				FSN_EXCEPT(FileSystemException, "Dependency tree for '" + resource->GetPath() + "' is too deep: it's probably circular");
 			}
+
+			auto _where = m_ResourceLoaders.find(resource->GetType());
+			if (_where == m_ResourceLoaders.end())
+			{
+				FSN_EXCEPT(FileTypeException, "Attempted to load unknown resource type '" + resource->GetType() + "'");
+			}
+			ResourceLoader& loader = _where->second;
+
+			if (loader.list_prereq != nullptr)
+			{
+				DepsList prereqs;
+				loader.list_prereq(resource.get(), prereqs, loader.userData);
+
+				for (auto it = prereqs.begin(), end = prereqs.end(); it != end; ++it)
+				{
+					ResourceDataPtr dep;
+					obtainResource(dep, it->first, it->second);
+					loadResourceAndDeps(dep, depth_limit - 1);
+
+					resource->AttachDependency(dep);
+				}
+			}
+
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+			// Run the load function
+			loader.load(resource.get(), vdir, loader.userData);
 		}
-
-		// Initialize a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-
-		// Run the load function
-		loader.load(resource.get(), vdir, loader.userData);
 	}
 
 	//void ResourceManager::loadResourceAndDepsIterative()
@@ -281,6 +284,15 @@ namespace FusionEngine
 			}
 		}
 		m_ToUnloadEvent.set();
+	}
+
+	void ResourceManager::CancelAllDeliveries()
+	{
+		ResourceDataPtr res;
+		while (m_ToDeliver.try_pop(res))
+		{
+			res->SigLoaded.disconnect_all_slots();
+		}
 	}
 
 	boost::signals2::connection ResourceManager::GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
@@ -513,19 +525,22 @@ namespace FusionEngine
 
 	void ResourceManager::loadResource(const ResourceDataPtr &resource)
 	{
-		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
-		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
-		if (_where == m_ResourceLoaders.end())
+		if (!resource->IsLoaded())
 		{
-			FSN_EXCEPT(ExCode::FileType, "Attempted to load unknown resource type '" + resource->GetType() + "'");
+			//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+			ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
+			if (_where == m_ResourceLoaders.end())
+			{
+				FSN_EXCEPT(ExCode::FileType, "Attempted to load unknown resource type '" + resource->GetType() + "'");
+			}
+
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+			// Run the load function
+			ResourceLoader &loader = _where->second;
+			loader.load(resource.get(), vdir, loader.userData);
 		}
-
-		// Initialize a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-
-		// Run the load function
-		ResourceLoader &loader = _where->second;
-		loader.load(resource.get(), vdir, loader.userData);
 	}
 
 	void ResourceManager::getAndUnloadResource(const std::string &path)

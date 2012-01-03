@@ -84,6 +84,8 @@ namespace FusionEngine
 	{
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
+		UnloadScriptResource(resource, vdir, userData);
+
 		if (resource->GetPath().empty())
 		{
 			resource->SetDataPtr(nullptr);

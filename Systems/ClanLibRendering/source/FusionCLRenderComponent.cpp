@@ -136,7 +136,8 @@ namespace FusionEngine
 			else
 			{
 				m_AnimationResource.Release();
-				redefineSprite();
+				if (!m_Sprite.is_null())
+					redefineSprite();
 			}
 			m_ReloadAnimation = false;
 		}

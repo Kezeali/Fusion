@@ -102,6 +102,8 @@ namespace FusionEngine
 		//! Adds all resources that are no longer used (refcount is zero) to the ToUnload queue
 		void UnloadUnreferencedResources();
 
+		void CancelAllDeliveries();
+
 		//! Loads / gets a resource (asynchronous)
 		boost::signals2::connection GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 

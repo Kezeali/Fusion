@@ -863,6 +863,7 @@ public:
 						{
 							SendToConsole("Loading: Stopping archivist...");
 							cellArchivist->Stop();
+							resourceManager->CancelAllDeliveries();
 							SendToConsole("Loading: Deactivating entities...");
 							entityManager->DeactivateAllEntities(false);
 							cameraSynchroniser->Clear();

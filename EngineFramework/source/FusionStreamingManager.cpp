@@ -1390,10 +1390,13 @@ namespace FusionEngine
 		//  are split / merged into no-overlapping sub-regions (to avoid processing cells
 		//  twice in a step)
 		std::list<CL_Rect> inactiveRanges;
-		std::list<std::tuple<CL_Rect, std::list<std::pair<Vector2, float>>, std::list<std::pair<std::pair<Vector2, float>, PlayerID>>>> activeRanges;
+		typedef std::pair<Vector2, float> StreamPosition_t;
+		typedef std::list<StreamPosition_t> LocalStreamPositionsList_t;
+		typedef std::list<std::pair<StreamPosition_t, PlayerID>> RemoteStreamPositionsList_t;
+		std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>> activeRanges;
 		// Used to process The Void
-		std::list<std::pair<Vector2, float>> allLocalStreamPositions;
-		std::list<std::pair<std::pair<Vector2, float>, PlayerID>> allRemoteStreamPositions;
+		LocalStreamPositionsList_t allLocalStreamPositions;
+		RemoteStreamPositionsList_t allRemoteStreamPositions;
 
 		bool allActiveRangesStale = true;
 

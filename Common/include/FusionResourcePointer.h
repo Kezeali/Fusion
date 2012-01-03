@@ -181,7 +181,7 @@ namespace FusionEngine
 
 	//! Makes a callback helper
 	template <typename T>
-	static ResourcePointerSetter<T> make_load_callback(ResourcePointer<T>& ptr)
+	inline ResourcePointerSetter<T> make_load_callback(ResourcePointer<T>& ptr)
 	{
 		return ResourcePointerSetter<T>(ptr);
 	}

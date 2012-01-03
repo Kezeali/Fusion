@@ -27,9 +27,9 @@ namespace FusionEngine { namespace Test
 	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		// TODO: should the resource manager be allowed to request reloads like this?
-		UnloadTextResource(resource, vdir, userData);
+		//UnloadTextResource(resource, vdir, userData);
 		// ... or should this be a valid assertion?
-		//ASSERT_FALSE(resource->IsLoaded());
+		ASSERT_FALSE(resource->IsLoaded());
 
 		auto content = new std::string();
 		try

@@ -180,7 +180,7 @@ namespace FusionEngine
 			{
 				try
 				{
-					intTypeRegex = std::regex("u?int(?:8|16|32|64)", std::regex_constants::ECMAScript);
+					intTypeRegex = std::regex("u?int(?:8|16|32|64)?", std::regex_constants::ECMAScript);
 					//bool|float|double|EntityWrapper
 				}
 				catch(std::regex_error&)

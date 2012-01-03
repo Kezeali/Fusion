@@ -628,7 +628,7 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
-			if (eventId == 2) // TransactionEnded
+			if (eventId == 1) // TransactionEnded
 			{
 				ClearReadyCells(readyCells);
 			}
