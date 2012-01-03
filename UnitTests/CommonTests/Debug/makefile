@@ -45,7 +45,7 @@ dependents:
 	-cd "${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug" && $(MAKE) all
 
 # Tool invocations
-CommonTests: $(OBJS) $(USER_OBJS) "${FUSION_WORKSPACE}/Fusion/Common/Debug/libCommon.a "${FUSION_WORKSPACE}/Fusion/external/minizip/Debug/libminizip.a "${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug/libtinyxml.a
+CommonTests: $(OBJS) $(USER_OBJS) "${FUSION_WORKSPACE}/Fusion/Common/Debug/libCommon.a" "${FUSION_WORKSPACE}/Fusion/external/minizip/Debug/libminizip.a" "${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug/libtinyxml.a"
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
 	g++ -L"${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug" -L"${FUSION_WORKSPACE}/Fusion/external/minizip/Debug" -L"${FUSION_WORKSPACE}/Fusion/Common/Debug" -L"${GTEST_ROOT}/lib" -L"${BOOST_ROOT}/lib" -pthread -o "CommonTests" $(OBJS) $(USER_OBJS) $(LIBS)
