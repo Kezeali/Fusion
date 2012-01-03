@@ -1,7 +1,6 @@
 #include "PrecompiledHeaders.h"
 
 #include <ClanLib/core.h>
-#include <ClanLib/display.h>
 #include "FusionPrerequisites.h"
 
 // Logging
@@ -39,7 +38,6 @@ int main(int argc, char** argv)
 	testing::InitGoogleTest(&argc, argv);
 
 	CL_SetupCore coreSetup;
-	CL_SetupDisplay displaySetup;
 
 	testing::AddGlobalTestEnvironment(new CommonTestsEnv);
 	return RUN_ALL_TESTS();

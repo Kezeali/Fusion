@@ -53,7 +53,7 @@ namespace FusionEngine
 		catch (CL_Exception& ex)
 		{
 			resource->setLoaded(false);
-			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
@@ -146,7 +146,7 @@ namespace FusionEngine
 			delete def;
 			resource->SetDataPtr(nullptr);
 			resource->setLoaded(false);
-			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 		
 		resource->SetDataPtr(def);
