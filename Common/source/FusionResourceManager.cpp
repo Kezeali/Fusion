@@ -339,6 +339,7 @@ namespace FusionEngine
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
 			unloadResource(it->second);
+			it->second->NoReferences = ResourceContainer::ReleasedFn();
 		}
 		// There may still be ResourcePointers holding shared_ptrs to the
 		//  ResourceContainers held in m_Resources, but they will simply
@@ -355,6 +356,11 @@ namespace FusionEngine
 		bool success = true;
 		for (auto it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
+			if (!it->second)
+			{
+				success = false;
+				SendToConsole(it->first + " is uninitialised (resource entry is null.)");
+			}
 			if (it->second->Unused() && it->second->IsLoaded() && !(allow_queued && it->second->IsQueuedToUnload()))
 			{
 				success = false;
@@ -374,7 +380,7 @@ namespace FusionEngine
 		std::vector<std::string> list;
 		for (auto it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
-			if (it->second->IsLoaded())
+			if (it->second && it->second->IsLoaded())
 				list.push_back(it->second->GetPath());
 		}
 		return list;
