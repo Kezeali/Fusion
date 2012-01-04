@@ -29,7 +29,7 @@ struct CommonTestsEnv : public testing::Environment
 	}
 	virtual void TearDown()
 	{
-		SetupPhysFS::deinit();
+		ASSERT_NO_FATAL_FAILURE(SetupPhysFS::deinit());
 	}
 };
 
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 {
 	testing::InitGoogleTest(&argc, argv);
 
-	CL_SetupCore coreSetup;
+	CL_SetupCore core;
 
 	testing::AddGlobalTestEnvironment(new CommonTestsEnv);
 	return RUN_ALL_TESTS();
