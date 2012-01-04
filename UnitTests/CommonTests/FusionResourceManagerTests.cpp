@@ -58,7 +58,10 @@ protected:
 		: gc(),
 		currentN(0)
 	{}
-	virtual ~resource_manager_f() {}
+	virtual ~resource_manager_f()
+	{
+		logger.reset();
+	}
 
 	virtual void SetUp()
 	{
@@ -76,18 +79,14 @@ protected:
 	}
 	virtual void TearDown()
 	{
-		manager.reset();
-		logger.reset();
+		ASSERT_NO_FATAL_FAILURE(resourcesBeingLoaded.clear());
+
+		ASSERT_NO_FATAL_FAILURE(manager.reset());
 	}
 
 	void AddStandardLoaders()
 	{
 		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource)));
-	}
-
-	void OnLoad(ResourceDataPtr resource)
-	{
-		lastLoadedResource = resource;
 	}
 
 	void AttemptActualLoad(bool next = true)
@@ -104,19 +103,16 @@ protected:
 
 	void VerifyLoadedResources()
 	{
-		std::cout << "listing loaded resources" << std::endl << "{" << std::endl;
 		auto list = manager->ListLoadedResources();
 		for (auto it = list.begin(), end = list.end(); it != end; ++it)
 		{
 			std::string path = *it;
-			std::cout << "  " << path << std::endl;
 			bool shouldBeLoaded = std::any_of(resourcesBeingLoaded.begin(), resourcesBeingLoaded.end(), [path](const std::shared_ptr<ResourceHelper>& loaded)->bool
 			{
 				return loaded->resource && loaded->resource->GetPath() == path;
 			});
 			ASSERT_TRUE(shouldBeLoaded);
 		}
-		std::cout << "}" << std::endl;
 	}
 
 	class ResourceHelper
@@ -140,7 +136,6 @@ protected:
 	};
 	
 	std::vector<std::shared_ptr<ResourceHelper>> resourcesBeingLoaded;
-	ResourceDataPtr lastLoadedResource;
 
 	std::vector<std::string> n;
 	size_t currentN;
@@ -243,9 +238,7 @@ TEST_F(resource_manager_f, load_unload)
 		for (size_t i = 0; i < numIterations; ++i)
 		{
 			std::shared_ptr<ResourceHelper> helper;
-			std::cout << "loading " << ("resource" + n[i+u] + ".txt") << "(" << i << "+" << u << ")... ";
 			ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i+u] + ".txt"));
-			std::cout << "loaded" << std::endl;
 			if ((i % 10) != 0)
 			{
 				resourcesBeingLoaded.push_back(helper);
@@ -264,18 +257,14 @@ TEST_F(resource_manager_f, load_unload)
 		ASSERT_NO_FATAL_FAILURE(manager->UnloadUnreferencedResources());
 		ASSERT_TRUE(manager->VerifyResources(true));
 	}
-	std::cout << "stopping thread" << std::endl;;
 	ASSERT_NO_FATAL_FAILURE(manager->StopLoaderThreadWhenDone());
-	std::cout << "last delivery" << std::endl;
 	ASSERT_NO_FATAL_FAILURE(manager->DeliverLoadedResources());
 	// All resources should be loaded
-	std::cout << "testify!" << std::endl;
 	for (auto it = resourcesBeingLoaded.begin(), end = resourcesBeingLoaded.end(); it != end; ++it)
 	{
 		ASSERT_TRUE((*it)->resource.get() != nullptr);
 		ASSERT_TRUE((*it)->resource->IsLoaded());
 	}
-	std::cout << "verify!" << std::endl;
 	ASSERT_TRUE(manager->VerifyResources(false));
 	VerifyLoadedResources();
 }

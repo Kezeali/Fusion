@@ -40,5 +40,6 @@ int main(int argc, char** argv)
 	CL_SetupCore core;
 
 	testing::AddGlobalTestEnvironment(new CommonTestsEnv);
+
 	return RUN_ALL_TESTS();
 }

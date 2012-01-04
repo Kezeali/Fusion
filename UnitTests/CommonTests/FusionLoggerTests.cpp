@@ -12,10 +12,11 @@ struct logger_f : public testing::Test
 {
 	virtual void SetUp()
 	{
-		logger = std::make_shared<Logger>();
+		ASSERT_NO_THROW(logger = std::make_shared<Logger>());
 	}
 	virtual void TearDown()
 	{
+		ASSERT_NO_FATAL_FAILURE(logger.reset());
 	}
 
 	std::shared_ptr<Logger> logger;
