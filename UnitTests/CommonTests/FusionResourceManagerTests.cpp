@@ -268,3 +268,22 @@ TEST_F(resource_manager_f, load_unload)
 	ASSERT_TRUE(manager->VerifyResources(false));
 	VerifyLoadedResources();
 }
+
+TEST_F(resource_manager_f, destruct_with_resources_in_use)
+{
+	const size_t numIterations = 1000;
+	for (size_t i = 0; i < numIterations; ++i)
+	{
+		ASSERT_NO_THROW(AttemptActualLoad());
+	}
+
+	manager->DeliverLoadedResources();
+	manager->UnloadUnreferencedResources();
+	manager->StopLoaderThreadWhenDone();
+	manager->DeliverLoadedResources();
+
+	// Delete the manager with active resource pointers
+	ASSERT_NO_FATAL_FAILURE(manager.reset());
+
+	ASSERT_NO_FATAL_FAILURE(resourcesBeingLoaded.clear());
+}
