@@ -217,7 +217,7 @@ TEST_F(resource_manager_f, load_unload)
 	AddStandardLoaders();
 	ASSERT_NO_THROW(AttemptActualLoad());
 	ASSERT_NO_THROW(manager->StartLoaderThread());
-	const size_t numIterations = 250;
+	const size_t numIterations = 210;
 	for (size_t i = 0; i < numIterations; ++i)
 	{
 		std::shared_ptr<ResourceHelper> helper;
@@ -240,18 +240,9 @@ TEST_F(resource_manager_f, load_unload)
 			std::shared_ptr<ResourceHelper> helper;
 			ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i+u] + ".txt"));
 			if ((i % 10) != 0)
-			{
 				resourcesBeingLoaded.push_back(helper);
-			}
 			if (i != 0 && (i % 14) == 0)
-			{
 				resourcesBeingLoaded.erase(resourcesBeingLoaded.begin());
-			}
-			//if ((i % 60) == 0)
-			//{
-			//	manager->UnloadUnreferencedResources();
-			//	manager->DeliverLoadedResources();
-			//}
 		}
 		ASSERT_NO_FATAL_FAILURE(manager->DeliverLoadedResources());
 		ASSERT_NO_FATAL_FAILURE(manager->UnloadUnreferencedResources());
@@ -271,10 +262,20 @@ TEST_F(resource_manager_f, load_unload)
 
 TEST_F(resource_manager_f, destruct_with_resources_in_use)
 {
-	const size_t numIterations = 1000;
-	for (size_t i = 0; i < numIterations; ++i)
+	const size_t numIterations = 70;
+	for (size_t u = 0; u < 20; ++u)
 	{
-		ASSERT_NO_THROW(AttemptActualLoad());
+		for (size_t i = 0; i < numIterations; ++i)
+		{
+			std::shared_ptr<ResourceHelper> helper;
+			ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i+u] + ".txt"));
+			if ((i % 10) != 0)
+				resourcesBeingLoaded.push_back(helper);
+			if (i != 0 && (i % 14) == 0)
+				resourcesBeingLoaded.erase(resourcesBeingLoaded.begin());
+		}
+		manager->DeliverLoadedResources();
+		manager->UnloadUnreferencedResources();
 	}
 
 	manager->DeliverLoadedResources();
