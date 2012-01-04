@@ -80,7 +80,7 @@ protected:
 
 	void AddStandardLoaders()
 	{
-		manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource));
+		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource)));
 	}
 
 	void OnLoad(ResourceDataPtr resource)
@@ -227,8 +227,8 @@ TEST_F(resource_manager_f, load_unload)
 		if (i != 0 && (i % 14) == 0)
 			resourcesBeingLoaded.erase(resourcesBeingLoaded.begin());
 	}
-	manager->DeliverLoadedResources();
-	manager->UnloadUnreferencedResources();
+	ASSERT_NO_FATAL_FAILURE(manager->DeliverLoadedResources());
+	ASSERT_NO_FATAL_FAILURE(manager->UnloadUnreferencedResources());
 	for (size_t u = 0; u < 12; ++u)
 	{
 		for (size_t i = 0; i < numIterations; ++i)
@@ -249,8 +249,8 @@ TEST_F(resource_manager_f, load_unload)
 		ASSERT_NO_FATAL_FAILURE(manager->UnloadUnreferencedResources());
 		ASSERT_TRUE(manager->VerifyResources(true));
 	}
-	manager->StopLoaderThreadWhenDone();
-	manager->DeliverLoadedResources();
+	ASSERT_NO_FATAL_FAILURE(manager->StopLoaderThreadWhenDone());
+	ASSERT_NO_FATAL_FAILURE(manager->DeliverLoadedResources());
 	// All resources should be loaded
 	for (auto it = resourcesBeingLoaded.begin(), end = resourcesBeingLoaded.end(); it != end; ++it)
 	{
