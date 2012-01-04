@@ -76,6 +76,8 @@ protected:
 	}
 	virtual void TearDown()
 	{
+		manager.reset();
+		logger.reset();
 	}
 
 	void AddStandardLoaders()
@@ -223,9 +225,14 @@ TEST_F(resource_manager_f, load_unload)
 		std::shared_ptr<ResourceHelper> helper;
 		ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i] + ".txt"));
 		if ((i % 10) != 0)
+		{
 			resourcesBeingLoaded.push_back(helper);
+		}
 		if (i != 0 && (i % 14) == 0)
+		{
+			std::cout << "dropping held resource" << std::endl;
 			resourcesBeingLoaded.erase(resourcesBeingLoaded.begin());
+		}
 	}
 	ASSERT_NO_FATAL_FAILURE(manager->DeliverLoadedResources());
 	ASSERT_NO_FATAL_FAILURE(manager->UnloadUnreferencedResources());
@@ -236,9 +243,14 @@ TEST_F(resource_manager_f, load_unload)
 			std::shared_ptr<ResourceHelper> helper;
 			ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i+u] + ".txt"));
 			if ((i % 10) != 0)
+			{
 				resourcesBeingLoaded.push_back(helper);
+			}
 			if (i != 0 && (i % 14) == 0)
+			{
+				std::cout << "dropping held resource" << std::endl;
 				resourcesBeingLoaded.erase(resourcesBeingLoaded.begin());
+			}
 			//if ((i % 60) == 0)
 			//{
 			//	manager->UnloadUnreferencedResources();
