@@ -241,9 +241,12 @@ TEST_F(resource_manager_f, load_unload)
 		for (size_t i = 0; i < numIterations; ++i)
 		{
 			std::shared_ptr<ResourceHelper> helper;
+			std::cout << "loading " << ("resource" + n[i+u] + ".txt") << "(" << i << "+" << u << ")... ";
 			ASSERT_NO_THROW(helper = ResourceHelper::Load(manager, "resource" + n[i+u] + ".txt"));
+			std::cout << "loaded" << std::endl;
 			if ((i % 10) != 0)
 			{
+				std::cout << "holding resource" << std::endl;
 				resourcesBeingLoaded.push_back(helper);
 			}
 			if (i != 0 && (i % 14) == 0)
