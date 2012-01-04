@@ -42,6 +42,8 @@
 #include "FusionTypes.h"
 #include "FusionXML.h"
 
+#include <tuple>
+
 namespace FusionEngine
 {
 

@@ -44,9 +44,6 @@
 #include "FusionLogger.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
-#include "FusionResourceManager.h"
-//#include "FusionScriptedEntity.h"
-#include "FusionScriptSound.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionXML.h"
 
