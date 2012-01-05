@@ -38,8 +38,9 @@
 #include "FusionRegionMapLoader.h"
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
-#include "FusionDeltaTime.h"
 #include "FusionComponentFactory.h"
+#include "FusionComponentSystem.h"
+#include "FusionDeltaTime.h"
 #include "FusionEntitySynchroniser.h"
 #include "FusionExceptionFactory.h"
 #include "FusionNetDestinationHelpers.h"
@@ -479,7 +480,7 @@ namespace FusionEngine
 		m_SentStates.erase(entity->GetID());
 	}
 
-	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
+	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager)
 	{
 		//ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
 		//if (_where != m_ReceivedStates.end())
@@ -591,14 +592,14 @@ namespace FusionEngine
 
 	static RakNet::Time nextPacketTime = 0;
 
-	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager, EntityFactory* factory)
+	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager)
 	{
 		// TODO: OnDisconected handler (need to add a signal or something for that) that removes jitter buffer
 		if (m_UseJitterBuffer)
 			ProcessJitterBuffer();
 
 		for (auto it = m_EntitiesToReceive.begin(), end = m_EntitiesToReceive.end(); it != end; ++it)
-			ReceiveSync(*it, entity_manager, factory);
+			ReceiveSync(*it, entity_manager);
 
 		m_EntitiesToReceive.clear();
 
@@ -975,11 +976,11 @@ namespace FusionEngine
 
 	// TODO: set domain modes (and / or replace domains with mode flags in entities?)
 
-	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, EntityFactory* component_factory, SaveDataArchive* data_archive)
+	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, ComponentUniverse* universe, SaveDataArchive* data_archive)
 		: m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_StreamingManager(streaming),
-		m_EntityFactory(component_factory),
+		m_Universe(universe),
 		m_SaveDataArchive(data_archive),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
@@ -1069,7 +1070,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::LoadNonStreamingEntities(std::istream& stream, InstancingSynchroniser* instantiator)
+	void EntityManager::LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator)
 	{
 		IO::Streams::CellStreamReader reader(&stream);
 
@@ -1077,7 +1078,7 @@ namespace FusionEngine
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
 		{
-			auto entity = LoadEntity(stream, true, 0, m_EntityFactory, this, instantiator);
+			auto entity = LoadEntity(stream, true, 0, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 		}
@@ -1422,10 +1423,9 @@ namespace FusionEngine
 				for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 				{
 					auto& com = *it;
-					auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-					if (_where != m_EntityFactory->m_ComponentInstancers.end())
+					if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 					{
-						_where->second->CancelPreparation(com);
+						world->CancelPreparation(com);
 					}
 				}
 			}
@@ -1721,8 +1721,8 @@ namespace FusionEngine
 			auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
 			while (it != end)
 			{
-				auto worldEntry = m_EntityFactory->m_ComponentInstancers.find(it->second->GetType());
-				if (attemptToActivateComponent(worldEntry->second, it->second))
+				auto world = m_Universe->GetWorldByComponentType(it->second->GetType());
+				if (attemptToActivateComponent(world, it->second))
 				{
 					it = m_ComponentsToActivate.erase(it);
 					end = m_ComponentsToActivate.end();
@@ -1786,11 +1786,10 @@ namespace FusionEngine
 			auto& com = *it;
 			if (com->GetReadyState() == IComponent::NotReady)
 			{
-				auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-				if (_where != m_EntityFactory->m_ComponentInstancers.end())
+				if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 				{
 					com->SetReadyState(IComponent::Preparing);
-					_where->second->Prepare(com);
+					world->Prepare(com);
 					allAreReady &= com->IsReady();
 				}
 				else
@@ -1833,10 +1832,9 @@ namespace FusionEngine
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
 			auto& com = *it;
-			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 			{
-				allAreActive &= attemptToActivateComponent(_where->second, com);
+				allAreActive &= attemptToActivateComponent(world, com);
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Unknown component type (this would be impossable if I had planned ahead properly, but alas)");
@@ -1903,10 +1901,9 @@ namespace FusionEngine
 		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
 		{
 			auto& com = *cit;
-			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 			{
-				_where->second->OnDeactivation(com);
+				world->OnDeactivation(com);
 				com->SetReadyState(IComponent::NotReady);
 			}
 			else

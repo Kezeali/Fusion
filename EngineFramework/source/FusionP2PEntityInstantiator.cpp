@@ -27,7 +27,7 @@
 
 #include "PrecompiledHeaders.h"
 
-#include "FusionInstanceSynchroniser.h"
+#include "FusionP2PEntityInstantiator.h"
 
 #include <BitStream.h>
 #include <RakNetTypes.h>
@@ -56,7 +56,7 @@ using namespace RakNet;
 namespace FusionEngine
 {
 	
-	InstancingSynchroniser::InstancingSynchroniser(EntityFactory *factory, EntityManager *manager)
+	P2PEntityInstantiator::P2PEntityInstantiator(ComponentFactory *factory, EntityManager *manager)
 		: m_Factory(factory),
 		m_EntityManager(manager)
 	{
@@ -70,14 +70,14 @@ namespace FusionEngine
 		ScriptManager::getSingleton().RegisterGlobalObject("Ontology ontology", this);
 	}
 
-	InstancingSynchroniser::~InstancingSynchroniser()
+	P2PEntityInstantiator::~P2PEntityInstantiator()
 	{
 		NetworkManager::getSingleton().Unsubscribe(MTID_INSTANCEENTITY, this);
 		NetworkManager::getSingleton().Unsubscribe(MTID_REMOVEENTITY, this);
 		NetworkManager::getSingleton().Unsubscribe(ID_NEW_INCOMING_CONNECTION, this);
 	}
 
-	void InstancingSynchroniser::Reset(ObjectID next)
+	void P2PEntityInstantiator::Reset(ObjectID next)
 	{
 		for (int i = 0; i < s_MaxPeers; ++i)
 			m_LocalIdGenerators[i].freeAll();
@@ -88,7 +88,7 @@ namespace FusionEngine
 	static const ObjectID peerIndexMask = 0x78 << (sizeof(ObjectID) * 8 - 8); // - 8 because the mask overlaps 2 bytes
 	static const ObjectID localIdMask = ~(localFlag | peerIndexMask);
 
-	void InstancingSynchroniser::TakeID(ObjectID id)
+	void P2PEntityInstantiator::TakeID(ObjectID id)
 	{
 		if ((id & localFlag) == localFlag) // if the first bit is set (this is a local-authority ID)
 		{
@@ -104,7 +104,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InstancingSynchroniser::FreeID(ObjectID id)
+	void P2PEntityInstantiator::FreeID(ObjectID id)
 	{
 		if ((id & localFlag) == localFlag) // if the first bit is set this is a local-authority ID
 		{
@@ -120,7 +120,12 @@ namespace FusionEngine
 		}
 	}
 
-	ObjectID InstancingSynchroniser::generateLocalId()
+	ObjectID P2PEntityInstantiator::GetFreeGlobalID()
+	{
+		return m_WorldIdGenerator.getFreeID();
+	}
+
+	ObjectID P2PEntityInstantiator::generateLocalId()
 	{
 		static_assert(CHAR_BIT == 8, "Why are your bytes weird? :(");
 
@@ -147,7 +152,7 @@ namespace FusionEngine
 		return id;
 	}
 
-	void InstancingSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const Vector2& pos, float angle, const std::string &name, PlayerID owner_id)
+	void P2PEntityInstantiator::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const Vector2& pos, float angle, const std::string &name, PlayerID owner_id)
 	{
 		RakNet::BitStream newEntityData;
 		//newEntityData.Write(requester_id);
@@ -172,7 +177,7 @@ namespace FusionEngine
 			m_Network->Send(To::Arbiter(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 	}
 
-	void InstancingSynchroniser::sendFullSynch(NetDestination& destination, const EntityPtr& entity)
+	void P2PEntityInstantiator::sendFullSynch(NetDestination& destination, const EntityPtr& entity)
 	{
 		RakNet::BitStream entityData;
 
@@ -184,7 +189,7 @@ namespace FusionEngine
 		m_Network->Send(destination, !Timestamped, MTID_STARTSYNC, &entityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 	}
 
-	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, Vector2 pos, float angle, PlayerID owner_id)
+	EntityPtr P2PEntityInstantiator::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, Vector2 pos, float angle, PlayerID owner_id)
 	{
 		bool localAuthority = requester && PlayerRegistry::IsLocal(requester->GetOwnerID());
 
@@ -211,10 +216,11 @@ namespace FusionEngine
 				sendInstancingMessage(requester->GetID(), id, type, pos, angle, name, owner_id);
 			}
 
-			auto transform = m_Factory->InstanceComponent(type, pos, angle);
+			auto transform = m_Factory->InstantiateComponent(type);
 			if (!transform)
-				FSN_EXCEPT(InvalidArgumentException, type + " doesn't exist, so you can't instantiate an entity with it.");
-			if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
+				FSN_EXCEPT(InvalidArgumentException, "Component type " + type + " doesn't exist, so you can't instantiate an entity with it.");
+			auto tfAsTf = dynamic_cast<ITransform*>(transform.get());
+			if (!tfAsTf)
 				FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
 
 			// TODO: make m_PropChangedQueue a member of this class?
@@ -226,13 +232,12 @@ namespace FusionEngine
 				entity->SetOwnerID(owner_id);
 				entity->SetName(name);
 
+				tfAsTf->Position.Set(pos);
+				tfAsTf->Angle.Set(angle);
+
 				transform->SynchronisePropertiesNow();
 
 				m_EntityManager->AddEntity(entity);
-
-				// TODO: set this entity to a property, rather than calling this callback
-				//if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
-				//	requester->OnInstanceRequestFulfilled(entity);
 			}
 
 			return entity;
@@ -241,12 +246,12 @@ namespace FusionEngine
 		return EntityPtr();
 	}
 
-	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, Vector2 pos, float angle, PlayerID owner)
+	EntityPtr P2PEntityInstantiator::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, Vector2 pos, float angle, PlayerID owner)
 	{
 		return RequestInstance(requester, syncable, type, "", Vector2::zero(), 0.f, owner);
 	}
 
-	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
+	void P2PEntityInstantiator::RemoveInstance(EntityPtr& entity)
 	{
 		// TODO: reconsider the logic of who should be able to instance / delete entities (WRT owner ID)
 		if (entity->IsSyncedEntity())
@@ -271,11 +276,11 @@ namespace FusionEngine
 			m_EntityManager->RemoveEntity(entity);
 	}
 
-	void InstancingSynchroniser::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
+	void P2PEntityInstantiator::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
 	{
 		if (entity)
 		{
-			auto com = m_Factory->InstanceComponent(type);
+			auto com = m_Factory->InstantiateComponent(type);
 			if (com)
 			{
 				entity->AddComponent(com, identifier);
@@ -287,7 +292,7 @@ namespace FusionEngine
 		// TODO: throw exception
 	}
 
-	void InstancingSynchroniser::HandlePacket(Packet *packet)
+	void P2PEntityInstantiator::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream receivedData(packet->data, packet->length, false);
 
@@ -342,10 +347,11 @@ namespace FusionEngine
 					return;
 				}
 
-				auto transform = m_Factory->InstanceComponent(transformTypeName, position, angle);
+				auto transform = m_Factory->InstantiateComponent(transformTypeName);
 				if (!transform)
 					FSN_EXCEPT(InstanceSyncException, type + " doesn't exist, so you can't instantiate an entity with it.");
-				if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
+				auto tfAsTf = dynamic_cast<ITransform*>(transform.get());
+				if (!tfAsTf)
 					FSN_EXCEPT(InstanceSyncException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
 
 				EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
@@ -356,6 +362,9 @@ namespace FusionEngine
 				entity->SetOwnerID(ownerId);
 				if (!name.empty())
 					entity->SetName(name);
+
+				tfAsTf->Position.Set(position);
+				tfAsTf->Angle.Set(angle);
 
 				transform->SynchronisePropertiesNow();
 
@@ -410,14 +419,14 @@ namespace FusionEngine
 		} // end switch (type)
 	}
 
-	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)
+	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
 	{
 		auto entity = app_obj->GetParent()->shared_from_this();
 
 		return obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
 	}
 
-	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)
+	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
 	{
 		ASScript* nativeCom = ASScript::GetActiveScript();
 
@@ -430,14 +439,14 @@ namespace FusionEngine
 		return newEntity;//.get();
 	}
 
-	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)
+	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
 	{
 		obj->AddComponent(entity, type, identifier);
 	}
 
-	void InstancingSynchroniser::Register(asIScriptEngine* engine)
+	void P2PEntityInstantiator::Register(asIScriptEngine* engine)
 	{
-		RegisterSingletonType<InstancingSynchroniser>("Ontology", engine);
+		RegisterSingletonType<P2PEntityInstantiator>("Ontology", engine);
 
 		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
 			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
@@ -446,7 +455,7 @@ namespace FusionEngine
 			asFUNCTION(InstantiationSynchroniser_InstantiateAuto), asCALL_CDECL_OBJLAST);
 
 		engine->RegisterObjectMethod("Ontology", "void addComponent(Entity, const string &in, const string &in)",
-			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, InstancingSynchroniser*), void), asCALL_CDECL_OBJLAST);
+			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, P2PEntityInstantiator*), void), asCALL_CDECL_OBJLAST);
 	}
 
 }

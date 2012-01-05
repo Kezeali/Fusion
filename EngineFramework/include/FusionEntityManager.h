@@ -37,6 +37,7 @@
 #include <BitStream.h>
 #include <RakNetTypes.h>
 
+#include "FusionComponentUniverse.h"
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
 #include "FusionIDStack.h"
@@ -93,7 +94,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, EntityFactory* component_factory, SaveDataArchive* data_archive);
+		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, ComponentUniverse* universe, SaveDataArchive* data_archive);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -111,7 +112,7 @@ namespace FusionEngine
 		void LoadActiveEntities(std::istream& stream);
 
 		void SaveNonStreamingEntities(std::ostream& stream);
-		void LoadNonStreamingEntities(std::istream& stream, InstancingSynchroniser* instantiator);
+		void LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator);
 		//! Saves data used to restore pointers between entities
 		void SaveCurrentReferenceData();
 
@@ -286,7 +287,7 @@ namespace FusionEngine
 		StreamingManager *m_StreamingManager;
 
 	protected:
-		EntityFactory *m_EntityFactory;
+		ComponentUniverse *m_Universe;
 
 		mutable tbb::spin_rw_mutex m_EntityListsMutex;
 

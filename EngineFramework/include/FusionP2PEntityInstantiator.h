@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEntityInstancer
-#define H_FusionEntityInstancer
+#ifndef H_FusionP2PEntityInstantiator
+#define H_FusionP2PEntityInstantiator
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,7 +34,10 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionEntityInstantiator.h"
+
 #include <array>
+#include "FusionComponentFactory.h"
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
 #include "FusionPacketHandler.h"
@@ -53,11 +56,11 @@ namespace FusionEngine
 	};
 
 	//! Synchronises the creation of new instances
-	class InstancingSynchroniser : public PacketHandler
+	class P2PEntityInstantiator : public EntityInstantiator, public PacketHandler
 	{
 	public:
-		InstancingSynchroniser(EntityFactory *factory, EntityManager *manager);
-		~InstancingSynchroniser();
+		P2PEntityInstantiator(ComponentFactory *factory, EntityManager *manager);
+		~P2PEntityInstantiator();
 
 		//! Resets the used ID lists, setting the min world id to the one given.
 		void Reset(ObjectID min_unused = 0);
@@ -70,6 +73,8 @@ namespace FusionEngine
 		void TakeID(ObjectID id);
 		//! Puts the given ID back in the pool
 		void FreeID(ObjectID id);
+
+		ObjectID GetFreeGlobalID();
 
 		//! Tries to create a new entity (only succeeds if this peer has authority to do so)
 		/*!
@@ -113,8 +118,8 @@ namespace FusionEngine
 
 		static void Register(asIScriptEngine* engine);
 
-	//protected:
-		EntityFactory *m_Factory;
+	protected:
+		ComponentFactory *m_Factory;
 		EntityManager *m_EntityManager;
 
 		RakNetwork *m_Network;

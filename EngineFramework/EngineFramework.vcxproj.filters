@@ -18,9 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\FusionInstanceSynchroniser.cpp">
-      <Filter>Instantiation</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionEntityManager.cpp" />
     <ClCompile Include="source\FusionTaskManager.cpp" />
     <ClCompile Include="source\FusionTaskScheduler.cpp" />
@@ -63,11 +60,15 @@
     <ClCompile Include="PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionP2PEntityInstantiator.cpp">
+      <Filter>Instantiation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionComponentUniverse.cpp" />
+    <ClCompile Include="source\FusionPrefabInstantiator.cpp">
+      <Filter>Instantiation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\FusionInstanceSynchroniser.h">
-      <Filter>Instantiation</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionTaskScheduler.h" />
     <ClInclude Include="include\FusionEntityManager.h" />
     <ClInclude Include="include\FusionEntitySynchroniser.h" />
@@ -117,6 +118,13 @@
     </ClInclude>
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionP2PEntityInstantiator.h">
+      <Filter>Instantiation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionComponentUniverse.h" />
+    <ClInclude Include="include\FusionPrefabInstantiator.h">
+      <Filter>Instantiation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

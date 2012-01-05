@@ -45,7 +45,27 @@ namespace FusionEngine
 		virtual ~EntityInstantiator()
 		{}
 
-		virtual EntityPtr RequestInstance(bool synced, const std::string &transform_type, const std::string &name, Vector2 pos, float angle, PlayerID instance_owner = 0); = 0;
+		//! Resets the used ID lists, setting the min world id to the one given.
+		virtual void Reset(ObjectID min_unused = 0) = 0;
+
+		//! Removes the given ID from the available pool
+		virtual void TakeID(ObjectID id) = 0;
+		//! Puts the given ID back in the pool
+		virtual void FreeID(ObjectID id) = 0;
+		//! Returns a free global ID (used when creating entities in the editor)
+		virtual ObjectID GetFreeGlobalID() = 0;
+
+		//! Instance (named)
+		virtual EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string &transform_type, const std::string &name, Vector2 pos, float angle, PlayerID instance_owner = 0) = 0;
+		//! Instance
+		virtual EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string &transform_type, Vector2 pos, float angle, PlayerID instance_owner = 0) = 0;
+
+		//! Returns the given Entity's ID to the pool
+		virtual void RemoveInstance(EntityPtr& entity) = 0;
+
+		// TODO: move to ComponentInstantiator
+		virtual void AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier) = 0;
+
 	};
 
 }

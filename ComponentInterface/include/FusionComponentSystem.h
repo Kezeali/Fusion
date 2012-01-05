@@ -80,7 +80,8 @@ namespace FusionEngine
 
 		enum MessageType
 		{
-			NewTypes
+			None = 0,
+			NewTypes = 1
 		};
 
 		void PostSystemMessage(MessageType message)
@@ -90,8 +91,12 @@ namespace FusionEngine
 
 		MessageType PopSystemMessage()
 		{
-			auto message = m_SystemMessages.back();
-			m_SystemMessages.pop_back();
+			MessageType message = MessageType::None;
+			if (!m_SystemMessages.empty())
+			{
+				message = m_SystemMessages.back();
+				m_SystemMessages.pop_back();
+			}
 			return message;
 		}
 

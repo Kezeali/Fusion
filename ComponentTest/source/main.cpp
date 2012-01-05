@@ -52,13 +52,14 @@
 
 #include "FusionContextMenu.h"
 #include "FusionComponentFactory.h"
+#include "FusionComponentUniverse.h"
 #include "FusionEntityManager.h"
 #include "FusionEntityRepo.h"
 #include "FusionEntitySynchroniser.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionExceptionFactory.h"
 #include "FusionGameMapLoader.h"
-#include "FusionInstanceSynchroniser.h"
+#include "FusionP2PEntityInstantiator.h"
 #include "FusionScriptedConsoleCommand.h"
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
@@ -386,7 +387,7 @@ public:
 				// Entity generation
 				Entity::Register(asEngine);
 				ASScript::ScriptInterface::Register(asEngine);
-				InstancingSynchroniser::Register(asEngine);
+				P2PEntityInstantiator::Register(asEngine);
 
 				Camera::Register(asEngine);
 				StreamingManager::Register(asEngine);
@@ -464,17 +465,17 @@ public:
 				std::unique_ptr<CameraSynchroniser> cameraSynchroniser(new CameraSynchroniser(streamingMgr.get()));
 
 				// Entity management / instantiation
-				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
+				std::unique_ptr<ComponentUniverse> componentUniverse(new ComponentUniverse());
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get(), streamingMgr.get()));
 				
-				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), entityFactory.get(), cellArchivist.get()));
-				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), componentUniverse.get(), cellArchivist.get()));
+				std::unique_ptr<P2PEntityInstantiator> instantiationSynchroniser(new P2PEntityInstantiator(componentUniverse.get(), entityManager.get()));
 
 				try
 				{
 				std::unique_ptr<GameMapLoader> mapLoader(new GameMapLoader(options));
 
-				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
+				cellArchivist->SetInstantiator(instantiationSynchroniser.get(), componentUniverse.get(), entityManager.get());
 
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
 
@@ -498,7 +499,7 @@ public:
 				auto renderWorld = clRenderSystem->CreateWorld();
 				ontology.push_back(renderWorld);
 
-				entityFactory->AddInstancer(renderWorld);
+				componentUniverse->AddWorld(renderWorld);
 
 				scriptManager->RegisterGlobalObject("Renderer renderer", renderWorld.get());
 				
@@ -506,7 +507,7 @@ public:
 				auto box2dWorld = box2dSystem->CreateWorld();
 				ontology.push_back(box2dWorld);
 
-				entityFactory->AddInstancer(box2dWorld);
+				componentUniverse->AddWorld(box2dWorld);
 				
 				static_cast<CLRenderWorld*>(renderWorld.get())->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld.get())->Getb2World());
 				static_cast<CLRenderWorld*>(renderWorld.get())->SetDebugDraw(false);
@@ -518,7 +519,7 @@ public:
 				// TODO: add some sort of Init method, to be called by the scheduler (?) when the ontology is set (?)
 				static_cast<AngelScriptWorld*>(asWorld.get())->BuildScripts();
 
-				entityFactory->AddInstancer(asWorld);
+				componentUniverse->AddWorld(asWorld);
 
 				scheduler->SetOntology(ontology);
 
@@ -534,7 +535,7 @@ public:
 
 					streamingMgr->Initialise(map->GetCellSize());
 
-					map->LoadNonStreamingEntities(true, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
+					map->LoadNonStreamingEntities(true, entityManager.get(), componentUniverse.get(), instantiationSynchroniser.get());
 				}
 				// Start the asynchronous cell loader
 				cellArchivist->Start();
@@ -598,7 +599,7 @@ public:
 						for (unsigned int i = 0; i < repeats * repeats; ++i)
 						{
 							auto entity =
-								createEntity(addToScene, (unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
+								createEntity(addToScene, (unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), componentUniverse.get(), entityManager.get());
 							if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
 								entities.push_back(entity);
 							if (ev.alt)
@@ -868,8 +869,8 @@ public:
 							entityManager->DeactivateAllEntities(false);
 							cameraSynchroniser->Clear();
 							SendToConsole("Loading: Clearing entities...");
-							//entityManager.reset(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), entityFactory.get(), cellArchivist.get()));
-							//instantiationSynchroniser.reset(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+							//entityManager.reset(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), componentUniverse.get(), cellArchivist.get()));
+							//instantiationSynchroniser.reset(new P2PEntityInstantiator(componentUniverse.get(), entityManager.get()));
 							//cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 							//propChangedQueue = entityManager->m_PropChangedQueue;
 							entityManager->Clear();
@@ -879,7 +880,7 @@ public:
 							SendToConsole("Loading: Garbage-collecting...");
 							int r = scriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
 							SendToConsole("Loading: Non-streaming entities (from map)...");
-							map->LoadNonStreamingEntities(false, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
+							map->LoadNonStreamingEntities(false, entityManager.get(), componentUniverse.get(), instantiationSynchroniser.get());
 							cellArchivist->Load("quicksave");
 							SendToConsole("Loading: Non-streaming entities (from data-file)...");
 							if (auto file = cellArchivist->LoadDataFile("non_streaming_entities"))
@@ -942,7 +943,7 @@ public:
 #ifdef PROFILE_BUILD
 						dispWindow.flip(0);
 #else
-						dispWindow.flip(0);
+						dispWindow.flip();
 #endif
 						gc.clear();
 					}
@@ -952,8 +953,10 @@ public:
 						cellArchivist->BeginTransaction();
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
-						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
+						entitySynchroniser->ProcessQueue(entityManager.get());
 						cellArchivist->EndTransaction();
+
+						componentUniverse->CheckMessages();
 					}
 
 					// Propagate property changes
@@ -997,7 +1000,7 @@ public:
 					throw;
 				}
 				//cellArchivist->Stop();
-				entityFactory.reset();
+				componentUniverse.reset();
 				scriptManager->GetEnginePtr()->GarbageCollect();
 			}
 			catch (FusionEngine::Exception &ex)
@@ -1048,22 +1051,22 @@ public:
 		return 0;
 	}
 
-	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, InstancingSynchroniser* instantiationSynchroniser, EntityFactory* factory, EntityManager* entityManager)
+	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, EntityInstantiator* instantiationSynchroniser, ComponentFactory* factory, EntityManager* entityManager)
 	{
 		position.x = ToSimUnits(position.x); position.y = ToSimUnits(position.y);
 
 		ComponentPtr transformCom;
 		if (i == 1 || i == 2)
 		{
-			transformCom = factory->InstanceComponent("StaticTransform", position, 0.f);
+			transformCom = factory->InstantiateComponent("StaticTransform");
 		}
 		else if (i == 4)
 		{
-			transformCom = factory->InstanceComponent("b2Kinematic", position, 0.f);
+			transformCom = factory->InstantiateComponent("b2Kinematic");
 		}
 		else
 		{
-			transformCom = factory->InstanceComponent("b2RigidBody", position, 0.f);
+			transformCom = factory->InstantiateComponent("b2RigidBody");
 		}
 
 		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transformCom);
@@ -1071,7 +1074,7 @@ public:
 		if (i == 2 || i == 3)
 		{
 			ObjectID id = 0;
-			id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
+			id = instantiationSynchroniser->GetFreeGlobalID();
 			entity->SetID(id);
 
 			std::stringstream str;
@@ -1088,6 +1091,12 @@ public:
 		//	entity->SetName("edit" + str.str());
 		//}
 
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Position.Set(position);
+			transform->Angle.Set(0.f);
+		}
+
 		if (add_to_scene)
 			entityManager->AddEntity(entity);
 
@@ -1100,7 +1109,7 @@ public:
 		ComponentPtr b2CircleFixture;
 		if (i == 3 || i == 4)
 		{
-			b2CircleFixture = factory->InstanceComponent("b2Circle");
+			b2CircleFixture = factory->InstantiateComponent("b2Circle");
 			entity->AddComponent(b2CircleFixture);
 			{
 				auto fixture = entity->GetComponent<FusionEngine::IFixture>();
@@ -1112,19 +1121,19 @@ public:
 			entity->SynchroniseParallelEdits();
 		}
 
-		auto clSprite = factory->InstanceComponent("CLSprite");
+		auto clSprite = factory->InstantiateComponent("CLSprite");
 		entity->AddComponent(clSprite);
 
 		ComponentPtr asScript, asScript2;
 		if (i == 4)
 		{
-			asScript = factory->InstanceComponent("ASScript");
+			asScript = factory->InstantiateComponent("ASScript");
 			entity->AddComponent(asScript, "script_a");
 		}
 
 		if (i == 2)
 		{
-			asScript2 = factory->InstanceComponent("ASScript");
+			asScript2 = factory->InstantiateComponent("ASScript");
 			entity->AddComponent(asScript2, "spawn_script");
 		}
 

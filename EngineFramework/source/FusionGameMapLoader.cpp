@@ -39,7 +39,7 @@
 #include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionEntitySerialisationUtils.h"
-#include "FusionInstanceSynchroniser.h"
+#include "FusionEntityInstantiator.h"
 #include "FusionNetDestinationHelpers.h"
 #include "FusionNetworkManager.h"
 #include "FusionNetworkTypes.h"
@@ -162,7 +162,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator)
+	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		namespace io = boost::iostreams;
@@ -443,7 +443,7 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, EntityInstantiator* synchroniser)
 	{
 		CL_IODevice device = directory.open_file_read(filename);
 
@@ -485,7 +485,7 @@ namespace FusionEngine
 		return map;
 	}
 
-	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, InstancingSynchroniser* synchroniser)
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, EntityInstantiator* synchroniser)
 	{
 		return LoadMap(filename, CL_VirtualDirectory(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), ""), synchroniser);
 	}

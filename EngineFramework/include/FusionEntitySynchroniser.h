@@ -111,7 +111,7 @@ namespace FusionEngine
 		//! Enqueues the given entity to be processed for synch
 		bool Enqueue(EntityPtr &entity);
 		//! Sends enqueued entities
-		void ProcessQueue(EntityManager* entity_manager, EntityFactory* factory);
+		void ProcessQueue(EntityManager* entity_manager);
 		//! Implements PacketHandler
 		void HandlePacket(RakNet::Packet *packet);
 
@@ -123,7 +123,7 @@ namespace FusionEngine
 		// Things called by ProcessQueue
 		void WriteHeaderAndInput(bool important, RakNet::BitStream& packetData);
 		void SendPackets();
-		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory);
+		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager);
 
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;

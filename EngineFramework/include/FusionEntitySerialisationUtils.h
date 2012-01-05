@@ -53,7 +53,7 @@ namespace FusionEngine
 	namespace EntitySerialisationUtils
 	{
 		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode);
-		EntityPtr DeserialiseEntity(RakNet::BitStream& in, EntityFactory* factory, EntityManager* manager);
+		EntityPtr DeserialiseEntity(RakNet::BitStream& in, ComponentFactory* factory, EntityManager* manager);
 
 		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode);
 		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode);
@@ -82,7 +82,7 @@ namespace FusionEngine
 		//! Save an active entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included);
 		//! Load an entity
-		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
+		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 	}
 
 }

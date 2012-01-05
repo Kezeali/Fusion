@@ -78,8 +78,7 @@ namespace FusionEngine
 		RegionMapLoader(bool edit_mod, const std::string& cache_path = "/cache");
 		~RegionMapLoader();
 
-		InstancingSynchroniser* m_Instantiator;
-		void SetSynchroniser(InstancingSynchroniser* instantiator);
+		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager);
 
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);
@@ -201,7 +200,10 @@ private:
 
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 
-		
+		EntityInstantiator* m_Instantiator;
+		ComponentFactory* m_Factory;
+		EntityManager* m_EntityManager;
+
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE
 		typedef tbb::concurrent_queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool>> WriteQueue_t;

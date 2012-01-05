@@ -33,7 +33,7 @@
 #include "FusionEntityComponent.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
-#include "FusionInstanceSynchroniser.h"
+#include "FusionEntityInstantiator.h"
 
 #include "FusionBinaryStream.h"
 
@@ -220,7 +220,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		EntityPtr DeserialiseEntity(RakNet::BitStream& in, EntityFactory* factory, EntityManager* manager)
+		EntityPtr DeserialiseEntity(RakNet::BitStream& in, ComponentFactory* factory, EntityManager* manager)
 		{
 			EntityPtr entity;
 
@@ -239,7 +239,7 @@ namespace FusionEngine
 				//FSN_ASSERT(entity->GetTransform()->GetType() == typeName);
 				//transform = entity->GetTransform();
 
-				transform = factory->InstanceComponent(typeName);
+				transform = factory->InstantiateComponent(typeName);
 
 				bool conData = in.ReadBit();
 				bool occData = in.ReadBit();
@@ -281,7 +281,7 @@ namespace FusionEngine
 				//	component = *componentEntry;
 				//else
 				{
-					component = factory->InstanceComponent(typeName);
+					component = factory->InstantiateComponent(typeName);
 					if (component)
 					{
 						entity->AddComponent(component, identifier);
@@ -917,7 +917,7 @@ namespace FusionEngine
 			}
 		}
 
-		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser)
+		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 
@@ -925,12 +925,12 @@ namespace FusionEngine
 			if (id_included)
 			{
 				in.Read(id);
-				synchroniser->TakeID(id);
+				instantiator->TakeID(id);
 			}
 			else if (override_id != 0)
 			{
 				id = override_id;
-				synchroniser->TakeID(id);
+				instantiator->TakeID(id);
 			}
 
 			PlayerID owner = 0;
@@ -945,7 +945,7 @@ namespace FusionEngine
 			ComponentPtr transform;
 			{
 				std::string transformType = in.ReadString();
-				transform = factory->InstanceComponent(transformType);
+				transform = factory->InstantiateComponent(transformType);
 
 				if (transformType != "StaticTransform")
 				{
@@ -986,7 +986,7 @@ namespace FusionEngine
 			{
 				std::string type = in.ReadString();
 				std::string ident = in.ReadString();
-				auto component = factory->InstanceComponent(type);
+				auto component = factory->InstantiateComponent(type);
 				entity->AddComponent(component, ident);
 			}
 			if (numComponents != 0)

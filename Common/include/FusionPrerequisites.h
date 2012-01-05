@@ -69,11 +69,11 @@ namespace FusionEngine
 	class CameraSynchroniser;
 	class ClientOptions;
 	class IComponent;
+	class ComponentFactory;
 	class Console;
 	class Editor;
 	class EditorMapEntity;
 	class Entity;
-	class EntityFactory;
 	class EntityRepo;
 	class EntitySynchroniser;
 	class EntityManager;
@@ -84,7 +84,7 @@ namespace FusionEngine
 	class GameMapLoader;
 	class InputDefinitionLoader;
 	class InputManager;
-	class InstancingSynchroniser;
+	class EntityInstantiator;
 	class Log;
 	class Logger;
 	class MessageBox;
@@ -93,6 +93,7 @@ namespace FusionEngine
 	class NetworkManager;
 	class NetworkSystem;
 	class OntologicalSystem;
+	class P2PEntityInstantiator;
 	class IPacket;
 	class PacketDispatcher;
 	class PacketHandler;

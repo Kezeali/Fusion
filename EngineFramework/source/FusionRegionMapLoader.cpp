@@ -34,7 +34,7 @@
 #include "FusionAnyFS.h"
 #include "FusionGameMapLoader.h"
 #include "FusionEntitySerialisationUtils.h"
-#include "FusionInstanceSynchroniser.h"
+#include "FusionEntityInstantiator.h"
 #include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
@@ -164,6 +164,8 @@ namespace FusionEngine
 		m_NewData(false),
 		m_TransactionEnded(false),
 		m_Instantiator(nullptr),
+		m_Factory(nullptr),
+		m_EntityManager(nullptr),
 		m_Running(false),
 		m_EditMode(edit_mode),
 		m_BeginIndex(std::numeric_limits<size_t>::max()),
@@ -195,9 +197,11 @@ namespace FusionEngine
 		delete m_Cache;
 	}
 
-	void RegionMapLoader::SetSynchroniser(InstancingSynchroniser* instantiator)
+	void RegionMapLoader::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager)
 	{
 		m_Instantiator = instantiator;
+		m_Factory = component_factory;
+		m_EntityManager = manager;
 	}
 
 	void RegionMapLoader::SetMap(const std::shared_ptr<GameMap>& map)
@@ -503,7 +507,7 @@ namespace FusionEngine
 
 	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id)
 	{
-		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, m_Factory, m_EntityManager, m_Instantiator);
 	}
 
 	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids)

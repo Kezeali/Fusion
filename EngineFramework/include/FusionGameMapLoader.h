@@ -60,10 +60,10 @@ namespace FusionEngine
 		GameMap(CL_IODevice& file, const std::string& name);
 
 		// TODO: remove this
-		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
+		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, EntityInstantiator* instantiator);
 
 		//! Loads entities that aren't managed by the cell archiver
-		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
+		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, EntityInstantiator* instantiator);
 		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
 		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 
@@ -113,14 +113,14 @@ namespace FusionEngine
 		* Set if starting a new game; if joining a game or loading a save, set to null
 		* so synced entities can be loaded from the existing ontology.
 		*/
-		std::shared_ptr<GameMap> LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser = nullptr);
+		std::shared_ptr<GameMap> LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, EntityInstantiator* synchroniser = nullptr);
 
-		std::shared_ptr<GameMap> LoadMap(const std::string &filename, InstancingSynchroniser* synchroniser = nullptr);
+		std::shared_ptr<GameMap> LoadMap(const std::string &filename, EntityInstantiator* synchroniser = nullptr);
 
 		void onEntityInstanced(EntityPtr &entity);
 
 	private:
-		EntityFactory *m_Factory;
+		ComponentFactory *m_Factory;
 		EntityManager *m_Manager;
 
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)
