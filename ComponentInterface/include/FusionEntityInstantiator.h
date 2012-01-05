@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionComponentFactory
-#define H_FusionComponentFactory
+#ifndef H_FusionEntityInstantiator
+#define H_FusionEntityInstantiator
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,18 +34,18 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionEntityComponent.h"
+#include "FusionEntity.h"
 
 namespace FusionEngine
 {
 
-	class ComponentFactory
+	class EntityInstantiator
 	{
 	public:
-		virtual ~ComponentFactory()
+		virtual ~EntityInstantiator()
 		{}
 
-		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
+		virtual EntityPtr RequestInstance(bool synced, const std::string &transform_type, const std::string &name, Vector2 pos, float angle, PlayerID instance_owner = 0); = 0;
 	};
 
 }

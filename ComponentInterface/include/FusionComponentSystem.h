@@ -36,8 +36,7 @@
 
 #include "FusionEntityComponent.h"
 
-#include "FusionCommon.h" // just for Vector2 typedef (should fix this, since it is often the case)
-//#include "FusionPositionSerialisation.h"
+#include "FusionVectorTypes.h"
 
 namespace FusionEngine
 {
@@ -79,6 +78,23 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
+		enum MessageType
+		{
+			NewTypes
+		};
+
+		void PostSystemMessage(MessageType message)
+		{
+			m_SystemMessages.push_back(message);
+		}
+
+		MessageType PopSystemMessage()
+		{
+			auto message = m_SystemMessages.back();
+			m_SystemMessages.pop_back();
+			return message;
+		}
+
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
 		//! Instanciate method for physics / transform components
@@ -107,13 +123,14 @@ namespace FusionEngine
 		virtual std::vector<ISystemTask*> GetTasks()
 		{
 			FSN_ASSERT(GetTask() != nullptr);
-			std::vector<ISystemTask*> tasks(1u);
+			std::vector<ISystemTask*> tasks(1);
 			tasks[0] = GetTask();
 			return tasks;
 		}
 
 	private:
 		IComponentSystem* m_System;
+		std::vector<MessageType> m_SystemMessages;
 	};
 
 	//! Task

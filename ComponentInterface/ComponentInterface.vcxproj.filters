@@ -7,9 +7,6 @@
     <Filter Include="Types">
       <UniqueIdentifier>{2732e00e-5dc0-4318-84b5-3f53d7275248}</UniqueIdentifier>
     </Filter>
-    <Filter Include="temp">
-      <UniqueIdentifier>{330bf379-e640-473b-948e-84673a09905b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PrecompiledHeaders">
       <UniqueIdentifier>{e7d7fe75-3fb9-48a7-8e58-8d2a51b88fbd}</UniqueIdentifier>
     </Filter>
@@ -22,9 +19,6 @@
       <Filter>Entity</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionDeltaTime.cpp" />
-    <ClCompile Include="source\FusionComponentFactory.cpp">
-      <Filter>temp</Filter>
-    </ClCompile>
     <ClCompile Include="PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
@@ -53,11 +47,10 @@
     <ClInclude Include="include\FusionComponentSystem.h" />
     <ClInclude Include="include\FusionDeltaTime.h" />
     <ClInclude Include="include\FusionEntityRepo.h" />
-    <ClInclude Include="include\FusionComponentFactory.h">
-      <Filter>temp</Filter>
-    </ClInclude>
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionComponentFactory.h" />
+    <ClInclude Include="include\FusionEntityInstantiator.h" />
   </ItemGroup>
 </Project>

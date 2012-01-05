@@ -73,7 +73,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="source\FusionComponentFactory.cpp" />
     <ClCompile Include="source\FusionDeltaTime.cpp" />
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />
@@ -85,6 +84,7 @@
     <ClInclude Include="include\FusionDeltaTime.h" />
     <ClInclude Include="include\FusionEntity.h" />
     <ClInclude Include="include\FusionEntityComponent.h" />
+    <ClInclude Include="include\FusionEntityInstantiator.h" />
     <ClInclude Include="include\FusionEntityRepo.h" />
     <ClInclude Include="include\FusionPhysicalComponent.h" />
     <ClInclude Include="include\FusionRender2DComponent.h" />

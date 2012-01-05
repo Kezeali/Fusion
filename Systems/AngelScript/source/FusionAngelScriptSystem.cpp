@@ -470,21 +470,19 @@ namespace FusionEngine
 		return scriptInfo;
 	}
 
-	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory)
-		: m_ScriptManager(manager),
-		m_EntityFactory(factory)
+	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
+		: m_ScriptManager(manager)
 	{
 	}
 
 	std::shared_ptr<ISystemWorld> AngelScriptSystem::CreateWorld()
 	{
-		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager, m_EntityFactory);
+		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager);
 	}
 
-	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory)
+	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
 		: ISystemWorld(system),
-		m_ScriptManager(manager),
-		m_EntityFactory(factory)
+		m_ScriptManager(manager)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
 
@@ -745,16 +743,20 @@ namespace FusionEngine
 			{
 				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename, CLBinaryStream::open_write));
 				module->GetASModule()->SaveByteCode(outFile.get());
-
-				m_EntityFactory->AddInstancer(typeName, this->shared_from_this());
 			}
 		}
+
+		ISystemWorld::PostSystemMessage(MessageType::NewTypes);
 	}
 
 	std::vector<std::string> AngelScriptWorld::GetTypes() const
 	{
 		std::vector<std::string> types;
 		types.push_back("ASScript");
+		for (auto it = m_ScriptInfo.begin(), end = m_ScriptInfo.end(); it != end; ++it)
+		{
+			types.push_back(it->second.ClassName);
+		}
 		return types;
 	}
 

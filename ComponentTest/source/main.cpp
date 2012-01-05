@@ -511,7 +511,7 @@ public:
 				static_cast<CLRenderWorld*>(renderWorld.get())->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld.get())->Getb2World());
 				static_cast<CLRenderWorld*>(renderWorld.get())->SetDebugDraw(false);
 
-				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager, entityFactory.get()));
+				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager));
 				auto asWorld = asSystem->CreateWorld();
 				ontology.push_back(asWorld);
 
