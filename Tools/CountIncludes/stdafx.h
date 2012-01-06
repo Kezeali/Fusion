@@ -12,6 +12,8 @@
 #include <iostream>
 #include <deque>
 #include <array>
+#include <unordered_set>
+#include <map>
 
 #include <boost/filesystem.hpp>
 #include <boost/bimap.hpp>
