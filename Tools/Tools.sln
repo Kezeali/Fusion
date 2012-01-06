@@ -3,11 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClanLibKeyInfoLister", "ClanLibKeyInfoLister\ClanLibKeyInfoLister.vcxproj", "{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CountIncludes", "CountIncludes\CountIncludes.vcxproj", "{E8912DEB-53CF-4A5D-904C-286600ECC1EC}"
+EndProject
 Global
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
@@ -17,8 +15,16 @@ Global
 		{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}.Debug|Win32.Build.0 = Debug|Win32
 		{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}.Release|Win32.ActiveCfg = Release|Win32
 		{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}.Release|Win32.Build.0 = Release|Win32
+		{E8912DEB-53CF-4A5D-904C-286600ECC1EC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E8912DEB-53CF-4A5D-904C-286600ECC1EC}.Debug|Win32.Build.0 = Debug|Win32
+		{E8912DEB-53CF-4A5D-904C-286600ECC1EC}.Release|Win32.ActiveCfg = Release|Win32
+		{E8912DEB-53CF-4A5D-904C-286600ECC1EC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
 	EndGlobalSection
 EndGlobal
