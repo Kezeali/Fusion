@@ -3,3 +3,4 @@
 #endif
 
 #include "FusionStableHeaders.h"
+#include <Box2D/Box2D.h>

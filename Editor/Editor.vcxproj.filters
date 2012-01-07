@@ -15,5 +15,6 @@
     <ClCompile Include="PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionEditor.cpp" />
   </ItemGroup>
 </Project>

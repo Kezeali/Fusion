@@ -32,8 +32,11 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
+#include "FusionException.h"
+#include "FusionTypes.h"
 
+#include <deque>
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 #include <set>

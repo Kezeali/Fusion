@@ -67,6 +67,7 @@
     <ClCompile Include="source\FusionPrefabInstantiator.cpp">
       <Filter>Instantiation</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionEngineManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -126,5 +127,7 @@
     <ClInclude Include="include\FusionPrefabInstantiator.h">
       <Filter>Instantiation</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionEngineManager.h" />
+    <ClInclude Include="include\FusionEngineExtension.h" />
   </ItemGroup>
 </Project>

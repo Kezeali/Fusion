@@ -17,8 +17,6 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 
-#include <Box2D/Box2D.h>
-
 #include <ClanLib/core.h>
 #include <ClanLib/application.h>
 #include <ClanLib/display.h>
@@ -31,7 +29,6 @@
 #include <tbb/task.h>
 
 #include "FusionAssert.h"
-#include "FusionCommon.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionHashable.h"
