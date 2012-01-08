@@ -68,6 +68,8 @@
       <Filter>Instantiation</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionEngineManager.cpp" />
+    <ClCompile Include="source\FusionComponentScriptTypeRegistration.cpp" />
+    <ClCompile Include="source\FusionEntityScriptBinding.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -129,5 +131,6 @@
     </ClInclude>
     <ClInclude Include="include\FusionEngineManager.h" />
     <ClInclude Include="include\FusionEngineExtension.h" />
+    <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
   </ItemGroup>
 </Project>

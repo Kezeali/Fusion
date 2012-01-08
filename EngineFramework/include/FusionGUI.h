@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2010 Fusion Project Team
+*  Copyright (c) 2006-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -53,13 +53,98 @@ namespace Rocket {
 namespace FusionEngine
 {
 
+	class MessageBoxMaker;
+
 	//! Secondary context class
-	class SecondContext
+	class GUIContext
 	{
 	public:
-			void Update(float time);
-			void Draw();
-			void SetDimensions(const Vector2 &size);
+		GUIContext();
+		GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size);
+		GUIContext(Rocket::Core::Context* context, CL_InputContext ic);
+		~GUIContext();
+
+		GUIContext(const GUIContext& other)
+			: m_Context(other.m_Context),
+			m_MouseShowPeriod(other.m_MouseShowPeriod),
+			m_ShowMouseTimer(other.m_ShowMouseTimer),
+			m_ClickPause(other.m_ClickPause),
+			m_Slots(other.m_Slots)
+		{
+			m_Context->AddReference();
+		}
+
+		GUIContext(GUIContext&& other)
+			: m_Context(std::move(other.m_Context)),
+			m_MouseShowPeriod(other.m_MouseShowPeriod),
+			m_ShowMouseTimer(other.m_ShowMouseTimer),
+			m_ClickPause(other.m_ClickPause),
+			m_Slots(std::move(other.m_Slots))
+		{
+			other.m_Context = 0;
+		}
+
+		GUIContext& operator= (const GUIContext& other)
+		{
+			m_Context = other.m_Context;
+			m_Context->AddReference();
+			m_MouseShowPeriod = other.m_MouseShowPeriod;
+			m_ShowMouseTimer = other.m_ShowMouseTimer;
+			m_ClickPause = other.m_ClickPause;
+			m_Slots = other.m_Slots;
+			return *this;
+		}
+
+		GUIContext& operator= (GUIContext&& other)
+		{
+			m_Context = std::move(other.m_Context);
+			other.m_Context = 0;
+			m_MouseShowPeriod = other.m_MouseShowPeriod;
+			m_ShowMouseTimer = other.m_ShowMouseTimer;
+			m_ClickPause = other.m_ClickPause;
+			m_Slots = std::move(other.m_Slots);
+			return *this;
+		}
+
+		void Update(float dt);
+		void Draw();
+		void SetDimensions(const Vector2i& size);
+
+		//! Sets the period of time the mouse will be shown after it stops moving
+		void SetMouseShowPeriod(unsigned int period);
+		unsigned int GetMouseShowPeriod() const;
+
+		void ShowMouse();
+
+		//! Sends fake mouse position data to this GUI's context
+		void SetMouseCursorPosition(int x, int y, int modifier = 0);
+
+
+		Rocket::Core::Context* m_Context;
+
+		//! How long after the mouse stops moving until it fades
+		unsigned int m_MouseShowPeriod;
+		//! When this reaches zero, the mouse will be hidden
+		int m_ShowMouseTimer;
+
+		static const float s_ClickPausePeriod;
+		// Stop mouse-move events from being processed while this is > 0 - this var is set to
+		//  a milisecond count after a click event is processed (to make double-clicking easier)
+		float m_ClickPause;
+
+		SlotContainer m_Slots;
+
+		//! Tells the gui system when a mouse button is pressed
+		void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when a mouse button is released
+		void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when the mouse moves
+		void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
+
+		//! Tells the gui system when a keyboard key goes down
+		void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when a keyboard key is released
+		void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
 	};
 
 	/*!
@@ -96,6 +181,8 @@ namespace FusionEngine
 		//! Unbinds
 		virtual void CleanUp();
 
+		GUIContext& CreateContext(const std::string& name, Vector2i size = Vector2i(0, 0));
+
 		Rocket::Core::Context* GetContext() const;
 		//! Returns the console window document
 		Rocket::Core::ElementDocument *GetConsoleWindow() const;
@@ -107,20 +194,6 @@ namespace FusionEngine
 		void HideDebugger();
 
 		bool DebuggerIsVisible() const;
-
-		//! Sets the period of time the mouse will be shown after it stops moving
-		void SetMouseShowPeriod(unsigned int period);
-		unsigned int GetMouseShowPeriod() const;
-
-		void ShowMouse();
-
-		//! Sends fake mouse position data to this GUI's context
-		void SetMouseCursorPosition(int x, int y, int modifier = 0);
-		//! Helper fn. for angelscript registration
-		/*
-		* \see SetMouseCursorPosition()
-		*/
-		void SetMouseCursorPosition_default(int x, int y);
 
 		static void Register(ScriptManager *manager);
 
@@ -144,13 +217,17 @@ namespace FusionEngine
 
 		bool m_Initialised;
 
-		RocketSystem *m_RocketSystem;
-		RocketRenderer *m_RocketRenderer;
-		RocketFileSystem *m_RocketFileSys;
+		std::unique_ptr<RocketSystem> m_RocketSystem;
+		std::unique_ptr<RocketRenderer> m_RocketRenderer;
+		std::unique_ptr<RocketFileSystem> m_RocketFileSys;
 
 		std::list<std::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 
-		Rocket::Core::Context* m_Context;
+		std::unique_ptr<MessageBoxMaker> m_MessageBoxMaker;
+
+		std::map<std::string, GUIContext> m_Contexts;
+
+		//Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument *m_ConsoleDocument;
 
 		bool m_DebuggerInitialized;
@@ -161,17 +238,6 @@ namespace FusionEngine
 		void initScripting(ScriptManager* eng);
 		//! Called when the module set with SetModule is built
 		void onModuleBuild(BuildModuleEvent& event);
-		//! Tells the gui system when a mouse button is pressed
-		virtual void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when a mouse button is released
-		virtual void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when the mouse moves
-		virtual void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
-
-		//! Tells the gui system when a keyboard key goes down
-		virtual void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when a keyboard key is released
-		virtual void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
 
 		void onResize(int x, int y);
 	};

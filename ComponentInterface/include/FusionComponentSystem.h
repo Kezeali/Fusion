@@ -59,6 +59,8 @@ namespace FusionEngine
 
 		virtual std::string GetName() const = 0;
 
+		virtual void RegisterScriptInterface(asIScriptEngine* engine) {}
+
 		virtual std::shared_ptr<ISystemWorld> CreateWorld() = 0;
 	};
 

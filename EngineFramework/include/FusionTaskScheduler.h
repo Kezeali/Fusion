@@ -54,7 +54,7 @@ namespace FusionEngine
 
 		~TaskScheduler();
 
-		void SetOntology(const std::vector<std::shared_ptr<ISystemWorld>>& ontology);
+		void SetUniverse(const std::vector<std::shared_ptr<ISystemWorld>>& universe);
 
 		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
 

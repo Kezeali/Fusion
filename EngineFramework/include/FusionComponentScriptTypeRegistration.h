@@ -25,35 +25,29 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEditorExtension
-#define H_FusionEditorExtension
+#ifndef H_FusionComponentScriptTypeRegistration
+#define H_FusionComponentScriptTypeRegistration
 
 #include "FusionPrerequisites.h"
 
-#include <memory>
-#include <vector>
+#include <angelscript.h>
 
 namespace FusionEngine
 {
 
-	class RendererExtension;
+	void ITransform_RegisterScriptInterface(asIScriptEngine* engine);
 
-	class EngineExtension
-	{
-	public:
-		EngineExtension() : m_Quit(false) {}
-		virtual ~EngineExtension() {}
+	void IRigidBody_RegisterScriptInterface(asIScriptEngine* engine);
 
-		virtual void Update(float time, float dt) = 0;
+	void ICircleShape_RegisterScriptInterface(asIScriptEngine* engine);
 
-		bool Quit() const { return m_Quit; }
+	void IRenderCom_RegisterScriptInterface(asIScriptEngine* engine);
 
-		virtual std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const = 0;
+	void ISprite_RegisterScriptInterface(asIScriptEngine* engine);
 
-	private:
-		bool m_Quit;
+	void IScript_RegisterScriptInterface(asIScriptEngine* engine);
 
-	};
+	void ICamera_RegisterScriptInterface(asIScriptEngine* engine);
 
 }
 

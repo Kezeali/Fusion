@@ -120,6 +120,11 @@ namespace FusionEngine
 			return getSingleton().create(type, params);
 		}
 
+		static MessageBox* Create(Rocket::Core::Context* context, const std::string& type, const std::string& params)
+		{
+			return getSingleton().create(type, params, context);
+		}
+
 		static std::string GetParam(const ParamMap& params, const std::string& param_name);
 
 		MessageBoxMaker(Rocket::Core::Context* context);
@@ -127,7 +132,7 @@ namespace FusionEngine
 
 		void addFactory(const std::string& name, const MessageBoxFactoryFn& function);
 		void removeFactory(const std::string& name);
-		MessageBox* create(const std::string& type, const std::string& params);
+		MessageBox* create(const std::string& type, const std::string& params, Rocket::Core::Context* ctx = nullptr);
 
 	protected:
 		std::unordered_map<std::string, MessageBoxFactoryFn> m_Factories;

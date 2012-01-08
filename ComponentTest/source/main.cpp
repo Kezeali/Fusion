@@ -493,11 +493,11 @@ public:
 					scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
 #endif
 
-				std::vector<std::shared_ptr<ISystemWorld>> ontology;
+				std::vector<std::shared_ptr<ISystemWorld>> worlds;
 
 				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc, cameraSynchroniser.get()));
 				auto renderWorld = clRenderSystem->CreateWorld();
-				ontology.push_back(renderWorld);
+				worlds.push_back(renderWorld);
 
 				componentUniverse->AddWorld(renderWorld);
 
@@ -505,7 +505,7 @@ public:
 				
 				const std::unique_ptr<IComponentSystem> box2dSystem(new Box2DSystem());
 				auto box2dWorld = box2dSystem->CreateWorld();
-				ontology.push_back(box2dWorld);
+				worlds.push_back(box2dWorld);
 
 				componentUniverse->AddWorld(box2dWorld);
 				
@@ -514,14 +514,14 @@ public:
 
 				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager));
 				auto asWorld = asSystem->CreateWorld();
-				ontology.push_back(asWorld);
+				worlds.push_back(asWorld);
 
 				// TODO: add some sort of Init method, to be called by the scheduler (?) when the ontology is set (?)
 				static_cast<AngelScriptWorld*>(asWorld.get())->BuildScripts();
 
 				componentUniverse->AddWorld(asWorld);
 
-				scheduler->SetOntology(ontology);
+				scheduler->SetUniverse(worlds);
 
 
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;

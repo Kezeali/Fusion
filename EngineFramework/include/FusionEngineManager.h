@@ -45,9 +45,21 @@
 namespace FusionEngine
 {
 
-	class EngineExtension;
 	class IComponentSystem;
+	class ComponentUniverse;
+	class EngineExtension;
+	class EntitySynchroniser;
+	class GUI;
+	class InputManager;
+	class PacketDispatcher;
+	class PlayerManager;
+	class PlayerRegistry;
+	class Profiling;
 	class RegionMapLoader;
+	class SoundOutput;
+
+	class TaskManager;
+	class TaskScheduler;
 
 	void BootUp();
 
@@ -75,6 +87,8 @@ namespace FusionEngine
 		std::map<std::string, std::unique_ptr<IComponentSystem>> m_Systems;
 
 		std::unique_ptr<Logger> m_Logger;
+		std::unique_ptr<Console> m_Console;
+		std::unique_ptr<Profiling> m_Profiling;
 
 		LogPtr m_Log;
 
@@ -84,14 +98,45 @@ namespace FusionEngine
 		bool m_Fullscreen;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
-		std::shared_ptr<RegionMapLoader> m_CellLoader;
+
+		std::shared_ptr<RegionMapLoader> m_CellArchivist;
 		std::shared_ptr<StreamingManager> m_StreamingManager;
-		std::shared_ptr<CameraSynchroniser> m_CameraSync;
+		std::shared_ptr<CameraSynchroniser> m_CameraSynchroniser;
 
 		CL_DisplayWindow m_DisplayWindow;
 		CL_SoundOutput m_SoundOutput;
 
+		std::shared_ptr<InputManager> m_InputManager;
+
+		std::shared_ptr<ResourceManager> m_ResourceManager;
+
+		std::shared_ptr<GUI> m_GUI;
+
+		std::shared_ptr<SoundOutput> m_ScriptSoundOutput;
+
+		std::shared_ptr<PlayerRegistry> m_PlayerRegistry;
+
+		std::shared_ptr<RakNetwork> m_Network;
+		std::shared_ptr<PacketDispatcher> m_PacketDispatcher;
+		std::shared_ptr<NetworkManager> m_NetworkManager;
+
+		std::shared_ptr<PlayerManager> m_PlayerManager;
+
+		std::shared_ptr<ComponentUniverse> m_ComponentUniverse;
+		std::shared_ptr<EntitySynchroniser> m_EntitySynchroniser;
+		std::shared_ptr<EntityManager> m_EntityManager;
+		std::shared_ptr<P2PEntityInstantiator> m_EntityInstantiator;
+
+		std::shared_ptr<GameMapLoader> m_MapLoader;
+
+		std::shared_ptr<TaskManager> m_TaskManager;
+		std::shared_ptr<TaskScheduler> m_Scheduler;
+
 		void ReadOptions(ClientOptions* options);
+
+		void RegisterScriptTypes();
+
+		void AddResourceLoaders();
 
 	};
 

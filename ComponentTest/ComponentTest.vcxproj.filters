@@ -14,7 +14,6 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
-    <ClCompile Include="source\EntityScriptBinding.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PrecompiledHeaders.h">

@@ -308,11 +308,11 @@ void OnConsoleShow(Event &ev)
 	Element@ input = ev.GetCurrentElement().GetElementById(rString("command_element"));
 	input.Focus();
 
-	gui.enableDebugger();
-	gui.showDebugger();
+	//gui.enableDebugger();
+	//gui.showDebugger();
 }
 
 void OnConsoleHide()
 {
-	gui.hideDebugger();
+	//gui.hideDebugger();
 }

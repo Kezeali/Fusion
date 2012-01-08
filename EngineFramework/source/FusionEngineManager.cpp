@@ -31,17 +31,41 @@
 
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
+#include "FusionComponentScriptTypeRegistration.h"
 #include "FusionComponentSystem.h"
+#include "FusionComponentUniverse.h"
+#include "FusionContextMenu.h"
 #include "FusionEngineExtension.h"
+#include "FusionEntityManager.h"
+#include "FusionEntitySynchroniser.h"
+#include "FusionGUI.h"
 #include "FusionLog.h"
 #include "FusionLogger.h"
+#include "FusionNetworkManager.h"
+#include "FusionP2PEntityInstantiator.h"
+#include "FusionPacketDispatcher.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
-#include "FusionStreamingManager.h"
-
-#include "FusionScriptManager.h"
+#include "FusionPlayerManager.h"
+#include "FusionPlayerRegistry.h"
+#include "FusionProfiling.h"
+#include "FusionRakNetwork.h"
 #include "FusionRegionMapLoader.h"
+#include "FusionResourceManager.h"
+#include "FusionScriptedConsoleCommand.h"
+#include "FusionScriptInputEvent.h"
+#include "FusionScriptManager.h"
+#include "FusionScriptSound.h"
 #include "FusionStreamingManager.h"
+#include "FusionSpriteDefinition.h"
+#include "FusionTaskManager.h"
+#include "FusionTaskScheduler.h"
+
+// Resource Loaders
+#include "FusionAudioLoader.h"
+#include "FusionImageLoader.h"
+
+#include <angelscript.h>
 
 #include <ClanLib/display.h>
 
@@ -64,12 +88,18 @@ namespace FusionEngine
 
 		// Init Logger
 		m_Logger.reset(new Logger);
+
+		// Init profiling
+		m_Profiling.reset(new Profiling);
 	}
 
 	void EngineManager::Initialise()
 	{
 		try
 		{
+			// Init Console
+			m_Console.reset(new Console);
+
 			ClientOptions* options = new ClientOptions("settings.xml", "settings");
 
 			ReadOptions(options);
@@ -89,13 +119,65 @@ namespace FusionEngine
 
 			// Init ScriptManager
 			m_ScriptManager = std::make_shared<ScriptManager>();
+			
+			RegisterScriptTypes();
+
+			// Register the Console singleton in the script env
+			m_ScriptManager->RegisterGlobalObject("Console console", Console::getSingletonPtr());
+
+			// Init InputManager
+			m_InputManager.reset(new InputManager(m_DisplayWindow));
+
+			// Init resource manager
+			m_ResourceManager.reset(new ResourceManager(m_DisplayWindow.get_gc()));
+
+			// Init GUI
+			m_GUI.reset(new GUI(m_DisplayWindow));
+			m_GUI->Initialise();
+
+			m_ScriptSoundOutput = std::make_shared<SoundOutput>(m_SoundOutput);
+
+			m_PlayerRegistry.reset(new PlayerRegistry);
+
+			// Init network
+			m_Network.reset(new RakNetwork());
+			m_PacketDispatcher.reset(new PacketDispatcher());
+			m_NetworkManager.reset(new NetworkManager(m_Network.get(), m_PacketDispatcher.get()));
+
+			m_PlayerManager.reset(new PlayerManager());
 
 			// Init Streaming
-			m_CellLoader.reset(new RegionMapLoader(m_EditMode));
-			m_StreamingManager = std::make_shared<StreamingManager>(m_CellLoader.get());
+			m_CellArchivist.reset(new RegionMapLoader(m_EditMode));
+			m_StreamingManager = std::make_shared<StreamingManager>(m_CellArchivist.get());
+
+			m_ScriptManager->RegisterGlobalObject("StreamingManager streaming", m_StreamingManager.get());
 
 			// Init Camera
-			m_CameraSync = std::make_shared<CameraSynchroniser>(m_StreamingManager.get());
+			m_CameraSynchroniser = std::make_shared<CameraSynchroniser>(m_StreamingManager.get());
+
+			// Init component / entity management
+			m_ComponentUniverse.reset(new ComponentUniverse());
+			m_EntitySynchroniser.reset(new EntitySynchroniser(m_InputManager.get(), m_CameraSynchroniser.get(), m_StreamingManager.get()));
+
+			m_EntityManager.reset(new EntityManager(m_InputManager.get(), m_EntitySynchroniser.get(), m_StreamingManager.get(), m_ComponentUniverse.get(), m_CellArchivist.get()));
+			m_EntityInstantiator.reset(new P2PEntityInstantiator(m_ComponentUniverse.get(), m_EntityManager.get()));
+
+			m_MapLoader.reset(new GameMapLoader(options));
+
+			m_CellArchivist->SetInstantiator(m_EntityInstantiator.get(), m_ComponentUniverse.get(), m_EntityManager.get());
+
+			m_TaskManager.reset(new TaskManager());
+			m_Scheduler.reset(new TaskScheduler(m_TaskManager.get(), m_EntityManager.get(), m_CellArchivist.get()));
+
+#ifdef PROFILE_BUILD
+			m_Scheduler->SetFramerateLimiter(false);
+			m_Scheduler->SetUnlimited(true);
+#else
+			m_Scheduler->SetFramerateLimiter(false);
+			int maxFrameskip = 0;
+			if (options->GetOption("max_frameskip", &maxFrameskip) && maxFrameskip >= 0)
+				m_Scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
+#endif
 		}
 		catch (std::exception& ex)
 		{
@@ -122,6 +204,65 @@ namespace FusionEngine
 			m_Logger->ActivateConsoleLogging();
 	}
 
+	void EngineManager::RegisterScriptTypes()
+	{
+		auto engine = m_ScriptManager->GetEnginePtr();
+
+		Console::Register(m_ScriptManager.get());
+		RegisterScriptedConsoleCommand(engine);
+		GUI::Register(m_ScriptManager.get());
+		ContextMenu::Register(engine);
+
+		engine->RegisterTypedef("PlayerID", "uint8");
+
+		ScriptInputEvent::Register(engine);
+
+		{
+			int r = engine->RegisterGlobalFunction("bool isLocal(PlayerID)",
+				asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
+			FSN_ASSERT(r >= 0);
+		}
+
+		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
+		struct ScriptRect
+		{
+			static void CTOR1(float left, float top, float right, float bottom, void* ptr)
+			{
+				new (ptr) CL_Rectf(left, top, right, bottom);
+			}
+		};
+		engine->RegisterObjectBehaviour("Rect", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(ScriptRect::CTOR1), asCALL_CDECL_OBJLAST);
+
+		// Component types
+		IComponent::RegisterType<IComponent>(engine, "IComponent");
+		engine->RegisterObjectMethod("IComponent", "string getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL);
+
+		ITransform_RegisterScriptInterface(engine);
+		IRigidBody_RegisterScriptInterface(engine);
+		ICircleShape_RegisterScriptInterface(engine);
+		IRenderCom_RegisterScriptInterface(engine);
+		ISprite_RegisterScriptInterface(engine);
+		IScript_RegisterScriptInterface(engine);
+		ICamera_RegisterScriptInterface(engine);
+
+		Entity::Register(engine);
+		P2PEntityInstantiator::Register(engine);
+		
+		Camera::Register(engine);
+		StreamingManager::Register(engine);
+	}
+
+	void EngineManager::AddResourceLoaders()
+	{
+		m_ResourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, NULL);
+		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
+		m_ResourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
+		m_ResourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
+
+		m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
+	}
+
 	const CL_GraphicContext& EngineManager::GetGC() const
 	{
 		return m_DisplayWindow.get_gc();
@@ -139,7 +280,7 @@ namespace FusionEngine
 
 	CameraSynchroniser* EngineManager::GetCameraSynchroniser() const
 	{
-		return m_CameraSync.get();
+		return m_CameraSynchroniser.get();
 	}
 
 	void EngineManager::AddExtension(const std::shared_ptr<EngineExtension>& extension)
@@ -157,16 +298,134 @@ namespace FusionEngine
 	{
 		try
 		{
-			float time;
-			float dt;
-			while (true)
+			// Register system script interfaces
+			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
+				it->second->RegisterScriptInterface(m_ScriptManager->GetEnginePtr());
+
+			auto guiModule = m_ScriptManager->GetModule("core_gui_console");
+			m_GUI->SetModule(guiModule);
+			guiModule->Build();
+			
+			m_ResourceManager->StartLoaderThread();
+
+			std::vector<std::shared_ptr<ISystemWorld>> worlds;
+			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
+				auto world = it->second->CreateWorld();
+				m_ComponentUniverse->AddWorld(world);
+				worlds.push_back(world);
+			}
+			m_Scheduler->SetUniverse(worlds);
+
+			PropChangedQueue &propChangedQueue = m_EntityManager->m_PropChangedQueue;
+
+			// Load the map
+			std::shared_ptr<GameMap> map;
+			if (!m_EditMode/* && varMap.count("connect") == 0*/)
+			{
+				map = m_MapLoader->LoadMap("Maps/default.gad", m_EntityInstantiator.get());
+				m_CellArchivist->SetMap(map);
+
+				m_StreamingManager->Initialise(map->GetCellSize());
+
+				map->LoadNonStreamingEntities(true, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
+			}
+			// Start the asynchronous cell loader
+			m_CellArchivist->Start();
+
+			// Add some playas
+			auto playerInd = m_PlayerManager->RequestNewPlayer();
+			playerInd = m_PlayerManager->RequestNewPlayer();
+
+			bool connecting = false;
+
+			auto gc = m_DisplayWindow.get_gc();
+
+			float time = CL_System::get_time() * 0.001f;
+			float dt;
+			bool quit = false;
+			while (!quit)
+			{
+				CL_KeepAlive::process();
+
+				const float now = CL_System::get_time() * 0.001f;
+				dt = now - time;
+				time = now;
+
+				// Update extensions
 				for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
 				{
 					(*it)->Update(time, dt);
+					quit |= (*it)->Quit();
 				}
-			}
+				// Update GUI
+				m_GUI->Update(dt);
 
+				m_InputManager->Update(dt);
+				m_NetworkManager->DispatchPackets();
+
+				// Run serial resource manager operations
+				m_ResourceManager->UnloadUnreferencedResources();
+				m_ResourceManager->DeliverLoadedResources();
+
+				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
+
+				if (executed & SystemType::Rendering)
+				{
+#ifdef PROFILE_BUILD
+					m_DisplayWindow.flip(0);
+#else
+					m_DisplayWindow.flip();
+#endif
+					gc.clear();
+				}
+
+				if ((executed & SystemType::Simulation) || m_EditMode)
+				{
+					m_CellArchivist->BeginTransaction();
+					// Actually activate / deactivate components
+					m_EntityManager->ProcessActivationQueues();
+					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
+					m_CellArchivist->EndTransaction();
+
+					m_ComponentUniverse->CheckMessages();
+				}
+
+				// Propagate property changes
+				// TODO: throw if properties are changed during Rendering step?
+				PropChangedQueue::value_type changed;
+				while (propChangedQueue.try_pop(changed))
+				{
+					auto com = changed.first.lock();
+					if (com)
+					{
+						changed.second->Synchronise();
+						changed.second->FireSignal();
+					}
+				}
+
+				Profiling::getSingleton().AddTime("~Buffer size", 0.0);
+				Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
+				Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
+
+				m_Profiling->AddTime("ActualDT", dt);
+
+				// Record profiling data
+				m_Profiling->StoreTick();
+			} // while !quit
+
+			// Shutdown
+			propChangedQueue.clear();
+			m_CameraSynchroniser.reset();
+			m_EntityManager->Clear();
+			m_StreamingManager.reset();
+			m_CellArchivist->Stop();
+			m_EntityManager.reset();
+				
+			m_EntitySynchroniser.reset();
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+			m_ComponentUniverse.reset();
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
 		}
 		catch (Exception& ex)
 		{

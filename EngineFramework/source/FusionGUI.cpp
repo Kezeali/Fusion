@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2010 Fusion Project Team
+*  Copyright (c) 2006-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -52,7 +52,8 @@ namespace FusionEngine
 {
 
 	const std::string s_GuiSystemName = "GUI";
-	const float GUI::s_ClickPausePeriod = 10*0.001f;
+	const float GUI::s_ClickPausePeriod = 10 * 0.001f;
+	const float GUIContext::s_ClickPausePeriod = 10 * 0.001f;
 
 	//! Adds an expand button element when a row has sub-rows to display
 	class ExpandButtonFormatter : public Rocket::Controls::DataFormatter
@@ -127,6 +128,221 @@ namespace FusionEngine
 		return obj;
 	}
 
+	GUIContext::GUIContext()
+		: m_Context(nullptr),
+		m_MouseShowPeriod(1000),
+		m_ShowMouseTimer(m_MouseShowPeriod),
+		m_ClickPause(0)
+	{
+	}
+
+	GUIContext::GUIContext(Rocket::Core::Context* context, CL_InputContext ic)
+		: m_Context(context),
+		m_MouseShowPeriod(1000),
+		m_ShowMouseTimer(m_MouseShowPeriod),
+		m_ClickPause(0)
+	{
+		// Mouse Events
+		m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
+		m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
+		m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		// KBD events
+		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUIContext::onKeyDown);
+		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUIContext::onKeyUp);
+	}
+
+	GUIContext::GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size)
+		: m_Context(nullptr),
+		m_MouseShowPeriod(1000),
+		m_ShowMouseTimer(m_MouseShowPeriod),
+		m_ClickPause(0)
+	{
+		m_Context = Rocket::Core::CreateContext(Rocket::Core::String(&name[0], &name[0] + name.size()), Rocket::Core::Vector2i(size.x, size.y));
+		m_Context->LoadMouseCursor("core/gui/cursor.rml");
+
+		// Mouse Events
+		m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
+		m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
+		m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		// KBD events
+		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUIContext::onKeyDown);
+		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUIContext::onKeyUp);
+	}
+
+	GUIContext::~GUIContext()
+	{
+		if (m_Context)
+			m_Context->RemoveReference();
+	}
+
+	void GUIContext::Update(float dt)
+	{
+		if (m_Context)
+		{
+			m_Context->Update();
+
+			if (m_ClickPause > 0)
+				m_ClickPause -= dt;
+
+			// Hide the cursor if the timeout has been reached
+			if (m_ShowMouseTimer <= 0)
+			{
+				m_Context->ShowMouseCursor(false);
+			}
+			else
+			{
+				m_ShowMouseTimer -= (int)dt;
+			}
+		}
+	}
+
+	void GUIContext::Draw()
+	{
+		if (m_Context)
+			m_Context->Render();
+	}
+
+	void GUIContext::SetDimensions(const Vector2i &size)
+	{
+		if (m_Context)
+			m_Context->SetDimensions(Rocket::Core::Vector2i(size.x, size.y));
+	}
+
+	void GUIContext::SetMouseShowPeriod(unsigned int period)
+	{
+		m_MouseShowPeriod = period;
+	}
+
+	unsigned int GUIContext::GetMouseShowPeriod() const
+	{
+		return m_MouseShowPeriod;
+	}
+
+	void GUIContext::ShowMouse()
+	{
+		m_ShowMouseTimer = m_MouseShowPeriod;
+		m_Context->ShowMouseCursor(true);
+	}
+
+	void GUIContext::SetMouseCursorPosition(int x, int y, int modifier)
+	{
+		m_Context->ProcessMouseMove(x, y, modifier);
+	}
+
+	inline int getRktModifierFlags(const CL_InputEvent &ev)
+	{
+		int modifier = 0;
+		if (ev.alt)
+			modifier |= Rocket::Core::Input::KM_ALT;
+		if (ev.ctrl)
+			modifier |= Rocket::Core::Input::KM_CTRL;
+		if (ev.shift)
+			modifier |= Rocket::Core::Input::KM_SHIFT;
+		return modifier;
+	}
+
+	void GUIContext::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		m_ClickPause = s_ClickPausePeriod;
+
+		int modifier = getRktModifierFlags(ev);
+		switch(ev.id)
+		{
+		case CL_MOUSE_LEFT:
+			m_Context->ProcessMouseButtonDown(0, modifier);
+			break;
+		case CL_MOUSE_RIGHT:
+			m_Context->ProcessMouseButtonDown(1, modifier);
+			break;
+		case CL_MOUSE_MIDDLE:
+			m_Context->ProcessMouseButtonDown(2, modifier);
+			break;
+		case CL_MOUSE_XBUTTON1:
+			m_Context->ProcessMouseButtonDown(3, modifier);
+			break;
+		case CL_MOUSE_XBUTTON2:
+			m_Context->ProcessMouseButtonDown(4, modifier);
+			break;
+		case CL_MOUSE_WHEEL_UP:
+			m_Context->ProcessMouseWheel(-1, modifier);
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
+			break;
+		case CL_MOUSE_WHEEL_DOWN:
+			m_Context->ProcessMouseWheel(1, modifier);
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
+			break;
+		}
+	}
+
+	void GUIContext::onMouseUp(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		m_ClickPause = s_ClickPausePeriod;
+
+		int modifier = getRktModifierFlags(ev);
+		switch(ev.id)
+		{
+		case CL_MOUSE_LEFT:
+			m_Context->ProcessMouseButtonUp(0, modifier);
+			break;
+		case CL_MOUSE_RIGHT:
+			m_Context->ProcessMouseButtonUp(1, modifier);
+			break;
+		case CL_MOUSE_MIDDLE:
+			m_Context->ProcessMouseButtonUp(2, modifier);
+			break;
+		case CL_MOUSE_XBUTTON1:
+			m_Context->ProcessMouseButtonUp(3, modifier);
+			break;
+		case CL_MOUSE_XBUTTON2:
+			m_Context->ProcessMouseButtonUp(4, modifier);
+			break;
+		case CL_MOUSE_WHEEL_UP:
+			m_Context->ProcessMouseWheel(0, modifier);
+			break;
+		case CL_MOUSE_WHEEL_DOWN:
+			m_Context->ProcessMouseWheel(0, modifier);
+			break;
+		}
+	}
+
+	void GUIContext::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		if (m_ClickPause <= 0)
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));
+
+		if (m_ShowMouseTimer <= 0 && m_MouseShowPeriod > 0)
+		{
+			m_ShowMouseTimer = m_MouseShowPeriod;
+			m_Context->ShowMouseCursor(true);
+		}
+	}
+
+	inline bool isNonDisplayKey(int id)
+	{
+		return id != CL_KEY_BACKSPACE && id != CL_KEY_ESCAPE && id != CL_KEY_DELETE;
+	}
+
+	void GUIContext::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		// Grab characters
+		if (!ev.alt && !ev.ctrl && !ev.str.empty() && isNonDisplayKey(ev.id))
+		{
+			Rocket::Core::String text = ev.str.c_str();
+			m_Context->ProcessTextInput(text);
+		}
+
+		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
+
+		//SendToConsole("Key Down");
+	}
+
+	void GUIContext::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
+
+		//SendToConsole("Key Up");
+	}
+
 	GUI::GUI()
 		: m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
@@ -173,13 +389,13 @@ namespace FusionEngine
 
 		m_DebuggerInitialized = false;
 
-		m_RocketFileSys = new RocketFileSystem();
-		m_RocketRenderer = new RocketRenderer(m_Display.get_gc());
-		m_RocketSystem = new RocketSystem();
+		m_RocketFileSys.reset(new RocketFileSystem());
+		m_RocketRenderer.reset(new RocketRenderer(m_Display.get_gc()));
+		m_RocketSystem.reset(new RocketSystem());
 		
-		Rocket::Core::SetFileInterface(m_RocketFileSys);
-		Rocket::Core::SetRenderInterface(m_RocketRenderer);
-		Rocket::Core::SetSystemInterface(m_RocketSystem);
+		Rocket::Core::SetFileInterface(m_RocketFileSys.get());
+		Rocket::Core::SetRenderInterface(m_RocketRenderer.get());
+		Rocket::Core::SetSystemInterface(m_RocketSystem.get());
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
@@ -187,23 +403,11 @@ namespace FusionEngine
 		m_DataFormatters.push_back(std::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
 
 		CL_GraphicContext gc = m_Display.get_gc();
-
-		m_Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(gc.get_width(), gc.get_height()));
-
-		LoadFonts("core/gui/fonts/");
-		m_Context->LoadMouseCursor("core/gui/cursor.rml");
-
-		new MessageBoxMaker(m_Context);
-
 		CL_InputContext ic = m_Display.get_ic();
 
-		// Mouse Events
-		m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUI::onMouseDown);
-		m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUI::onMouseUp);
-		m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUI::onMouseMove);
-		// KBD events
-		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUI::onKeyDown);
-		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUI::onKeyUp);
+		auto& defaultCtx = m_Contexts["default"] = GUIContext("default", ic, Vector2i(gc.get_width(), gc.get_height()));
+
+		m_MessageBoxMaker.reset(new MessageBoxMaker(defaultCtx.m_Context));
 
 		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
 
@@ -240,24 +444,29 @@ namespace FusionEngine
 				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
-				m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
+				m_Contexts["default"].m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
 			delete MessageBoxMaker::getSingletonPtr();
 
-			m_Context->RemoveReference();
+			m_Contexts.clear();
 			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			Rocket::Core::Shutdown();
 
-			delete m_RocketFileSys;
-			delete m_RocketSystem;
-			delete m_RocketRenderer;
+			//delete m_RocketFileSys;
+			//delete m_RocketSystem;
+			//delete m_RocketRenderer;
+			m_RocketFileSys.reset();
+			m_RocketSystem.reset();
+			m_RocketRenderer.reset();
 
-			m_RocketFileSys = nullptr;
-			m_RocketSystem = nullptr;
-			m_RocketRenderer = nullptr;
-			m_Context = nullptr;
+
+			//m_RocketFileSys = nullptr;
+			//m_RocketSystem = nullptr;
+			//m_RocketRenderer = nullptr;
+			//m_Context = nullptr;
+			m_Contexts.clear();
 
 			m_Display.show_cursor();
 
@@ -267,44 +476,40 @@ namespace FusionEngine
 
 	void GUI::Update(float split)
 	{
-		m_Context->Update();
+		for (auto it = m_Contexts.begin(), end = m_Contexts.end(); it != end; ++it)
+			it->second.Update(split);
 
-		if (m_ClickPause > 0)
-			m_ClickPause -= split;
+		//m_Context->Update();
 
-		// Hide the cursor if the timeout has been reached
-		if ( m_ShowMouseTimer <= 0 )
-		{
-			m_Context->ShowMouseCursor(false);
-		}
-		else
-		{
-			m_ShowMouseTimer -= (int)split;
-		}
+		//if (m_ClickPause > 0)
+		//	m_ClickPause -= split;
+
+		//// Hide the cursor if the timeout has been reached
+		//if ( m_ShowMouseTimer <= 0 )
+		//{
+		//	m_Context->ShowMouseCursor(false);
+		//}
+		//else
+		//{
+		//	m_ShowMouseTimer -= (int)split;
+		//}
 	}
 
 	void GUI::Draw()
 	{
-		m_Context->Render();
-		//for (int i = 0; i < m_Context->GetNumDocuments(); ++i)
-		//{
-		//	Rocket::Core::ElementDocument *doc = m_Context->GetDocument(i);
-		//	CL_Rectf outline;
-		//	outline.top = doc->GetAbsoluteTop();
-		//	outline.left = doc->GetAbsoluteLeft(); 
-		//	outline.set_width(doc->GetOffsetWidth());
-		//	outline.set_height(doc->GetOffsetHeight());
-		//	if (doc->IsClassSet("focus"))
-		//		outline.expand(16.0f);
-		//	else
-		//		outline.expand(8.0f);
-		//	CL_Draw::fill(m_Display.get_gc(), outline, CL_Colorf(0.0f, 0.0f, 0.0f, 0.75f));
-		//}
+		//m_Context->Render();
+	}
+
+	GUIContext& GUI::CreateContext(const std::string& name, Vector2i size)
+	{
+		if (size.x == 0 && size.y == 0)
+			size.set(m_Display.get_gc().get_width(), m_Display.get_gc().get_height());
+		return m_Contexts[name] = GUIContext(name, m_Display.get_ic(), size);
 	}
 
 	Rocket::Core::Context *GUI::GetContext() const
 	{
-		return m_Context;
+		return m_Contexts.at("default").m_Context;
 	}
 
 	Rocket::Core::ElementDocument *GUI::GetConsoleWindow() const
@@ -315,7 +520,7 @@ namespace FusionEngine
 	void GUI::InitializeDebugger()
 	{
 		if (!m_DebuggerInitialized)
-			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Context);
+			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["default"].m_Context);
 	}
 
 	void GUI::ShowDebugger()
@@ -333,30 +538,26 @@ namespace FusionEngine
 		return Rocket::Debugger::IsVisible();
 	}
 
-	void GUI::SetMouseShowPeriod(unsigned int period)
-	{
-		m_MouseShowPeriod = period;
-	}
+	//void GUI::SetMouseShowPeriod(unsigned int period)
+	//{
+	//	m_MouseShowPeriod = period;
+	//}
 
-	unsigned int GUI::GetMouseShowPeriod() const
-	{
-		return m_MouseShowPeriod;
-	}
+	//unsigned int GUI::GetMouseShowPeriod() const
+	//{
+	//	return m_MouseShowPeriod;
+	//}
 
-	void GUI::ShowMouse()
-	{
-		m_ShowMouseTimer = m_MouseShowPeriod;
-		m_Context->ShowMouseCursor(true);
-	}
+	//void GUI::ShowMouse()
+	//{
+	//	m_ShowMouseTimer = m_MouseShowPeriod;
+	//	m_Context->ShowMouseCursor(true);
+	//}
 
-	void GUI::SetMouseCursorPosition(int x, int y, int modifier)
-	{
-		m_Context->ProcessMouseMove(x, y, modifier);
-	}
-	void GUI::SetMouseCursorPosition_default(int x, int y)
-	{
-		m_Context->ProcessMouseMove(x, y, 0);
-	}
+	//void GUI::SetMouseCursorPosition(int x, int y, int modifier)
+	//{
+	//	m_Context->ProcessMouseMove(x, y, modifier);
+	//}
 
 	Rocket::Core::Context* GUI_GetContextRef(GUI* obj)
 	{
@@ -414,16 +615,16 @@ namespace FusionEngine
 
 		RegisterSingletonType<GUI>("GUI", engine);
 
-		r = engine->RegisterObjectMethod(
-			"GUI", "void setMouseShowPeriod(uint)",
-			asMETHOD(GUI, SetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod(
-			"GUI", "uint getMouseShowPeriod() const",
-			asMETHOD(GUI, GetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod(
+		//	"GUI", "void setMouseShowPeriod(uint)",
+		//	asMETHOD(GUI, SetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod(
+		//	"GUI", "uint getMouseShowPeriod() const",
+		//	asMETHOD(GUI, GetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = engine->RegisterObjectMethod(
-			"GUI", "void showMouse()",
-			asMETHOD(GUI, ShowMouse), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod(
+		//	"GUI", "void showMouse()",
+		//	asMETHOD(GUI, ShowMouse), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(
 			"GUI", "void enableDebugger()",
@@ -453,13 +654,9 @@ namespace FusionEngine
 			"GUI", "void hideConsole()",
 			asFUNCTION(GUI_HideConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = engine->RegisterObjectMethod(
-			"GUI", "void setMouseCursorPosition(int x, int y)",
-			asMETHOD(GUI, SetMouseCursorPosition_default), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-		r = engine->RegisterObjectMethod(
-			"GUI", "void setMouseCursorPosition(int x, int y, int modifiers)",
-			asMETHOD(GUI, SetMouseCursorPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod(
+		//	"GUI", "void setMouseCursorPosition(int x, int y, int modifiers)",
+		//	asMETHOD(GUI, SetMouseCursorPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	void GUI::SetModule(ModulePtr module)
@@ -497,123 +694,9 @@ namespace FusionEngine
 		}
 	}
 
-	inline int getRktModifierFlags(const CL_InputEvent &ev)
-	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
-		return modifier;
-	}
-
-	void GUI::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
-	{
-		m_ClickPause = s_ClickPausePeriod;
-
-		int modifier = getRktModifierFlags(ev);
-		switch(ev.id)
-		{
-		case CL_MOUSE_LEFT:
-			m_Context->ProcessMouseButtonDown(0, modifier);
-			break;
-		case CL_MOUSE_RIGHT:
-			m_Context->ProcessMouseButtonDown(1, modifier);
-			break;
-		case CL_MOUSE_MIDDLE:
-			m_Context->ProcessMouseButtonDown(2, modifier);
-			break;
-		case CL_MOUSE_XBUTTON1:
-			m_Context->ProcessMouseButtonDown(3, modifier);
-			break;
-		case CL_MOUSE_XBUTTON2:
-			m_Context->ProcessMouseButtonDown(4, modifier);
-			break;
-		case CL_MOUSE_WHEEL_UP:
-			m_Context->ProcessMouseWheel(-1, modifier);
-			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
-			break;
-		case CL_MOUSE_WHEEL_DOWN:
-			m_Context->ProcessMouseWheel(1, modifier);
-			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
-			break;
-		}
-	}
-
-	void GUI::onMouseUp(const CL_InputEvent &ev, const CL_InputState &state)
-	{
-		m_ClickPause = s_ClickPausePeriod;
-
-		int modifier = getRktModifierFlags(ev);
-		switch(ev.id)
-		{
-		case CL_MOUSE_LEFT:
-			m_Context->ProcessMouseButtonUp(0, modifier);
-			break;
-		case CL_MOUSE_RIGHT:
-			m_Context->ProcessMouseButtonUp(1, modifier);
-			break;
-		case CL_MOUSE_MIDDLE:
-			m_Context->ProcessMouseButtonUp(2, modifier);
-			break;
-		case CL_MOUSE_XBUTTON1:
-			m_Context->ProcessMouseButtonUp(3, modifier);
-			break;
-		case CL_MOUSE_XBUTTON2:
-			m_Context->ProcessMouseButtonUp(4, modifier);
-			break;
-		case CL_MOUSE_WHEEL_UP:
-			m_Context->ProcessMouseWheel(0, modifier);
-			break;
-		case CL_MOUSE_WHEEL_DOWN:
-			m_Context->ProcessMouseWheel(0, modifier);
-			break;
-		}
-	}
-
-	void GUI::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
-	{
-		if (m_ClickPause <= 0)
-			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));
-
-		if (m_ShowMouseTimer <= 0 && m_MouseShowPeriod > 0)
-		{
-			m_ShowMouseTimer = m_MouseShowPeriod;
-			m_Context->ShowMouseCursor(true);
-		}
-	}
-
-	inline bool isNonDisplayKey(int id)
-	{
-		return id != CL_KEY_BACKSPACE && id != CL_KEY_ESCAPE && id != CL_KEY_DELETE;
-	}
-
-	void GUI::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
-	{
-		// Grab characters
-		if (!ev.alt && !ev.ctrl && !ev.str.empty() && isNonDisplayKey(ev.id))
-		{
-			Rocket::Core::String text = ev.str.c_str();
-			m_Context->ProcessTextInput(text);
-		}
-
-		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
-
-		//SendToConsole("Key Down");
-	}
-
-	void GUI::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
-	{
-		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
-
-		//SendToConsole("Key Up");
-	}
-
 	void GUI::onResize(int x, int y)
 	{
-		m_Context->SetDimensions(Rocket::Core::Vector2i(x, y));
+		m_Contexts["default"].SetDimensions(Vector2i(x, y));
 	}
 
 }

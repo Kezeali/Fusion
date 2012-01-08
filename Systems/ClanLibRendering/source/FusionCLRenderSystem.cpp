@@ -48,6 +48,8 @@
 
 #include "FusionPhysicsDebugDraw.h"
 
+#include <Rocket/Core.h>
+
 #include <tbb/parallel_sort.h>
 #include <tbb/parallel_for.h>
 
@@ -59,6 +61,11 @@ namespace FusionEngine
 		: m_GraphicContext(gc),
 		m_CameraSynchroniser(camera_sync)
 	{
+	}
+
+	void CLRenderSystem::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		CLRenderWorld::Register(engine);
 	}
 
 	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
@@ -386,6 +393,12 @@ namespace FusionEngine
 				{
 					drawable->Draw(gc, camera_pos);
 				}
+			}
+
+			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+			{
+				auto ctx = Rocket::Core::GetContext(i);
+				ctx->Render();
 			}
 
 			m_Renderer->PostDraw();

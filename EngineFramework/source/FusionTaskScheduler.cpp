@@ -136,9 +136,9 @@ namespace FusionEngine
 		}
 	}
 
-	void TaskScheduler::SetOntology(const std::vector<std::shared_ptr<ISystemWorld>>& ontology)
+	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<ISystemWorld>>& universe)
 	{
-		m_ComponentWorlds = ontology;
+		m_ComponentWorlds = universe;
 
 		//m_ResortTasks = true;
 

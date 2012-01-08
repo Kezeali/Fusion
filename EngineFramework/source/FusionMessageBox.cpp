@@ -150,7 +150,7 @@ namespace FusionEngine
 		m_Factories.erase(name);
 	}
 
-	MessageBox* MessageBoxMaker::create(const std::string& type, const std::string& params)
+	MessageBox* MessageBoxMaker::create(const std::string& type, const std::string& params, Rocket::Core::Context* ctx)
 	{
 		auto _where = m_Factories.find(type);
 		if (_where != m_Factories.end())
@@ -158,7 +158,8 @@ namespace FusionEngine
 			ParamMap pairizedParams;
 			fe_pairize(params, pairizedParams);
 
-			return _where->second(m_Context, pairizedParams);
+			if (ctx == nullptr) ctx = m_Context;
+			return _where->second(ctx, pairizedParams);
 		}
 		else
 			return nullptr;

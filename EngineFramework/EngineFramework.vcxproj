@@ -74,6 +74,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">PrecompiledHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="source\FusionComponentScriptTypeRegistration.cpp" />
     <ClCompile Include="source\FusionComponentUniverse.cpp" />
     <ClCompile Include="source\FusionContextMenu.cpp" />
     <ClCompile Include="source\FusionElementSelectableDataGrid.cpp" />
@@ -81,6 +82,7 @@
     <ClCompile Include="source\FusionEntityDecorator.cpp" />
     <ClCompile Include="source\FusionEntityDecoratorInstancer.cpp" />
     <ClCompile Include="source\FusionEntityManager.cpp" />
+    <ClCompile Include="source\FusionEntityScriptBinding.cpp" />
     <ClCompile Include="source\FusionEntitySerialisationUtils.cpp" />
     <ClCompile Include="source\FusionGameMapLoader.cpp" />
     <ClCompile Include="source\FusionGUI.cpp" />
@@ -97,6 +99,7 @@
   <ItemGroup>
     <ClInclude Include="include\FusionCellCache.h" />
     <ClInclude Include="include\FusionCellDataSource.h" />
+    <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
     <ClInclude Include="include\FusionComponentUniverse.h" />
     <ClInclude Include="include\FusionContextMenu.h" />
     <ClInclude Include="include\FusionElementSelectableDataGrid.h" />

@@ -57,17 +57,20 @@ namespace FusionEngine
 	class CLRenderSystem : public IComponentSystem
 	{
 	public:
-		SystemType GetType() const { return SystemType::Rendering; }
-
-		std::string GetName() const { return "CLRenderSystem"; }
-
 		CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync);
 
 		std::shared_ptr<ISystemWorld> CreateWorld();
 
 	private:
+		SystemType GetType() const { return SystemType::Rendering; }
+
+		std::string GetName() const { return "CLRenderSystem"; }
+
+		void RegisterScriptInterface(asIScriptEngine* engine);
+
 		CL_GraphicContext m_GraphicContext;
 		CameraSynchroniser* m_CameraSynchroniser;
+		
 	};
 
 	class CLRenderWorld : public ISystemWorld

@@ -66,6 +66,8 @@ namespace FusionEngine
 
 		std::string GetName() const { return "AngelScriptSystem"; }
 
+		void RegisterScriptInterface(asIScriptEngine* engine);
+
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 

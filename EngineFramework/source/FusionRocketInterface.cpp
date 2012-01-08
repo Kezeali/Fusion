@@ -47,7 +47,7 @@ namespace FusionEngine
 	{
 		m_RocketLog = Logger::getSingleton().OpenLog("rocket");
 #ifdef _DEBUG
-		m_RocketLog->SetThreshold(LOG_TRIVIAL);
+		m_RocketLog->SetThreshold(LOG_INFO);
 #endif
 	}
 
@@ -58,14 +58,15 @@ namespace FusionEngine
 
 	bool RocketSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message)
 	{
-		LogSeverity logLevel = LOG_NORMAL;
-		if (type == Rocket::Core::Log::LT_ERROR || type == Rocket::Core::Log::LT_ASSERT)
-			logLevel = LOG_CRITICAL;
-		else if (type == Rocket::Core::Log::LT_INFO)
-			logLevel = LOG_TRIVIAL;
-		Logger *logger = Logger::getSingletonPtr();
-		if (logger != NULL)
+		if (m_RocketLog)
+		{
+			LogSeverity logLevel = LOG_NORMAL;
+			if (type == Rocket::Core::Log::LT_ERROR || type == Rocket::Core::Log::LT_ASSERT)
+				logLevel = LOG_CRITICAL;
+			else if (type == Rocket::Core::Log::LT_INFO)
+				logLevel = LOG_INFO;
 			m_RocketLog->AddEntry(std::string(message.CString(), (std::string::size_type)message.Length()), logLevel);
+		}
 
 		Rocket::Core::SystemInterface::LogMessage(type, message);
 

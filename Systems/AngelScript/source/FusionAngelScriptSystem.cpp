@@ -473,6 +473,12 @@ namespace FusionEngine
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
+		ResourceManager::getSingleton().AddResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource, NULL);
+	}
+
+	void AngelScriptSystem::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		ASScript::ScriptInterface::Register(engine);
 	}
 
 	std::shared_ptr<ISystemWorld> AngelScriptSystem::CreateWorld()

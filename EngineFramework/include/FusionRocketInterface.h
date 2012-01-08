@@ -45,6 +45,7 @@
 namespace FusionEngine
 {
 
+	//! libRocket SystemInterface implementaiton
 	class RocketSystem : public Rocket::Core::SystemInterface
 	{
 	public:
@@ -57,6 +58,7 @@ namespace FusionEngine
 		LogPtr m_RocketLog;
 	};
 
+	//! libRocket RenderInterface implmentation
 	class RocketRenderer : public Rocket::Core::RenderInterface
 	{
 	public:
@@ -104,9 +106,10 @@ namespace FusionEngine
 
 		bool m_ClipEnabled;
 		//TextureMap m_Textures;
-		//GeometryMap m_Geometry;;
+		//GeometryMap m_Geometry;
 	};
 
+	//! libRocket FileInterface implementation
 	class RocketFileSystem : public Rocket::Core::FileInterface
 	{
 	public:

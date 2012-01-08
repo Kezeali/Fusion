@@ -176,7 +176,6 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\EntityScriptBinding.cpp" />
     <ClCompile Include="source\main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>

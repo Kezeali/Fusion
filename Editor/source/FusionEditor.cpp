@@ -29,11 +29,15 @@
 
 #include "FusionEditor.h"
 
+#include "FusionGUI.h"
+
 namespace FusionEngine
 {
 
 	Editor::Editor(const std::vector<CL_String>& args)
 	{
+		auto& context = GUI::getSingleton().CreateContext("editor");
+		context.SetMouseShowPeriod(500);
 	}
 
 	Editor::~Editor()
@@ -42,6 +46,20 @@ namespace FusionEngine
 
 	void Editor::Update(float time, float dt)
 	{
+		//if (m_EditCam)
+		//{
+		//	auto camPos = m_EditCam->GetPosition();
+		//	if (m_DispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
+		//		camPos.y -= 400 * seconds;
+		//	if (m_DispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
+		//		camPos.y += 400 * seconds;
+		//	if (m_DispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
+		//		camPos.x -= 400 * seconds;
+		//	if (m_DispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
+		//		camPos.x += 400 * seconds;
+
+		//	m_EditCam->SetPosition(camPos.x, camPos.y);
+		//}
 	}
 
 	std::vector<std::shared_ptr<RendererExtension>> Editor::MakeRendererExtensions() const
