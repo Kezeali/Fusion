@@ -396,11 +396,11 @@ namespace FusionEngine
 				}
 			}
 
-			//for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
-			//{
-			//	auto ctx = Rocket::Core::GetContext(i);
-			//	ctx->Render();
-			//}
+			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+			{
+				auto ctx = Rocket::Core::GetContext(i);
+				ctx->Render();
+			}
 
 			m_Renderer->PostDraw();
 		}

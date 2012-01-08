@@ -73,7 +73,7 @@ class ConsoleElement : ScriptElement
 
 	void AddLine(const string &in text)
 	{
-		if (text_area.GetCursorIndex() >= num_chars)
+		if (text_area.GetCursorIndex() >= int(num_chars))
 		{
 			autoScroll = true;
 			//slowScroll = true;

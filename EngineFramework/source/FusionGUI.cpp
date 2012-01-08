@@ -400,6 +400,8 @@ namespace FusionEngine
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
+		LoadFonts("core/gui/fonts/");
+
 		ElementSelectableDataGrid::RegisterElement();
 		m_DataFormatters.push_back(std::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
 
