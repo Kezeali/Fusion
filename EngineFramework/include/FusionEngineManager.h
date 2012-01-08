@@ -47,6 +47,7 @@ namespace FusionEngine
 
 	class IComponentSystem;
 	class ComponentUniverse;
+	class ConsoleStdOutWriter;
 	class EngineExtension;
 	class EntitySynchroniser;
 	class GUI;
@@ -88,7 +89,8 @@ namespace FusionEngine
 
 		std::unique_ptr<Logger> m_Logger;
 		std::unique_ptr<Console> m_Console;
-		std::unique_ptr<Profiling> m_Profiling;
+		std::shared_ptr<Profiling> m_Profiling;
+		std::shared_ptr<ConsoleStdOutWriter> m_CoutWriter;
 
 		LogPtr m_Log;
 

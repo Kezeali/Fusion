@@ -75,7 +75,8 @@ namespace FusionEngine
 
 	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
 		: ISystemWorld(system),
-		m_CameraManager(camera_sync)
+		m_CameraManager(camera_sync),
+		m_PhysWorld(nullptr)
 	{
 		m_Renderer = new Renderer(gc);
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
@@ -395,11 +396,11 @@ namespace FusionEngine
 				}
 			}
 
-			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
-			{
-				auto ctx = Rocket::Core::GetContext(i);
-				ctx->Render();
-			}
+			//for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+			//{
+			//	auto ctx = Rocket::Core::GetContext(i);
+			//	ctx->Render();
+			//}
 
 			m_Renderer->PostDraw();
 		}
@@ -512,7 +513,7 @@ namespace FusionEngine
 			}
 		}
 
-		if (!m_PhysDebugDraw)
+		if (!m_PhysDebugDraw && m_RenderWorld->m_PhysWorld)
 		{
 			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
 			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());

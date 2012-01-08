@@ -64,6 +64,47 @@ namespace FusionEngine
 		GUIContext(Rocket::Core::Context* context, CL_InputContext ic);
 		~GUIContext();
 
+		void Update(float dt);
+		void Draw();
+		void SetDimensions(const Vector2i& size);
+
+		//! Sets the period of time the mouse will be shown after it stops moving
+		void SetMouseShowPeriod(unsigned int period);
+		unsigned int GetMouseShowPeriod() const;
+
+		void ShowMouse();
+
+		//! Sends fake mouse position data to this GUI's context
+		void SetMouseCursorPosition(int x, int y, int modifier = 0);
+
+
+		Rocket::Core::Context* m_Context;
+
+	private:
+		//! How long after the mouse stops moving until it fades
+		unsigned int m_MouseShowPeriod;
+		//! When this reaches zero, the mouse will be hidden
+		int m_ShowMouseTimer;
+
+		static const float s_ClickPausePeriod;
+		// Stop mouse-move events from being processed while this is > 0 - this var is set to
+		//  a milisecond count after a click event is processed (to make double-clicking easier)
+		float m_ClickPause;
+
+		SlotContainer m_Slots;
+
+		//! Tells the gui system when a mouse button is pressed
+		void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when a mouse button is released
+		void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when the mouse moves
+		void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
+
+		//! Tells the gui system when a keyboard key goes down
+		void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
+		//! Tells the gui system when a keyboard key is released
+		void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
+
 		GUIContext(const GUIContext& other)
 			: m_Context(other.m_Context),
 			m_MouseShowPeriod(other.m_MouseShowPeriod),
@@ -105,46 +146,6 @@ namespace FusionEngine
 			m_Slots = std::move(other.m_Slots);
 			return *this;
 		}
-
-		void Update(float dt);
-		void Draw();
-		void SetDimensions(const Vector2i& size);
-
-		//! Sets the period of time the mouse will be shown after it stops moving
-		void SetMouseShowPeriod(unsigned int period);
-		unsigned int GetMouseShowPeriod() const;
-
-		void ShowMouse();
-
-		//! Sends fake mouse position data to this GUI's context
-		void SetMouseCursorPosition(int x, int y, int modifier = 0);
-
-
-		Rocket::Core::Context* m_Context;
-
-		//! How long after the mouse stops moving until it fades
-		unsigned int m_MouseShowPeriod;
-		//! When this reaches zero, the mouse will be hidden
-		int m_ShowMouseTimer;
-
-		static const float s_ClickPausePeriod;
-		// Stop mouse-move events from being processed while this is > 0 - this var is set to
-		//  a milisecond count after a click event is processed (to make double-clicking easier)
-		float m_ClickPause;
-
-		SlotContainer m_Slots;
-
-		//! Tells the gui system when a mouse button is pressed
-		void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when a mouse button is released
-		void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when the mouse moves
-		void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
-
-		//! Tells the gui system when a keyboard key goes down
-		void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
-		//! Tells the gui system when a keyboard key is released
-		void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
 	};
 
 	/*!
@@ -181,7 +182,7 @@ namespace FusionEngine
 		//! Unbinds
 		virtual void CleanUp();
 
-		GUIContext& CreateContext(const std::string& name, Vector2i size = Vector2i(0, 0));
+		const std::shared_ptr<GUIContext>& CreateContext(const std::string& name, Vector2i size = Vector2i(0, 0));
 
 		Rocket::Core::Context* GetContext() const;
 		//! Returns the console window document
@@ -225,7 +226,7 @@ namespace FusionEngine
 
 		std::unique_ptr<MessageBoxMaker> m_MessageBoxMaker;
 
-		std::map<std::string, GUIContext> m_Contexts;
+		std::map<std::string, std::shared_ptr<GUIContext>> m_Contexts;
 
 		//Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument *m_ConsoleDocument;

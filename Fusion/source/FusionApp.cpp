@@ -41,6 +41,8 @@ public:
 		if (!SetupPhysFS::is_init())
 			return 1;
 
+		CL_ConsoleWindow conWindow("Console", 80, 10);
+
 		try
 		{
 			EngineManager manager(args);

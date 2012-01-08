@@ -94,8 +94,7 @@ class SpawnPoint : ScriptComponent
 		{
 			seed_rand(1234);
 			
-			@entityA = 
-			createPlayerEntity(itransform.Position, 1);
+			@entityA = createPlayerEntity(itransform.Position, 1);
 			EntityWrapper@ entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
 			
 			Vector pos = itransform.Position;

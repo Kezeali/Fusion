@@ -35,6 +35,8 @@
 #include "FusionComponentSystem.h"
 #include "FusionComponentUniverse.h"
 #include "FusionContextMenu.h"
+#include "FusionConsole.h"
+#include "FusionConsoleStdOutWriter.h"
 #include "FusionEngineExtension.h"
 #include "FusionEntityManager.h"
 #include "FusionEntitySynchroniser.h"
@@ -108,6 +110,14 @@ namespace FusionEngine
 			options->GetOption("screen_height", &m_DisplayDimensions.y);
 			m_Fullscreen = options->GetOption_bool("fullscreen");
 
+			// Enable native console
+			//if (m_NativeConsole)
+			{
+				//m_ConsoleWindow = CL_ConsoleWindow("Console", 80, 10);
+				m_CoutWriter.reset(new ConsoleStdOutWriter());
+				m_CoutWriter->Enable();
+			}
+
 			// Get the general log file
 			m_Log = Logger::getSingleton().OpenLog(g_LogGeneral);
 
@@ -127,6 +137,9 @@ namespace FusionEngine
 
 			// Init InputManager
 			m_InputManager.reset(new InputManager(m_DisplayWindow));
+
+			m_InputManager->Test();
+			m_InputManager->Initialise();
 
 			// Init resource manager
 			m_ResourceManager.reset(new ResourceManager(m_DisplayWindow.get_gc()));
@@ -298,6 +311,9 @@ namespace FusionEngine
 	{
 		try
 		{
+			// TODO: add resource loaders from systems
+			AddResourceLoaders();
+
 			// Register system script interfaces
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 				it->second->RegisterScriptInterface(m_ScriptManager->GetEnginePtr());
@@ -316,6 +332,11 @@ namespace FusionEngine
 				worlds.push_back(world);
 			}
 			m_Scheduler->SetUniverse(worlds);
+
+			m_ComponentUniverse->CheckMessages();
+
+			unsigned short listenPort = 11122;
+			m_Network->Startup(listenPort);
 
 			PropChangedQueue &propChangedQueue = m_EntityManager->m_PropChangedQueue;
 
@@ -358,6 +379,8 @@ namespace FusionEngine
 					(*it)->Update(time, dt);
 					quit |= (*it)->Quit();
 				}
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_0))
+					m_GUI->GetConsoleWindow()->Show();
 				// Update GUI
 				m_GUI->Update(dt);
 
@@ -412,6 +435,9 @@ namespace FusionEngine
 
 				// Record profiling data
 				m_Profiling->StoreTick();
+
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
+					quit = true;
 			} // while !quit
 
 			// Shutdown

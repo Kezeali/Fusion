@@ -37,7 +37,7 @@ namespace FusionEngine
 	Editor::Editor(const std::vector<CL_String>& args)
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
-		context.SetMouseShowPeriod(500);
+		context->SetMouseShowPeriod(500);
 	}
 
 	Editor::~Editor()

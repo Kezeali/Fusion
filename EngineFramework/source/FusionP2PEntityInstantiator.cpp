@@ -419,13 +419,6 @@ namespace FusionEngine
 		} // end switch (type)
 	}
 
-	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
-	{
-		auto entity = app_obj->GetParent()->shared_from_this();
-
-		return obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
-	}
-
 	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
 	{
 		ASScript* nativeCom = ASScript::GetActiveScript();
@@ -447,9 +440,6 @@ namespace FusionEngine
 	void P2PEntityInstantiator::Register(asIScriptEngine* engine)
 	{
 		RegisterSingletonType<P2PEntityInstantiator>("Ontology", engine);
-
-		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
-			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 
 		engine->RegisterObjectMethod("Ontology", "Entity instantiate(const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
 			asFUNCTION(InstantiationSynchroniser_InstantiateAuto), asCALL_CDECL_OBJLAST);

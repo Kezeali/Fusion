@@ -173,6 +173,7 @@ namespace FusionEngine
 	{
 		if (m_Context)
 			m_Context->RemoveReference();
+		m_Slots.disconnect_all();
 	}
 
 	void GUIContext::Update(float dt)
@@ -405,9 +406,9 @@ namespace FusionEngine
 		CL_GraphicContext gc = m_Display.get_gc();
 		CL_InputContext ic = m_Display.get_ic();
 
-		auto& defaultCtx = m_Contexts["default"] = GUIContext("default", ic, Vector2i(gc.get_width(), gc.get_height()));
+		auto& defaultCtx = m_Contexts["default"] = std::make_shared<GUIContext>("default", ic, Vector2i(gc.get_width(), gc.get_height()));
 
-		m_MessageBoxMaker.reset(new MessageBoxMaker(defaultCtx.m_Context));
+		m_MessageBoxMaker.reset(new MessageBoxMaker(defaultCtx->m_Context));
 
 		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
 
@@ -444,7 +445,7 @@ namespace FusionEngine
 				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
-				m_Contexts["default"].m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
+				m_Contexts["default"]->m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
@@ -477,7 +478,7 @@ namespace FusionEngine
 	void GUI::Update(float split)
 	{
 		for (auto it = m_Contexts.begin(), end = m_Contexts.end(); it != end; ++it)
-			it->second.Update(split);
+			it->second->Update(split);
 
 		//m_Context->Update();
 
@@ -500,16 +501,16 @@ namespace FusionEngine
 		//m_Context->Render();
 	}
 
-	GUIContext& GUI::CreateContext(const std::string& name, Vector2i size)
+	const std::shared_ptr<GUIContext>& GUI::CreateContext(const std::string& name, Vector2i size)
 	{
 		if (size.x == 0 && size.y == 0)
 			size.set(m_Display.get_gc().get_width(), m_Display.get_gc().get_height());
-		return m_Contexts[name] = GUIContext(name, m_Display.get_ic(), size);
+		return m_Contexts[name] = std::make_shared<GUIContext>(name, m_Display.get_ic(), size);
 	}
 
 	Rocket::Core::Context *GUI::GetContext() const
 	{
-		return m_Contexts.at("default").m_Context;
+		return m_Contexts.at("default")->m_Context;
 	}
 
 	Rocket::Core::ElementDocument *GUI::GetConsoleWindow() const
@@ -520,7 +521,7 @@ namespace FusionEngine
 	void GUI::InitializeDebugger()
 	{
 		if (!m_DebuggerInitialized)
-			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["default"].m_Context);
+			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["default"]->m_Context);
 	}
 
 	void GUI::ShowDebugger()
@@ -593,17 +594,17 @@ namespace FusionEngine
 
 			r = engine->RegisterObjectBehaviour("string",
 				asBEHAVE_CONSTRUCT,
-				"void f(const string &in)",
+				"void f(const rString &in)",
 				asFUNCTION(stdstringCtor_FromEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("string",
-				"string& opAssign(const rString&in)",
+				"string& opAssign(const rString &in)",
 				asFUNCTION(stdstringAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("string",
-				"string& opAddAssign(const rString&in)",
+				"string& opAddAssign(const rString &in)",
 				asFUNCTION(stdstringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}
@@ -676,7 +677,7 @@ namespace FusionEngine
 		{
 			Rocket::AngelScript::InitialiseModule(event.manager->GetEnginePtr(), event.module_name);
 
-			event.manager->AddFile("core/gui/console.as", "main");
+			event.manager->AddFile("core/gui/console.as", event.module_name);
 		}
 		else if (event.type == BuildModuleEvent::PostBuild)
 		{
@@ -696,7 +697,7 @@ namespace FusionEngine
 
 	void GUI::onResize(int x, int y)
 	{
-		m_Contexts["default"].SetDimensions(Vector2i(x, y));
+		m_Contexts["default"]->SetDimensions(Vector2i(x, y));
 	}
 
 }

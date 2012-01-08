@@ -118,7 +118,7 @@ class ConsoleElement : ScriptElement
 	{
 		if (dirty && text_area !is null)
 		{
-			string@ linesText = @string();
+			string linesText;
 			{
 				uint i = (size < lines.length() ? 0 : lines_end);
 				for (uint done = 0; done < size; ++done)
@@ -180,7 +180,7 @@ class ConsoleElement : ScriptElement
 }
 
 bool acConnection = false;
-rString lastvalue = "";
+rString lastvalue = rString("");
 StringArray possibleCompletions;
 void OnConsoleEntryChanged(Event& ev)
 {
@@ -295,7 +295,7 @@ void OnConsoleEntryKeyUp(Event& ev)
 
 void OnConsoleOpened(Event &ev)
 {
-	OnWindowLoad(ev);
+	//OnWindowLoad(ev);
 }
 
 void OnConsoleClosed()

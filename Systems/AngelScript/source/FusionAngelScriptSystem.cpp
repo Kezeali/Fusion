@@ -43,6 +43,8 @@
 #include "FusionInputHandler.h"
 #include "FusionScriptInputEvent.h"
 
+#include "FusionEntityInstantiator.h"
+
 #include "scriptany.h"
 
 #include <tbb/parallel_for.h>
@@ -476,9 +478,19 @@ namespace FusionEngine
 		ResourceManager::getSingleton().AddResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource, NULL);
 	}
 
+	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, EntityInstantiator* obj)
+	{
+		auto entity = app_obj->GetParent()->shared_from_this();
+
+		return obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
+	}
+
 	void AngelScriptSystem::RegisterScriptInterface(asIScriptEngine* engine)
 	{
 		ASScript::ScriptInterface::Register(engine);
+
+		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
+			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 	}
 
 	std::shared_ptr<ISystemWorld> AngelScriptSystem::CreateWorld()
@@ -491,6 +503,8 @@ namespace FusionEngine
 		m_ScriptManager(manager)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
+		
+		BuildScripts(true);
 
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
 		m_ASTaskB = new AngelScriptTaskB(this, m_ScriptManager);
