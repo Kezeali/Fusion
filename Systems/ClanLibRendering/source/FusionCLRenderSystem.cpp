@@ -396,13 +396,13 @@ namespace FusionEngine
 				}
 			}
 
-			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
-			{
-				auto ctx = Rocket::Core::GetContext(i);
-				ctx->Render();
-			}
-
 			m_Renderer->PostDraw();
+		}
+
+		for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+		{
+			auto ctx = Rocket::Core::GetContext(i);
+			ctx->Render();
 		}
 
 		{
@@ -513,17 +513,20 @@ namespace FusionEngine
 			}
 		}
 
-		if (!m_PhysDebugDraw && m_RenderWorld->m_PhysWorld)
+		if (!m_PhysDebugDraw)
 		{
 			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
-			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
+			if (m_RenderWorld->m_PhysWorld)
+				m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
 			m_PhysDebugDraw->SetFlags(B2DebugDraw::e_centerOfMassBit | B2DebugDraw::e_jointBit | B2DebugDraw::e_pairBit | B2DebugDraw::e_shapeBit);
 		}
 
-		if (m_PhysDebugDraw && !viewports.empty() && m_RenderWorld->m_PhysDebugDrawEnabled)
+		if (m_PhysDebugDraw && m_RenderWorld->m_PhysDebugDrawEnabled && !viewports.empty())
 		{
 			m_PhysDebugDraw->SetViewport(viewports.front());
 			m_PhysDebugDraw->SetupView();
+
+			// Draw cell division lines
 			CL_Rectf area;
 			m_Renderer->CalculateScreenArea(area, viewports.front(), true);
 			area.top *= s_SimUnitsPerGameUnit; area.right *= s_SimUnitsPerGameUnit; area.bottom *= s_SimUnitsPerGameUnit; area.left *= s_SimUnitsPerGameUnit;
@@ -547,6 +550,7 @@ namespace FusionEngine
 					m_DebugFont2.draw_text(gc, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
 				}
 			}
+			
 			m_RenderWorld->m_PhysWorld->DrawDebugData();
 			m_PhysDebugDraw->ResetView();
 		}

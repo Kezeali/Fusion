@@ -414,7 +414,7 @@ namespace FusionEngine
 
 		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
 
-		m_Display.hide_cursor();
+		//m_Display.hide_cursor();
 
 		m_Initialised = true;
 
@@ -451,7 +451,7 @@ namespace FusionEngine
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
-			delete MessageBoxMaker::getSingletonPtr();
+			//delete MessageBoxMaker::getSingletonPtr();
 
 			m_Contexts.clear();
 			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();

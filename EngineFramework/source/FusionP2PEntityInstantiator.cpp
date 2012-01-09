@@ -423,8 +423,12 @@ namespace FusionEngine
 	{
 		ASScript* nativeCom = ASScript::GetActiveScript();
 
-		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
-		auto entity = nativeCom->GetParent()->shared_from_this();
+		EntityPtr entity;
+		if (nativeCom)
+		{
+			//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
+			entity = nativeCom->GetParent()->shared_from_this();
+		}
 
 		auto newEntity = obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
 

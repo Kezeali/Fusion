@@ -1,3 +1,5 @@
+#include "gui_base.as"
+
 void InitialiseConsole()
 {
 	RegisterElementType(rString("console"), rString("ConsoleElement"));

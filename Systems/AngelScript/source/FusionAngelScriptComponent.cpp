@@ -557,43 +557,45 @@ namespace FusionEngine
 		{
 			asIScriptObject* scriptCom = static_cast<asIScriptObject*>( asGetActiveContext()->GetThisPointer(asGetActiveContext()->GetCallstackSize()-1) );
 
-			if (scriptCom->GetPropertyTypeId(0) == s_ASScriptTypeId)
+			if (scriptCom)
 			{
-				// Note: The script object stores a pointer to the intermediate ScriptInterface (which is garbage collected)
-				const auto scriptInterface = *static_cast<ASScript::ScriptInterface**>( scriptCom->GetAddressOfProperty(0) );
-				return scriptInterface->component;
-			}
-			else // Safe (but slow) lookup
-			{
-				if (std::string(scriptCom->GetObjectType()->GetBaseType()->GetName()) != "ScriptComponent")
-					return nullptr;
-
-				int appObjOffset = -1;
-
-				auto baseObjType = scriptCom->GetObjectType()->GetBaseType();
-				for (asUINT i = 0, count = baseObjType->GetPropertyCount(); i < count; ++i)
+				if (scriptCom->GetPropertyTypeId(0) == s_ASScriptTypeId)
 				{
-					const char* name; int typeId; bool isPrivate;
-					if (baseObjType->GetProperty(i, &name, &typeId, &isPrivate, &appObjOffset) >= 0)
+					// Note: The script object stores a pointer to the intermediate ScriptInterface (which is garbage collected)
+					const auto scriptInterface = *static_cast<ASScript::ScriptInterface**>( scriptCom->GetAddressOfProperty(0) );
+					return scriptInterface->component;
+				}
+				else // Safe (but slow) lookup
+				{
+					if (std::string(scriptCom->GetObjectType()->GetBaseType()->GetName()) != "ScriptComponent")
+						return nullptr;
+
+					int appObjOffset = -1;
+
+					auto baseObjType = scriptCom->GetObjectType()->GetBaseType();
+					for (asUINT i = 0, count = baseObjType->GetPropertyCount(); i < count; ++i)
 					{
-						if (isPrivate && std::string(name) == "app_obj")
+						const char* name; int typeId; bool isPrivate;
+						if (baseObjType->GetProperty(i, &name, &typeId, &isPrivate, &appObjOffset) >= 0)
 						{
-							break;
+							if (isPrivate && std::string(name) == "app_obj")
+							{
+								break;
+							}
 						}
 					}
-				}
 
-				if (appObjOffset != -1)
-				{
-					auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(scriptCom) + appObjOffset);
-					return (*static_cast<ASScript::ScriptInterface**>(propAddress))->component;
+					if (appObjOffset != -1)
+					{
+						auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(scriptCom) + appObjOffset);
+						return (*static_cast<ASScript::ScriptInterface**>(propAddress))->component;
+					}
+					else
+						return nullptr;
 				}
-				else
-					return nullptr;
 			}
 		}
-		else
-			return nullptr;
+		return nullptr;
 	}
 
 	void ASScript::CreateCoroutine(asIScriptFunction *fn)

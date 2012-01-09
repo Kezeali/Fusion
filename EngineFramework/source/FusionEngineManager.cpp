@@ -68,7 +68,7 @@
 #include "FusionImageLoader.h"
 
 #include <angelscript.h>
-
+#include <boost/lexical_cast.hpp>
 #include <ClanLib/display.h>
 
 namespace FusionEngine
@@ -191,6 +191,46 @@ namespace FusionEngine
 			if (options->GetOption("max_frameskip", &maxFrameskip) && maxFrameskip >= 0)
 				m_Scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
 #endif
+			auto streamingManager = m_StreamingManager;
+			m_Console->BindCommand("cam_range", [streamingManager](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 2)
+				{
+					auto range = boost::lexical_cast<float>(cmdargs[1]);
+					streamingManager->SetRange(range);
+				}
+				return "Streaming range is " + boost::lexical_cast<std::string>(streamingManager->GetRange());
+			});
+
+			m_Console->BindCommand("exec", [](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 2)
+				{
+					std::string userCode;
+					{
+						auto it = cmdargs.begin(), end = cmdargs.end();
+						for (++it; it != end; ++it)
+							userCode += *it;
+					}
+					const std::string code = "void _fsnConsoleExecuteString() {\n" + userCode +"\n;}";
+
+					auto module = ScriptManager::getSingleton().GetModule("core_gui_console");
+					asIScriptFunction* fn = 0;
+					auto r = module->GetASModule()->CompileFunction("execute_string", code.c_str(), -1, 0, &fn);
+					if (r < 0)
+						return "Failed to compile: " + userCode;
+
+					auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), fn->GetId());
+					if (caller)
+					{
+						ScriptManager::getSingleton().ConnectToCaller(caller);
+						caller();
+					}
+
+					fn->Release();
+				}
+				return "";
+			});
 		}
 		catch (std::exception& ex)
 		{
