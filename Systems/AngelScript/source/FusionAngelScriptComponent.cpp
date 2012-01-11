@@ -84,7 +84,7 @@ namespace FusionEngine
 	{
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
-		UnloadScriptResource(resource, vdir, userData);
+		FSN_ASSERT(!resource->IsLoaded());
 
 		if (resource->GetPath().empty())
 		{
@@ -93,7 +93,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 
-		asIScriptModule* module = engine->GetModule(resource->GetPath().c_str(), asGM_ALWAYS_CREATE);
+		asIScriptModule* module = engine->GetModule(resource->GetPath().c_str(), asGM_CREATE_IF_NOT_EXISTS);
 
 		std::string moduleFileName = resource->GetPath().substr(resource->GetPath().rfind('/'));
 		moduleFileName.erase(moduleFileName.size() - 3);
@@ -403,7 +403,7 @@ namespace FusionEngine
 	}
 
 	//! Init an entity wrapper in the current script
-	static uint32_t ScriptInitEntityPtr(std::weak_ptr<Entity>& owner, const EntityPtr& entityReferenced)
+	static std::uint32_t ScriptInitEntityPtr(std::weak_ptr<Entity>& owner, const EntityPtr& entityReferenced)
 	{
 		if (entityReferenced)
 		{
@@ -811,6 +811,16 @@ namespace FusionEngine
 
 	void ASScript::SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& properties)
 	{
+		if (m_ScriptObject)
+		{
+			auto newEnd = std::remove_if(this->m_Properties.begin(), this->m_Properties.end(), [](IComponentProperty* prop)->bool
+			{
+				return dynamic_cast<ScriptAnyTSP*>(prop) != nullptr;
+			});
+			this->m_Properties.erase(newEnd, this->m_Properties.end());
+			m_ScriptProperties.clear();
+			m_ScriptObject.reset();
+		}
 		if (obj)
 		{
 			m_ScriptObject = new ScriptInterface(this, obj);
@@ -908,10 +918,6 @@ namespace FusionEngine
 					}
 				}
 			}
-		}
-		else
-		{
-			m_ScriptObject.reset();
 		}
 	}
 

@@ -219,7 +219,6 @@ namespace FusionEngine
 			return m_Interfaces;
 		}
 
-		// TODO: call this in the component factory
 		virtual void InitInterfaces() = 0;
 		virtual void InitInterfaceList() = 0;
 
@@ -278,12 +277,13 @@ namespace FusionEngine
 	protected:
 		std::set<std::string> m_Interfaces;
 		bool m_InterfacesInitialised;
+		
+		std::vector<IComponentProperty*> m_Properties;
 
 	private:
 		Entity* m_Parent;
 		std::string m_Identifier; // How this component is identified within the entity
-
-		std::vector<IComponentProperty*> m_Properties;
+		
 		PropChangedQueue *m_ChangedProperties;
 
 		tbb::atomic<ReadyState> m_Ready;

@@ -32,6 +32,8 @@
 
 #include "FusionEngineExtension.h"
 
+#include "FusionTypes.h"
+
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
 #include <memory>
@@ -41,6 +43,7 @@ namespace FusionEngine
 
 	class ISystemWorld;
 	class AngelScriptWorld;
+	class CLRenderWorld;
 
 	class Editor : public EngineExtension
 	{
@@ -49,6 +52,12 @@ namespace FusionEngine
 		virtual ~Editor();
 
 		void SetDisplay(const CL_DisplayWindow& display);
+		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
+		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
+		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
+		// TODO: ? interface MapLoader with Save and Load methods
+		void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) { m_MapLoader = map_loader; }
+		void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) { m_StreamingManager = manager; }
 
 		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
 
@@ -63,6 +72,16 @@ namespace FusionEngine
 
 		CL_DisplayWindow m_DisplayWindow;
 		std::shared_ptr<AngelScriptWorld> m_AngelScriptWorld;
+		std::shared_ptr<CLRenderWorld> m_RenderWorld;
+
+		std::shared_ptr<RegionMapLoader> m_MapLoader;
+		std::shared_ptr<StreamingManager> m_StreamingManager;
+
+		std::shared_ptr<ComponentFactory> m_ComponentFactory;
+		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
+		std::shared_ptr<EntityManager> m_EntityManager;
+
+		std::vector<EntityPtr> m_NonStreamedEntities;
 
 		CL_Slot m_KeyUpSlot;
 

@@ -367,6 +367,16 @@ namespace FusionEngine
 			m_GUI->SetModule(guiModule);
 			guiModule->Build();
 
+			for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
+			{
+				(*exit)->SetDisplay(m_DisplayWindow);
+				(*exit)->SetComponentFactory(m_ComponentUniverse);
+				(*exit)->SetEntityInstantiator(m_EntityInstantiator);
+				(*exit)->SetEntityManager(m_EntityManager);
+				(*exit)->SetMapLoader(m_CellArchivist);
+				(*exit)->SetStreamingManager(m_StreamingManager);
+			}
+
 			auto mb = Rocket::Core::GetContext("world")->LoadDocument("/core/gui/message_box.rml");
 			if (auto label = mb->GetElementById("message_label"))
 				label->SetInnerRML("hello");

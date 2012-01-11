@@ -30,9 +30,21 @@
 #include "FusionEditor.h"
 
 #include "FusionCamera.h"
+#include "FusionComponentFactory.h"
+#include "FusionEntityInstantiator.h"
+#include "FusionEntityManager.h"
 #include "FusionGUI.h"
 
 #include "FusionAngelScriptSystem.h"
+#include "FusionCLRenderSystem.h"
+#include "FusionRenderer.h"
+
+// TYPES (will be removed when createEntity is replaced with a script)
+#include "FusionPhysicalComponent.h"
+#include "FusionRender2DComponent.h"
+#include "FusionScriptComponent.h"
+#include "FusionTransformComponent.h"
+
 
 namespace FusionEngine
 {
@@ -59,6 +71,18 @@ namespace FusionEngine
 		if (auto asw = std::dynamic_pointer_cast<AngelScriptWorld>(world))
 		{
 			SetAngelScriptWorld(asw);
+		}
+		else if (auto renderWorld = std::dynamic_pointer_cast<CLRenderWorld>(world))
+		{
+			m_RenderWorld = renderWorld;
+
+			auto camera = std::make_shared<Camera>();
+			camera->SetPosition(0.f, 0.f);
+			auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+			m_RenderWorld->AddViewport(viewport);
+			m_StreamingManager->AddCamera(camera);
+
+			m_EditCam = camera;
 		}
 	}
 
@@ -91,11 +115,169 @@ namespace FusionEngine
 		return std::vector<std::shared_ptr<RendererExtension>>();
 	}
 
+	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, EntityInstantiator* instantiator, ComponentFactory* factory, EntityManager* entityManager)
+	{
+		position.x = ToSimUnits(position.x); position.y = ToSimUnits(position.y);
+
+		ComponentPtr transformCom;
+		if (i == 1 || i == 2)
+		{
+			transformCom = factory->InstantiateComponent("StaticTransform");
+		}
+		else if (i == 4)
+		{
+			transformCom = factory->InstantiateComponent("b2Kinematic");
+		}
+		else
+		{
+			transformCom = factory->InstantiateComponent("b2RigidBody");
+		}
+
+		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transformCom);
+
+		if (i == 2 || i == 3)
+		{
+			ObjectID id = 0;
+			id = instantiator->GetFreeGlobalID();
+			entity->SetID(id);
+
+			std::stringstream str;
+			str << i << "_" << id;
+			entity->SetName("edit" + str.str());
+
+			if (i == 2)
+				entity->SetDomain(SYSTEM_DOMAIN);
+		}
+		//else
+		//{
+		//	std::stringstream str;
+		//	str << reinterpret_cast<uintptr_t>(entity.get());
+		//	entity->SetName("edit" + str.str());
+		//}
+
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Position.Set(position);
+			transform->Angle.Set(0.f);
+		}
+
+		if (add_to_scene)
+			entityManager->AddEntity(entity);
+
+		if (i == 1)
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Depth.Set(-1);
+		}
+
+		ComponentPtr b2CircleFixture;
+		if (i == 3 || i == 4)
+		{
+			b2CircleFixture = factory->InstantiateComponent("b2Circle");
+			entity->AddComponent(b2CircleFixture);
+			{
+				auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+				fixture->Density.Set(0.8f);
+				fixture->Sensor.Set(i > 80);
+				auto shape = entity->GetComponent<ICircleShape>();
+				shape->Radius.Set(ToSimUnits(50.f / 2.f));
+			}
+			entity->SynchroniseParallelEdits();
+		}
+
+		auto clSprite = factory->InstantiateComponent("CLSprite");
+		entity->AddComponent(clSprite);
+
+		ComponentPtr asScript, asScript2;
+		if (i == 4)
+		{
+			asScript = factory->InstantiateComponent("ASScript");
+			entity->AddComponent(asScript, "script_a");
+		}
+
+		if (i == 2)
+		{
+			asScript2 = factory->InstantiateComponent("ASScript");
+			entity->AddComponent(asScript2, "spawn_script");
+		}
+
+		if (i == 4)
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Depth.Set(1);
+		}
+
+		{
+			auto sprite = entity->GetComponent<ISprite>();
+			if (i == 1)
+			{
+				sprite->ImagePath.Set("Entities/Dirt.png");
+			}
+			else if (i == 3)
+			{
+				sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
+				sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
+			}
+			else
+				sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
+		}
+
+		if (i == 5)
+		{
+			auto script = entity->GetComponent<IScript>("script_a");
+			if (script)
+				script->ScriptPath.Set("Scripts/test_script.as");
+		}
+		if (i == 2)
+		{
+			auto script = entity->GetComponent<IScript>("spawn_script");
+			if (script)
+				script->ScriptPath.Set("Scripts/SpawnPoint.as");
+		}
+		entity->SynchroniseParallelEdits();
+
+		{
+			auto body = entity->GetComponent<IRigidBody>();
+			if (body)
+			{
+				//body->ApplyTorque(10.f);
+				//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+				//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
+				body->LinearDamping.Set(0.1f);
+				body->AngularDamping.Set(0.9f);
+			}
+		}
+
+		return entity;
+	}
+
 	void Editor::onKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
 	{
-		if (ev.id == CL_KEY_F7)
+		switch (ev.id)
 		{
+		case CL_KEY_F7:
 			m_Rebuild = true;
+			break;
+		}
+		if (ev.id >= CL_KEY_0 && ev.id <= CL_KEY_9)
+		{
+			unsigned int num = (unsigned int)(ev.id - CL_KEY_0);
+
+			auto vps = m_RenderWorld->GetViewports();
+			if (vps.empty())
+				return;
+			auto vp = vps.front();
+
+			srand(CL_System::get_time());
+
+			Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
+			CL_Rectf area;
+			Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, vp, true);
+			pos.x += area.left; pos.y += area.top;
+
+			auto entity = createEntity(true, num, pos, m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+			if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
+				m_NonStreamedEntities.push_back(entity);
 		}
 	}
 

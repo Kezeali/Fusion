@@ -150,6 +150,8 @@ namespace FusionEngine
 		AngelScriptTaskB* m_ASTaskB;
 
 		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
+
+		bool instantiateScript(const boost::intrusive_ptr<ASScript>& script);
 	};
 
 	class AngelScriptTask : public ISystemTask

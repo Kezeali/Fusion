@@ -145,6 +145,11 @@ namespace FusionEngine
 			m_Resource = resource;
 		}
 
+		const ResourceDataPtr& GetTarget() const
+		{
+			return m_Resource;
+		}
+
 		void Release()
 		{
 			m_Resource.reset();

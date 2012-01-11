@@ -791,13 +791,30 @@ namespace FusionEngine
 			}
 		}
 
-		struct rebuiltScript_t
+		class rebuiltScript_t
 		{
+		public:
 			boost::intrusive_ptr<ASScript> component;
 			std::shared_ptr<RakNet::BitStream> occasionalData;
 			std::shared_ptr<RakNet::BitStream> continiousData;
+			rebuiltScript_t()
+				: occasionalData(new RakNet::BitStream),
+				continiousData(new RakNet::BitStream)
+			{}
+			rebuiltScript_t(rebuiltScript_t&& other)
+				: component(std::move(other.component)),
+				occasionalData(std::move(other.occasionalData)),
+				continiousData(std::move(other.continiousData))
+			{}
+			rebuiltScript_t& operator=(rebuiltScript_t&& other)
+			{
+				component = std::move(other.component);
+				occasionalData = std::move(other.occasionalData);
+				continiousData = std::move(other.continiousData);
+				return *this;
+			}
 		};
-		std::map<std::string, rebuiltScript_t> rebuiltScripts;
+		std::vector<rebuiltScript_t> rebuiltScripts;
 
 		for (auto it = scriptsToBuild.begin(), end = scriptsToBuild.end(); it != end; ++it)
 		{
@@ -805,6 +822,7 @@ namespace FusionEngine
 			auto& script = it->second.first;
 			auto& scriptInfo = it->second.second;
 
+			ResourceDataPtr resource; // The resource pointer for any active scripts will be copied here
 			for (auto sit = m_ActiveScripts.begin(), send = m_ActiveScripts.end(); sit != send; ++sit)
 			{
 				const auto& scriptComponent = (*sit);
@@ -816,13 +834,26 @@ namespace FusionEngine
 					scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData, IComponent::Editable);
 					scriptComponent->SerialiseContinuous(*rebuiltScript.continiousData);
 
-					scriptComponent->SetScriptObject(nullptr, scriptInfo.Properties);
+					if (rebuiltScript.occasionalData->GetNumberOfBitsUsed() == 0)
+						rebuiltScript.occasionalData.reset();
+					if (rebuiltScript.continiousData->GetNumberOfBitsUsed() == 0)
+						rebuiltScript.continiousData.reset();
 
-					rebuiltScripts[fileName] = rebuiltScript;
+					scriptComponent->SetScriptObject(nullptr, scriptInfo.Properties);
+					//scriptComponent->m_Module.Release();
+					resource = scriptComponent->m_Module.GetTarget();
+
+					rebuiltScripts.push_back(rebuiltScript);
 				}
 			}
 
+			m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE);
+
 			auto module = m_ScriptManager->GetModule(fileName.c_str(), asGM_ALWAYS_CREATE);
+
+			// Hackiddy hack (switch the resource data)
+			if (resource)
+				resource->SetDataPtr(module->GetASModule());
 
 			module->AddCode(fileName, script);
 
@@ -851,6 +882,25 @@ namespace FusionEngine
 			{
 				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename, CLBinaryStream::open_write));
 				module->GetASModule()->SaveByteCode(outFile.get());
+			}
+		}
+
+		for (auto it = rebuiltScripts.begin(), end = rebuiltScripts.end(); it != end; ++it)
+		{
+			const auto& rebuiltScript = *it;
+			//rebuiltScript.component->m_ModuleLoadedConnection =
+			//	ResourceManager::getSingleton().GetResource("MODULE", rebuiltScript.component->GetScriptPath(),
+			//	std::bind(&ASScript::OnModuleLoaded, rebuiltScript.component.get(), std::placeholders::_1));
+
+			rebuiltScript.component->m_EntityWrapperTypeId =
+				rebuiltScript.component->m_Module->GetTypeIdByDecl("EntityWrapper@");
+			FSN_ASSERT(rebuiltScript.component->m_EntityWrapperTypeId >= 0);
+			if (instantiateScript(rebuiltScript.component))
+			{
+				if (rebuiltScript.occasionalData)
+					rebuiltScript.component->DeserialiseOccasional(*rebuiltScript.occasionalData, IComponent::Editable);
+				if (rebuiltScript.continiousData)
+					rebuiltScript.component->DeserialiseContinuous(*rebuiltScript.continiousData);
 			}
 		}
 
@@ -1042,6 +1092,47 @@ namespace FusionEngine
 	{
 	}
 
+	bool AngelScriptWorld::instantiateScript(const boost::intrusive_ptr<ASScript>& script)
+	{
+		if (!script->m_ScriptObject)
+		{
+			auto objectType = script->m_Module->GetObjectTypeByIndex(0);
+			if (objectType == nullptr)
+			{
+				SendToConsole(script->GetScriptPath() + " defines no classes");
+				script->m_ModuleReloaded = false;
+				return false;
+			}
+			if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
+			{
+				SendToConsole("First class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
+				script->m_ModuleReloaded = false;
+				return false;
+			}
+			//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
+			auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "");
+			if (f)
+			{
+				f.SetThrowOnException(true);
+
+				try
+				{
+					auto obj = *static_cast<asIScriptObject**>( f() );
+					if (obj)
+					{
+						auto scriptInfoForThis = m_ScriptInfo.find(objectType->GetName());
+						script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
+					}
+				}
+				catch (ScriptUtils::Exception& e)
+				{
+					SendToConsole(e.m_Message);
+				}
+			}
+		}
+		return true;
+	}
+
 	void AngelScriptTaskB::Update(const float delta)
 	{
 		{
@@ -1058,36 +1149,8 @@ namespace FusionEngine
 
 				if (script->m_Module.IsLoaded())
 				{
-					if (!script->m_ScriptObject)
-					{
-						auto objectType = script->m_Module->GetObjectTypeByIndex(0);
-						if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
-						{
-							SendToConsole("First class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
-							script->m_ModuleReloaded = false;
-							continue;
-						}
-						//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
-						auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "");
-						if (f)
-						{
-							f.SetThrowOnException(true);
-
-							try
-							{
-								auto obj = *static_cast<asIScriptObject**>( f() );
-								if (obj)
-								{
-									auto scriptInfoForThis = m_AngelScriptWorld->m_ScriptInfo.find(objectType->GetName());
-									script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
-								}
-							}
-							catch (ScriptUtils::Exception& e)
-							{
-								SendToConsole(e.m_Message);
-							}
-						}
-					}
+					if (!m_AngelScriptWorld->instantiateScript(script))
+						continue;
 					
 					if (script->InitialiseEntityWrappers())
 						script->MarkReady();

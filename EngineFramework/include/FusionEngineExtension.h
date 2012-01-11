@@ -37,13 +37,30 @@ namespace FusionEngine
 {
 
 	class RendererExtension;
+
 	class ISystemWorld;
+
+	class ComponentFactory;
+	class EntityInstantiator;
+	class EntityManager;
+	class RegionMapLoader;
+	class StreamingManager;
 
 	class EngineExtension
 	{
 	public:
 		EngineExtension() : m_Quit(false) {}
 		virtual ~EngineExtension() {}
+
+		// If I change the implementation such that CLRenderSystem creates the display,
+		//  this interface can be removed and getting the display can be done in OnWorldCreated
+		//  if an extension requires it
+		virtual void SetDisplay(const CL_DisplayWindow& display) {}
+		virtual void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) {}
+		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
+		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
+		virtual void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) {}
+		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
 
 		virtual void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world) = 0;
 

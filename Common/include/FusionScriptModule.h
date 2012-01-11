@@ -62,6 +62,7 @@ namespace FusionEngine
 	//! Stores a module pointer
 	class Module
 	{
+		friend class ScriptManager;
 	public:
 		typedef boost::signals2::signal<void (BuildModuleEvent&)> BuildModuleSignalType;
 		typedef BuildModuleSignalType::slot_type BuildModuleSlotType;

@@ -487,10 +487,16 @@ namespace FusionEngine
 
 	ModulePtr ScriptManager::GetModule(const char *module_name, asEGMFlags when)
 	{
-		ModuleMap::iterator _where = m_Modules.find(module_name);
+		auto _where = m_Modules.find(module_name);
 		if (_where != m_Modules.end()) // Return the existing wrapper
 		{
-			return _where->second;
+			if (when != asGM_ALWAYS_CREATE)
+				return _where->second;
+			else
+			{
+				_where->second->m_Module = m_asEngine->GetModule(module_name, when);
+				return _where->second;
+			}
 		}
 		else if (when != asGM_ONLY_IF_EXISTS) // Create a new Module wrapper
 		{
