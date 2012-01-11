@@ -76,6 +76,14 @@ namespace FusionEngine
 
 	typedef boost::intrusive_ptr<IComponent> ComponentPtr;
 
+	//! Serialisation exception
+	class SerialisationError : public Exception
+	{
+	public:
+		SerialisationError(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
+	};
+
 	template <class T>
 	class ComponentIPtr
 	{

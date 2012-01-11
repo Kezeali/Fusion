@@ -125,6 +125,13 @@ namespace FusionEngine
 			return getSingleton().create(type, params, context);
 		}
 
+		static MessageBox* Show(Rocket::Core::Context* context, const std::string& type, const std::string& params)
+		{
+			auto mb = getSingleton().create(type, params, context);
+			mb->Show();
+			return mb;
+		}
+
 		static std::string GetParam(const ParamMap& params, const std::string& param_name);
 
 		MessageBoxMaker(Rocket::Core::Context* context);

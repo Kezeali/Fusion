@@ -30,10 +30,15 @@
 #include "FusionEditor.h"
 
 #include "FusionCamera.h"
+#include "FusionCellCache.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
 #include "FusionGUI.h"
+#include "FusionMessageBox.h"
+#include "FusionRegionCellCache.h"
+#include "FusionRegionMapLoader.h"
+#include "FusionStreamingManager.h"
 
 #include "FusionAngelScriptSystem.h"
 #include "FusionCLRenderSystem.h"
@@ -50,10 +55,30 @@ namespace FusionEngine
 {
 
 	Editor::Editor(const std::vector<CL_String>& args)
-		: m_Rebuild(false)
+		: m_RebuildScripts(false),
+		m_CompileMap(false),
+		m_SaveMap(false),
+		m_LoadMap(false)
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
 		context->SetMouseShowPeriod(500);
+
+		MessageBoxMaker::AddFactory("error",
+			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
+		{
+			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
+
+			messageBox->SetType("error_message");
+			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
+			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
+
+			MessageBox* messageBoxRawPtr = messageBox.get();
+			messageBox->GetEventSignal("accept_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
+				messageBoxRawPtr->release();
+			});
+
+			return messageBox.get();
+		});
 	}
 
 	Editor::~Editor()
@@ -103,10 +128,35 @@ namespace FusionEngine
 			m_EditCam->SetPosition(camPos.x, camPos.y);
 		}
 
-		if (m_Rebuild && m_AngelScriptWorld)
+		if (m_RebuildScripts && m_AngelScriptWorld)
 		{
-			m_Rebuild = false;
+			m_RebuildScripts = false;
 			m_AngelScriptWorld->BuildScripts();
+		}
+
+		if (m_CompileMap)
+		{
+			m_CompileMap = false;
+
+			m_StreamingManager->StoreAllCells(false);
+			m_MapLoader->Stop();
+			try
+			{
+				IO::PhysFSStream file("default.gad", IO::Write);
+				GameMap::CompileMap(file, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities);
+				m_MapLoader->SaveEntityLocationDB("default.endb");
+			}
+			catch (FileSystemException& e)
+			{
+				SendToConsole("Failed to compile map: " + e.GetDescription());
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+			}
+			m_MapLoader->Start();
+
+			m_StreamingManager->Update(true);
+
+			auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
+			mb->Show();
 		}
 	}
 
@@ -253,12 +303,33 @@ namespace FusionEngine
 
 	void Editor::onKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
 	{
-		switch (ev.id)
+		// Ctrl + Keys
+		if (ev.ctrl)
 		{
-		case CL_KEY_F7:
-			m_Rebuild = true;
-			break;
+			switch (ev.id)
+			{
+			case CL_KEY_S:
+				m_SaveMap = true;
+				break;
+			case CL_KEY_O:
+				m_LoadMap = true;
+				break;
+			}
 		}
+		// Keys
+		else
+		{
+			switch (ev.id)
+			{
+			case CL_KEY_F7:
+				m_RebuildScripts = true;
+				break;
+			case CL_KEY_F5:
+				m_CompileMap = true;
+				break;
+			}
+		}
+		// Numbers
 		if (ev.id >= CL_KEY_0 && ev.id <= CL_KEY_9)
 		{
 			unsigned int num = (unsigned int)(ev.id - CL_KEY_0);

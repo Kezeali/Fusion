@@ -32,6 +32,7 @@
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
 
+#include "FusionException.h"
 #include "FusionLogger.h"
 
 #include "scriptany.h"
@@ -1200,11 +1201,15 @@ namespace FusionEngine
 
 		std::bitset<DeltaSerialiser_t::NumParams> changes;
 		std::string unused;
+		std::string newPath;
 		m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes,
-			m_Path, unused);
+			newPath, unused);
 
-		if (changes[PropsIdx::ScriptPath])
+		if (newPath != m_Path)
+		{
+			m_Path = newPath;
 			m_ReloadScript = true;
+		}
 
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
@@ -1218,7 +1223,10 @@ namespace FusionEngine
 		stream.Read(numProperties);
 		if (m_ScriptObject)
 		{
-			FSN_ASSERT(mode == Editable || m_ScriptProperties.size() == numProperties);
+			if (mode != Editable && m_ScriptProperties.size() != numProperties)
+			{
+				FSN_EXCEPT(SerialisationError, "Script data has incorrect number of properties");
+			}
 			FSN_ASSERT(m_ScriptObject->object);
 
 			if (mode == Editable)
@@ -1320,8 +1328,9 @@ namespace FusionEngine
 
 	void ASScript::SetScriptPath(const std::string& path)
 	{
+		if (path != m_Path)
+			m_ReloadScript = true;
 		m_Path = path;
-		m_ReloadScript = true;
 
 		m_DeltaSerialisationHelper.markChanged(PropsIdx::ScriptPath);
 	}

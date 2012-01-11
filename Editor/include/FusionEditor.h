@@ -85,7 +85,10 @@ namespace FusionEngine
 
 		CL_Slot m_KeyUpSlot;
 
-		bool m_Rebuild;
+		bool m_RebuildScripts;
+		bool m_CompileMap;
+		bool m_SaveMap;
+		bool m_LoadMap;
 
 		void onKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
 
