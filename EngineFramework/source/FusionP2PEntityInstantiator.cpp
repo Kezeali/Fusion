@@ -426,7 +426,6 @@ namespace FusionEngine
 		EntityPtr entity;
 		if (nativeCom)
 		{
-			//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
 			entity = nativeCom->GetParent()->shared_from_this();
 		}
 

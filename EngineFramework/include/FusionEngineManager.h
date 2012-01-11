@@ -71,6 +71,7 @@ namespace FusionEngine
 
 		void Initialise();
 
+		const CL_DisplayWindow& GetDisplayWindow() const;
 		const CL_GraphicContext& GetGC() const;
 		const CL_SoundOutput& GetSoundOutput() const;
 		const std::shared_ptr<ScriptManager>& GetScriptManager() const;

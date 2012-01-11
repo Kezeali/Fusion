@@ -49,6 +49,7 @@ namespace FusionEngine
 	class IDrawable;
 	class CLSprite;
 	class CLRenderTask;
+	class CLRenderGUITask;
 	class StreamingCamera;
 	class CameraSynchroniser;
 
@@ -57,7 +58,7 @@ namespace FusionEngine
 	class CLRenderSystem : public IComponentSystem
 	{
 	public:
-		CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync);
+		CLRenderSystem(const CL_DisplayWindow& window, CameraSynchroniser* camera_sync);
 
 		std::shared_ptr<ISystemWorld> CreateWorld();
 
@@ -68,7 +69,7 @@ namespace FusionEngine
 
 		void RegisterScriptInterface(asIScriptEngine* engine);
 
-		CL_GraphicContext m_GraphicContext;
+		CL_DisplayWindow m_DisplayWindow;
 		CameraSynchroniser* m_CameraSynchroniser;
 		
 	};
@@ -76,7 +77,7 @@ namespace FusionEngine
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
-		CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc, CameraSynchroniser* camera_sync);
+		CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync);
 		virtual ~CLRenderWorld();
 
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
@@ -109,9 +110,10 @@ namespace FusionEngine
 		void OnActivation(const ComponentPtr& component);
 		void OnDeactivation(const ComponentPtr& component);
 
-		ISystemTask* GetTask();
+		std::vector<ISystemTask*> GetTasks();
 
 		CLRenderTask* m_RenderTask;
+		CLRenderGUITask* m_GUITask;
 
 		// Drawables contains all drawable components (sprites, etc.) sorted for rendering
 		std::vector<boost::intrusive_ptr<IDrawable>> m_Drawables;
@@ -158,6 +160,36 @@ namespace FusionEngine
 
 		CL_Font m_DebugFont;
 		CL_Font m_DebugFont2;
+	};
+
+	class CLRenderGUITask : public ISystemTask
+	{
+	public:
+		CLRenderGUITask(CLRenderWorld* sysworld, const CL_DisplayWindow& window, Renderer* const renderer);
+		~CLRenderGUITask();
+
+		void Update(const float delta);
+
+		SystemType GetTaskType() const { return SystemType::Simulation; }
+
+		PerformanceHint GetPerformanceHint() const { return Short; }
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return true;
+		}
+
+		void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
+
+	private:
+		CLRenderWorld* m_RenderWorld;
+		Renderer* const m_Renderer;
+
+		CL_DisplayWindow m_DisplayWindow;
+
+		CL_Slot m_MouseMoveSlot;
+		std::deque<CL_InputEvent> m_BufferedEvents;
+		//Vector2i m_LastPosition;
 	};
 
 }

@@ -136,34 +136,39 @@ namespace FusionEngine
 	{
 	}
 
-	GUIContext::GUIContext(Rocket::Core::Context* context, CL_InputContext ic)
+	GUIContext::GUIContext(Rocket::Core::Context* context, CL_InputContext ic, bool enable_mouse)
 		: m_Context(context),
 		m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(m_MouseShowPeriod),
 		m_ClickPause(0)
 	{
-		// Mouse Events
-		m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
-		m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
-		m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		if (enable_mouse)
+		{
+			// Mouse Events
+			m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
+			m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
+			m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		}
 		// KBD events
 		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUIContext::onKeyDown);
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUIContext::onKeyUp);
 	}
 
-	GUIContext::GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size)
+	GUIContext::GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size, bool enable_mouse)
 		: m_Context(nullptr),
 		m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(m_MouseShowPeriod),
 		m_ClickPause(0)
 	{
 		m_Context = Rocket::Core::CreateContext(Rocket::Core::String(&name[0], &name[0] + name.size()), Rocket::Core::Vector2i(size.x, size.y));
-		m_Context->LoadMouseCursor("core/gui/cursor.rml");
 
-		// Mouse Events
-		m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
-		m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
-		m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		if (enable_mouse)
+		{
+			// Mouse Events
+			m_Slots.connect(ic.get_mouse().sig_key_down(), this, &GUIContext::onMouseDown);
+			m_Slots.connect(ic.get_mouse().sig_key_up(), this, &GUIContext::onMouseUp);
+			m_Slots.connect(ic.get_mouse().sig_pointer_move(), this, &GUIContext::onMouseMove);
+		}
 		// KBD events
 		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUIContext::onKeyDown);
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUIContext::onKeyUp);
@@ -408,9 +413,13 @@ namespace FusionEngine
 		CL_GraphicContext gc = m_Display.get_gc();
 		CL_InputContext ic = m_Display.get_ic();
 
-		auto& defaultCtx = m_Contexts["default"] = std::make_shared<GUIContext>("default", ic, Vector2i(gc.get_width(), gc.get_height()));
+		// Create the world context, no input
+		m_Contexts["world"] = std::make_shared<GUIContext>("world", ic, Vector2i(gc.get_width(), gc.get_height()), false);
+		auto& screenCtx = m_Contexts["screen"] = std::make_shared<GUIContext>("screen", ic, Vector2i(gc.get_width(), gc.get_height()));
 
-		m_MessageBoxMaker.reset(new MessageBoxMaker(defaultCtx->m_Context));
+		screenCtx->m_Context->LoadMouseCursor("core/gui/cursor.rml");
+
+		m_MessageBoxMaker.reset(new MessageBoxMaker(screenCtx->m_Context));
 
 		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
 
@@ -447,7 +456,7 @@ namespace FusionEngine
 				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
-				m_Contexts["default"]->m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
+				m_Contexts["screen"]->m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
@@ -512,7 +521,7 @@ namespace FusionEngine
 
 	Rocket::Core::Context *GUI::GetContext() const
 	{
-		return m_Contexts.at("default")->m_Context;
+		return m_Contexts.at("screen")->m_Context;
 	}
 
 	Rocket::Core::ElementDocument *GUI::GetConsoleWindow() const
@@ -523,7 +532,7 @@ namespace FusionEngine
 	void GUI::InitializeDebugger()
 	{
 		if (!m_DebuggerInitialized)
-			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["default"]->m_Context);
+			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["screen"]->m_Context);
 	}
 
 	void GUI::ShowDebugger()
@@ -699,7 +708,8 @@ namespace FusionEngine
 
 	void GUI::onResize(int x, int y)
 	{
-		m_Contexts["default"]->SetDimensions(Vector2i(x, y));
+		m_Contexts["world"]->SetDimensions(Vector2i(x, y));
+		m_Contexts["screen"]->SetDimensions(Vector2i(x, y));
 	}
 
 }

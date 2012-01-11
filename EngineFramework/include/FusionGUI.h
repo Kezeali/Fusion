@@ -60,8 +60,8 @@ namespace FusionEngine
 	{
 	public:
 		GUIContext();
-		GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size);
-		GUIContext(Rocket::Core::Context* context, CL_InputContext ic);
+		GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size, bool enable_mouse = true);
+		GUIContext(Rocket::Core::Context* context, CL_InputContext ic, bool enable_mouse = true);
 		~GUIContext();
 
 		void Update(float dt);
@@ -76,7 +76,6 @@ namespace FusionEngine
 
 		//! Sends fake mouse position data to this GUI's context
 		void SetMouseCursorPosition(int x, int y, int modifier = 0);
-
 
 		Rocket::Core::Context* m_Context;
 

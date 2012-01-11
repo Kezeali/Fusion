@@ -316,6 +316,11 @@ namespace FusionEngine
 		m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
 	}
 
+	const CL_DisplayWindow& EngineManager::GetDisplayWindow() const
+	{
+		return m_DisplayWindow;
+	}
+
 	const CL_GraphicContext& EngineManager::GetGC() const
 	{
 		return m_DisplayWindow.get_gc();
@@ -361,6 +366,12 @@ namespace FusionEngine
 			auto guiModule = m_ScriptManager->GetModule("core_gui_console");
 			m_GUI->SetModule(guiModule);
 			guiModule->Build();
+
+			auto mb = Rocket::Core::GetContext("world")->LoadDocument("/core/gui/message_box.rml");
+			if (auto label = mb->GetElementById("message_label"))
+				label->SetInnerRML("hello");
+			mb->Show();
+			mb->RemoveReference();
 			
 			m_ResourceManager->StartLoaderThread();
 
@@ -368,7 +379,12 @@ namespace FusionEngine
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
 				auto world = it->second->CreateWorld();
+				// Add the world to the universe
 				m_ComponentUniverse->AddWorld(world);
+				// Notify the extensions
+				for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
+					(*exit)->OnWorldCreated(world);
+				// Add the world's tasks to the scheduler
 				worlds.push_back(world);
 			}
 			m_Scheduler->SetUniverse(worlds);

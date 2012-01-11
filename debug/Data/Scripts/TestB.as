@@ -50,11 +50,11 @@ class TestB : ScriptComponent
 			else
 				irigidbody.AngularVelocity << 0;
 		}
-		//~ //if (ev.inputName == "special")
-		//~ //{
-		//~ //	if (ev.isDown)
-		//~ //		irigidbody.Interpolate = !irigidbody.Interpolate;
-		//~ //}
+		//if (ev.inputName == "special")
+		//{
+		//	if (ev.isDown)
+		//		irigidbody.Interpolate = !irigidbody.Interpolate;
+		//}
 	}
 
 	void update()

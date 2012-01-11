@@ -40,6 +40,8 @@
 #include "FusionCameraSynchroniser.h"
 
 #include "FusionPlayerRegistry.h"
+#include "FusionInputHandler.h"
+#include "FusionGUI.h"
 
 #include "FusionProfiling.h"
 #include "FusionNetworkManager.h"
@@ -57,8 +59,8 @@
 
 namespace FusionEngine
 {
-	CLRenderSystem::CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
-		: m_GraphicContext(gc),
+	CLRenderSystem::CLRenderSystem(const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
+		: m_DisplayWindow(window),
 		m_CameraSynchroniser(camera_sync)
 	{
 	}
@@ -70,20 +72,22 @@ namespace FusionEngine
 
 	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
 	{
-		return std::make_shared<CLRenderWorld>(this, m_GraphicContext, m_CameraSynchroniser);
+		return std::make_shared<CLRenderWorld>(this, m_DisplayWindow, m_CameraSynchroniser);
 	}
 
-	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
+	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
 		: ISystemWorld(system),
 		m_CameraManager(camera_sync),
 		m_PhysWorld(nullptr)
 	{
-		m_Renderer = new Renderer(gc);
+		m_Renderer = new Renderer(window.get_gc());
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
+		m_GUITask = new CLRenderGUITask(this, window, m_Renderer);
 	}
 
 	CLRenderWorld::~CLRenderWorld()
 	{
+		delete m_GUITask;
 		delete m_RenderTask;
 		delete m_Renderer;
 	}
@@ -242,9 +246,12 @@ namespace FusionEngine
 		}
 	}
 
-	ISystemTask* CLRenderWorld::GetTask()
+	std::vector<ISystemTask*> CLRenderWorld::GetTasks()
 	{
-		return m_RenderTask;
+		std::vector<ISystemTask*> tasks;
+		tasks.push_back(m_RenderTask);
+		//tasks.push_back(m_GUITask);
+		return tasks;
 	}
 
 	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
@@ -396,13 +403,17 @@ namespace FusionEngine
 				}
 			}
 
+			auto ctx = Rocket::Core::GetContext("world");
+			ctx->Render();
+
 			m_Renderer->PostDraw();
 		}
 
 		for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
 		{
 			auto ctx = Rocket::Core::GetContext(i);
-			ctx->Render();
+			if (ctx->GetName() != "world")
+				ctx->Render();
 		}
 
 		{
@@ -429,28 +440,28 @@ namespace FusionEngine
 		}
 
 		{
-		auto pf = Profiling::getSingleton().GetTimes();
-		CL_Pointf pfLoc(10.f, 110.f);
-		for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
-		{
-			std::stringstream secStr, percentStr;
-			secStr.setf(std::ios::fixed);
-			secStr.precision(5);
-			percentStr.precision(3);
-
-			secStr << it->second;
-			std::string line = it->first + ": " + secStr.str() + "sec";
-
-			if (it->second > 0.0 && DeltaTime::GetDeltaTime() > 0.f)
+			auto pf = Profiling::getSingleton().GetTimes();
+			CL_Pointf pfLoc(10.f, 110.f);
+			for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 			{
-				percentStr << (it->second / DeltaTime::GetDeltaTime()) * 100.f;
-				line += " (" + percentStr.str() + "%)";
+				std::stringstream secStr, percentStr;
+				secStr.setf(std::ios::fixed);
+				secStr.precision(5);
+				percentStr.precision(3);
+
+				secStr << it->second;
+				std::string line = it->first + ": " + secStr.str() + "sec";
+
+				if (it->second > 0.0 && DeltaTime::GetDeltaTime() > 0.f)
+				{
+					percentStr << (it->second / DeltaTime::GetDeltaTime()) * 100.f;
+					line += " (" + percentStr.str() + "%)";
+				}
+
+				m_DebugFont.draw_text(gc, pfLoc, line);
+
+				pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
 			}
-
-			m_DebugFont.draw_text(gc, pfLoc, line);
-
-			pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
-		}
 		}
 
 		{
@@ -566,6 +577,80 @@ namespace FusionEngine
 	{
 		RegisterSingletonType<CLRenderSystem>("Renderer", engine);
 		engine->RegisterObjectMethod("Renderer", "void addViewport(const Camera &in)", asFUNCTION(CLRenderWorld_AddViewport), asCALL_CDECL_OBJLAST);
+	}
+
+
+	CLRenderGUITask::CLRenderGUITask(CLRenderWorld* sysworld, const CL_DisplayWindow& window, Renderer* const renderer)
+		: ISystemTask(sysworld),
+		m_RenderWorld(sysworld),
+		m_Renderer(renderer),
+		m_DisplayWindow(window)
+	{
+		m_MouseMoveSlot = window.get_ic().get_mouse().sig_pointer_move().connect(this, &CLRenderGUITask::onMouseMove);
+	}
+
+	CLRenderGUITask::~CLRenderGUITask()
+	{
+	}
+
+	inline int getRktModifierFlags(const CL_InputEvent &ev)
+	{
+		int modifier = 0;
+		if (ev.alt)
+			modifier |= Rocket::Core::Input::KM_ALT;
+		if (ev.ctrl)
+			modifier |= Rocket::Core::Input::KM_CTRL;
+		if (ev.shift)
+			modifier |= Rocket::Core::Input::KM_SHIFT;
+		return modifier;
+	}
+
+	void CLRenderGUITask::Update(const float delta)
+	{
+		auto context = Rocket::Core::GetContext(0);
+
+		auto& viewports = m_RenderWorld->GetViewports();
+		while (!m_BufferedEvents.empty())
+		{
+			CL_InputEvent ev = m_BufferedEvents.front();
+			m_BufferedEvents.pop_front();
+
+			auto mousePos = ev.mouse_pos;
+			auto keyState = getRktModifierFlags(ev);
+
+			for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
+			{
+				const auto& camera = (*it)->GetCamera();
+
+				// Calculate the area on-screen that the viewport takes up
+				CL_Rectf screenArea;
+				m_Renderer->CalculateScreenArea(screenArea, *it, false);
+
+				if (screenArea.contains(CL_Vec2i(mousePos.x, mousePos.y)))
+				{
+					// Calculate the offset within the world of the viewport
+					CL_Rectf worldArea;
+					m_Renderer->CalculateScreenArea(worldArea, *it, true);
+
+					mousePos.x += (int)worldArea.left;
+					mousePos.y += (int)worldArea.top;
+
+					//for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+					{
+						context->ProcessMouseMove(mousePos.x, mousePos.y, keyState);
+					}
+				}
+			}
+		}
+
+		context->Update();
+	}
+
+	void CLRenderGUITask::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		//if (m_ClickPause <= 0)
+		//	m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));
+		m_BufferedEvents.push_back(ev);
 	}
 
 }

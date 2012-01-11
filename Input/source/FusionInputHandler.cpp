@@ -128,6 +128,9 @@ namespace FusionEngine
 
 	bool InputManager::Test()
 	{
+		if (m_DisplayWindow.is_null())
+			return false;
+
 		// Keyboard is always required
 		if (m_InputContext.get_keyboard_count() == 0)
 			return false;
@@ -137,6 +140,8 @@ namespace FusionEngine
 
 	void InputManager::Initialise()
 	{
+		FSN_ASSERT(Test());
+
 		m_SuspendRequests = 0;
 
 		for (unsigned int i = 0; i < (unsigned int)m_InputContext.get_keyboard_count(); i++)

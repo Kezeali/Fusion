@@ -47,12 +47,17 @@
 
 #include "scriptany.h"
 
+#include <boost/crc.hpp>
+#include <boost/filesystem/path.hpp>
+
 #include <tbb/parallel_for.h>
 #include <tbb/scalable_allocator.h>
 #include <tbb/spin_mutex.h>
 
 #include <new>
 #include <regex>
+
+#include <BitStream.h>
 
 namespace FusionEngine
 {
@@ -516,13 +521,6 @@ namespace FusionEngine
 		delete m_ASTask;
 	}
 
-	struct DependencyNode
-	{
-		std::string Name;
-		std::set<std::shared_ptr<DependencyNode>> IncludedBy;
-		std::set<std::shared_ptr<DependencyNode>> UsedBy;
-	};
-
 	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
 	{
 		std::string scriptComponentInterface;
@@ -676,27 +674,99 @@ namespace FusionEngine
 		return baseCode;
 	}
 
+	bool AngelScriptWorld::updateChecksum(const std::string& filename, const std::string& filedata)
+	{
+		boost::crc_32_type crc;
+		crc.process_bytes(filedata.data(), filedata.size());
+		auto sum = crc.checksum();
+
+		auto insertResult = m_ScriptChecksums.insert(std::make_pair(filename, sum));
+		if (!insertResult.second)
+		{
+			auto _where = insertResult.first;
+			if (_where->second == sum) // Existing entry is equal
+				return false;
+			else
+			{
+				_where->second = sum;
+				return true;
+			}
+		}
+		else // No existing entry
+		{
+			return true;
+		}
+	}
+
+	std::shared_ptr<AngelScriptWorld::DependencyNode> AngelScriptWorld::getDependencyNode(const std::string &name)
+	{
+		std::shared_ptr<DependencyNode> dependencyNode;
+		auto _where = m_DependencyData.find(name);
+		if (_where == m_DependencyData.end())
+		{
+			dependencyNode = std::make_shared<DependencyNode>();
+			dependencyNode->Name = name;
+			m_DependencyData[name] = dependencyNode;
+		}
+		else
+			dependencyNode = _where->second;
+		return dependencyNode;
+	};
+
+	void AngelScriptWorld::insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies)
+	{
+		auto scriptInfo = ParseComponentScript(m_Engine, script);
+		scriptInfo.Module = filename;
+
+		scriptsToBuild[filename] = std::make_pair(script, scriptInfo);
+		m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
+		m_ScriptInfo["I" + scriptInfo.ClassName] = scriptInfo;
+
+		// Add this data to the dependency tree
+		auto thisNode = getDependencyNode(scriptInfo.ClassName);
+		thisNode->Filename = filename;
+		for (auto pit = scriptInfo.UsedComponents.begin(), pend = scriptInfo.UsedComponents.end(); pit != pend; ++pit)
+		{
+			auto usedNode = getDependencyNode(pit->first);
+			usedNode->UsedBy.insert(thisNode);
+		}
+		for (auto pit = scriptInfo.IncludedScripts.begin(), pend = scriptInfo.IncludedScripts.end(); pit != pend; ++pit)
+		{
+			auto includedNode = getDependencyNode(*pit);
+			includedNode->IncludedBy.insert(thisNode);
+		}
+		if (check_dependencies)
+		{
+			for (auto pit = thisNode->UsedBy.begin(), pend = thisNode->UsedBy.end(); pit != pend; ++pit)
+			{
+				const std::string& dependantFilename = (*pit)->Filename;
+				auto buildEntry = scriptsToBuild.find(dependantFilename);
+				if (buildEntry == scriptsToBuild.end())
+				{
+					std::string dependantScript = OpenString_PhysFS(dependantFilename);
+					updateChecksum(dependantFilename, dependantScript);
+					insertScriptToBuild(scriptsToBuild, dependantFilename, dependantScript, true);
+				}
+			}
+			for (auto pit = thisNode->IncludedBy.begin(), pend = thisNode->IncludedBy.end(); pit != pend; ++pit)
+			{
+				const std::string& dependantFilename = (*pit)->Filename;
+				auto buildEntry = scriptsToBuild.find(dependantFilename);
+				if (buildEntry == scriptsToBuild.end())
+				{
+					std::string dependantScript = OpenString_PhysFS(dependantFilename);
+					updateChecksum(dependantFilename, dependantScript);
+					insertScriptToBuild(scriptsToBuild, dependantFilename, dependantScript, true);
+				}
+			}
+		}
+	}
+
 	void AngelScriptWorld::BuildScripts(bool rebuild_all)
 	{
 		std::vector<std::tuple<std::string, std::string, ModulePtr>> modulesToBuild;
 
 		std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>> scriptsToBuild;
-
-		std::map<std::string, std::shared_ptr<DependencyNode>> dependencyData;
-		auto getDependencyNode = [&](const std::string &name)->std::shared_ptr<DependencyNode>
-		{
-			std::shared_ptr<DependencyNode> dependencyNode;
-			auto _where = dependencyData.find(name);
-			if (_where == dependencyData.end())
-			{
-				dependencyNode = std::make_shared<DependencyNode>();
-				dependencyNode->Name = name;
-				dependencyData[name] = dependencyNode;
-			}
-			else
-				dependencyNode = _where->second;
-			return dependencyNode;
-		};
 
 		const std::string basePath = "Scripts";
 		char **files = PHYSFS_enumerateFiles(basePath.c_str());
@@ -707,34 +777,27 @@ namespace FusionEngine
 			if (fileName.rfind(".as") != std::string::npos)
 			{
 				std::string script = OpenString_PhysFS(fileName);
-				try
+				if (updateChecksum(fileName, script) || rebuild_all)
 				{
-					auto scriptInfo = ParseComponentScript(m_Engine, script);
-					scriptInfo.Module = fileName;
-
-					scriptsToBuild[fileName] = std::make_pair(script, scriptInfo);
-					m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
-					m_ScriptInfo["I" + scriptInfo.ClassName] = scriptInfo;
-
-					// Add this data to the dependency tree
-					auto thisNode = getDependencyNode(scriptInfo.ClassName);
-					for (auto pit = scriptInfo.UsedComponents.begin(), pend = scriptInfo.UsedComponents.end(); pit != pend; ++pit)
+					try
 					{
-						auto usedNode = getDependencyNode(pit->first);
-						usedNode->UsedBy.insert(thisNode);
+						insertScriptToBuild(scriptsToBuild, fileName, script, !rebuild_all);
 					}
-					for (auto pit = scriptInfo.IncludedScripts.begin(), pend = scriptInfo.IncludedScripts.end(); pit != pend; ++pit)
+					catch (PreprocessorException &ex)
 					{
-						auto includedNode = getDependencyNode(*pit);
-						includedNode->IncludedBy.insert(thisNode);
+						SendToConsole("Failed to pre-process " + fileName + ": " + ex.what());
 					}
-				}
-				catch (PreprocessorException &ex)
-				{
-					SendToConsole("Failed to pre-process " + fileName + ": " + ex.what());
 				}
 			}
 		}
+
+		struct rebuiltScript_t
+		{
+			boost::intrusive_ptr<ASScript> component;
+			std::shared_ptr<RakNet::BitStream> occasionalData;
+			std::shared_ptr<RakNet::BitStream> continiousData;
+		};
+		std::map<std::string, rebuiltScript_t> rebuiltScripts;
 
 		for (auto it = scriptsToBuild.begin(), end = scriptsToBuild.end(); it != end; ++it)
 		{
@@ -742,15 +805,40 @@ namespace FusionEngine
 			auto& script = it->second.first;
 			auto& scriptInfo = it->second.second;
 
+			for (auto sit = m_ActiveScripts.begin(), send = m_ActiveScripts.end(); sit != send; ++sit)
+			{
+				const auto& scriptComponent = (*sit);
+				if (scriptComponent->GetScriptPath() == fileName)
+				{
+					rebuiltScript_t rebuiltScript;
+					rebuiltScript.component = scriptComponent;
+
+					scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData, IComponent::Editable);
+					scriptComponent->SerialiseContinuous(*rebuiltScript.continiousData);
+
+					scriptComponent->SetScriptObject(nullptr, scriptInfo.Properties);
+
+					rebuiltScripts[fileName] = rebuiltScript;
+				}
+			}
+
 			auto module = m_ScriptManager->GetModule(fileName.c_str(), asGM_ALWAYS_CREATE);
 
 			module->AddCode(fileName, script);
 
 			module->AddCode("basecode", GenerateBaseCode(scriptInfo, m_ScriptInfo));
 
-			std::string moduleFileName = fileName.substr(fileName.rfind('/'));
-			moduleFileName.erase(moduleFileName.size() - 3);
-			moduleFileName = "ScriptCache" + moduleFileName + ".bytecode";
+			auto modulePath = "ScriptCache" / boost::filesystem::path(fileName).filename();
+			modulePath.replace_extension(".bytecode");
+			std::string moduleFileName = modulePath.generic_string();
+			//auto nameBegin = fileName.rfind('/');
+			//std::string moduleFileName;
+			//if (nameBegin != std::string::npos)
+			//	moduleFileName = fileName.substr(nameBegin);
+			//else
+			//	moduleFileName = "/" + fileName;
+			//moduleFileName.erase(moduleFileName.size() - 3);
+			//moduleFileName = "ScriptCache" + moduleFileName + ".bytecode";
 			modulesToBuild.push_back(std::make_tuple(moduleFileName, scriptInfo.ClassName, module));
 		}
 

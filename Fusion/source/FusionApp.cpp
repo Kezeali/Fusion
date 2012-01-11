@@ -49,11 +49,13 @@ public:
 
 			manager.Initialise();
 			
-			manager.AddExtension(std::make_shared<Editor>(args));
+			auto editor = std::make_shared<Editor>(args);
+			editor->SetDisplay(manager.GetDisplayWindow()); // TODO: automate this
+			manager.AddExtension(editor);
 
 			manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
 			manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
-			manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetGC(), manager.GetCameraSynchroniser())));
+			manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetDisplayWindow(), manager.GetCameraSynchroniser())));
 
 			manager.Run();
 		}

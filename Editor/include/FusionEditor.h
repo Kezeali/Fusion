@@ -33,10 +33,14 @@
 #include "FusionEngineExtension.h"
 
 #include <ClanLib/core.h>
+#include <ClanLib/display.h>
 #include <memory>
 
 namespace FusionEngine
 {
+
+	class ISystemWorld;
+	class AngelScriptWorld;
 
 	class Editor : public EngineExtension
 	{
@@ -44,9 +48,27 @@ namespace FusionEngine
 		Editor(const std::vector<CL_String> &args);
 		virtual ~Editor();
 
+		void SetDisplay(const CL_DisplayWindow& display);
+
+		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
+
+		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw) { m_AngelScriptWorld = asw; }
+
 		void Update(float time, float dt);
 
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
+
+	private:
+		std::shared_ptr<Camera> m_EditCam;
+
+		CL_DisplayWindow m_DisplayWindow;
+		std::shared_ptr<AngelScriptWorld> m_AngelScriptWorld;
+
+		CL_Slot m_KeyUpSlot;
+
+		bool m_Rebuild;
+
+		void onKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
 
 	};
 

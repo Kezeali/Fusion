@@ -99,10 +99,24 @@ namespace FusionEngine
 		ISystemTask* GetTask();
 		std::vector<ISystemTask*> GetTasks();
 
+		struct DependencyNode
+		{
+			std::string Name;
+			std::string Filename;
+			std::set<std::shared_ptr<DependencyNode>> IncludedBy;
+			std::set<std::shared_ptr<DependencyNode>> UsedBy;
+		};
+
+		bool updateChecksum(const std::string& filename, const std::string& filedata);
+		std::shared_ptr<DependencyNode> getDependencyNode(const std::string &name);
+
 		std::vector<boost::intrusive_ptr<ASScript>> m_NewlyActiveScripts;
 		std::vector<boost::intrusive_ptr<ASScript>> m_ActiveScripts;
 
 		bool m_Updating;
+
+		std::map<std::string, std::uint32_t> m_ScriptChecksums;
+		std::map<std::string, std::shared_ptr<DependencyNode>> m_DependencyData;
 
 	public:
 		struct ComponentScriptInfo
@@ -134,6 +148,8 @@ namespace FusionEngine
 		asIScriptEngine* m_Engine;
 		AngelScriptTask* m_ASTask;
 		AngelScriptTaskB* m_ASTaskB;
+
+		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
 	};
 
 	class AngelScriptTask : public ISystemTask

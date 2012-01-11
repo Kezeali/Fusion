@@ -112,6 +112,15 @@ namespace FusionEngine
 
 		// Set the viewport
 		m_GC.set_cliprect(viewportArea);
+		//m_GC.clear_stencil();
+		//CL_BufferControl bufferControl = m_GC.get_buffer_control();
+		//bufferControl.enable_stencil_test(true);
+		//bufferControl.enable_color_write(false);
+		//m_GC.set_buffer_control(bufferControl);
+		//CL_Draw::fill(m_GC, viewportArea, CL_Colorf(0.f, 0.f, 0.f, 1.f));
+
+		//bufferControl.enable_color_write(true);
+		//m_GC.set_buffer_control(bufferControl);
 
 		const CL_Vec2f &camPosition = camera->GetPosition();
 		const CL_Origin camOrigin = origin_center;

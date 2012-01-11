@@ -37,12 +37,15 @@ namespace FusionEngine
 {
 
 	class RendererExtension;
+	class ISystemWorld;
 
 	class EngineExtension
 	{
 	public:
 		EngineExtension() : m_Quit(false) {}
 		virtual ~EngineExtension() {}
+
+		virtual void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world) = 0;
 
 		virtual void Update(float time, float dt) = 0;
 
