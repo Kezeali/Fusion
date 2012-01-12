@@ -33,6 +33,8 @@
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
 
+#include "FusionWorldSaver.h"
+
 #include <ClanLib/core.h> // For CL_String (bleh)
 #include <ClanLib/display.h>
 #include <ClanLib/sound.h>
@@ -50,6 +52,7 @@ namespace FusionEngine
 	class ConsoleStdOutWriter;
 	class EngineExtension;
 	class EntitySynchroniser;
+	class GameMap;
 	class GUI;
 	class InputManager;
 	class PacketDispatcher;
@@ -64,7 +67,7 @@ namespace FusionEngine
 
 	void BootUp();
 
-	class EngineManager
+	class EngineManager : public WorldSaver
 	{
 	public:
 		EngineManager(const std::vector<CL_String>& args);
@@ -83,6 +86,10 @@ namespace FusionEngine
 
 		void Run();
 
+		void Save(const std::string& name);
+
+		void Load(const std::string& name);
+
 	private:
 		std::vector<std::shared_ptr<EngineExtension>> m_Extensions;
 
@@ -99,6 +106,9 @@ namespace FusionEngine
 
 		Vector2i m_DisplayDimensions;
 		bool m_Fullscreen;
+
+		bool m_Save;
+		bool m_Load;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
@@ -132,6 +142,8 @@ namespace FusionEngine
 
 		std::shared_ptr<GameMapLoader> m_MapLoader;
 
+		std::shared_ptr<GameMap> m_Map;
+
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;
 
@@ -140,6 +152,8 @@ namespace FusionEngine
 		void RegisterScriptTypes();
 
 		void AddResourceLoaders();
+
+		void ProcessExtensionMessages(const std::shared_ptr<EngineExtension>& ex);
 
 	};
 

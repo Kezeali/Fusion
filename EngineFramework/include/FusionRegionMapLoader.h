@@ -80,6 +80,8 @@ namespace FusionEngine
 
 		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager);
 
+		void SetSavePath(const std::string& save_path) { m_SavePath = save_path; }
+
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);
 
@@ -177,11 +179,10 @@ private:
 
 		bool m_EditMode;
 		bool m_Running;
-
-		size_t m_BeginIndex;
-		size_t m_EndIndex;
-
+		
 		size_t m_RegionSize;
+
+		std::string m_SavePath;
 
 		std::string m_CachePath;
 		RegionCellCache* m_Cache;

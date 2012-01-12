@@ -73,12 +73,12 @@ namespace FusionEngine
 		{
 			PHYSFS_File *fromFile = PHYSFS_openRead(from.c_str());
 			if (fromFile == nullptr)
-				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to open " + from + " for copying (probably doesn't exist).");
+				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to open " + from + " for copying: " + std::string(PHYSFS_getLastError()));
 			PHYSFS_File *toFile = PHYSFS_openWrite(to.c_str());
 			if (toFile == nullptr)
 			{
 				PHYSFS_close(fromFile);
-				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to create / overwrite target file " + to + ".");
+				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to create / overwrite copy target file " + to + ": " + std::string(PHYSFS_getLastError()));
 			}
 			try
 			{
@@ -88,10 +88,10 @@ namespace FusionEngine
 				{
 					readLength = PHYSFS_read(fromFile, buffer.data(), sizeof(char), buffer.size());
 					if (readLength < 0)
-						FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying.");
+						FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying: " + std::string(PHYSFS_getLastError()));
 
 					if (PHYSFS_write(toFile, buffer.data(), sizeof(char), (PHYSFS_uint32)readLength) != readLength)
-						FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to write copied data to " + to + ".");
+						FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to write copied data to " + to + ": " + std::string(PHYSFS_getLastError()));
 				} while (!PHYSFS_eof(fromFile));
 			}
 			catch (FusionEngine::FileSystemException&)

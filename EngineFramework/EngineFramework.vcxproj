@@ -122,6 +122,7 @@
     <ClInclude Include="include\FusionStreamingSystem.h" />
     <ClInclude Include="include\FusionTaskManager.h" />
     <ClInclude Include="include\FusionTaskScheduler.h" />
+    <ClInclude Include="include\FusionWorldSaver.h" />
     <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>

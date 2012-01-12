@@ -495,7 +495,7 @@ public:
 
 				std::vector<std::shared_ptr<ISystemWorld>> worlds;
 
-				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc, cameraSynchroniser.get()));
+				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(dispWindow, cameraSynchroniser.get()));
 				auto renderWorld = clRenderSystem->CreateWorld();
 				worlds.push_back(renderWorld);
 

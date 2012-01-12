@@ -30,6 +30,9 @@
 
 #include "FusionPrerequisites.h"
 
+#include <ClanLib/Display/Window/display_window.h>
+
+#include <deque>
 #include <memory>
 #include <vector>
 
@@ -46,6 +49,8 @@ namespace FusionEngine
 	class RegionMapLoader;
 	class StreamingManager;
 
+	class WorldSaver;
+
 	class EngineExtension
 	{
 	public:
@@ -61,17 +66,48 @@ namespace FusionEngine
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
 		virtual void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) {}
 		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
+		virtual void SetWorldSaver(WorldSaver* saver) {}
+
 
 		virtual void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world) = 0;
 
 		virtual void Update(float time, float dt) = 0;
 
-		bool Quit() const { return m_Quit; }
+		void RequestQuit() { m_Quit = true; }
+		bool HasRequestedQuit() const { return m_Quit; }
+
+		enum MessageType
+		{
+			None,
+			Save,
+			Load,
+			SwitchToEditMode,
+			SwitchToPlayMode
+		};
+
+		void PushMessage(MessageType type, const std::string& data)
+		{
+			m_Messages.push_back(std::make_pair(type, data));
+		}
+
+		std::pair<MessageType, std::string> PopMessage()
+		{
+			if (m_Messages.empty())
+				return std::make_pair(MessageType::None, std::string());
+			else
+			{
+				auto message = m_Messages.front();
+				m_Messages.pop_front();
+				return std::move(message);
+			}
+		}
 
 		virtual std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const = 0;
 
 	private:
 		bool m_Quit;
+
+		std::deque<std::pair<MessageType, std::string>> m_Messages;
 
 	};
 

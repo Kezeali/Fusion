@@ -77,7 +77,9 @@ namespace FusionEngine
 	EngineManager::EngineManager(const std::vector<CL_String>& args)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
-		m_Fullscreen(false)
+		m_Fullscreen(false),
+		m_Save(false),
+		m_Load(false)
 	{
 		// Configure PhysFS
 		SetupPhysFS::configure("lastflare", "Fusion", "7z");
@@ -93,15 +95,15 @@ namespace FusionEngine
 
 		// Init profiling
 		m_Profiling.reset(new Profiling);
+		
+		// Init Console
+		m_Console.reset(new Console);
 	}
 
 	void EngineManager::Initialise()
 	{
 		try
 		{
-			// Init Console
-			m_Console.reset(new Console);
-
 			ClientOptions* options = new ClientOptions("settings.xml", "settings");
 
 			ReadOptions(options);
@@ -182,6 +184,9 @@ namespace FusionEngine
 			m_TaskManager.reset(new TaskManager());
 			m_Scheduler.reset(new TaskScheduler(m_TaskManager.get(), m_EntityManager.get(), m_CellArchivist.get()));
 
+			m_Save = false;
+			m_Load = false;
+
 #ifdef PROFILE_BUILD
 			m_Scheduler->SetFramerateLimiter(false);
 			m_Scheduler->SetUnlimited(true);
@@ -238,6 +243,70 @@ namespace FusionEngine
 			if (!m_DisplayWindow.is_null())
 				MessageBoxA(m_DisplayWindow.get_hwnd(), (std::string("Failed to initialise engine: ") + ex.what()).c_str(), "Error", MB_OK);
 #endif
+		}
+	}
+
+	void EngineManager::Save(const std::string& name)
+	{
+		m_StreamingManager->StoreAllCells();
+		try
+		{
+			if (auto file = m_CellArchivist->CreateDataFile("active_entities"))
+				m_EntityManager->SaveActiveEntities(*file);
+			if (auto file = m_CellArchivist->CreateDataFile("non_streaming_entities"))
+				m_EntityManager->SaveNonStreamingEntities(*file);
+
+			m_EntityManager->SaveCurrentReferenceData();
+
+			m_CellArchivist->Save(name);
+		}
+		catch (std::ios::failure& e)
+		{
+			AddLogEntry(e.what());
+			throw e;
+		}
+	}
+
+	void EngineManager::Load(const std::string& name)
+	{
+		try
+		{
+			SendToConsole("Loading: Stopping archivist...");
+			m_CellArchivist->Stop();
+			m_ResourceManager->CancelAllDeliveries();
+			SendToConsole("Loading: Deactivating entities...");
+			m_EntityManager->DeactivateAllEntities(false);
+			m_CameraSynchroniser->Clear();
+			SendToConsole("Loading: Clearing entities...");
+			//entityManager.reset(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), componentUniverse.get(), cellArchivist.get()));
+			//instantiationSynchroniser.reset(new P2PEntityInstantiator(componentUniverse.get(), entityManager.get()));
+			//cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
+			//propChangedQueue = entityManager->m_PropChangedQueue;
+			m_EntityManager->Clear();
+			m_EntityInstantiator->Reset();
+			SendToConsole("Loading: Clearing cells...");
+			m_StreamingManager->Reset();
+			SendToConsole("Loading: Garbage-collecting...");
+			int r = m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
+			if (m_Map)
+			{
+				SendToConsole("Loading: Non-streaming entities (from map)...");
+				m_Map->LoadNonStreamingEntities(false, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
+			}
+			m_CellArchivist->Load(name);
+			SendToConsole("Loading: Non-streaming entities (from data-file)...");
+			if (auto file = m_CellArchivist->LoadDataFile("non_streaming_entities"))
+				m_EntityManager->LoadNonStreamingEntities(*file, m_EntityInstantiator.get());
+			m_CellArchivist->Start();
+			SendToConsole("Loading: Activating entities...");
+			if (auto file = m_CellArchivist->LoadDataFile("active_entities"))
+				m_EntityManager->LoadActiveEntities(*file);
+			// TODO: allow the entity manager to pause the simulation until all these entities are active
+		}
+		catch (std::exception& e)
+		{
+			AddLogEntry(e.what());
+
 		}
 	}
 
@@ -375,6 +444,7 @@ namespace FusionEngine
 				(*exit)->SetEntityManager(m_EntityManager);
 				(*exit)->SetMapLoader(m_CellArchivist);
 				(*exit)->SetStreamingManager(m_StreamingManager);
+				(*exit)->SetWorldSaver(this);
 			}
 
 			auto mb = Rocket::Core::GetContext("world")->LoadDocument("/core/gui/message_box.rml");
@@ -407,15 +477,14 @@ namespace FusionEngine
 			PropChangedQueue &propChangedQueue = m_EntityManager->m_PropChangedQueue;
 
 			// Load the map
-			std::shared_ptr<GameMap> map;
 			if (!m_EditMode/* && varMap.count("connect") == 0*/)
 			{
-				map = m_MapLoader->LoadMap("Maps/default.gad", m_EntityInstantiator.get());
-				m_CellArchivist->SetMap(map);
+				m_Map = m_MapLoader->LoadMap("Maps/default.gad", m_EntityInstantiator.get());
+				m_CellArchivist->SetMap(m_Map);
 
-				m_StreamingManager->Initialise(map->GetCellSize());
+				m_StreamingManager->Initialise(m_Map->GetCellSize());
 
-				map->LoadNonStreamingEntities(true, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
+				m_Map->LoadNonStreamingEntities(true, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
 			}
 			// Start the asynchronous cell loader
 			m_CellArchivist->Start();
@@ -443,7 +512,8 @@ namespace FusionEngine
 				for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
 				{
 					(*it)->Update(time, dt);
-					quit |= (*it)->Quit();
+					quit |= (*it)->HasRequestedQuit();
+					ProcessExtensionMessages(*it);
 				}
 				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_0))
 					m_GUI->GetConsoleWindow()->Show();
@@ -534,6 +604,27 @@ namespace FusionEngine
 			if (!m_DisplayWindow.is_null())
 				MessageBoxA(m_DisplayWindow.get_hwnd(), (std::string("Unhandled exception: ") + ex.what()).c_str(), "Error", MB_OK);
 #endif
+		}
+	}
+
+	void EngineManager::ProcessExtensionMessages(const std::shared_ptr<EngineExtension>& ex)
+	{
+		auto message = ex->PopMessage();
+		while (message.first)
+		{
+			switch (message.first)
+			{
+			case EngineExtension::MessageType::Save:
+				m_Save = true;
+				break;
+			case EngineExtension::MessageType::Load:
+				m_Load = true;
+				break;
+			case EngineExtension::MessageType::SwitchToEditMode:
+				// TODO: restart engine-manager in edit-mode (perhaps set the edit-mode option and make Run exit with a 'restart' flag?)
+				break;
+			};
+			message = ex->PopMessage();
 		}
 	}
 

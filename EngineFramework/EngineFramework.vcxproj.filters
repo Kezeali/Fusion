@@ -132,5 +132,6 @@
     <ClInclude Include="include\FusionEngineManager.h" />
     <ClInclude Include="include\FusionEngineExtension.h" />
     <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
+    <ClInclude Include="include\FusionWorldSaver.h" />
   </ItemGroup>
 </Project>

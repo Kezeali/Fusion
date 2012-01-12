@@ -39,6 +39,7 @@
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
 #include "FusionStreamingManager.h"
+#include "FusionWorldSaver.h"
 
 #include "FusionAngelScriptSystem.h"
 #include "FusionCLRenderSystem.h"
@@ -50,9 +51,33 @@
 #include "FusionScriptComponent.h"
 #include "FusionTransformComponent.h"
 
+#include <boost/lexical_cast.hpp>
+#include <Rocket/Core/ElementDocument.h>
 
 namespace FusionEngine
 {
+
+	void intrusive_ptr_add_ref(Rocket::Core::ReferenceCountable *ptr)
+	{
+		ptr->AddReference();
+	}
+
+	void intrusive_ptr_release(Rocket::Core::ReferenceCountable *ptr)
+	{
+		ptr->RemoveReference();
+	}
+
+	class GUIDialog
+	{
+	public:
+		virtual ~GUIDialog()
+		{
+			m_Document->RemoveReference();
+		}
+
+	protected:
+		Rocket::Core::ElementDocument* m_Document;
+	};
 
 	Editor::Editor(const std::vector<CL_String>& args)
 		: m_RebuildScripts(false),
@@ -89,6 +114,13 @@ namespace FusionEngine
 	{
 		m_DisplayWindow = display;
 		m_KeyUpSlot = m_DisplayWindow.get_ic().get_keyboard().sig_key_up().connect(this, &Editor::onKeyUp);
+	}
+
+	void Editor::SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader)
+	{
+		m_MapLoader = map_loader;
+		// TODO: do this when the editor is enabled, undo when not
+		m_MapLoader->SetSavePath("Editor/");
 	}
 
 	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
@@ -158,11 +190,71 @@ namespace FusionEngine
 			auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
 			mb->Show();
 		}
+
+		if (m_SaveMap)
+		{
+			m_SaveMap = false;
+			m_SaveName = "save";
+			Save();
+		}
+
+		if (m_LoadMap)
+		{
+			m_LoadMap = false;
+			m_SaveName = "save";
+			Load();
+		}
 	}
 
 	std::vector<std::shared_ptr<RendererExtension>> Editor::MakeRendererExtensions() const
 	{
 		return std::vector<std::shared_ptr<RendererExtension>>();
+	}
+
+	void Editor::ShowSaveDialog()
+	{
+		//auto document = m_GUIContext->LoadDocument("core/gui/SaveDialog");
+		//document->RemoveReference();
+		//m_Dialog = std::make_shared<SaveDialog>(m_SaveName);
+	}
+
+	void Editor::ShowLoadDialog()
+	{
+	}
+
+	void Editor::Save()
+	{
+		if (m_SaveName.empty())
+		{
+			ShowSaveDialog();
+		}
+
+		try
+		{
+			m_Saver->Save(m_SaveName);
+		}
+		catch (std::exception& e)
+		{
+			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+		}
+	}
+
+	void Editor::Load()
+	{
+		if (m_SaveName.empty())
+		{
+			ShowLoadDialog();
+		}
+
+		try
+		{
+			m_Saver->Load(m_SaveName);
+			m_StreamingManager->AddCamera(m_EditCam);
+		}
+		catch (std::exception& e)
+		{
+			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+		}
 	}
 
 	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, EntityInstantiator* instantiator, ComponentFactory* factory, EntityManager* entityManager)

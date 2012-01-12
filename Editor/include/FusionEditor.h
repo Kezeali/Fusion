@@ -38,12 +38,20 @@
 #include <ClanLib/display.h>
 #include <memory>
 
+namespace Rocket { namespace Core {
+	class Context;
+} }
+
 namespace FusionEngine
 {
 
 	class ISystemWorld;
 	class AngelScriptWorld;
 	class CLRenderWorld;
+
+	class GUIDialog;
+
+	class WorldSaver;
 
 	class Editor : public EngineExtension
 	{
@@ -56,8 +64,9 @@ namespace FusionEngine
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
 		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
 		// TODO: ? interface MapLoader with Save and Load methods
-		void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) { m_MapLoader = map_loader; }
+		void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader);
 		void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) { m_StreamingManager = manager; }
+		void SetWorldSaver(WorldSaver* saver) { m_Saver = saver; }
 
 		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
 
@@ -81,6 +90,8 @@ namespace FusionEngine
 		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
 		std::shared_ptr<EntityManager> m_EntityManager;
 
+		WorldSaver* m_Saver;
+
 		std::vector<EntityPtr> m_NonStreamedEntities;
 
 		CL_Slot m_KeyUpSlot;
@@ -89,6 +100,18 @@ namespace FusionEngine
 		bool m_CompileMap;
 		bool m_SaveMap;
 		bool m_LoadMap;
+
+		Rocket::Core::Context* m_GUIContext;
+
+		std::string m_SaveName;
+
+		std::shared_ptr<GUIDialog> m_Dialog;
+
+		void ShowSaveDialog();
+		void ShowLoadDialog();
+
+		void Save();
+		void Load();
 
 		void onKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
 
