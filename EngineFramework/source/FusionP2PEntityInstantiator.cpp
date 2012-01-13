@@ -67,7 +67,7 @@ namespace FusionEngine
 		NetworkManager::getSingleton().Subscribe(MTID_STARTSYNC, this);
 		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
 
-		ScriptManager::getSingleton().RegisterGlobalObject("Ontology ontology", this);
+		ScriptManager::getSingleton().RegisterGlobalObject("EntityInstantiator instantiator", this);
 	}
 
 	P2PEntityInstantiator::~P2PEntityInstantiator()
@@ -276,7 +276,7 @@ namespace FusionEngine
 			m_EntityManager->RemoveEntity(entity);
 	}
 
-	void P2PEntityInstantiator::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
+	ComponentPtr P2PEntityInstantiator::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
 	{
 		if (entity)
 		{
@@ -287,9 +287,12 @@ namespace FusionEngine
 				m_EntityManager->OnComponentAdded(entity, com);
 
 				//sendComponent(To::Populace(), entity, com);
+				return com;
 			}
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a component of unknown type " + type + " to an entity");
 		}
-		// TODO: throw exception
+		// TODO: throw specific exception
+		FSN_EXCEPT(InvalidArgumentException, "Tried to add a component to a null entity");
 	}
 
 	void P2PEntityInstantiator::HandlePacket(Packet *packet)
@@ -435,20 +438,22 @@ namespace FusionEngine
 		return newEntity;//.get();
 	}
 
-	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
+	static IComponent* InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
 	{
-		obj->AddComponent(entity, type, identifier);
+		auto com = obj->AddComponent(entity, type, identifier);
+		com->addRef();
+		return com.get();
 	}
 
 	void P2PEntityInstantiator::Register(asIScriptEngine* engine)
 	{
-		RegisterSingletonType<P2PEntityInstantiator>("Ontology", engine);
+		RegisterSingletonType<P2PEntityInstantiator>("EntityInstantiator", engine);
 
-		engine->RegisterObjectMethod("Ontology", "Entity instantiate(const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
+		engine->RegisterObjectMethod("EntityInstantiator", "Entity instantiate(const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
 			asFUNCTION(InstantiationSynchroniser_InstantiateAuto), asCALL_CDECL_OBJLAST);
 
-		engine->RegisterObjectMethod("Ontology", "void addComponent(Entity, const string &in, const string &in)",
-			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, P2PEntityInstantiator*), void), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("EntityInstantiator", "IComponent@ addComponent(Entity, const string &in, const string &in)",
+			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, P2PEntityInstantiator*), IComponent*), asCALL_CDECL_OBJLAST);
 	}
 
 }

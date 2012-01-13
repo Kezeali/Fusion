@@ -39,6 +39,10 @@
 
 #include <angelscript.h>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
+
 #define FSN_PARALLEL_SCRIPT_EXECUTION
 
 namespace FusionEngine
@@ -82,6 +86,9 @@ namespace FusionEngine
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
 		void BuildScripts(bool rebuild_all = false);
+
+		//! Preprocesses the given script and generates code for an EntityWrapper type to be used in it
+		std::string GenerateBaseCodeForScript(std::string& filename);
 
 	private:
 		std::vector<std::string> GetTypes() const;
@@ -140,9 +147,18 @@ namespace FusionEngine
 			std::set<std::string> IncludedScripts;
 		};
 
-	private:
+		typedef boost::multi_index_container<
+			ComponentScriptInfo,
+			boost::multi_index::indexed_by<
+			boost::multi_index::hashed_unique<boost::multi_index::member<ComponentScriptInfo, std::string, &ComponentScriptInfo::ClassName>>,
+			boost::multi_index::hashed_unique<boost::multi_index::member<ComponentScriptInfo, std::string, &ComponentScriptInfo::Module>>
+			>> ScriptInfoMap_t;
 
-		std::map<std::string, ComponentScriptInfo> m_ScriptInfo;
+		typedef std::map<std::string, ComponentScriptInfo> ScriptInfoClassMap_t;
+
+	private:
+		ScriptInfoClassMap_t m_ScriptInfo;
+		ScriptInfoMap_t m_ScriptInfof;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 		asIScriptEngine* m_Engine;
@@ -151,6 +167,10 @@ namespace FusionEngine
 
 		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
 
+		//! Instantiates the object that implements the script-type 'ScriptComponent' in the module loaded by the given component
+		/*
+		* Yes, this method is badly named, but it's concise
+		*/
 		bool instantiateScript(const boost::intrusive_ptr<ASScript>& script);
 	};
 
@@ -200,6 +220,8 @@ namespace FusionEngine
 		AngelScriptWorld* m_AngelScriptWorld;
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
+
+	std::string GenerateBaseCode(const AngelScriptWorld::ComponentScriptInfo& scriptInfo, const AngelScriptWorld::ScriptInfoClassMap_t& scriptComponents);
 
 }
 

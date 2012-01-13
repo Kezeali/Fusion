@@ -89,23 +89,27 @@ namespace FusionEngine
 		}
 		else
 		{
-			ASScript::GetActiveScript()->YieldUntil([entity, type, ident, future]()->bool
+			auto activeScript = ASScript::GetActiveScript();
+			if (activeScript)
 			{
-				auto com = entity->GetComponent(type, ident);
-				if (com)
+				activeScript->YieldUntil([entity, type, ident, future]()->bool
 				{
-					com->addRef();
-					future->component = com.get();
-					return true;
-				}
-				else
-					return false;
-			},
+					auto com = entity->GetComponent(type, ident);
+					if (com)
+					{
+						com->addRef();
+						future->component = com.get();
+						return true;
+					}
+					else
+						return false;
+				},
 #ifdef PROFILE_BUILD
-				20.0f);
+					20.0f);
 #else
-				5.f);
+					5.f);
 #endif
+			}
 		}
 		
 		return future;

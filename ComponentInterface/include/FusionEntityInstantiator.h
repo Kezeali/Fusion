@@ -64,7 +64,7 @@ namespace FusionEngine
 		virtual void RemoveInstance(EntityPtr& entity) = 0;
 
 		// TODO: move to ComponentInstantiator
-		virtual void AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier) = 0;
+		virtual ComponentPtr AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier) = 0;
 
 	};
 

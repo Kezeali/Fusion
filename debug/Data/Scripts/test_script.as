@@ -45,13 +45,13 @@ class Test : ScriptComponent
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
-		ontology.addComponent(newEnt, "b2Circle", "");
-		ontology.addComponent(newEnt, "CLSprite", "");
+		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, 0);
+		instantiator.addComponent(newEnt, "b2Circle", "");
+		instantiator.addComponent(newEnt, "CLSprite", "");
 		bool script = false;
 		if (rand() < 0.2f)
 		{
-			//ontology.addComponent(newEnt, "TestC", "script_c");
+			//instantiator.addComponent(newEnt, "TestC", "script_c");
 			//script = true;
 		}
 		IComponent@ com = newEnt.getComponent("ISprite");
@@ -80,10 +80,10 @@ class Test : ScriptComponent
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
-		ontology.addComponent(newEnt, "b2Circle", "");
-		ontology.addComponent(newEnt, "CLSprite", "");
-		ontology.addComponent(newEnt, "PseudoI", "notai");
+		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, 0);
+		instantiator.addComponent(newEnt, "b2Circle", "");
+		instantiator.addComponent(newEnt, "CLSprite", "");
+		instantiator.addComponent(newEnt, "PseudoI", "notai");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
@@ -104,8 +104,8 @@ class Test : ScriptComponent
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand() * 3.14f, 0);
-		ontology.addComponent(newEnt, "CLSprite", "");
+		Entity newEnt = instantiator.instantiate("StaticTransform", false, pos, rand() * 3.14f, 0);
+		instantiator.addComponent(newEnt, "CLSprite", "");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath = "Entities/Dirt.png";
@@ -120,10 +120,10 @@ class Test : ScriptComponent
 	{
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 1);
-		ontology.addComponent(newEnt, "b2Circle", "");
-		ontology.addComponent(newEnt, "CLSprite", "");
-		ontology.addComponent(newEnt, "TestB", "script_b");
+		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, 1);
+		instantiator.addComponent(newEnt, "b2Circle", "");
+		instantiator.addComponent(newEnt, "CLSprite", "");
+		instantiator.addComponent(newEnt, "TestB", "script_b");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
 		if (sprite is null)
 		{

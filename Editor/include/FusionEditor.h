@@ -33,7 +33,10 @@
 #include "FusionEngineExtension.h"
 
 #include "FusionTypes.h"
+#include "FusionVectorTypes.h"
 
+#include <angelscript.h>
+#include <boost/intrusive_ptr.hpp>
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
 #include <memory>
@@ -41,6 +44,9 @@
 namespace Rocket { namespace Core {
 	class Context;
 } }
+
+void intrusive_ptr_add_ref(asIScriptFunction *ptr);
+void intrusive_ptr_release(asIScriptFunction *ptr);
 
 namespace FusionEngine
 {
@@ -70,7 +76,7 @@ namespace FusionEngine
 
 		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
 
-		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw) { m_AngelScriptWorld = asw; }
+		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw);
 
 		void Update(float time, float dt);
 
@@ -107,13 +113,23 @@ namespace FusionEngine
 
 		std::shared_ptr<GUIDialog> m_Dialog;
 
+		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
+
+		CL_Rectf m_SelectionBox;
+
 		void ShowSaveDialog();
 		void ShowLoadDialog();
 
 		void Save();
 		void Load();
 
+		void BuildCreateEntityScript();
+
+		EntityPtr CreateEntity(const std::string& transform_type, const Vector2& pos, float angle, bool synced, bool streaming);
+
 		void onKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
+
+		void RegisterScriptType(asIScriptEngine* engine);
 
 	};
 

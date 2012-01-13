@@ -306,7 +306,7 @@ namespace FusionEngine
 		catch (std::exception& e)
 		{
 			AddLogEntry(e.what());
-
+			throw e;
 		}
 	}
 
@@ -427,6 +427,9 @@ namespace FusionEngine
 		{
 			// TODO: add resource loaders from systems
 			AddResourceLoaders();
+
+			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
+				(*it)->RegisterScriptType(m_ScriptManager->GetEnginePtr());
 
 			// Register system script interfaces
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)

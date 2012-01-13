@@ -400,7 +400,7 @@ namespace FusionEngine
 		while (pos < script.size())
 		{
 			auto token = ParseNextToken(engine, script, pos);
-			if (/*token.first == asTC_UNKNOWN && */script[pos] == '#')
+			if (script[pos] == '#')
 			{
 				size_t start = pos++;
 
@@ -494,7 +494,7 @@ namespace FusionEngine
 	{
 		ASScript::ScriptInterface::Register(engine);
 
-		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
+		engine->RegisterObjectMethod("EntityInstantiator", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
 			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 	}
 
@@ -569,7 +569,7 @@ namespace FusionEngine
 		return scriptComponentInterface;
 	}
 
-	static std::string GenerateBaseCode(const AngelScriptWorld::ComponentScriptInfo& scriptInfo, std::map<std::string, AngelScriptWorld::ComponentScriptInfo>& scriptComponents)
+	std::string GenerateBaseCode(const AngelScriptWorld::ComponentScriptInfo& scriptInfo, const AngelScriptWorld::ScriptInfoClassMap_t& scriptComponents)
 	{
 		std::set<std::string> usedIdentifiers;
 		std::vector<AngelScriptWorld::ComponentScriptInfo> scriptComponentInterfaces;
@@ -644,6 +644,7 @@ namespace FusionEngine
 			"Entity getLocked() const { return app_obj.lock(); }\n"
 			//"Input@ input;\n"
 			"Input@ get_input() { return Input(app_obj.lock()); }\n"
+			"void addComponent(const string &in type, const string &in id) { instantiator.addComponent(getLocked(), type, id); }"
 			"\n" +
 			convenientEntityProperties +
 			"}\n"
@@ -661,10 +662,31 @@ namespace FusionEngine
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name, float delay = 0.0f) { app_obj.createCoroutine(fn_name, delay); }\n"
 			"EntityWrapper@ instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id)"
-			" { return EntityWrapper(ontology.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
+			" { return EntityWrapper(instantiator.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
 			"\n" +
 			convenientComponentProperties +
-			"}\n";
+			"}\n"
+
+			"class EntityRapper\n"
+			"{\n"
+			"EntityRapper() {}\n"
+			"EntityRapper(const Entity &in obj) {\n"
+			"_setAppObj(obj);\n"
+			"}\n"
+			"void _setAppObj(const Entity &in obj) {\n"
+			"app_obj = obj;\n"
+			//"@input = Input(app_obj);\n"
+			"}\n"
+			"private EntityW app_obj;\n"
+			"EntityW getRaw() const { return app_obj; }\n"
+			"Entity getLocked() const { return app_obj.lock(); }\n"
+			//"Input@ input;\n"
+			"Input@ get_input() { return Input(app_obj.lock()); }\n"
+			"void addComponent(const string &in type, const string &in id) { instantiator.addComponent(getLocked(), type, id); }"
+			"\n" +
+			convenientEntityProperties +
+			"}\n"
+			;
 
 		for (auto it = scriptComponentInterfaces.begin(), end = scriptComponentInterfaces.end(); it != end; ++it)
 		{
@@ -672,6 +694,12 @@ namespace FusionEngine
 		}
 
 		return baseCode;
+	}
+
+	std::string AngelScriptWorld::GenerateBaseCodeForScript(std::string& script)
+	{
+		auto scriptInfo = ParseComponentScript(m_Engine, script);
+		return GenerateBaseCode(scriptInfo, m_ScriptInfo);
 	}
 
 	bool AngelScriptWorld::updateChecksum(const std::string& filename, const std::string& filedata)
@@ -895,6 +923,7 @@ namespace FusionEngine
 			rebuiltScript.component->m_EntityWrapperTypeId =
 				rebuiltScript.component->m_Module->GetTypeIdByDecl("EntityWrapper@");
 			FSN_ASSERT(rebuiltScript.component->m_EntityWrapperTypeId >= 0);
+
 			if (instantiateScript(rebuiltScript.component))
 			{
 				if (rebuiltScript.occasionalData)
@@ -1094,9 +1123,22 @@ namespace FusionEngine
 
 	bool AngelScriptWorld::instantiateScript(const boost::intrusive_ptr<ASScript>& script)
 	{
+		if (!script->m_Module.IsLoaded())
+			return false;
+
 		if (!script->m_ScriptObject)
 		{
-			auto objectType = script->m_Module->GetObjectTypeByIndex(0);
+			asIObjectType* objectType = nullptr;
+			for (unsigned int i = 0; i < script->m_Module->GetObjectTypeCount(); ++i)
+			{
+				objectType = script->m_Module->GetObjectTypeByIndex(i);
+				std::string name = objectType->GetName();
+				// This is a shitty way to do this
+				// TODO: multimap with module name index
+				auto scriptInfoForThis = m_ScriptInfo.find(name);
+				if (scriptInfoForThis != m_ScriptInfo.end() && scriptInfoForThis->second.Module == script->m_Module->GetName())
+					break;
+			}
 			if (objectType == nullptr)
 			{
 				SendToConsole(script->GetScriptPath() + " defines no classes");
@@ -1105,7 +1147,7 @@ namespace FusionEngine
 			}
 			if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
 			{
-				SendToConsole("First class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
+				SendToConsole("Class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
 				script->m_ModuleReloaded = false;
 				return false;
 			}
@@ -1121,7 +1163,10 @@ namespace FusionEngine
 					if (obj)
 					{
 						auto scriptInfoForThis = m_ScriptInfo.find(objectType->GetName());
-						script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
+						if (scriptInfoForThis != m_ScriptInfo.end())
+							script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
+						else
+							return false;
 					}
 				}
 				catch (ScriptUtils::Exception& e)

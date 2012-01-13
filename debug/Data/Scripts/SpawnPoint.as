@@ -21,13 +21,13 @@ class SpawnPoint : ScriptComponent
 	{
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, owner);
+		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, owner);
 		if (!newEnt.isNull())
 		{
-		ontology.addComponent(newEnt, "b2Circle", "");
-		ontology.addComponent(newEnt, "CLSprite", "");
-		ontology.addComponent(newEnt, "TestB", "script_b");
-		ontology.addComponent(newEnt, "StreamingCamera", "");
+		instantiator.addComponent(newEnt, "b2Circle", "");
+		instantiator.addComponent(newEnt, "CLSprite", "");
+		instantiator.addComponent(newEnt, "TestB", "script_b");
+		instantiator.addComponent(newEnt, "StreamingCamera", "");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
 		if (sprite is null)
 		{
@@ -59,11 +59,11 @@ class SpawnPoint : ScriptComponent
 	EntityWrapper@ createBeachBall(Vector &in pos)
 	{
 		console.println("Ball spawned at " + pos.x + "," + pos.y);
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
+		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, 0);
 		if (!newEnt.isNull())
 		{
-		ontology.addComponent(newEnt, "b2Circle", "");
-		ontology.addComponent(newEnt, "CLSprite", "");
+		instantiator.addComponent(newEnt, "b2Circle", "");
+		instantiator.addComponent(newEnt, "CLSprite", "");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
 		if (sprite is null)
 		{

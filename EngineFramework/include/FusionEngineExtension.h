@@ -68,6 +68,7 @@ namespace FusionEngine
 		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
 		virtual void SetWorldSaver(WorldSaver* saver) {}
 
+		virtual void RegisterScriptType(asIScriptEngine* engine) {}
 
 		virtual void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world) = 0;
 

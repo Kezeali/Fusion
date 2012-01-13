@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include <Rocket/Core.h>
+#include <boost/intrusive_ptr.hpp>
 #include <boost/signals2.hpp>
 
 #include "FusionSingleton.h"
@@ -49,6 +50,15 @@ namespace Rocket {
 	}
 }
 
+inline void intrusive_ptr_add_ref(Rocket::Core::ReferenceCountable *ptr)
+{
+	ptr->AddReference();
+}
+
+inline void intrusive_ptr_release(Rocket::Core::ReferenceCountable *ptr)
+{
+	ptr->RemoveReference();
+}
 
 namespace FusionEngine
 {
@@ -217,9 +227,9 @@ namespace FusionEngine
 
 		bool m_Initialised;
 
-		std::unique_ptr<RocketSystem> m_RocketSystem;
-		std::unique_ptr<RocketRenderer> m_RocketRenderer;
-		std::unique_ptr<RocketFileSystem> m_RocketFileSys;
+		boost::intrusive_ptr<RocketSystem> m_RocketSystem;
+		boost::intrusive_ptr<RocketRenderer> m_RocketRenderer;
+		boost::intrusive_ptr<RocketFileSystem> m_RocketFileSys;
 
 		std::list<std::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 

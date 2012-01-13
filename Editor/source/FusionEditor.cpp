@@ -40,6 +40,7 @@
 #include "FusionRegionMapLoader.h"
 #include "FusionStreamingManager.h"
 #include "FusionWorldSaver.h"
+#include "FusionScriptTypeRegistrationUtils.h"
 
 #include "FusionAngelScriptSystem.h"
 #include "FusionCLRenderSystem.h"
@@ -54,18 +55,18 @@
 #include <boost/lexical_cast.hpp>
 #include <Rocket/Core/ElementDocument.h>
 
+void intrusive_ptr_add_ref(asIScriptFunction *ptr)
+{
+	ptr->AddRef();
+}
+
+void intrusive_ptr_release(asIScriptFunction *ptr)
+{
+	ptr->Release();
+}
+
 namespace FusionEngine
 {
-
-	void intrusive_ptr_add_ref(Rocket::Core::ReferenceCountable *ptr)
-	{
-		ptr->AddReference();
-	}
-
-	void intrusive_ptr_release(Rocket::Core::ReferenceCountable *ptr)
-	{
-		ptr->RemoveReference();
-	}
 
 	class GUIDialog
 	{
@@ -123,6 +124,14 @@ namespace FusionEngine
 		m_MapLoader->SetSavePath("Editor/");
 	}
 
+	void Editor::SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw)
+	{
+		m_AngelScriptWorld = asw;
+
+		ScriptManager::getSingleton().RegisterGlobalObject("Editor editor", this);
+		BuildCreateEntityScript();
+	}
+
 	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
 	{
 		if (auto asw = std::dynamic_pointer_cast<AngelScriptWorld>(world))
@@ -164,6 +173,8 @@ namespace FusionEngine
 		{
 			m_RebuildScripts = false;
 			m_AngelScriptWorld->BuildScripts();
+
+			BuildCreateEntityScript();
 		}
 
 		if (m_CompileMap)
@@ -438,10 +449,78 @@ namespace FusionEngine
 			Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, vp, true);
 			pos.x += area.left; pos.y += area.top;
 
-			auto entity = createEntity(true, num, pos, m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
-			if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
-				m_NonStreamedEntities.push_back(entity);
+			pos.x = ToSimUnits(pos.x);
+			pos.y = ToSimUnits(pos.y);
+
+			float angle = 0.f;
+
+			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
+			if (caller)
+				caller(num, &pos, angle);
+			//auto entity = createEntity(true, num, pos, m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+			//if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
+			//	m_NonStreamedEntities.push_back(entity);
 		}
+	}
+
+	void Editor::BuildCreateEntityScript()
+	{
+		auto& scriptManager = ScriptManager::getSingleton();
+
+		m_CreateEntityFn.reset();
+
+		auto module = scriptManager.GetModule("core_create_entity");
+		// Load the script file
+		auto script = OpenString_PhysFS("/core/create_entity.as");
+		// Generate and add the basecode section (also preprocess the script)
+		int r = module->AddCode("basecode", m_AngelScriptWorld->GenerateBaseCodeForScript(script));
+		FSN_ASSERT(r >= 0);
+		// Add the pre-processed script
+		r = module->AddCode("/core/create_entity.as", script);
+		FSN_ASSERT(r >= 0);
+		// Attempt to build
+		r = module->Build();
+		if (r < 0)
+			SendToConsole("Failed to build /core/create_entity.as");
+		FSN_ASSERT(r >= 0);
+
+		m_CreateEntityFn = module->GetASModule()->GetFunctionByName("createEntity");
+	}
+
+	EntityPtr Editor::CreateEntity(const std::string& transform_type, const Vector2& position, float angle, bool synced, bool streaming)
+	{
+		ComponentPtr transformCom = m_ComponentFactory->InstantiateComponent("StaticTransform");
+
+		auto entity = std::make_shared<Entity>(m_EntityManager.get(), &m_EntityManager->m_PropChangedQueue, transformCom);
+
+		ObjectID id = 0;
+		if (synced)
+			id = m_EntityInstantiator->GetFreeGlobalID();
+		entity->SetID(id);
+
+		if (!streaming)
+		{
+			entity->SetDomain(SYSTEM_DOMAIN);
+			// TODO: limit max non-streamed-entities
+			m_NonStreamedEntities.push_back(entity);
+		}
+
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Position.Set(position);
+			transform->Angle.Set(angle);
+		}
+
+		m_EntityManager->AddEntity(entity);
+
+		return entity;
+	}
+
+	void Editor::RegisterScriptType(asIScriptEngine* engine)
+	{
+		int r;
+		RegisterSingletonType<Editor>("Editor", engine);
+		r = engine->RegisterObjectMethod("Editor", "Entity CreateEntity(const string &in, const Vector &in, float, bool, bool)", asMETHOD(Editor, CreateEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 }
