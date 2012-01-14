@@ -43,8 +43,11 @@
 #include "FusionScriptTypeRegistrationUtils.h"
 
 #include "FusionAngelScriptSystem.h"
+#include "FusionBox2DSystem.h"
 #include "FusionCLRenderSystem.h"
 #include "FusionRenderer.h"
+
+#include "FusionBox2DComponent.h"
 
 // TYPES (will be removed when createEntity is replaced with a script)
 #include "FusionPhysicalComponent.h"
@@ -80,11 +83,60 @@ namespace FusionEngine
 		Rocket::Core::ElementDocument* m_Document;
 	};
 
+	//! Implements b2QueryCallback, returning all entities within an AABB that satisfy the passed function
+	class EntityQuery : public b2QueryCallback
+	{
+	public:
+		EntityQuery(std::vector<EntityPtr>* output_array, std::function<bool (b2Fixture*, bool&)> test_fn)
+			: m_Test(test_fn),
+			m_Entities(output_array)
+		{
+		}
+
+		explicit EntityQuery(std::vector<EntityPtr>* output_array)
+			: m_Entities(output_array)
+		{
+		}
+
+		bool ReportFixture(b2Fixture* fixture)
+		{
+			bool continue_query = true;
+			if (!m_Test || m_Test(fixture, continue_query))
+			{
+				auto* component = static_cast<Box2DFixture*>(fixture->GetUserData());
+				if (component != nullptr)
+				{
+					m_Entities->push_back(component->GetParent()->shared_from_this());
+				}
+			}
+			// Continue if the test func. said to
+			return continue_query;
+		}
+
+		std::function<bool (b2Fixture*, bool&)> m_Test;
+		std::vector<EntityPtr>* m_Entities;
+
+	private:
+		EntityQuery(const EntityQuery& other)
+			: m_Test(other.m_Test),
+			m_Entities(other.m_Entities)
+		{}
+		EntityQuery& operator= (const EntityQuery& other)
+		{
+			m_Test = other.m_Test;
+			m_Entities = other.m_Entities;
+			return *this;
+		}
+	};
+
 	Editor::Editor(const std::vector<CL_String>& args)
 		: m_RebuildScripts(false),
 		m_CompileMap(false),
 		m_SaveMap(false),
-		m_LoadMap(false)
+		m_LoadMap(false),
+		m_ShiftSelect(false),
+		m_AltSelect(false),
+		m_ReceivedMouseDown(false)
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
 		context->SetMouseShowPeriod(500);
@@ -105,6 +157,14 @@ namespace FusionEngine
 
 			return messageBox.get();
 		});
+
+		Console::getSingleton().BindCommand("lent", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			std::string retval = "Selected entities: ";
+			for (auto it = this->m_SelectedEntities.begin(), end = this->m_SelectedEntities.end(); it != end; ++it)
+				retval += "\n" + (*it)->GetName();
+			return retval;
+		});
 	}
 
 	Editor::~Editor()
@@ -114,7 +174,11 @@ namespace FusionEngine
 	void Editor::SetDisplay(const CL_DisplayWindow& display)
 	{
 		m_DisplayWindow = display;
-		m_KeyUpSlot = m_DisplayWindow.get_ic().get_keyboard().sig_key_up().connect(this, &Editor::onKeyUp);
+		m_KeyDownSlot = m_DisplayWindow.get_ic().get_keyboard().sig_key_down().connect(this, &Editor::OnKeyDown);
+		m_KeyUpSlot = m_DisplayWindow.get_ic().get_keyboard().sig_key_up().connect(this, &Editor::OnKeyUp);
+		m_MouseDownSlot = m_DisplayWindow.get_ic().get_mouse().sig_key_down().connect(this, &Editor::OnMouseDown);
+		m_MouseUpSlot = m_DisplayWindow.get_ic().get_mouse().sig_key_up().connect(this, &Editor::OnMouseUp);
+		m_MouseMoveSlot = m_DisplayWindow.get_ic().get_mouse().sig_pointer_move().connect(this, &Editor::OnMouseMove);
 	}
 
 	void Editor::SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader)
@@ -138,14 +202,18 @@ namespace FusionEngine
 		{
 			SetAngelScriptWorld(asw);
 		}
+		else if (auto b2World = std::dynamic_pointer_cast<Box2DWorld>(world))
+		{
+			m_Box2DWorld = b2World;
+		}
 		else if (auto renderWorld = std::dynamic_pointer_cast<CLRenderWorld>(world))
 		{
 			m_RenderWorld = renderWorld;
 
 			auto camera = std::make_shared<Camera>();
 			camera->SetPosition(0.f, 0.f);
-			auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
-			m_RenderWorld->AddViewport(viewport);
+			m_Viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+			m_RenderWorld->AddViewport(m_Viewport);
 			m_StreamingManager->AddCamera(camera);
 
 			m_EditCam = camera;
@@ -404,8 +472,19 @@ namespace FusionEngine
 		return entity;
 	}
 
-	void Editor::onKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
+	void Editor::OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state)
 	{
+		if (ev.shift)
+			m_ShiftSelect = true;
+		if (ev.alt)
+			m_AltSelect = true;
+	}
+
+	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
+	{
+		m_ShiftSelect = false;
+		m_AltSelect = false;
+
 		// Ctrl + Keys
 		if (ev.ctrl)
 		{
@@ -457,10 +536,130 @@ namespace FusionEngine
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
 			if (caller)
 				caller(num, &pos, angle);
-			//auto entity = createEntity(true, num, pos, m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
-			//if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
-			//	m_NonStreamedEntities.push_back(entity);
 		}
+	}
+
+	void Editor::OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state)
+	{
+		//[process global inputs here]
+
+		//Rocket::Core::Context *context = m_MainDocument->GetContext();
+		//for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
+		//{
+		//	if (context->GetDocument(i)->IsPseudoClassSet("hover"))
+		//		return;
+		//}
+
+		m_ReceivedMouseDown = true;
+
+		OnMouseDown_Selection(ev);
+	}
+
+	void Editor::OnMouseUp(const CL_InputEvent& ev, const CL_InputState& state)
+	{
+		m_ReceivedMouseDown = false;
+	}
+
+	void Editor::OnMouseMove(const CL_InputEvent& ev, const CL_InputState& state)
+	{
+		if (m_ReceivedMouseDown)
+			UpdateSelectionRectangle(Vector2(ev.mouse_pos.x, ev.mouse_pos.y), true);
+	}
+
+	void Editor::OnMouseDown_Selection(const CL_InputEvent& ev)
+	{
+		m_DragFrom = Vector2(ev.mouse_pos.x, ev.mouse_pos.y);
+		TranslateScreenToWorld(&m_DragFrom.x, &m_DragFrom.y);
+		m_SelectionRectangle.right = m_SelectionRectangle.left = m_DragFrom.x;
+		m_SelectionRectangle.bottom = m_SelectionRectangle.top = m_DragFrom.y;
+	}
+
+	void Editor::TranslateScreenToWorld(float* x, float* y) const
+	{
+		CL_Rectf area;
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
+		*x += area.left; *y += area.top;
+	}
+
+	Vector2 Editor::ReturnScreenToWorld(float x, float y) const
+	{
+		CL_Rectf area;
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
+		return Vector2(x + area.left, y + area.top);
+	}
+
+	void Editor::UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position)
+	{
+		float oldWidth = std::abs(m_SelectionRectangle.get_width());
+		float oldHeight = std::abs(m_SelectionRectangle.get_height());
+
+		m_SelectionRectangle.right = pointer_position.x;
+		m_SelectionRectangle.bottom = pointer_position.y;
+		if (translate_position)
+			TranslateScreenToWorld(&m_SelectionRectangle.right, &m_SelectionRectangle.bottom);
+
+		std::set<EntityPtr> entitiesUnselected;
+		if (!m_ShiftSelect && (std::abs(m_SelectionRectangle.get_width()) < oldWidth || std::abs(m_SelectionRectangle.get_height()) < oldHeight))
+			entitiesUnselected.insert(m_SelectedEntities.begin(),  m_SelectedEntities.end());
+
+		// Select entities found within the updated selection rectangle
+		std::vector<EntityPtr> entitiesUnderMouse;
+		GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle);
+		for (auto it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
+		{
+			const EntityPtr& map_entity = *it;
+			if (!m_ShiftSelect)
+				entitiesUnselected.erase(map_entity);
+			if (!m_AltSelect)
+				SelectEntity(map_entity);
+			else
+				DeselectEntity(map_entity);
+		}
+		// Deselect all the entities not found in the updated rectangle
+		for (auto it = entitiesUnselected.begin(), end = entitiesUnselected.end(); it != end; ++it)
+		{
+			const EntityPtr& map_entity = *it;
+			if (!m_AltSelect)
+				DeselectEntity(map_entity);
+			else
+				SelectEntity(map_entity);
+		}
+	}
+
+	void Editor::SelectEntity(const EntityPtr& entity)
+	{
+		m_SelectedEntities.insert(entity);
+	}
+
+	void Editor::DeselectEntity(const EntityPtr& entity)
+	{
+		m_SelectedEntities.erase(entity);
+	}
+
+	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const CL_Rectf &rectangle)
+	{
+		// Figure out where the rectangle is in the world
+		Vector2 top_left(ToSimUnits(std::min(rectangle.left, rectangle.right)), ToSimUnits(std::min(rectangle.top, rectangle.bottom)));
+		Vector2 bottom_right(ToSimUnits(std::max(rectangle.left, rectangle.right)), ToSimUnits(std::max(rectangle.top, rectangle.bottom)));
+		//if (screen_to_world)
+		//{
+		//	translateScreenToWorld(&top_left, m_Renderer, m_Viewport);
+		//	translateScreenToWorld(&bottom_right, m_Renderer, m_Viewport);
+		//}
+
+		m_StreamingManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+
+		//// Make an AABB for the given rect
+		//b2AABB aabb;
+		//aabb.lowerBound.Set(top_left.x * s_SimUnitsPerGameUnit, top_left.y * s_SimUnitsPerGameUnit);
+		//aabb.upperBound.Set(bottom_right.x * s_SimUnitsPerGameUnit, bottom_right.y * s_SimUnitsPerGameUnit);
+
+		//SendToConsole("LB=" + boost::lexical_cast<std::string>(aabb.lowerBound.x) + "," + boost::lexical_cast<std::string>(aabb.lowerBound.y));
+		//SendToConsole("UB=" + boost::lexical_cast<std::string>(aabb.upperBound.x) + "," + boost::lexical_cast<std::string>(aabb.upperBound.y));
+
+		//// Query the world for overlapping shapes
+		//EntityQuery callback(&out, [](b2Fixture*, bool&) {return true;});
+		//m_Box2DWorld->Getb2World()->QueryAABB(&callback, aabb);
 	}
 
 	void Editor::BuildCreateEntityScript()

@@ -53,7 +53,9 @@ namespace FusionEngine
 
 	class ISystemWorld;
 	class AngelScriptWorld;
+	class Box2DWorld;
 	class CLRenderWorld;
+	class Viewport;
 
 	class GUIDialog;
 
@@ -83,11 +85,13 @@ namespace FusionEngine
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
 
 	private:
-		std::shared_ptr<Camera> m_EditCam;
-
 		CL_DisplayWindow m_DisplayWindow;
 		std::shared_ptr<AngelScriptWorld> m_AngelScriptWorld;
+		std::shared_ptr<Box2DWorld> m_Box2DWorld;
 		std::shared_ptr<CLRenderWorld> m_RenderWorld;
+
+		std::shared_ptr<Camera> m_EditCam;
+		std::shared_ptr<Viewport> m_Viewport;
 
 		std::shared_ptr<RegionMapLoader> m_MapLoader;
 		std::shared_ptr<StreamingManager> m_StreamingManager;
@@ -100,7 +104,11 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> m_NonStreamedEntities;
 
+		CL_Slot m_KeyDownSlot;
 		CL_Slot m_KeyUpSlot;
+		CL_Slot m_MouseDownSlot;
+		CL_Slot m_MouseUpSlot;
+		CL_Slot m_MouseMoveSlot;
 
 		bool m_RebuildScripts;
 		bool m_CompileMap;
@@ -115,7 +123,13 @@ namespace FusionEngine
 
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
 
-		CL_Rectf m_SelectionBox;
+		bool m_ShiftSelect;
+		bool m_AltSelect;
+		CL_Rectf m_SelectionRectangle;
+		std::set<EntityPtr> m_SelectedEntities;
+
+		Vector2 m_DragFrom;
+		bool m_ReceivedMouseDown;
 
 		void ShowSaveDialog();
 		void ShowLoadDialog();
@@ -127,7 +141,22 @@ namespace FusionEngine
 
 		EntityPtr CreateEntity(const std::string& transform_type, const Vector2& pos, float angle, bool synced, bool streaming);
 
-		void onKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnMouseUp(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnMouseMove(const CL_InputEvent& ev, const CL_InputState& state);
+
+		void OnMouseDown_Selection(const CL_InputEvent& ev);
+
+		void TranslateScreenToWorld(float* x, float* y) const;
+		Vector2 ReturnScreenToWorld(float x, float y) const;
+		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
+
+		void SelectEntity(const EntityPtr& entity);
+		void DeselectEntity(const EntityPtr& entity);
+
+		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area);
 
 		void RegisterScriptType(asIScriptEngine* engine);
 

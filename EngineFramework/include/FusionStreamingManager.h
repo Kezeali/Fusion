@@ -299,6 +299,8 @@ namespace FusionEngine
 
 		inline std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
 
+		void QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const;
+
 		//! Pass all loaded cells to the archivist to be stored
 		/*!
 		* \param setup_refresh

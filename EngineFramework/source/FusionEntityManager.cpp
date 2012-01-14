@@ -1251,15 +1251,10 @@ namespace FusionEngine
 		return m_Entities;
 	}
 
-	//const EntityManager::EntitySet &EntityManager::GetPseudoEntities() const
-	//{
-	//	return m_PseudoEntities;
-	//}
-
-	//EntityArray &EntityManager::GetDomain(EntityDomain idx)
-	//{
-	//	return m_EntitiesToUpdate[idx];
-	//}
+	void EntityManager::QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const
+	{
+		m_StreamingManager->QueryRect(fn, lb, ub);
+	}
 
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)
 	{

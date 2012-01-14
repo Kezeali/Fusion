@@ -171,11 +171,7 @@ namespace FusionEngine
 		*/
 		const IDEntityMap &GetEntities() const;
 
-		//! Returns Pseudo-Entities
-		//const EntitySet &GetPseudoEntities() const;
-
-		//! Returns the EntityArray for the given domain
-		//EntityArray &GetDomain(EntityDomain domain_index);
+		void QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const;
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);

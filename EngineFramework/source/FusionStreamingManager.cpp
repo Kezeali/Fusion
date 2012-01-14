@@ -420,6 +420,38 @@ namespace FusionEngine
 		return std::make_pair(std::move(location), cell);
 	}
 
+	inline bool isWithinBounds(const Vector2& pos, const Vector2& lb, const Vector2& ub)
+	{
+		return pos.x > lb.x && pos.y > lb.y && pos.x < ub.x && pos.y < ub.y;
+	}
+
+	inline bool runQueryOnObjects(const Cell::CellEntryMap& objects, const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub)
+	{
+		for (auto it = objects.begin(), end = objects.end(); it != end; ++it)
+		{
+			const auto& entity = it->first;
+			if (isWithinBounds(entity->GetPosition(), lb, ub) && !fn(entity))
+				return false;
+		}
+		return true;
+	}
+
+	void StreamingManager::QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const
+	{
+		auto lbLoc = ToCellLocation(lb);
+		auto ubLoc = ToCellLocation(ub);
+
+		if (!runQueryOnObjects(m_TheVoid.objects, fn, lb, ub))
+			return;
+
+		auto lbEntry = m_Cells.lower_bound(lbLoc);
+		for (auto cit = lbEntry, cend = m_Cells.upper_bound(ubLoc); cit != cend; ++cit)
+		{
+			if (!runQueryOnObjects(cit->second->objects, fn, lb, ub))
+				return;
+		}
+	}
+
 	std::shared_ptr<Cell>& StreamingManager::RetrieveCell(const CellHandle &location)
 	{
 		auto _where = m_Cells.lower_bound(location);

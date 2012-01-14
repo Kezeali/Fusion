@@ -119,7 +119,6 @@
     <ClCompile Include="source\FusionPhysFSIOStream.cpp" />
     <ClCompile Include="source\FusionPlayerRegistry.cpp" />
     <ClCompile Include="source\FusionProfiling.cpp" />
-    <ClCompile Include="source\FusionRefCounted.cpp" />
     <ClCompile Include="source\FusionResource.cpp" />
     <ClCompile Include="source\FusionResourceManager.cpp" />
     <ClCompile Include="source\FusionScriptedConsoleCommand.cpp" />

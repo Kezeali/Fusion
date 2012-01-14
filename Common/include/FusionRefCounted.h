@@ -245,9 +245,15 @@ namespace FusionEngine
 			asCALL_CDECL_OBJLAST);
 	}
 
-	void intrusive_ptr_add_ref(RefCounted *ptr);
+	inline void intrusive_ptr_add_ref(RefCounted *ptr)
+	{
+		ptr->addRef();
+	}
 
-	void intrusive_ptr_release(RefCounted *ptr);
+	inline void intrusive_ptr_release(RefCounted *ptr)
+	{
+		ptr->release();
+	}
 
 }
 

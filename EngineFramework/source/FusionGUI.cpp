@@ -461,6 +461,7 @@ namespace FusionEngine
 			}
 
 			//delete MessageBoxMaker::getSingletonPtr();
+			m_MessageBoxMaker.reset();
 
 			m_Contexts.clear();
 			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();

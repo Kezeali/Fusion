@@ -100,6 +100,10 @@ namespace FusionEngine
 		m_Console.reset(new Console);
 	}
 
+	EngineManager::~EngineManager()
+	{
+	}
+
 	void EngineManager::Initialise()
 	{
 		try

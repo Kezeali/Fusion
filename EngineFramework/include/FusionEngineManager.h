@@ -71,6 +71,7 @@ namespace FusionEngine
 	{
 	public:
 		EngineManager(const std::vector<CL_String>& args);
+		~EngineManager();
 
 		void Initialise();
 
@@ -91,10 +92,6 @@ namespace FusionEngine
 		void Load(const std::string& name);
 
 	private:
-		std::vector<std::shared_ptr<EngineExtension>> m_Extensions;
-
-		std::map<std::string, std::unique_ptr<IComponentSystem>> m_Systems;
-
 		std::unique_ptr<Logger> m_Logger;
 		std::unique_ptr<Console> m_Console;
 		std::shared_ptr<Profiling> m_Profiling;
@@ -141,8 +138,11 @@ namespace FusionEngine
 		std::shared_ptr<P2PEntityInstantiator> m_EntityInstantiator;
 
 		std::shared_ptr<GameMapLoader> m_MapLoader;
-
 		std::shared_ptr<GameMap> m_Map;
+
+		std::vector<std::shared_ptr<EngineExtension>> m_Extensions;
+
+		std::map<std::string, std::unique_ptr<IComponentSystem>> m_Systems;
 
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;

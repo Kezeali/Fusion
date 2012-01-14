@@ -166,7 +166,6 @@
     <ClCompile Include="source\FusionCmdOptions.cpp" />
     <ClCompile Include="source\FusionIDStack.cpp" />
     <ClCompile Include="source\FusionPlayerRegistry.cpp" />
-    <ClCompile Include="source\FusionRefCounted.cpp" />
     <ClCompile Include="source\FusionTimer.cpp" />
   </ItemGroup>
   <ItemGroup>
