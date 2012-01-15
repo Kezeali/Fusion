@@ -141,6 +141,8 @@ namespace FusionEngine
 		std::shared_ptr<GameMap> m_Map;
 
 		std::vector<std::shared_ptr<EngineExtension>> m_Extensions;
+		std::set<std::string> m_EnabledExtensions; // Loaded from options
+		std::vector<std::shared_ptr<EngineExtension>> m_ActiveExtensions;
 
 		std::map<std::string, std::unique_ptr<IComponentSystem>> m_Systems;
 

@@ -61,11 +61,20 @@ namespace FusionEngine
 
 	class WorldSaver;
 
+	class EditorOverlay;
+	class SelectionDrawer;
+
 	class Editor : public EngineExtension
 	{
 	public:
 		Editor(const std::vector<CL_String> &args);
 		virtual ~Editor();
+
+		std::string GetName() const { return "editor"; }
+
+		void Activate();
+		void Deactivate();
+		bool IsActive() const { return m_Active; }
 
 		void SetDisplay(const CL_DisplayWindow& display);
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
@@ -85,6 +94,15 @@ namespace FusionEngine
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
 
 	private:
+		enum QueryType
+		{
+			General,
+			Physical
+		};
+
+		bool m_Active;
+		std::string m_OriginalSavePath;
+
 		CL_DisplayWindow m_DisplayWindow;
 		std::shared_ptr<AngelScriptWorld> m_AngelScriptWorld;
 		std::shared_ptr<Box2DWorld> m_Box2DWorld;
@@ -131,6 +149,9 @@ namespace FusionEngine
 		Vector2 m_DragFrom;
 		bool m_ReceivedMouseDown;
 
+		std::shared_ptr<EditorOverlay> m_EditorOverlay;
+		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
+
 		void ShowSaveDialog();
 		void ShowLoadDialog();
 
@@ -156,7 +177,7 @@ namespace FusionEngine
 		void SelectEntity(const EntityPtr& entity);
 		void DeselectEntity(const EntityPtr& entity);
 
-		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area);
+		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
 
 		void RegisterScriptType(asIScriptEngine* engine);
 

@@ -455,6 +455,19 @@ namespace FusionEngine
 	{
 	}
 
+	void Box2DWorld::InitialiseActiveComponents()
+	{
+		for (auto it = m_BodiesToCreate.begin(), end = m_BodiesToCreate.end(); it != end; ++it)
+		{
+			auto body = *it;
+			body->ConstructBody(m_World, this->shared_from_this());
+		}
+
+		// Copy the newly-created bodies into the active list:
+		m_ActiveBodies.insert(m_ActiveBodies.end(), m_BodiesToCreate.begin(), m_BodiesToCreate.end());
+		m_BodiesToCreate.clear();
+	}
+
 	void Box2DTask::Update(const float delta)
 	{
 		// Late initialisation

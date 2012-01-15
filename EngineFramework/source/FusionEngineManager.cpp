@@ -328,6 +328,10 @@ namespace FusionEngine
 
 		if (options->GetOption_bool("console_logging"))
 			m_Logger->ActivateConsoleLogging();
+
+		auto activeExtensionsStr = options->GetOption_str("active_extensions");
+		auto activeExtensions = fe_splitstring(activeExtensionsStr, ",");
+		m_EnabledExtensions.insert(activeExtensions.begin(), activeExtensions.end());
 	}
 
 	void EngineManager::RegisterScriptTypes()
@@ -365,6 +369,7 @@ namespace FusionEngine
 
 		ITransform_RegisterScriptInterface(engine);
 		IRigidBody_RegisterScriptInterface(engine);
+		IFixture_RegisterScriptInterface(engine);
 		ICircleShape_RegisterScriptInterface(engine);
 		IRenderCom_RegisterScriptInterface(engine);
 		ISprite_RegisterScriptInterface(engine);
@@ -443,6 +448,8 @@ namespace FusionEngine
 			m_GUI->SetModule(guiModule);
 			guiModule->Build();
 
+			m_ActiveExtensions.clear();
+			// Initialise extensions
 			for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
 			{
 				(*exit)->SetDisplay(m_DisplayWindow);
@@ -452,6 +459,11 @@ namespace FusionEngine
 				(*exit)->SetMapLoader(m_CellArchivist);
 				(*exit)->SetStreamingManager(m_StreamingManager);
 				(*exit)->SetWorldSaver(this);
+
+				if (m_EnabledExtensions.find((*exit)->GetName()) != m_EnabledExtensions.end())
+				{
+					m_ActiveExtensions.push_back(*exit);
+				}
 			}
 
 			auto mb = Rocket::Core::GetContext("world")->LoadDocument("/core/gui/message_box.rml");
@@ -462,6 +474,7 @@ namespace FusionEngine
 			
 			m_ResourceManager->StartLoaderThread();
 
+			// Create worlds
 			std::vector<std::shared_ptr<ISystemWorld>> worlds;
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
@@ -476,7 +489,14 @@ namespace FusionEngine
 			}
 			m_Scheduler->SetUniverse(worlds);
 
+			// Check for any messages posted during world creation
 			m_ComponentUniverse->CheckMessages();
+
+			// Activate extensions
+			for (auto it = m_ActiveExtensions.begin(), end = m_ActiveExtensions.end(); it != end; ++it)
+			{
+				(*it)->Activate();
+			}
 
 			unsigned short listenPort = 11122;
 			m_Network->Startup(listenPort);
@@ -516,7 +536,7 @@ namespace FusionEngine
 				time = now;
 
 				// Update extensions
-				for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
+				for (auto it = m_ActiveExtensions.begin(), end = m_ActiveExtensions.end(); it != end; ++it)
 				{
 					(*it)->Update(time, dt);
 					quit |= (*it)->HasRequestedQuit();

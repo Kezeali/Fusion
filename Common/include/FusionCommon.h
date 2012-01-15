@@ -305,8 +305,20 @@ namespace FusionEngine
 	void fe_pairize(const std::string& entries, T& out_map)
 	{
 		std::string::size_type token_pos = 0, token_end = 0;
+		std::string::size_type literalBegin = std::string::npos, literalEnd;
 		while (true)
 		{
+			// Read the key param
+			literalBegin = entries.find("'", token_pos);
+			if (literalBegin != std::string::npos)
+			{
+				literalEnd = entries.find("'", literalBegin + 1);
+				if (literalEnd != std::string::npos)
+					token_pos = literalEnd + 1;
+				else
+					break; // Un-even quote token
+			}
+
 			token_end = entries.find(":", token_pos);
 			if (token_end == std::string::npos)
 				break;
@@ -315,7 +327,19 @@ namespace FusionEngine
 				entries.substr(token_pos, token_end - token_pos)
 				);
 
+			// Read the value param
 			token_pos = token_end + 1;
+
+			literalBegin = entries.find("'", token_pos);
+			if (literalBegin != std::string::npos)
+			{
+				literalEnd = entries.find("'", literalBegin + 1);
+				if (literalEnd != std::string::npos)
+					token_pos = literalEnd + 1;
+				else
+					break; // Un-even quote token
+			}
+			
 			token_end = entries.find(",", token_pos);
 
 			if (!key.empty())

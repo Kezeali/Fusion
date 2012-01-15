@@ -85,6 +85,9 @@ namespace FusionEngine
 		//  and create a new one from the system.
 		b2World* Getb2World() const { return m_World; }
 
+		//! Initialise components now (usually they get initialised when the task runs)
+		void InitialiseActiveComponents();
+
 	private:
 		std::vector<std::string> GetTypes() const;
 

@@ -45,6 +45,7 @@
 #include "FusionAngelScriptSystem.h"
 #include "FusionBox2DSystem.h"
 #include "FusionCLRenderSystem.h"
+#include "FusionCLRenderExtension.h"
 #include "FusionRenderer.h"
 
 #include "FusionBox2DComponent.h"
@@ -129,8 +130,38 @@ namespace FusionEngine
 		}
 	};
 
+	class EditorOverlay : public CLRenderExtension
+	{
+	public:
+		void Draw(const CL_GraphicContext& gc);
+	};
+
+	void EditorOverlay::Draw(const CL_GraphicContext& gc)
+	{
+	}
+
+	class SelectionDrawer : public CLRenderExtension
+	{
+	public:
+		void Draw(const CL_GraphicContext& gc);
+
+		void SetSelectionBox(const CL_Rectf& box) { m_SelectionBox = box; }
+
+		CL_Rectf m_SelectionBox;
+	};
+
+	void SelectionDrawer::Draw(const CL_GraphicContext& gc_)
+	{
+		auto gc = gc_;
+		auto fillC = CL_Colorf::aquamarine;
+		fillC.set_alpha(0.25f);
+		CL_Draw::box(gc, m_SelectionBox, CL_Colorf::white);
+		CL_Draw::box(gc, m_SelectionBox, fillC);
+	}
+
 	Editor::Editor(const std::vector<CL_String>& args)
-		: m_RebuildScripts(false),
+		: m_Active(false),
+		m_RebuildScripts(false),
 		m_CompileMap(false),
 		m_SaveMap(false),
 		m_LoadMap(false),
@@ -158,17 +189,50 @@ namespace FusionEngine
 			return messageBox.get();
 		});
 
-		Console::getSingleton().BindCommand("lent", [this](const std::vector<std::string>& cmdargs)->std::string
+		Console::getSingleton().BindCommand("le", [this](const std::vector<std::string>& cmdargs)->std::string
 		{
 			std::string retval = "Selected entities: ";
 			for (auto it = this->m_SelectedEntities.begin(), end = this->m_SelectedEntities.end(); it != end; ++it)
 				retval += "\n" + (*it)->GetName();
 			return retval;
 		});
+		Console::getSingleton().SetCommandHelpText("le", "List selected entities", StringVector());
+
+		m_EditorOverlay = std::make_shared<EditorOverlay>();
+		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 	}
 
 	Editor::~Editor()
 	{
+		Console::getSingleton().UnbindCommand("le");
+	}
+
+	void Editor::Activate()
+	{
+		m_Active = true;
+
+		m_OriginalSavePath = m_MapLoader->GetSavePath();
+		m_MapLoader->SetSavePath("Editor/");
+
+		BuildCreateEntityScript();
+
+		auto camera = std::make_shared<Camera>();
+		camera->SetPosition(0.f, 0.f);
+		m_Viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+		m_RenderWorld->AddViewport(m_Viewport);
+		m_StreamingManager->AddCamera(camera);
+
+		m_EditCam = camera;
+
+		m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
+		m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
+	}
+
+	void Editor::Deactivate()
+	{
+		m_Active = false;
+
+		m_MapLoader->SetSavePath(m_OriginalSavePath);
 	}
 
 	void Editor::SetDisplay(const CL_DisplayWindow& display)
@@ -183,9 +247,7 @@ namespace FusionEngine
 
 	void Editor::SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader)
 	{
-		m_MapLoader = map_loader;
-		// TODO: do this when the editor is enabled, undo when not
-		m_MapLoader->SetSavePath("Editor/");
+		m_MapLoader = map_loader;	
 	}
 
 	void Editor::SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw)
@@ -193,7 +255,8 @@ namespace FusionEngine
 		m_AngelScriptWorld = asw;
 
 		ScriptManager::getSingleton().RegisterGlobalObject("Editor editor", this);
-		BuildCreateEntityScript();
+		if (m_Active)
+			BuildCreateEntityScript();
 	}
 
 	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
@@ -210,18 +273,24 @@ namespace FusionEngine
 		{
 			m_RenderWorld = renderWorld;
 
-			auto camera = std::make_shared<Camera>();
-			camera->SetPosition(0.f, 0.f);
-			m_Viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
-			m_RenderWorld->AddViewport(m_Viewport);
-			m_StreamingManager->AddCamera(camera);
+			if (m_Active)
+			{
+				auto camera = std::make_shared<Camera>();
+				camera->SetPosition(0.f, 0.f);
+				m_Viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+				m_RenderWorld->AddViewport(m_Viewport);
+				m_StreamingManager->AddCamera(camera);
 
-			m_EditCam = camera;
+				m_EditCam = camera;
+			}
 		}
 	}
 
 	void Editor::Update(float time, float dt)
 	{
+		// Bodies have to be forced to create since the simulation isn't running
+		m_Box2DWorld->InitialiseActiveComponents();
+
 		if (m_EditCam)
 		{
 			auto camPos = m_EditCam->GetPosition();
@@ -523,19 +592,41 @@ namespace FusionEngine
 
 			srand(CL_System::get_time());
 
-			Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
-			CL_Rectf area;
-			Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, vp, true);
-			pos.x += area.left; pos.y += area.top;
-
-			pos.x = ToSimUnits(pos.x);
-			pos.y = ToSimUnits(pos.y);
-
-			float angle = 0.f;
-
+			bool randomAngle = ev.shift;
+			
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
 			if (caller)
-				caller(num, &pos, angle);
+			{
+				CL_Rectf area;
+				Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, vp, true);
+
+				Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
+				pos.x += area.left; pos.y += area.top;
+
+				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+				{
+					for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
+						for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
+						{
+							Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
+
+							float angle = 0.f;
+							if (randomAngle)
+								angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
+
+							caller(num, &simPos, angle);
+						}
+				}
+				else
+				{
+					pos.x = ToSimUnits(pos.x);
+					pos.y = ToSimUnits(pos.y);
+
+					float angle = 0.f;
+
+					caller(num, &pos, angle);
+				}
+			}
 		}
 	}
 
@@ -604,7 +695,7 @@ namespace FusionEngine
 
 		// Select entities found within the updated selection rectangle
 		std::vector<EntityPtr> entitiesUnderMouse;
-		GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle);
+		GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, QueryType::General);
 		for (auto it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
 		{
 			const EntityPtr& map_entity = *it;
@@ -624,6 +715,8 @@ namespace FusionEngine
 			else
 				SelectEntity(map_entity);
 		}
+
+		m_SelectionDrawer->SetSelectionBox(m_SelectionRectangle);
 	}
 
 	void Editor::SelectEntity(const EntityPtr& entity)
@@ -636,30 +729,31 @@ namespace FusionEngine
 		m_SelectedEntities.erase(entity);
 	}
 
-	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const CL_Rectf &rectangle)
+	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const CL_Rectf &rectangle, const Editor::QueryType query_type)
 	{
 		// Figure out where the rectangle is in the world
 		Vector2 top_left(ToSimUnits(std::min(rectangle.left, rectangle.right)), ToSimUnits(std::min(rectangle.top, rectangle.bottom)));
 		Vector2 bottom_right(ToSimUnits(std::max(rectangle.left, rectangle.right)), ToSimUnits(std::max(rectangle.top, rectangle.bottom)));
-		//if (screen_to_world)
-		//{
-		//	translateScreenToWorld(&top_left, m_Renderer, m_Viewport);
-		//	translateScreenToWorld(&bottom_right, m_Renderer, m_Viewport);
-		//}
 
-		m_StreamingManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+		switch (query_type)
+		{
+		case QueryType::General:
+			m_StreamingManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+			break;
 
-		//// Make an AABB for the given rect
-		//b2AABB aabb;
-		//aabb.lowerBound.Set(top_left.x * s_SimUnitsPerGameUnit, top_left.y * s_SimUnitsPerGameUnit);
-		//aabb.upperBound.Set(bottom_right.x * s_SimUnitsPerGameUnit, bottom_right.y * s_SimUnitsPerGameUnit);
+		case QueryType::Physical:
+			{
+				// Make an AABB for the given rect
+				b2AABB aabb;
+				aabb.lowerBound.Set(top_left.x, top_left.y);
+				aabb.upperBound.Set(bottom_right.x, bottom_right.y);
 
-		//SendToConsole("LB=" + boost::lexical_cast<std::string>(aabb.lowerBound.x) + "," + boost::lexical_cast<std::string>(aabb.lowerBound.y));
-		//SendToConsole("UB=" + boost::lexical_cast<std::string>(aabb.upperBound.x) + "," + boost::lexical_cast<std::string>(aabb.upperBound.y));
-
-		//// Query the world for overlapping shapes
-		//EntityQuery callback(&out, [](b2Fixture*, bool&) {return true;});
-		//m_Box2DWorld->Getb2World()->QueryAABB(&callback, aabb);
+				// Query the world for overlapping shapes
+				EntityQuery callback(&out, [](b2Fixture*, bool&) {return true;});
+				m_Box2DWorld->Getb2World()->QueryAABB(&callback, aabb);
+			}
+			break;
+		};
 	}
 
 	void Editor::BuildCreateEntityScript()

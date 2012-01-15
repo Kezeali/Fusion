@@ -125,6 +125,16 @@ namespace FusionEngine
 		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", FixedRotation);
 	}
 
+	void IFixture_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		RegisterComponentInterfaceType<IFixture>(engine);
+
+		FSN_REGISTER_PROP_ACCESSOR(IFixture, bool, "bool", Sensor);
+		FSN_REGISTER_PROP_ACCESSOR(IFixture, float, "float", Density);
+		FSN_REGISTER_PROP_ACCESSOR(IFixture, float, "float", Friction);
+		FSN_REGISTER_PROP_ACCESSOR(IFixture, float, "float", Restitution);
+	}
+
 	void ICircleShape_RegisterScriptInterface(asIScriptEngine* engine)
 	{
 		RegisterComponentInterfaceType<ICircleShape>(engine);

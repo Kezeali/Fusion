@@ -81,6 +81,7 @@ namespace FusionEngine
 		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager);
 
 		void SetSavePath(const std::string& save_path) { m_SavePath = save_path; }
+		const std::string& GetSavePath() const { return m_SavePath; }
 
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);

@@ -61,8 +61,6 @@ class ConsoleElement : ScriptElement
 		autocomplete_menu.removeAllChildren();
 		@autocompleteCon = null;
 		@autocomplete_menu = null;
-
-		console.println("deleted Console element");
 	}
 
 	uint diff(uint front, uint back, uint buffer_length)

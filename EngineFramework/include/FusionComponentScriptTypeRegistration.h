@@ -39,6 +39,8 @@ namespace FusionEngine
 
 	void IRigidBody_RegisterScriptInterface(asIScriptEngine* engine);
 
+	void IFixture_RegisterScriptInterface(asIScriptEngine* engine);
+
 	void ICircleShape_RegisterScriptInterface(asIScriptEngine* engine);
 
 	void IRenderCom_RegisterScriptInterface(asIScriptEngine* engine);

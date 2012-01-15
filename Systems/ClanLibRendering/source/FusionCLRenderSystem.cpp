@@ -31,6 +31,7 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionCLRenderComponent.h"
+#include "FusionCLRenderExtension.h"
 #include "FusionRenderer.h"
 
 #include "FusionEntity.h"
@@ -114,6 +115,26 @@ namespace FusionEngine
 			//m_Viewports.clear();
 			m_Viewports.push_back(viewport);
 		}
+	}
+
+	void CLRenderWorld::AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& vp)
+	{
+		m_Extensions.insert(std::make_pair(vp, extension));
+	}
+
+	void CLRenderWorld::RunExtensions(const ViewportPtr& vp, const CL_GraphicContext& gc)
+	{
+		std::vector<ViewportPtr> removed;
+		auto range = m_Extensions.equal_range(vp);
+		for (auto it = range.first; it != range.second; ++it)
+		{
+			if (auto extension = it->second.lock())
+				extension->Draw(gc);
+			else
+				removed.push_back(vp);
+		}
+		for (auto it = removed.begin(), end = removed.end(); it != end; ++it)
+			m_Extensions.erase(*it);
 	}
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const
@@ -383,12 +404,15 @@ namespace FusionEngine
 		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 
 		auto& viewports = m_RenderWorld->GetViewports();
+		auto worldGUICtx = Rocket::Core::GetContext("world");
 		for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
 		{
-			const auto& camera = (*it)->GetCamera();
+			const auto& vp = *it;
+
+			const auto& camera = vp->GetCamera();
 
 			CL_Rectf drawArea;
-			m_Renderer->SetupDraw(*it, &drawArea);
+			m_Renderer->SetupDraw(vp, &drawArea);
 
 			const auto& p = camera->GetPosition();
 			//drawArea.translate(p);
@@ -403,8 +427,9 @@ namespace FusionEngine
 				}
 			}
 
-			auto ctx = Rocket::Core::GetContext("world");
-			ctx->Render();
+			worldGUICtx->Render();
+
+			m_RenderWorld->RunExtensions(vp, gc);
 
 			m_Renderer->PostDraw();
 		}
@@ -412,7 +437,7 @@ namespace FusionEngine
 		for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
 		{
 			auto ctx = Rocket::Core::GetContext(i);
-			if (ctx->GetName() != "world")
+			if (ctx != worldGUICtx)
 				ctx->Render();
 		}
 

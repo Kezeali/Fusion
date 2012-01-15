@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -42,6 +42,8 @@
 #include <ClanLib/display.h>
 #include <tbb/concurrent_queue.h>
 #include <boost/thread/mutex.hpp>
+#include <map>
+#include <vector>
 
 namespace FusionEngine
 {
@@ -52,6 +54,8 @@ namespace FusionEngine
 	class CLRenderGUITask;
 	class StreamingCamera;
 	class CameraSynchroniser;
+
+	class CLRenderExtension;
 
 	class B2DebugDraw;
 
@@ -74,6 +78,7 @@ namespace FusionEngine
 		
 	};
 
+	//! ClanLib Renderer
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
@@ -83,6 +88,9 @@ namespace FusionEngine
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
 		void AddViewport(const ViewportPtr& viewport);
 		void RemoveViewport(const ViewportPtr& viewport);
+
+		void AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& viewport);
+		void RunExtensions(const ViewportPtr& vp, const CL_GraphicContext& gc);
 
 		void AddQueuedViewports();
 
@@ -126,11 +134,14 @@ namespace FusionEngine
 		std::vector<ViewportPtr> m_Viewports;
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
 
+		std::multimap<ViewportPtr, std::weak_ptr<CLRenderExtension>> m_Extensions;
+
 		CameraSynchroniser* m_CameraManager;
 
 		Renderer* m_Renderer;
 	};
 
+	//! ClanLib render task
 	class CLRenderTask : public ISystemTask
 	{
 	public:

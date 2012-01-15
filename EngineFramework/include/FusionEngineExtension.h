@@ -57,6 +57,11 @@ namespace FusionEngine
 		EngineExtension() : m_Quit(false) {}
 		virtual ~EngineExtension() {}
 
+		virtual std::string GetName() const = 0;
+
+		virtual void Activate() = 0;
+		virtual void Deactivate() = 0;
+
 		// If I change the implementation such that CLRenderSystem creates the display,
 		//  this interface can be removed and getting the display can be done in OnWorldCreated
 		//  if an extension requires it
