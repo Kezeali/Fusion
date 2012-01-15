@@ -543,6 +543,9 @@ namespace FusionEngine
 
 	void Editor::OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state)
 	{
+		if (!m_Active)
+			return;
+
 		if (ev.shift)
 			m_ShiftSelect = true;
 		if (ev.alt)
@@ -551,6 +554,9 @@ namespace FusionEngine
 
 	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
 	{
+		if (!m_Active)
+			return;
+
 		m_ShiftSelect = false;
 		m_AltSelect = false;
 
@@ -632,29 +638,38 @@ namespace FusionEngine
 
 	void Editor::OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state)
 	{
-		//[process global inputs here]
+		if (m_Active)
+		{
+			//[process global inputs here]
 
-		//Rocket::Core::Context *context = m_MainDocument->GetContext();
-		//for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
-		//{
-		//	if (context->GetDocument(i)->IsPseudoClassSet("hover"))
-		//		return;
-		//}
+			//Rocket::Core::Context *context = m_MainDocument->GetContext();
+			//for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
+			//{
+			//	if (context->GetDocument(i)->IsPseudoClassSet("hover"))
+			//		return;
+			//}
 
-		m_ReceivedMouseDown = true;
+			m_ReceivedMouseDown = true;
 
-		OnMouseDown_Selection(ev);
+			OnMouseDown_Selection(ev);
+		}
 	}
 
 	void Editor::OnMouseUp(const CL_InputEvent& ev, const CL_InputState& state)
 	{
-		m_ReceivedMouseDown = false;
+		if (m_Active)
+		{
+			m_ReceivedMouseDown = false;
+		}
 	}
 
 	void Editor::OnMouseMove(const CL_InputEvent& ev, const CL_InputState& state)
 	{
-		if (m_ReceivedMouseDown)
-			UpdateSelectionRectangle(Vector2(ev.mouse_pos.x, ev.mouse_pos.y), true);
+		if (m_Active)
+		{
+			if (m_ReceivedMouseDown)
+				UpdateSelectionRectangle(Vector2(ev.mouse_pos.x, ev.mouse_pos.y), true);
+		}
 	}
 
 	void Editor::OnMouseDown_Selection(const CL_InputEvent& ev)

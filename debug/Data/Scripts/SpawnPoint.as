@@ -25,10 +25,11 @@ class SpawnPoint : ScriptComponent
 		if (!newEnt.isNull())
 		{
 		instantiator.addComponent(newEnt, "b2Circle", "");
-		instantiator.addComponent(newEnt, "CLSprite", "");
+		instantiator.addComponent(newEnt, "CLSprite", "sprite_main");
+		instantiator.addComponent(newEnt, "CLSprite", "sprite_shadow");
 		instantiator.addComponent(newEnt, "TestB", "script_b");
 		instantiator.addComponent(newEnt, "StreamingCamera", "");
-		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
+		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_main").get());
 		if (sprite is null)
 		{
 			console.println("sprite cast failed");
@@ -38,11 +39,19 @@ class SpawnPoint : ScriptComponent
 		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
+		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
+		shadow.ImagePath = "Entities/Test/Gfx/spaceshoot_body_shadow.png";
+		shadow.BaseAngle = 1.57f;
+		shadow.Scale << Vector(1.02f, 1.02f);
+		shadow.Alpha = 0.75f;
+		shadow.LocalDepth = -1;
+		//shadow.Offset << Vector(0.0f, 0.25f);
+		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
-		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
+		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
 		
 		ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
 		cam.AngleEnabled = false;
