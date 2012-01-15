@@ -73,7 +73,7 @@ namespace FusionEngine
 		friend class CLRenderWorld;
 		friend class CLRenderTask;
 	public:
-		FSN_LIST_INTERFACES((ISprite))
+		FSN_LIST_INTERFACES((IRenderCom)(ISprite))
 
 		struct PropsIdx { enum Names : size_t {
 			Offset = 0, LocalDepth,
@@ -137,14 +137,12 @@ namespace FusionEngine
 
 		void OnSiblingAdded(const ComponentPtr& component);
 
-		void SynchroniseParallelEdits();
-		void FireSignals();
-
 		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		// ISprite
 		void SetOffset(const Vector2& offset);
+		Vector2 GetOffset() const;
 		void SetLocalDepth(int value);
 		//void SetInterpolate(bool value);
 		
@@ -165,7 +163,7 @@ namespace FusionEngine
 		void SetRotationOffset(const Vector2i& offset);
 		Vector2i GetRotationOffset() const;
 
-		mutable CL_Colorf m_Colour; // Since CL_Sprite::get_color returns by value (for no good reason)
+		mutable CL_Colorf m_Colour; // mutable since CL_Sprite::get_color returns by value (for no good reason)
 		void SetColour(const CL_Colorf& val);
 		const CL_Colorf &GetColour() const;
 		

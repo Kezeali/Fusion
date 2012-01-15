@@ -328,7 +328,14 @@ namespace FusionEngine
 			}
 			else if (first->GetEntityDepth() == second->GetEntityDepth())
 			{
-				if (first->GetParent() < second->GetParent())
+				auto firstPos = first->GetPosition();
+				auto secondPos = second->GetPosition();
+				if (firstPos.y == secondPos.y)
+				{
+					if (first->GetParent() < second->GetParent())
+						return true;
+				}
+				else if (firstPos.y < secondPos.y)
 					return true;
 			}
 			else if (first->GetEntityDepth() < second->GetEntityDepth())

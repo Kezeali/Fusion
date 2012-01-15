@@ -224,10 +224,9 @@ namespace FusionEngine
 			//m_Sprite.set_rotation_hotspot(origin_center);
 			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
 			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
-			//m_Sprite.set_color(Colour.Get());
 			m_Sprite.set_color(m_Colour);
 			m_Sprite.set_alpha(Alpha.Get());
-			//m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
+			m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
 			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
 
 			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
@@ -236,23 +235,23 @@ namespace FusionEngine
 		}
 		if (!m_Sprite.is_null())
 		{
-#ifdef _DEBUG
-			const CL_Colorf authColours[] = {
-				CL_Colorf::white,
-				CL_Colorf::blue,
-				CL_Colorf::red,
-				CL_Colorf::yellow,
-				CL_Colorf::green,
-				CL_Colorf::brown,
-				CL_Colorf::purple,
-				CL_Colorf::orange
-			};
-			PlayerID auth = GetParent()->GetAuthority();
-			if (auth < 8)
-				m_Sprite.set_color(authColours[auth]);
-#endif
+//#ifdef _DEBUG
+//			const CL_Colorf authColours[] = {
+//				CL_Colorf::white,
+//				CL_Colorf::blue,
+//				CL_Colorf::red,
+//				CL_Colorf::yellow,
+//				CL_Colorf::green,
+//				CL_Colorf::brown,
+//				CL_Colorf::purple,
+//				CL_Colorf::orange
+//			};
+//			PlayerID auth = GetParent()->GetAuthority();
+//			if (auth < 8)
+//				m_Sprite.set_color(authColours[auth]);
+//#endif
 
-			Vector2 draw_pos = ToRender(m_Position);// - camera_pos;
+			Vector2 draw_pos = ToRender(m_Position) + m_Offset;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
 			//auto size = m_AABB.get_size();
@@ -299,16 +298,6 @@ namespace FusionEngine
 			m_Angle = transform->Angle.Get();
 			m_EntityDepth = transform->Depth.Get();
 		}
-	}
-
-	void CLSprite::SynchroniseParallelEdits()
-	{
-		ISprite::SynchroniseInterface();
-	}
-
-	void CLSprite::FireSignals()
-	{
-		ISprite::FireInterfaceSignals();
 	}
 
 	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
@@ -407,6 +396,11 @@ namespace FusionEngine
 	{
 		m_Offset = value;
 		m_SerialisationHelper.markChanged(PropsIdx::Offset);
+	}
+
+	Vector2 CLSprite::GetOffset() const
+	{
+		return m_Offset;
 	}
 
 	void CLSprite::SetLocalDepth(int value)

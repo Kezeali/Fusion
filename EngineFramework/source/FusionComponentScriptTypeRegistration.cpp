@@ -155,6 +155,9 @@ namespace FusionEngine
 	{
 		RegisterComponentInterfaceType<ISprite>(engine);
 
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2, "Vector", Offset);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, int, "int", LocalDepth);
+
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", ImagePath);
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", AnimationPath);
 

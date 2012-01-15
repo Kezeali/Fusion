@@ -49,27 +49,16 @@ namespace FusionEngine
 		ThreadSafeProperty<int> LocalDepth;
 		//ThreadSafeProperty<bool> Interpolate;
 
-		void SynchroniseInterface()
-		{
-			if (Offset.SynchroniseExternalOnly()) // writeonly
-				SetOffset(Offset.Get());
-			if (LocalDepth.SynchroniseExternalOnly())
-				SetLocalDepth(LocalDepth.Get());
-			//if (Interpolate.Synchronise())
-			//	SetInterpolate(Interpolate.Get());
-		}
-
-		void FireInterfaceSignals()
-		{
-			Offset.FireSignal();
-			LocalDepth.FireSignal();
-			//Interpolate.FireSignal();
-		}
+		FSN_COIFACE_CTOR(IRenderCom,
+			((FSN_GET_SET)(Offset))
+			((FSN_GET_SET)(LocalDepth)) )
 
 	private:
 		virtual void SetOffset(const Vector2& value) = 0;
+		virtual Vector2 GetOffset() const = 0;
 		
 		virtual void SetLocalDepth(int value) = 0;
+		virtual int GetLocalDepth() const = 0;
 
 		//virtual void SetInterpolate(bool value) = 0;
 	};
