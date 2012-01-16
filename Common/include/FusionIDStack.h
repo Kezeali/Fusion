@@ -414,12 +414,14 @@ namespace FusionEngine
 	};
 
 	//! Supplies ObjectIDs which aren't assigned
-	class ObjectIDSet : public IDSet<ObjectID>
+	class ObjectIDSet : public IDBitset<ObjectID>
 	{
 	public:
 		//! Initialises the first ID to 1 (Entity IDs start at 1)
 		ObjectIDSet()
-			: IDSet(1)
+			: IDBitset(1)
+		{}
+		virtual ~ObjectIDSet()
 		{}
 	};
 
@@ -434,6 +436,8 @@ namespace FusionEngine
 		//! Sets the max ID
 		ObjectIDStack(ObjectID max)
 			: IDStack(1, max)
+		{}
+		virtual ~ObjectIDStack()
 		{}
 	};
 

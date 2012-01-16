@@ -358,7 +358,7 @@ namespace FusionEngine
 			try
 			{
 				IO::PhysFSStream file("default.gad", IO::Write);
-				GameMap::CompileMap(file, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities);
+				GameMap::CompileMap(file, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
 				m_MapLoader->SaveEntityLocationDB("default.endb");
 			}
 			catch (FileSystemException& e)
@@ -414,7 +414,7 @@ namespace FusionEngine
 
 		try
 		{
-			m_Saver->Save(m_SaveName);
+			m_Saver->Save(m_SaveName, false);
 		}
 		catch (std::exception& e)
 		{
@@ -853,7 +853,7 @@ namespace FusionEngine
 
 	EntityPtr Editor::CreateEntity(const std::string& transform_type, const Vector2& position, float angle, bool synced, bool streaming)
 	{
-		ComponentPtr transformCom = m_ComponentFactory->InstantiateComponent("StaticTransform");
+		ComponentPtr transformCom = m_ComponentFactory->InstantiateComponent(transform_type);
 
 		auto entity = std::make_shared<Entity>(m_EntityManager.get(), &m_EntityManager->m_PropChangedQueue, transformCom);
 

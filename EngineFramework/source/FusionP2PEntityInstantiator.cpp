@@ -35,6 +35,7 @@
 #include <StringTable.h>
 #include <climits>
 
+#include "FusionBinaryStream.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
@@ -82,6 +83,72 @@ namespace FusionEngine
 		for (int i = 0; i < s_MaxPeers; ++i)
 			m_LocalIdGenerators[i].freeAll();
 		m_WorldIdGenerator.takeAll(next);
+	}
+
+	void SaveableObjectIDSet::Save(std::ostream& stream)
+	{
+		IO::Streams::CellStreamWriter writer(&stream);
+
+		stream.exceptions(std::ios::failbit);
+
+		writer.Write(Bitset_t::bits_per_block); // This is included as format info (data will fail to load if it is different)
+
+		writer.Write(m_NextId);
+
+		writer.Write(m_UnusedIds.num_blocks());
+		for (size_t block_index = 0; block_index < m_UnusedIds.num_blocks(); ++block_index)
+		{
+			Bitset_t::block_type block(0);
+			for (size_t bit_i = 0; bit_i < Bitset_t::bits_per_block; ++bit_i)
+			{
+				block <<= 1;
+				block |= m_UnusedIds[bit_i] ? 1 : 0;
+			}
+			writer.Write(block);
+		}
+	}
+
+	void SaveableObjectIDSet::Load(std::istream& stream)
+	{
+		IO::Streams::CellStreamReader reader(&stream);
+
+		stream.exceptions(std::ios::failbit);
+
+		auto actualBitsPerBlock = Bitset_t::bits_per_block;
+		reader.Read(actualBitsPerBlock);
+		if (actualBitsPerBlock != Bitset_t::bits_per_block)
+			FSN_EXCEPT(FileTypeException, "Used ObjectID state data is incompatible with this build");
+
+		reader.Read(m_NextId);
+
+		size_t numBlocks = 0;
+		reader.Read(numBlocks);
+		std::vector<Bitset_t::block_type> blocks(numBlocks);
+		for (size_t i = 0; i < numBlocks; ++i)
+		{
+			reader.Read(blocks[i]);
+		}
+
+		m_UnusedIds.clear();
+		m_UnusedIds.init_from_block_range(blocks.begin(), blocks.end());
+	}
+
+	void P2PEntityInstantiator::SaveState(std::ostream& stream)
+	{
+		m_WorldIdGenerator.Save(stream);
+		for (auto it = m_LocalIdGenerators.begin(), end = m_LocalIdGenerators.end(); it != end; ++it)
+		{
+			it->Save(stream);
+		}
+	}
+
+	void P2PEntityInstantiator::LoadState(std::istream& stream)
+	{
+		m_WorldIdGenerator.Load(stream);
+		for (auto it = m_LocalIdGenerators.begin(), end = m_LocalIdGenerators.end(); it != end; ++it)
+		{
+			it->Load(stream);
+		}
 	}
 
 	static const ObjectID localFlag = 0x1 << (sizeof(ObjectID) * 8 - 1); // - 1 because the flag is 1 bit

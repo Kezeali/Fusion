@@ -25,7 +25,7 @@ void createEntity(int type, const Vector &in pos, float angle)
 	}
 	if (type == 3)
 	{
-		Entity e = editor.CreateEntity("b2RigidBody", pos, angle, true, true);
+		Entity e = editor.CreateEntity("b2Dynamic", pos, angle, true, true);
 		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
 		ICircleShape@ shape = cast<ICircleShape>(instantiator.addComponent(e, "b2Circle", ""));
 		
@@ -55,5 +55,15 @@ void createEntity(int type, const Vector &in pos, float angle)
 		sprite.ImagePath << "/Entities/grass_shadowed.png";
 		shape.Radius << 0.20f;
 		fixture.Sensor << true;
+	}
+	if (type == 6)
+	{
+		Entity e = editor.CreateEntity("b2Dynamic", pos, angle, true, true);
+		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
+		ICircleShape@ shape = cast<ICircleShape>(instantiator.addComponent(e, "b2Circle", ""));
+		
+		sprite.ImagePath << "/Entities/character/walk_cycle.png";
+		sprite.AnimationPath << "/Entities/character/walk_cycle.yaml";
+		shape.Radius << 0.16f;
 	}
 }

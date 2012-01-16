@@ -250,9 +250,11 @@ namespace FusionEngine
 		}
 	}
 
-	void EngineManager::Save(const std::string& name)
+	void EngineManager::Save(const std::string& name, bool quick)
 	{
 		m_StreamingManager->StoreAllCells();
+		if (quick)
+			m_CellArchivist->Stop();
 		try
 		{
 			if (auto file = m_CellArchivist->CreateDataFile("active_entities"))
@@ -262,13 +264,21 @@ namespace FusionEngine
 
 			m_EntityManager->SaveCurrentReferenceData();
 
-			m_CellArchivist->Save(name);
+			if (auto file = m_CellArchivist->CreateDataFile("unused_ids"))
+				m_EntityInstantiator->SaveState(*file);
+
+			if (quick)
+				m_CellArchivist->EnqueueQuickSave(name);
+			else
+				m_CellArchivist->Save(name);
 		}
 		catch (std::ios::failure& e)
 		{
 			AddLogEntry(e.what());
 			throw e;
 		}
+		if(quick)
+			m_CellArchivist->Start();
 	}
 
 	void EngineManager::Load(const std::string& name)
@@ -292,16 +302,25 @@ namespace FusionEngine
 			m_StreamingManager->Reset();
 			SendToConsole("Loading: Garbage-collecting...");
 			int r = m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
+
+			SendToConsole("Loading: Loading unused IDs...");
+			if (auto file = m_CellArchivist->LoadDataFile("unused_ids"))
+				m_EntityInstantiator->LoadState(*file);
+
 			if (m_Map)
 			{
 				SendToConsole("Loading: Non-streaming entities (from map)...");
 				m_Map->LoadNonStreamingEntities(false, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
 			}
+
 			m_CellArchivist->Load(name);
+
 			SendToConsole("Loading: Non-streaming entities (from data-file)...");
 			if (auto file = m_CellArchivist->LoadDataFile("non_streaming_entities"))
 				m_EntityManager->LoadNonStreamingEntities(*file, m_EntityInstantiator.get());
+
 			m_CellArchivist->Start();
+
 			SendToConsole("Loading: Activating entities...");
 			if (auto file = m_CellArchivist->LoadDataFile("active_entities"))
 				m_EntityManager->LoadActiveEntities(*file);

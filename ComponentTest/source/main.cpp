@@ -799,7 +799,7 @@ public:
 							try
 							{
 								IO::PhysFSStream file("default.gad", IO::Write);
-								GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
+								GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities, instantiationSynchroniser.get());
 								cellArchivist->SaveEntityLocationDB("default.endb");
 							}
 							catch (FileSystemException& e)

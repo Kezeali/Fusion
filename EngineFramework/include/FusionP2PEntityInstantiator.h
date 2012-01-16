@@ -36,12 +36,14 @@
 
 #include "FusionEntityInstantiator.h"
 
-#include <array>
 #include "FusionComponentFactory.h"
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
 #include "FusionPacketHandler.h"
 #include "FusionRakNetwork.h"
+
+#include <array>
+#include <iostream>
 
 namespace FusionEngine
 {
@@ -55,6 +57,13 @@ namespace FusionEngine
 			: Exception(description, origin, file, line) {}
 	};
 
+	class SaveableObjectIDSet : public ObjectIDSet
+	{
+	public:
+		void Save(std::ostream& stream);
+		void Load(std::istream& stream);
+	};
+
 	//! Synchronises the creation of new instances
 	class P2PEntityInstantiator : public EntityInstantiator, public PacketHandler
 	{
@@ -64,6 +73,9 @@ namespace FusionEngine
 
 		//! Resets the used ID lists, setting the min world id to the one given.
 		void Reset(ObjectID min_unused = 0);
+
+		void SaveState(std::ostream& stream);
+		void LoadState(std::istream& stream);
 
 		//! Removes the given ID from the available pool
 		/*!
@@ -124,8 +136,8 @@ namespace FusionEngine
 
 		RakNetwork *m_Network;
 
-		std::array<ObjectIDSet, s_MaxPeers> m_LocalIdGenerators;
-		ObjectIDSet m_WorldIdGenerator;
+		std::array<SaveableObjectIDSet, s_MaxPeers> m_LocalIdGenerators;
+		SaveableObjectIDSet m_WorldIdGenerator;
 
 		//boost::signals2::connection m_EntityInstancedCnx;
 

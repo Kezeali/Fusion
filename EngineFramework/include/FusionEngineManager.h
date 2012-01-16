@@ -87,7 +87,7 @@ namespace FusionEngine
 
 		void Run();
 
-		void Save(const std::string& name);
+		void Save(const std::string& name, bool quick = false);
 
 		void Load(const std::string& name);
 

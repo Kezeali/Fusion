@@ -40,7 +40,7 @@ namespace FusionEngine
 	public:
 		virtual ~WorldSaver() {}
 
-		virtual void Save(const std::string& name) = 0;
+		virtual void Save(const std::string& name, bool quick) = 0;
 		virtual void Load(const std::string& load) = 0;
 
 	};

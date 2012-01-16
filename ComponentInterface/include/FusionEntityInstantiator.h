@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionEntity.h"
+#include <iostream>
 
 namespace FusionEngine
 {
@@ -47,6 +48,9 @@ namespace FusionEngine
 
 		//! Resets the used ID lists, setting the min world id to the one given.
 		virtual void Reset(ObjectID min_unused = 0) = 0;
+
+		virtual void SaveState(std::ostream& stream) = 0;
+		virtual void LoadState(std::istream& stream) = 0;
 
 		//! Removes the given ID from the available pool
 		virtual void TakeID(ObjectID id) = 0;

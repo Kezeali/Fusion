@@ -67,7 +67,7 @@ namespace FusionEngine
 		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
 		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 
-		static void CompileMap(std::ostream& device, float cell_size, CellCache* cache, const std::vector<EntityPtr>& nonStreamingEntities);
+		static void CompileMap(std::ostream& device, float cell_size, CellCache* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
 		const std::string& GetName() const { return m_Name; }
 
