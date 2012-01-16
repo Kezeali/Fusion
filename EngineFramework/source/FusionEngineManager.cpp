@@ -303,10 +303,6 @@ namespace FusionEngine
 			SendToConsole("Loading: Garbage-collecting...");
 			int r = m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
 
-			SendToConsole("Loading: Loading unused IDs...");
-			if (auto file = m_CellArchivist->LoadDataFile("unused_ids"))
-				m_EntityInstantiator->LoadState(*file);
-
 			if (m_Map)
 			{
 				SendToConsole("Loading: Non-streaming entities (from map)...");
@@ -314,6 +310,10 @@ namespace FusionEngine
 			}
 
 			m_CellArchivist->Load(name);
+
+			SendToConsole("Loading: Loading unused IDs...");
+			if (auto file = m_CellArchivist->LoadDataFile("unused_ids"))
+				m_EntityInstantiator->LoadState(*file);
 
 			SendToConsole("Loading: Non-streaming entities (from data-file)...");
 			if (auto file = m_CellArchivist->LoadDataFile("non_streaming_entities"))

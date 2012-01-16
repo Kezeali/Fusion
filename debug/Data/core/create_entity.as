@@ -64,6 +64,8 @@ void createEntity(int type, const Vector &in pos, float angle)
 		
 		sprite.ImagePath << "/Entities/character/walk_cycle.png";
 		sprite.AnimationPath << "/Entities/character/walk_cycle.yaml";
-		shape.Radius << 0.16f;
+		//sprite.Scale << Vector(4.f, 4.f);
+		sprite.Offset << Vector(0.f, -20.f);
+		shape.Radius << 0.20f;
 	}
 }
