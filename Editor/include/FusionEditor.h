@@ -39,7 +39,9 @@
 #include <boost/intrusive_ptr.hpp>
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
+#include <functional>
 #include <memory>
+#include <unordered_map>
 
 namespace Rocket { namespace Core {
 	class Context;
@@ -63,6 +65,10 @@ namespace FusionEngine
 
 	class EditorOverlay;
 	class SelectionDrawer;
+
+	namespace Inspectors {
+		class ComponentInspector;
+	}
 
 	class Editor : public EngineExtension
 	{
@@ -92,6 +98,8 @@ namespace FusionEngine
 		void Update(float time, float dt);
 
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
+
+		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
 	private:
 		enum QueryType
@@ -139,6 +147,8 @@ namespace FusionEngine
 
 		std::shared_ptr<GUIDialog> m_Dialog;
 
+		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
+
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
 
 		bool m_ShiftSelect;
@@ -177,7 +187,11 @@ namespace FusionEngine
 		void SelectEntity(const EntityPtr& entity);
 		void DeselectEntity(const EntityPtr& entity);
 
+		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
+
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
+
+		void CreatePropertiesWindow(const EntityPtr& entity);
 
 		void RegisterScriptType(asIScriptEngine* engine);
 

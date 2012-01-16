@@ -118,6 +118,7 @@
     <ClInclude Include="include\FusionRegionCellCache.h" />
     <ClInclude Include="include\FusionRegionMapLoader.h" />
     <ClInclude Include="include\FusionRocketInterface.h" />
+    <ClInclude Include="include\FusionRocketReferenceCountable.h" />
     <ClInclude Include="include\FusionStreamingManager.h" />
     <ClInclude Include="include\FusionStreamingSystem.h" />
     <ClInclude Include="include\FusionTaskManager.h" />

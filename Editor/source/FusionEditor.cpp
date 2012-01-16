@@ -56,8 +56,11 @@
 #include "FusionScriptComponent.h"
 #include "FusionTransformComponent.h"
 
+#include "FusionTransformInspector.h"
+
 #include <boost/lexical_cast.hpp>
 #include <Rocket/Core/ElementDocument.h>
+#include <Rocket/Core/StreamMemory.h>
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr)
 {
@@ -134,10 +137,33 @@ namespace FusionEngine
 	{
 	public:
 		void Draw(const CL_GraphicContext& gc);
+
+		void SelectEntity(const EntityPtr& entity)
+		{
+			m_Selected.insert(entity);
+		}
+
+		void DeselectEntity(const EntityPtr& entity)
+		{
+			m_Selected.erase(entity);
+		}
+
+		std::set<EntityPtr> m_Selected;
 	};
 
-	void EditorOverlay::Draw(const CL_GraphicContext& gc)
+	void EditorOverlay::Draw(const CL_GraphicContext& gc_)
 	{
+		auto gc = gc_;
+
+		for (auto it = m_Selected.begin(), end = m_Selected.end(); it != end; ++it)
+		{
+			const auto& entity = *it;
+			auto pos = entity->GetPosition();
+			pos.x = ToRenderUnits(pos.x), pos.y = ToRenderUnits(pos.y);
+			CL_Rectf box(CL_Sizef(50, 50));
+			box.translate(pos.x - box.get_width() * 0.5f, pos.y - box.get_height() * 0.5f);
+			CL_Draw::box(gc, box, CL_Colorf::powderblue);
+		}
 	}
 
 	class SelectionDrawer : public CLRenderExtension
@@ -154,9 +180,9 @@ namespace FusionEngine
 	{
 		auto gc = gc_;
 		auto fillC = CL_Colorf::aquamarine;
-		fillC.set_alpha(0.25f);
+		fillC.set_alpha(0.20f);
 		CL_Draw::box(gc, m_SelectionBox, CL_Colorf::white);
-		CL_Draw::box(gc, m_SelectionBox, fillC);
+		CL_Draw::fill(gc, m_SelectionBox, fillC);
 	}
 
 	Editor::Editor(const std::vector<CL_String>& args)
@@ -171,6 +197,8 @@ namespace FusionEngine
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
 		context->SetMouseShowPeriod(500);
+
+		m_GUIContext = context->m_Context;
 
 		MessageBoxMaker::AddFactory("error",
 			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
@@ -200,6 +228,13 @@ namespace FusionEngine
 
 		m_EditorOverlay = std::make_shared<EditorOverlay>();
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
+
+		//m_InspectorTypes.insert(std::make_pair(ITransform::GetTypeName(), []() { return std::make_shared<Inspectors::TransformInspector>(); }));
+		{
+			auto tag = "inspector_" + ITransform::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::TransformInspector>())->RemoveReference();
+		}
 	}
 
 	Editor::~Editor()
@@ -584,6 +619,12 @@ namespace FusionEngine
 			case CL_KEY_F5:
 				m_CompileMap = true;
 				break;
+			case CL_KEY_P:
+				ForEachSelected([this](const EntityPtr& entity)->bool {
+					this->CreatePropertiesWindow(entity);
+					return true;
+				});
+				break;
 			}
 		}
 		// Numbers
@@ -642,12 +683,11 @@ namespace FusionEngine
 		{
 			//[process global inputs here]
 
-			//Rocket::Core::Context *context = m_MainDocument->GetContext();
-			//for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
-			//{
-			//	if (context->GetDocument(i)->IsPseudoClassSet("hover"))
-			//		return;
-			//}
+			for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
+			{
+				if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
+					return;
+			}
 
 			m_ReceivedMouseDown = true;
 
@@ -706,7 +746,7 @@ namespace FusionEngine
 
 		std::set<EntityPtr> entitiesUnselected;
 		if (!m_ShiftSelect && (std::abs(m_SelectionRectangle.get_width()) < oldWidth || std::abs(m_SelectionRectangle.get_height()) < oldHeight))
-			entitiesUnselected.insert(m_SelectedEntities.begin(),  m_SelectedEntities.end());
+			entitiesUnselected = m_SelectedEntities;
 
 		// Select entities found within the updated selection rectangle
 		std::vector<EntityPtr> entitiesUnderMouse;
@@ -737,11 +777,22 @@ namespace FusionEngine
 	void Editor::SelectEntity(const EntityPtr& entity)
 	{
 		m_SelectedEntities.insert(entity);
+		m_EditorOverlay->SelectEntity(entity);
 	}
 
 	void Editor::DeselectEntity(const EntityPtr& entity)
 	{
 		m_SelectedEntities.erase(entity);
+		m_EditorOverlay->DeselectEntity(entity);
+	}
+
+	void Editor::ForEachSelected(std::function<bool (const EntityPtr&)> fn)
+	{
+		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
+		{
+			if (!fn(*it))
+				break;
+		}
 	}
 
 	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const CL_Rectf &rectangle, const Editor::QueryType query_type)
@@ -753,7 +804,13 @@ namespace FusionEngine
 		switch (query_type)
 		{
 		case QueryType::General:
-			m_StreamingManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+			m_EntityManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+			for (auto it = m_NonStreamedEntities.begin(), end = m_NonStreamedEntities.end(); it != end; ++it)
+			{
+				auto pos = (*it)->GetPosition();
+				if (rectangle.contains(CL_Vec2f(pos.x, pos.y)))
+					out.push_back(*it);
+			}
 			break;
 
 		case QueryType::Physical:
@@ -790,7 +847,6 @@ namespace FusionEngine
 		r = module->Build();
 		if (r < 0)
 			SendToConsole("Failed to build /core/create_entity.as");
-		FSN_ASSERT(r >= 0);
 
 		m_CreateEntityFn = module->GetASModule()->GetFunctionByName("createEntity");
 	}
@@ -822,6 +878,39 @@ namespace FusionEngine
 		m_EntityManager->AddEntity(entity);
 
 		return entity;
+	}
+
+	void Editor::CreatePropertiesWindow(const EntityPtr& entity)
+	{
+		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
+		{
+			auto script = OpenString_PhysFS("/core/gui/gui_base.as");
+			auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
+			doc->LoadScript(strm, "/core/gui/gui_base.as");
+			strm->RemoveReference();
+		}
+
+		auto component = entity->GetTransform();
+		//auto subsection = doc->CreateElement("inspector_section");
+		//subsection->CreateTextElement(component->GetType());
+		for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
+		{
+			auto tag = "inspector_" + *iit;
+			fe_tolower(tag);
+			auto element = doc->CreateElement(tag.c_str());
+			auto body = doc->GetFirstChild();
+			auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
+			if (inspector)
+			{
+				inspector->SetComponent(component);
+				body->AppendChild(inspector);
+			}
+			if (element)
+				element->RemoveReference();
+		}
+		
+		doc->Show();
+		doc->RemoveReference();
 	}
 
 	void Editor::RegisterScriptType(asIScriptEngine* engine)

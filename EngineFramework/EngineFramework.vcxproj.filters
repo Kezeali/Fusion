@@ -133,5 +133,8 @@
     <ClInclude Include="include\FusionEngineExtension.h" />
     <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
     <ClInclude Include="include\FusionWorldSaver.h" />
+    <ClInclude Include="include\FusionRocketReferenceCountable.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

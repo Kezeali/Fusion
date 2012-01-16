@@ -9,7 +9,7 @@
 			<div id="icon"></div>
 			<div id="title">Title</div>
 		</handle>
-			<div class="close_button" id="close_button" onclick="CloseThisWindow(event)"></div>
+			<div class="close_button" id="close_button" onclick="UnloadThisWindow(event)"></div>
 			<div class="close_button" id="hide_button" onclick="HideThisWindow(event)"></div>
 	</div>
 	<div id="window">

@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEngine_GUI
-#define H_FusionEngine_GUI
+#ifndef H_FusionGUI
+#define H_FusionGUI
 
 #if _MSC_VER > 1000
 #pragma once
@@ -41,6 +41,7 @@
 #include "FusionSingleton.h"
 
 #include "FusionRocketInterface.h"
+#include "FusionRocketReferenceCountable.h"
 #include "FusionScriptModule.h"
 #include "FusionSlotContainer.h"
 
@@ -48,16 +49,6 @@ namespace Rocket {
 	namespace Controls {
 		class DataFormatter;
 	}
-}
-
-inline void intrusive_ptr_add_ref(Rocket::Core::ReferenceCountable *ptr)
-{
-	ptr->AddReference();
-}
-
-inline void intrusive_ptr_release(Rocket::Core::ReferenceCountable *ptr)
-{
-	ptr->RemoveReference();
 }
 
 namespace FusionEngine

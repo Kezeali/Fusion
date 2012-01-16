@@ -87,7 +87,7 @@ class SpawnPoint : ScriptComponent
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
-		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
+		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
 		
 		return EntityWrapper(newEnt);
 		}

@@ -70,7 +70,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
+    <ClInclude Include="include\FusionTransformInspector.h" />
     <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>
@@ -78,6 +80,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\FusionEditor.cpp" />
+    <ClCompile Include="source\FusionTransformInspector.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
