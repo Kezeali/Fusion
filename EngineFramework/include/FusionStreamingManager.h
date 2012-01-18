@@ -122,12 +122,14 @@ namespace FusionEngine
 	struct CellEntry
 	{
 		enum State { Inactive = 0, Active = 1, Waiting = 2 };
-		//bool active;
 		State active;
 		bool pendingDeactivation;
 		float pendingDeactivationTime;
 
 		float x, y;
+
+		ObjectID id;
+		std::shared_ptr<RakNet::BitStream> data;
 
 		CellEntry()
 			: active(Inactive),
@@ -452,26 +454,27 @@ namespace FusionEngine
 		float m_CellSize;
 		float m_InverseCellSize;
 
-		//unsigned int m_XCellCount;
-		//unsigned int m_YCellCount;
-
-		//Vector2 m_Bounds;
+		typedef std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> CellMap_t;
 
 		// Cells are sorted by y then x, so they can be iterated over linearly when processing
-		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_Cells;
+		CellMap_t m_Cells;
 		// Where entities are stored until the correct cell is loaded for them
 		Cell m_TheVoid;
-		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_CellsBeingLoaded;
+		CellMap_t m_CellsBeingLoaded;
 		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
-		std::unordered_map<ObjectID, size_t> m_EntityDirectory;
+		CellMap_t m_CellsToStore;
 
 		CellDataSource* m_Archivist;
 
+		inline void StoreWhenDereferenced(const CellHandle& location);
+		inline void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);
+		inline void StoreWhenDereferenced(const CellMap_t::iterator& location);
 
 		std::shared_ptr<Cell>& RetrieveCell(const CellHandle &location);
-		void StoreCell(const CellHandle& location);
+		inline void StoreCell(const CellHandle& location);
+		inline void StoreCell(const CellMap_t::iterator& location);
 		//! Makes sure that the given cell is in either Ready or Retrieve state
 		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);
 

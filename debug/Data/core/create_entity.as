@@ -59,13 +59,51 @@ void createEntity(int type, const Vector &in pos, float angle)
 	if (type == 6)
 	{
 		Entity e = editor.CreateEntity("b2Dynamic", pos, angle, true, true);
-		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
+		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "body_sprite"));
+		ISprite@ shadow = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "shadow_sprite"));
 		ICircleShape@ shape = cast<ICircleShape>(instantiator.addComponent(e, "b2Circle", ""));
 		
 		sprite.ImagePath << "/Entities/character/walk_cycle.png";
 		sprite.AnimationPath << "/Entities/character/walk_cycle.yaml";
-		//sprite.Scale << Vector(4.f, 4.f);
 		sprite.Offset << Vector(0.f, -20.f);
-		shape.Radius << 0.20f;
+		
+		shadow.ImagePath << "/Entities/character/shadow.png";
+		shadow.Offset << Vector(0.f, 11.f);
+		shadow.Alpha << 0.75f;
+		shadow.LocalDepth << -1;
+		
+		shape.Radius << 0.176f;
+	}
+	if (type == 7)
+	{
+		Entity e = editor.CreateEntity("b2Dynamic", pos, angle, true, true);
+		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "body_sprite"));
+		ISprite@ hair = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "hair_sprite"));
+		ISprite@ shirt = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "shirt_sprite"));
+		ISprite@ shadow = cast<ISprite>(instantiator.addComponent(e, "CLSprite", "shadow_sprite"));
+		ICircleShape@ shape = cast<ICircleShape>(instantiator.addComponent(e, "b2Circle", ""));
+		
+		sprite.ImagePath << "/Entities/char1/char1.png";
+		sprite.AnimationPath << "/Entities/char1/walk_cycle.yaml";
+		sprite.Offset << Vector(0.f, -10.f);
+		hair.ImagePath << "/Entities/char1/char1_hair.png";
+		hair.AnimationPath << "/Entities/char1/walk_cycle.yaml";
+		hair.Offset << Vector(0.f, -10.f);
+		hair.LocalDepth << 2;
+		shirt.ImagePath << "/Entities/char1/char1_shirt.png";
+		shirt.AnimationPath << "/Entities/char1/walk_cycle.yaml";
+		shirt.Offset << Vector(0.f, -10.f);
+		shirt.LocalDepth << 1;
+		
+		sprite.Scale << Vector(2, 2);
+		hair.Scale << Vector(2, 2);
+		shirt.Scale << Vector(2, 2);
+		
+		shadow.ImagePath << "/Entities/character/shadow.png";
+		shadow.Offset << Vector(0.f, 6.f);
+		shadow.Alpha << 0.75f;
+		shadow.LocalDepth << -1;
+		
+		shape.Radius << 0.176f;
 	}
 }

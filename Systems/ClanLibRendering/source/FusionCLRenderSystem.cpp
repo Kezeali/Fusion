@@ -79,7 +79,8 @@ namespace FusionEngine
 	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
 		: ISystemWorld(system),
 		m_CameraManager(camera_sync),
-		m_PhysWorld(nullptr)
+		m_PhysWorld(nullptr),
+		m_PhysDebugDrawEnabled(false)
 	{
 		m_Renderer = new Renderer(window.get_gc());
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
@@ -594,7 +595,8 @@ namespace FusionEngine
 				}
 			}
 			
-			m_RenderWorld->m_PhysWorld->DrawDebugData();
+			if (m_RenderWorld->m_PhysWorld)
+				m_RenderWorld->m_PhysWorld->DrawDebugData();
 			m_PhysDebugDraw->ResetView();
 		}
 	}

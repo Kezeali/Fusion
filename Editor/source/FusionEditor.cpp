@@ -303,10 +303,16 @@ namespace FusionEngine
 		else if (auto b2World = std::dynamic_pointer_cast<Box2DWorld>(world))
 		{
 			m_Box2DWorld = b2World;
+
+			if (m_RenderWorld)
+				m_RenderWorld->SetPhysWorld(m_Box2DWorld->Getb2World());
 		}
 		else if (auto renderWorld = std::dynamic_pointer_cast<CLRenderWorld>(world))
 		{
 			m_RenderWorld = renderWorld;
+
+			if (m_Box2DWorld)
+				m_RenderWorld->SetPhysWorld(m_Box2DWorld->Getb2World());
 
 			if (m_Active)
 			{
@@ -424,19 +430,18 @@ namespace FusionEngine
 
 	void Editor::Load()
 	{
-		if (m_SaveName.empty())
+		if (!m_SaveName.empty())
 		{
-			ShowLoadDialog();
-		}
-
-		try
-		{
-			m_Saver->Load(m_SaveName);
-			m_StreamingManager->AddCamera(m_EditCam);
-		}
-		catch (std::exception& e)
-		{
-			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			try
+			{
+				m_Saver->Load(m_SaveName);
+				m_NonStreamedEntities = m_EntityManager->GetNonStreamedEntities();
+				m_StreamingManager->AddCamera(m_EditCam);
+			}
+			catch (std::exception& e)
+			{
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			}
 		}
 	}
 
@@ -613,17 +618,24 @@ namespace FusionEngine
 		{
 			switch (ev.id)
 			{
-			case CL_KEY_F7:
-				m_RebuildScripts = true;
+			case CL_KEY_F3:
+				m_RenderWorld->ToggleDebugDraw();
 				break;
 			case CL_KEY_F5:
 				m_CompileMap = true;
 				break;
+			case CL_KEY_F7:
+				m_RebuildScripts = true;
+				break;
 			case CL_KEY_P:
-				ForEachSelected([this](const EntityPtr& entity)->bool {
-					this->CreatePropertiesWindow(entity);
-					return true;
-				});
+				{
+					std::vector<EntityPtr> selectedEntities;
+					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
+						selectedEntities.push_back(entity);
+						return true;
+					});
+					CreatePropertiesWindow(selectedEntities);
+				}
 				break;
 			}
 		}
@@ -708,13 +720,13 @@ namespace FusionEngine
 		if (m_Active)
 		{
 			if (m_ReceivedMouseDown)
-				UpdateSelectionRectangle(Vector2(ev.mouse_pos.x, ev.mouse_pos.y), true);
+				UpdateSelectionRectangle(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), true);
 		}
 	}
 
 	void Editor::OnMouseDown_Selection(const CL_InputEvent& ev)
 	{
-		m_DragFrom = Vector2(ev.mouse_pos.x, ev.mouse_pos.y);
+		m_DragFrom = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 		TranslateScreenToWorld(&m_DragFrom.x, &m_DragFrom.y);
 		m_SelectionRectangle.right = m_SelectionRectangle.left = m_DragFrom.x;
 		m_SelectionRectangle.bottom = m_SelectionRectangle.top = m_DragFrom.y;
@@ -880,34 +892,94 @@ namespace FusionEngine
 		return entity;
 	}
 
-	void Editor::CreatePropertiesWindow(const EntityPtr& entity)
+	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities)
 	{
 		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
-		{
-			auto script = OpenString_PhysFS("/core/gui/gui_base.as");
-			auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
-			doc->LoadScript(strm, "/core/gui/gui_base.as");
-			strm->RemoveReference();
-		}
+		//{
+		//	auto script = OpenString_PhysFS("/core/gui/gui_base.as");
+		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
+		//	doc->LoadScript(strm, "/core/gui/gui_base.as");
+		//	strm->RemoveReference();
+		//}
 
-		auto component = entity->GetTransform();
-		//auto subsection = doc->CreateElement("inspector_section");
-		//subsection->CreateTextElement(component->GetType());
-		for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
+		class InspectorGenerator
 		{
-			auto tag = "inspector_" + *iit;
-			fe_tolower(tag);
-			auto element = doc->CreateElement(tag.c_str());
-			auto body = doc->GetFirstChild();
-			auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
-			if (inspector)
+		public:
+			Rocket::Core::ElementDocument* doc;
+
+			std::map<std::string, std::pair<Inspectors::ComponentInspector*, std::vector<ComponentPtr>>> inspectors;
+
+			InspectorGenerator(Rocket::Core::ElementDocument* doc_)
+				: doc(doc_)
+			{}
+
+			void ProcessEntity(const EntityPtr& entity)
 			{
-				inspector->SetComponent(component);
-				body->AppendChild(inspector);
+				const auto& components = entity->GetComponents();
+				for (auto it = components.begin(), end = components.end(); it != end; ++it)
+					ProcessComponent(*it);
 			}
-			if (element)
-				element->RemoveReference();
-		}
+
+			void ProcessComponent(const ComponentPtr& component)
+			{
+				const bool added = AddInspector(component, component->GetType());
+
+				if (!added) // If there wasn't a specific inspector for the given type, try adding interface inspectors
+				{
+					for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
+						AddInspector(component, *iit);
+				}
+			}
+
+			bool AddInspector(const ComponentPtr& component, const std::string& inspector_type)
+			{
+				const std::string inspector_identifier = inspector_type + component->GetIdentifier();
+				auto entry = inspectors.find(inspector_identifier);
+				if (entry == inspectors.end())
+				{
+					// New component / interface type
+					auto tag = "inspector_" + inspector_type;
+					fe_tolower(tag);
+					auto element = doc->CreateElement(tag.c_str());
+					auto body = doc->GetFirstChild();
+					auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
+					if (inspector)
+					{
+						auto& value = inspectors[inspector_identifier];
+						value.first = inspector;
+						value.second.push_back(component);
+
+						//auto subsection = doc->CreateElement("inspector_section");
+						//subsection->CreateTextElement(component->GetType());
+
+						body->AppendChild(inspector);
+					}
+					if (element)
+						element->RemoveReference();
+
+					return inspector != nullptr;
+				}
+				else
+				{
+					// Existing type
+					entry->second.second.push_back(component);
+					return true;
+				}
+			}
+
+			void Generate()
+			{
+				for (auto it = inspectors.begin(), end = inspectors.end(); it != end; ++it)
+				{
+					it->second.first->SetComponents(it->second.second);
+				}
+			}
+		};
+
+		InspectorGenerator generator(doc);
+		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+			generator.ProcessEntity(*it);
+		generator.Generate();
 		
 		doc->Show();
 		doc->RemoveReference();

@@ -173,6 +173,8 @@ namespace FusionEngine
 
 		void QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const;
 
+		std::vector<EntityPtr> GetNonStreamedEntities() const;
+
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
 		void RemoveTag(const std::string &entity_name, const std::string &tag);
@@ -250,8 +252,6 @@ namespace FusionEngine
 
 		//! Updates the entities that have been added to the active-entities list
 		EntityArray::iterator updateEntities(EntityArray::iterator begin, EntityArray::iterator end, float split);
-
-		void updateEntities(EntityArray& entities, float split);
 
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
 		void clearEntities(bool synced_only);

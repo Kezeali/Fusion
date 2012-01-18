@@ -191,7 +191,7 @@ namespace FusionEngine
 
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
 
-		void CreatePropertiesWindow(const EntityPtr& entity);
+		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities);
 
 		void RegisterScriptType(asIScriptEngine* engine);
 

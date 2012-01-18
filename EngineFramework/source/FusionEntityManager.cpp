@@ -1256,6 +1256,17 @@ namespace FusionEngine
 		m_StreamingManager->QueryRect(fn, lb, ub);
 	}
 
+	std::vector<EntityPtr> EntityManager::GetNonStreamedEntities() const
+	{
+		std::vector<EntityPtr> results;
+		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		{
+			if ((*it)->GetDomain() == SYSTEM_DOMAIN)
+				results.push_back(*it);
+		}
+		return std::move(results);
+	}
+
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)
 	{
 		try
@@ -1440,7 +1451,7 @@ namespace FusionEngine
 		}
 	}
 
-	static bool hasNoActiveReferences(EntityPtr& entity)
+	inline bool hasNoActiveReferences(const EntityPtr& entity)
 	{
 		bool allMarked = true;
 
@@ -1448,6 +1459,10 @@ namespace FusionEngine
 		std::deque<EntityPtr> stack;
 
 		stack.push_back(entity);
+
+		auto numActiveRefs = entity.use_count();
+		// managerRefs = cell + m_ActiveEntities + m_EntitiesByName + m_Entities
+		const long int managerRefs = 2 + (!entity->GetName().empty() ? 1 : 0) + (entity->IsSyncedEntity() ? 1 : 0);
 
 		EntityPtr ref;
 		//while (stack.try_pop(ref))
@@ -1465,16 +1480,19 @@ namespace FusionEngine
 				break;
 			}
 
+			--numActiveRefs;
+			FSN_ASSERT(numActiveRefs >= managerRefs);
+
 			{
-			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
-			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
-			{
-				auto referencingEntity = (*it).lock();
-				// Not being able to lock means that this entity has not only been deactivated, but also
-				//  destroyed, so it is clearly no longer a valid reference (doesn't need to be checked)
-				if (referencingEntity && !referencingEntity->GetGCFlag())
-					stack.push_back(referencingEntity);
-			}
+				tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
+				for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
+				{
+					auto referencingEntity = (*it).lock();
+					// Not being able to lock means that this entity has not only been deactivated, but also
+					//  destroyed, so it is clearly no longer a valid reference (doesn't need to be checked)
+					if (referencingEntity && !referencingEntity->GetGCFlag())
+						stack.push_back(referencingEntity);
+				}
 			}
 		}
 
@@ -1488,25 +1506,22 @@ namespace FusionEngine
 			ref->SetGCFlag(false);
 
 			{
-			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
-			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
-			{
-				auto referencingEntity = (*it).lock();
-				if (referencingEntity && referencingEntity->GetGCFlag())
-					stack.push_back(referencingEntity);
-			}
+				tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
+				for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
+				{
+					auto referencingEntity = (*it).lock();
+					if (referencingEntity && referencingEntity->GetGCFlag())
+						stack.push_back(referencingEntity);
+				}
 			}
 		}
 
-		return allMarked;
+		return allMarked && numActiveRefs == managerRefs;
 	}
 
 	EntityArray::iterator EntityManager::updateEntities(EntityArray::iterator begin, EntityArray::iterator end, float split)
 	{
 		bool entityRemoved = false;
-
-		//auto playerAddedEvents = m_PlayerAddedEvents;
-		//m_PlayerAddedEvents.clear();
 
 		auto newEnd = begin;
 		for (EntityArray::iterator it = begin; it != end; ++it)
@@ -1521,18 +1536,15 @@ namespace FusionEngine
 			//  entity from the active list
 			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
-				if (entity->IsActive())
-					m_EntitiesToDeactivate.push_back(*it);
-
 				// Keep entities active untill they are no longer referenced
-				if (!entity->IsReferenced() || hasNoActiveReferences(entity))
+				if (hasNoActiveReferences(entity))
 				{
+					if (entity->IsActive())
+						m_EntitiesToDeactivate.push_back(*it);
+
 					m_EntitiesUnreferenced.push_back(*it);
 
 					entity->RemoveDeactivateMark();
-
-					//--end;
-					//entity.swap(*(end));
 
 					continue;
 				}
@@ -1552,7 +1564,6 @@ namespace FusionEngine
 				}
 
 				// Next entity
-				//++it;
 				*newEnd++ = std::move(*it);
 			}
 		}
@@ -1561,66 +1572,6 @@ namespace FusionEngine
 		m_ToDeleteFlags = 0;
 
 		return newEnd;
-	}
-
-	void EntityManager::updateEntities(EntityArray &entityList, float split)
-	{
-		bool entityRemoved = false;
-
-		//auto playerAddedEvents = m_PlayerAddedEvents;
-		//m_PlayerAddedEvents.clear();
-
-		EntityArray::iterator it = entityList.begin(),
-			end = entityList.end();
-		while (it != end)
-		{
-			EntityPtr &entity = *it;
-
-			if (entity->GetTagFlags() & m_ToDeleteFlags)
-			{
-				RemoveEntity(entity); // Mark it to be removed from the active list
-			}
-			// Check for reasons to remove the
-			//  entity from the active list
-			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
-			{
-				if (entity->IsActive())
-					m_EntitiesToDeactivate.push_back(*it);
-
-				// Keep entities active untill they are no longer referenced
-				if (!entity->IsReferenced() || hasNoActiveReferences(entity))
-				{
-					m_EntitiesUnreferenced.push_back(*it);
-
-					entity->RemoveDeactivateMark();
-
-					it = entityList.erase(it);
-					end = entityList.end();
-
-					continue;
-				}
-			}
-			
-			{
-				// Also make sure the entity isn't blocked by a flag
-				if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
-				{
-					EntityDomain domainIndex = entity->GetDomain();
-
-					if (CheckState(domainIndex, DS_STREAMING))
-						m_StreamingManager->OnUpdated(entity, split);
-
-					if (CheckState(domainIndex, DS_SYNCH))
-						m_EntitySynchroniser->Enqueue(entity);
-				}
-
-				// Next entity
-				++it;
-			}
-		}
-
-		// Clear the ToDeleteFlags
-		m_ToDeleteFlags = 0;
 	}
 
 	void EntityManager::ProcessActivationQueues()
@@ -1759,7 +1710,7 @@ namespace FusionEngine
 			//  so that mark must be removed
 			if (entity->IsMarkedToDeactivate())
 				entity->RemoveDeactivateMark();
-			else
+			if (!entity->IsActive())
 			{
 //#ifdef _DEBUG
 //				FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());

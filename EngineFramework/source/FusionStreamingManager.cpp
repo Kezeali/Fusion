@@ -430,7 +430,7 @@ namespace FusionEngine
 		for (auto it = objects.begin(), end = objects.end(); it != end; ++it)
 		{
 			const auto& entity = it->first;
-			if (isWithinBounds(entity->GetPosition(), lb, ub) && !fn(entity))
+			if (it->second.active && isWithinBounds(entity->GetPosition(), lb, ub) && !fn(entity))
 				return false;
 		}
 		return true;
@@ -487,11 +487,33 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::StoreCell(const CellHandle& location)
+	inline void StreamingManager::StoreWhenDereferenced(const CellHandle& location)
 	{
-		auto _where = m_Cells.find(location);
-		m_Archivist->Store(location.x, location.y, std::move(_where->second));
-		m_Cells.erase(_where);
+		auto entry = m_Cells.find(location);
+		if (entry != m_Cells.end())
+			m_CellsToStore.insert(*entry);
+	}
+
+	inline void StreamingManager::StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell)
+	{
+		m_CellsToStore.insert(std::make_pair(location, cell));
+	}
+
+	inline void StreamingManager::StoreWhenDereferenced(const CellMap_t::iterator& entry)
+	{
+		FSN_ASSERT(entry != m_Cells.end());
+		m_CellsToStore.insert(*entry);
+	}
+
+	inline void StreamingManager::StoreCell(const CellHandle& location)
+	{
+		StoreCell(m_Cells.find(location));
+	}
+
+	inline void StreamingManager::StoreCell(const CellMap_t::iterator& entry)
+	{
+		m_Archivist->Store(entry->first.x, entry->first.y, std::move(entry->second));
+		m_Cells.erase(entry);
 	}
 
 	void StreamingManager::StoreAllCells(bool setup_refresh)
@@ -824,13 +846,12 @@ namespace FusionEngine
 	{
 		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
-			auto currentCell = m_Cells[entity->GetStreamingCellIndex()];
-
+			const auto& currentCell = m_Cells[entity->GetStreamingCellIndex()];
 			FSN_ASSERT(currentCell);
 
 			Cell::mutex_t::scoped_lock lock(currentCell->mutex);
 
-			auto it = findEntityInCell(currentCell.get(), entity/*.get()*/);
+			auto it = findEntityInCell(currentCell.get(), entity);
 			FSN_ASSERT(it->second.active != CellEntry::Inactive);
 			it->second.active = CellEntry::Inactive;
 
@@ -841,10 +862,9 @@ namespace FusionEngine
 
 			if (!currentCell->IsActive() && !currentCell->inRange)
 			{
+				//StoreWhenDereferenced(entity->GetStreamingCellIndex(), currentCell);
 				AddHist(entity->GetStreamingCellIndex(), "Store Attempted on Deactivation");
-				auto location = entity->GetStreamingCellIndex();
-				m_Archivist->Store(location.x, location.y, std::move(currentCell));
-				m_Cells.erase(location);
+				StoreCell(entity->GetStreamingCellIndex());
 			}
 		}
 		else// if (entity->GetStreamingCellIndex() == s_VoidCellIndex)
@@ -922,7 +942,7 @@ namespace FusionEngine
 		//entityPosition.x = ToRenderUnits(entityPosition.x); entityPosition.y = ToRenderUnits(entityPosition.y);
 		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), [&](const StreamingCamera& cam) { return (entityPosition - cam.streamPosition).length() <= cam.range; }))
 		{
-			if (!cell_entry->active)
+			if (cell_entry->active != CellEntry::Active)
 				ActivateEntity(cell_location, *cell, entity, *cell_entry);
 			cell_entry->pendingDeactivation = false;
 		}
@@ -935,7 +955,7 @@ namespace FusionEngine
 
 	void StreamingManager::ActivateEntity(const CellHandle& location, Cell& cell, const EntityPtr& entity, CellEntry& cell_entry)
 	{
-		FSN_ASSERT( !cell_entry.active );
+		FSN_ASSERT(cell_entry.active != CellEntry::Active);
 
 		if (&cell != &m_TheVoid)
 			entity->SetStreamingCellIndex(location);
@@ -950,7 +970,7 @@ namespace FusionEngine
 	
 	void StreamingManager::RemoteActivateEntity(CellEntry& cell_entry, ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state)
 	{
-		FSN_ASSERT( !cell_entry.active ); // TODO: Maybe not neccessary?
+		FSN_ASSERT(cell_entry.active != CellEntry::Active); // TODO: Maybe not neccessary?
 
 		// Note that this intentionally doesn't increase the ref-count of the local cell, because the cell
 		//  is no longer needed now that the state has been extracted and passed to the interested parties
@@ -974,11 +994,9 @@ namespace FusionEngine
 
 	void StreamingManager::DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &cell_entry)
 	{
-		FSN_ASSERT( cell_entry.active );
+		FSN_ASSERT(cell_entry.active);
 		cell_entry.active = CellEntry::Waiting;
 		cell_entry.pendingDeactivation = false;
-
-		//cell.EntryUnreferenced(); // Commented out: this doesn't get called until the entity is actually deactivated (see OnDeactivation)
 
 		GenerateDeactivationEvent(entity);
 	}
@@ -1130,6 +1148,7 @@ namespace FusionEngine
 						AddHist(CellHandle(ix, iy), "Store Attempted due to leaving range");
 						m_Archivist->Store(ix, iy, std::move(cell));
 						m_Cells.erase(it++);
+						//StoreCell(it++);
 						continue;
 					}
 					else
@@ -1177,7 +1196,7 @@ namespace FusionEngine
 					if (std::any_of(cams.begin(), cams.end(),
 						[&](const std::pair<Vector2, float>& cam) { return (entityPosition - cam.first).length() <= cam.second; }))
 					{
-						if (!cellEntry.active)
+						if (cellEntry.active != CellEntry::Active)
 						{
 							ActivateEntity(cell_location, cell, cell_it->first/*->shared_from_this()*/, cellEntry);
 						}
@@ -1192,10 +1211,7 @@ namespace FusionEngine
 							[&](const std::pair<std::pair<Vector2, float>, PlayerID>& remote_cam) { return (entityPosition - remote_cam.first.first).length() <= remote_cam.first.second; });
 						if (camEntry != remote_cams.end())
 						{
-							// TODO: add id and state to CellEntry
-							// state can probably be only initialised when the entity isn't activated (so either
-							// the entity associated with the entry is initialised, or the state is)
-							//RemoteActivateEntity(cellEntry, cellEntry.id, camEntry->second, cellEntry.state);
+							RemoteActivateEntity(cellEntry, cellEntry.id, camEntry->second, cellEntry.data);
 						}
 
 						if (cellEntry.active)
@@ -1343,6 +1359,7 @@ namespace FusionEngine
 								AddHist(location, "Storing cell again after Retrieving it for an entity spawned in The Void");
 								m_Archivist->Store(location.x, location.y, std::move(actualCell));
 								m_Cells.erase(location);
+								//StoreCell(location);
 							}
 
 							// remove from current cell
@@ -1414,9 +1431,14 @@ namespace FusionEngine
 			} // if (loaded)
 			++it;
 		}
-		// Retry any entities that werent present in this cell anymore (they were when the cell was requested, but were moved before it was loaded)
+		// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
 		for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
 			ActivateEntity(*it);
+
+		for (auto it = m_CellsToStore.begin(), end = m_CellsToStore.end(); it != end;)
+		{
+			StoreCell(it->first);
+		}
 
 		// Each vector element represents a range of cells to update - overlapping areas
 		//  are split / merged into no-overlapping sub-regions (to avoid processing cells
