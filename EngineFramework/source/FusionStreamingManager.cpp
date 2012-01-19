@@ -661,7 +661,9 @@ namespace FusionEngine
 				if (_where != currentCell->objects.end())
 					cellEntry = &_where->second;
 				else
+				{
 					FSN_EXCEPT(Exception, "Entity missing from loaded cell.");
+				}
 			}
 			else
 			{

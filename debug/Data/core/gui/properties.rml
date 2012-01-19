@@ -5,23 +5,39 @@
 		<style>
 			body
 			{
-			width: 460px;
-			height: 320px;
+				width: 460px;
+				height: 320px;
 			}
 
 			div#title_bar div#icon
 			{
-			display: none;
+				display: none;
 			}
 
 			div#close_button
 			{
-			display: inline;
+				display: inline;
 			}
 
 			div#content
 			{
-			text-align: left;
+				text-align: left;
+			}
+			
+			collapsible
+			{
+				display: block;
+			}
+			
+			inspector_section
+			{
+				display: block;
+				margin-left: 22px;
+			}
+			
+			inspector
+			{
+				display: block;
 			}
 		</style>
 	</head>

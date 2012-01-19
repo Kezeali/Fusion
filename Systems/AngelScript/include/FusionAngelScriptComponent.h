@@ -44,6 +44,10 @@
 
 #include <physfs.h>
 
+#ifdef Yield
+#undef Yield
+#endif
+
 class CScriptAny;
 
 namespace FusionEngine
@@ -189,6 +193,13 @@ namespace FusionEngine
 
 		const boost::intrusive_ptr<ScriptInterface>& GetScriptInterface() const { return m_ScriptObject; }
 
+		struct PropInfo
+		{
+			std::string name;
+			int type_id;
+		};
+		const std::vector<PropInfo>& GetScriptProperties() const { return m_ScriptPropertyInfo; }
+
 		void CheckChangedPropertiesIn();
 		
 		void OnModuleLoaded(ResourceDataPtr resource);
@@ -234,6 +245,7 @@ namespace FusionEngine
 		std::map<std::string, int> m_ScriptMethods;
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
+		std::vector<PropInfo> m_ScriptPropertyInfo;
 
 		IComponent::SerialiseMode m_LastDeserMode;
 		std::vector<boost::intrusive_ptr<CScriptAny>> m_CachedProperties;

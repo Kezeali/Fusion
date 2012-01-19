@@ -1455,14 +1455,14 @@ namespace FusionEngine
 	{
 		bool allMarked = true;
 
+		auto numActiveRefs = entity.use_count() + 1;
+		// managerRefs = cell + m_ActiveEntities + m_EntitiesByName + m_Entities
+		const long int managerRefs = 2 + (!entity->GetName().empty() ? 1 : 0) + (entity->IsSyncedEntity() ? 1 : 0);
+
 		//tbb::concurrent_queue<EntityPtr> stack;
 		std::deque<EntityPtr> stack;
 
 		stack.push_back(entity);
-
-		auto numActiveRefs = entity.use_count();
-		// managerRefs = cell + m_ActiveEntities + m_EntitiesByName + m_Entities
-		const long int managerRefs = 2 + (!entity->GetName().empty() ? 1 : 0) + (entity->IsSyncedEntity() ? 1 : 0);
 
 		EntityPtr ref;
 		//while (stack.try_pop(ref))
@@ -1481,7 +1481,7 @@ namespace FusionEngine
 			}
 
 			--numActiveRefs;
-			FSN_ASSERT(numActiveRefs >= managerRefs);
+			//FSN_ASSERT(numActiveRefs >= managerRefs);
 
 			{
 				tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
@@ -1516,7 +1516,7 @@ namespace FusionEngine
 			}
 		}
 
-		return allMarked && numActiveRefs == managerRefs;
+		return allMarked && numActiveRefs <= managerRefs;
 	}
 
 	EntityArray::iterator EntityManager::updateEntities(EntityArray::iterator begin, EntityArray::iterator end, float split)

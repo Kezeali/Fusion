@@ -8,10 +8,16 @@ class SpawnPoint : ScriptComponent
 {
 	SpawnPoint()
 	{
+		playerSprite = "/Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		spawnJunk = true;
 	}
 
 	uint frames;
 	float runtime;
+	
+	bool spawnJunk;
+	
+	string playerSprite;
 
 	void onSpawn()
 	{
@@ -36,13 +42,13 @@ class SpawnPoint : ScriptComponent
 			return EntityWrapper();
 		}
 		//console.println(sprite.getType());
-		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = playerSprite;
 		sprite.BaseAngle = 1.57f;
 		
 		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
-		shadow.ImagePath = "Entities/Test/Gfx/spaceshoot_body_shadow.png";
+		shadow.ImagePath = "/Entities/Test/Gfx/spaceshoot_body_shadow.png";
 		shadow.BaseAngle = 1.57f;
-		shadow.Scale << Vector(1.02f, 1.02f);
+		//shadow.Scale << Vector(1.02f, 1.02f);
 		shadow.Alpha = 0.75f;
 		shadow.LocalDepth = -1;
 		//shadow.Offset << Vector(0.0f, 0.25f);

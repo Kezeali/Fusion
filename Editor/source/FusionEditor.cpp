@@ -57,6 +57,7 @@
 #include "FusionTransformComponent.h"
 
 #include "FusionTransformInspector.h"
+#include "FusionASScriptInspector.h"
 
 #include <boost/lexical_cast.hpp>
 #include <Rocket/Core/ElementDocument.h>
@@ -234,6 +235,8 @@ namespace FusionEngine
 			auto tag = "inspector_" + ITransform::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::TransformInspector>())->RemoveReference();
+			Rocket::Core::Factory::RegisterElementInstancer("inspector_asscript",
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::ASScriptInspector>())->RemoveReference();
 		}
 	}
 
@@ -816,12 +819,15 @@ namespace FusionEngine
 		switch (query_type)
 		{
 		case QueryType::General:
-			m_EntityManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
-			for (auto it = m_NonStreamedEntities.begin(), end = m_NonStreamedEntities.end(); it != end; ++it)
 			{
-				auto pos = (*it)->GetPosition();
-				if (rectangle.contains(CL_Vec2f(pos.x, pos.y)))
-					out.push_back(*it);
+				m_EntityManager->QueryRect([&out](const EntityPtr& ent)->bool { out.push_back(ent); return true; }, top_left, bottom_right);
+				CL_Rectf simUnitsRectangle(top_left.x, top_left.y, bottom_right.x, bottom_right.y);
+				for (auto it = m_NonStreamedEntities.begin(), end = m_NonStreamedEntities.end(); it != end; ++it)
+				{
+					auto pos = (*it)->GetPosition();
+					if (simUnitsRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+						out.push_back(*it);
+				}
 			}
 			break;
 
@@ -940,7 +946,8 @@ namespace FusionEngine
 					// New component / interface type
 					auto tag = "inspector_" + inspector_type;
 					fe_tolower(tag);
-					auto element = doc->CreateElement(tag.c_str());
+					Rocket::Core::String rocketTag(tag.data(), tag.data() + tag.length());
+					auto element = Rocket::Core::Factory::InstanceElement(doc, rocketTag, "inspector", Rocket::Core::XMLAttributes());
 					auto body = doc->GetFirstChild();
 					auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
 					if (inspector)
@@ -949,10 +956,22 @@ namespace FusionEngine
 						value.first = inspector;
 						value.second.push_back(component);
 
-						//auto subsection = doc->CreateElement("inspector_section");
-						//subsection->CreateTextElement(component->GetType());
+						auto name = component->GetType();
 
-						body->AppendChild(inspector);
+						// Subsection
+						auto subsection = doc->CreateElement("inspector_section");
+						// Title
+						Rocket::Core::Factory::InstanceElementText(subsection, Rocket::Core::String(name.data(), name.data() + name.length()));
+						// This element can be collapsed to hide the inspector
+						auto p = Rocket::Core::Factory::InstanceElement(subsection, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
+
+						p->AppendChild(inspector);
+
+						subsection->AppendChild(p);
+						p->RemoveReference();
+
+						body->AppendChild(subsection);
+						subsection->RemoveReference();
 					}
 					if (element)
 						element->RemoveReference();

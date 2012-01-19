@@ -44,6 +44,15 @@ namespace FusionEngine
 
 	int ASScript::s_ASScriptTypeId = -1;
 
+	// Since these aren't built-in a static type-id (for use when serialising) has to be defined for them
+	namespace ASScriptSerialisaiton
+	{
+		static const int s_EntityTypeID = -1;
+		static const int s_CompressedStringTypeID = -2;
+
+		static const size_t s_MaxStringLength = 2048;
+	}
+
 	CLBinaryStream::CLBinaryStream(const std::string& filename, CLBinaryStream::OpenMode open_mode)
 		: m_File(nullptr)
 	{
@@ -694,8 +703,15 @@ namespace FusionEngine
 	{
 		if (index >= m_ScriptProperties.size())
 		{
-			asGetActiveContext()->SetException("Tried to access a script property that doesn't exist");
-			return nullptr;
+			if (asGetActiveContext())
+			{
+				asGetActiveContext()->SetException("Tried to access a script property that doesn't exist");
+				return nullptr;
+			}
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Tried to access a script property that doesn't exist");
+			}
 		}
 
 		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
@@ -727,12 +743,17 @@ namespace FusionEngine
 
 	bool ASScript::SetProperty(unsigned int index, void *ref, int typeId)
 	{
-		FSN_ASSERT(asGetActiveContext());
-
 		if (index >= m_ScriptProperties.size())
 		{
-			asGetActiveContext()->SetException("Tried to access a script property that doesn't exist");
-			return false;
+			if (asGetActiveContext())
+			{
+				asGetActiveContext()->SetException( "Tried to access a script property that doesn't exist");
+				return false;
+			}
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Tried to access a script property that doesn't exist");
+			}
 		}
 
 		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
@@ -745,8 +766,13 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException& e)
 			{
-				asGetActiveContext()->SetException(e.what());
-				return false;
+				if (asGetActiveContext())
+				{
+					asGetActiveContext()->SetException(e.what());
+					return false;
+				}
+				else
+					throw e;
 			}
 		}
 		else
@@ -800,8 +826,13 @@ namespace FusionEngine
 				}
 				catch (InvalidArgumentException& e)
 				{
-					asGetActiveContext()->SetException(e.what());
-					return false;
+					if (asGetActiveContext())
+					{
+						asGetActiveContext()->SetException(e.what());
+						return false;
+					}
+					else
+						throw e;
 				}
 			}
 			else // Failed to lock ref
@@ -820,6 +851,7 @@ namespace FusionEngine
 			});
 			this->m_Properties.erase(newEnd, this->m_Properties.end());
 			m_ScriptProperties.clear();
+			m_ScriptPropertyInfo.clear();
 			m_ScriptObject.reset();
 		}
 		if (obj)
@@ -830,6 +862,7 @@ namespace FusionEngine
 			m_FirstInit = true;
 
 			m_ScriptProperties.resize(properties.size());
+			m_ScriptPropertyInfo.resize(properties.size());
 			//auto objType = obj->GetObjectType();
 			for (size_t i = 0, count = obj->GetPropertyCount(); i < count; ++i)
 			{
@@ -845,13 +878,17 @@ namespace FusionEngine
 
 					FSN_ASSERT((comProp->GetTypeId() & asTYPEID_OBJHANDLE) == 0 || comProp->GetTypeId() == m_EntityWrapperTypeId);
 
+					auto& propInfo = m_ScriptPropertyInfo[interfaceIndex];
+					propInfo.name = nameStr;
+					propInfo.type_id = comProp->GetTypeId();
+
 					// Copy in any values that were deserialised before the script was reloaded
 					try
 					{
 						if (m_CachedProperties.size() > interfaceIndex)
 						{
 							const auto& cachedProp = m_CachedProperties[interfaceIndex];
-							if (cachedProp->GetTypeId() != -1)
+							if (cachedProp->GetTypeId() != ASScriptSerialisaiton::s_EntityTypeID)
 							{
 								comProp->Set(cachedProp);
 								comProp->Synchronise();
@@ -864,7 +901,7 @@ namespace FusionEngine
 							if (_where != m_EditableCachedProperties.end())
 							{
 								const auto& cachedProp = _where->second;
-								if (cachedProp->GetTypeId() != -1)
+								if (cachedProp->GetTypeId() != ASScriptSerialisaiton::s_EntityTypeID)
 								{
 									comProp->Set(cachedProp);
 									comProp->Synchronise();
@@ -1050,7 +1087,7 @@ namespace FusionEngine
 		if (val.typeId == m_EntityWrapperTypeId)
 		{
 			auto temp = val.typeId;
-			val.typeId = -1;
+			val.typeId = ASScriptSerialisaiton::s_EntityTypeID;
 			stream.Write(val.typeId);
 			val.typeId = temp;
 
@@ -1075,6 +1112,18 @@ namespace FusionEngine
 				stream.Write(uint32_t(0));
 			}
 		}
+		else if (val.typeId == ScriptManager::getSingleton().GetStringTypeId())
+		{
+			stream.Write(ASScriptSerialisaiton::s_CompressedStringTypeID);
+
+			std::string strVal;
+			any->Retrieve(&strVal, val.typeId);
+			if (strVal.length() > ASScriptSerialisaiton::s_MaxStringLength)
+			{
+				FSN_EXCEPT(SerialisationError, "String value too long");
+			}
+			RakNet::StringCompressor::Instance()->EncodeString(strVal.c_str(), strVal.length(), &stream);
+		}
 		else if ((val.typeId & asTYPEID_SCRIPTOBJECT) != 0)
 		{
 			FSN_ASSERT_FAIL("Not implemented");
@@ -1082,7 +1131,7 @@ namespace FusionEngine
 		}
 		else if ((val.typeId & asTYPEID_APPOBJECT) != 0)
 		{
-			FSN_EXCEPT(InvalidArgumentException, "Can't serialise app objects");
+			FSN_EXCEPT(SerialisationError, "Can't serialise app objects");
 		}
 		else
 		{
@@ -1101,7 +1150,7 @@ namespace FusionEngine
 
 		stream.Read(prop->value.typeId);
 
-		if (prop->value.typeId == -1)
+		if (prop->value.typeId == ASScriptSerialisaiton::s_EntityTypeID)
 		{
 			prop->value.valueObj = 0;
 
@@ -1116,6 +1165,20 @@ namespace FusionEngine
 			else
 				m_EditableUninitialisedEntityWrappers[name] = pointer_id;
 		}
+		else if (prop->value.typeId == ASScriptSerialisaiton::s_CompressedStringTypeID)
+		{
+			RakNet::RakString strVal;
+			if (RakNet::StringCompressor::Instance()->DecodeString(&strVal, ASScriptSerialisaiton::s_MaxStringLength, &stream))
+			{
+				auto actualTypeId = ScriptManager::getSingleton().GetStringTypeId();
+
+				prop->Store(&strVal, actualTypeId);
+			}
+			else
+			{
+				FSN_EXCEPT(SerialisationError, "Compressed string value seems to be too long");
+			}
+		}
 		else
 		{
 			auto v = prop->value.valueInt;
@@ -1128,7 +1191,7 @@ namespace FusionEngine
 
 	//void ASScript::DeserNonStandardProp(RakNet::BitStream& stream, CScriptAny* prop, size_t index, const std::string& name)
 	//{
-	//	if (prop->value.typeId == -1)
+	//	if (prop->value.typeId == ASScriptSerialisaiton::s_EntityTypeID)
 	//	{
 	//		ObjectID id;
 	//		stream.Read(id);
@@ -1172,7 +1235,7 @@ namespace FusionEngine
 			if (mode == Editable)
 			{
 				if (m_EditableCachedProperties.empty())
-					FSN_EXCEPT(InvalidArgumentException, "Data wasn't deserialised in editable mode, and the script object isn't available to reference against");
+					FSN_EXCEPT(SerialisationError, "Data wasn't deserialised in editable mode, and the script object isn't available to reference against");
 				for (auto it = m_EditableCachedProperties.begin(), end = m_EditableCachedProperties.end(); it != end; ++it)
 				{
 					std::string name = it->first;

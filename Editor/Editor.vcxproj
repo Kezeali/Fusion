@@ -70,6 +70,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionASScriptInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />
@@ -79,6 +80,7 @@
     <ClCompile Include="PrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />
   </ItemGroup>

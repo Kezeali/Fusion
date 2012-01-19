@@ -23,6 +23,14 @@ void createEntity(int type, const Vector &in pos, float angle)
 		
 		sprite.ImagePath << "/Entities/Test/Gfx/spaceshoot_body_moving1.png";
 	}
+	if (type == 8)
+	{
+		Entity e = editor.CreateEntity("StaticTransform", pos, angle, true, false);
+		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
+		instantiator.addComponent(e, "TestB", "");
+		
+		sprite.ImagePath << "/Entities/Test/Gfx/spaceshoot_body_moving1.png";
+	}
 	if (type == 3)
 	{
 		Entity e = editor.CreateEntity("b2Dynamic", pos, angle, true, true);

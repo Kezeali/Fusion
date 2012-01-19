@@ -7,6 +7,7 @@
     </ClInclude>
     <ClInclude Include="include\FusionTransformInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
+    <ClInclude Include="include\FusionASScriptInspector.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -19,5 +20,6 @@
     </ClCompile>
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />
+    <ClCompile Include="source\FusionASScriptInspector.cpp" />
   </ItemGroup>
 </Project>
