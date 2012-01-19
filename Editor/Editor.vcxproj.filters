@@ -5,13 +5,37 @@
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionTransformInspector.h" />
-    <ClInclude Include="include\FusionComponentInspector.h" />
-    <ClInclude Include="include\FusionASScriptInspector.h" />
+    <ClInclude Include="include\FusionInspectorBase.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionTransformInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionInspectorUtils.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRigidBodyInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionSpriteInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionComponentInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionASScriptInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCircleShapeInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
       <UniqueIdentifier>{e38748f1-98b9-4905-a9da-44142e7bf2b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inspectors">
+      <UniqueIdentifier>{2c0d9974-07df-4683-a82c-235e37dad302}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -19,7 +43,17 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionEditor.cpp" />
-    <ClCompile Include="source\FusionTransformInspector.cpp" />
-    <ClCompile Include="source\FusionASScriptInspector.cpp" />
+    <ClCompile Include="source\FusionTransformInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionASScriptInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionInspectorBase.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionSpriteInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

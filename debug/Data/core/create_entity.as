@@ -72,7 +72,7 @@ void createEntity(int type, const Vector &in pos, float angle)
 		ICircleShape@ shape = cast<ICircleShape>(instantiator.addComponent(e, "b2Circle", ""));
 		
 		sprite.ImagePath << "/Entities/character/walk_cycle.png";
-		sprite.AnimationPath << "/Entities/character/walk_cycle.yaml";
+		sprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:left";
 		sprite.Offset << Vector(0.f, -20.f);
 		
 		shadow.ImagePath << "/Entities/character/shadow.png";

@@ -48,18 +48,18 @@ namespace FusionEngine
 		SpriteAnimation();
 		SpriteAnimation(CL_IODevice dev);
 
-		void Load(CL_IODevice dev);
+		void Load(CL_IODevice dev, const std::string& animation_name = std::string());
 
 		std::vector<CL_Rect>& GetFrames() { return m_Frames; }
 		std::vector<std::pair<int, double>>& GetFrameDelays() { return m_FrameDelays; }
-		std::vector<std::pair<int, Vector2>>& GetFrameOffsets() { return m_FrameOffsets; }
+		std::vector<std::pair<int, Vector2i>>& GetFrameOffsets() { return m_FrameOffsets; }
 
 		double GetDefaultDelay() const { return m_DefaultDelay; }
 
 	private:
 		std::vector<CL_Rect> m_Frames;
 		std::vector<std::pair<int, double>> m_FrameDelays;
-		std::vector<std::pair<int, Vector2>> m_FrameOffsets;
+		std::vector<std::pair<int, Vector2i>> m_FrameOffsets;
 		double m_DefaultDelay;
 	};
 

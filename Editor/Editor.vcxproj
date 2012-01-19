@@ -71,8 +71,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionASScriptInspector.h" />
+    <ClInclude Include="include\FusionCircleShapeInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
+    <ClInclude Include="include\FusionInspectorBase.h" />
+    <ClInclude Include="include\FusionInspectorUtils.h" />
+    <ClInclude Include="include\FusionRigidBodyInspector.h" />
+    <ClInclude Include="include\FusionSpriteInspector.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />
     <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>
@@ -82,6 +87,8 @@
     </ClCompile>
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
+    <ClCompile Include="source\FusionInspectorBase.cpp" />
+    <ClCompile Include="source\FusionSpriteInspector.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,6 +57,7 @@
 #include "FusionTransformComponent.h"
 
 #include "FusionTransformInspector.h"
+#include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
 #include <boost/lexical_cast.hpp>
@@ -235,6 +236,11 @@ namespace FusionEngine
 			auto tag = "inspector_" + ITransform::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::TransformInspector>())->RemoveReference();
+
+			tag = "inspector_" + ISprite::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::SpriteInspector>())->RemoveReference();
+
 			Rocket::Core::Factory::RegisterElementInstancer("inspector_asscript",
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::ASScriptInspector>())->RemoveReference();
 		}
@@ -600,6 +606,12 @@ namespace FusionEngine
 		if (!m_Active)
 			return;
 
+		for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
+		{
+			if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
+				return;
+		}
+
 		m_ShiftSelect = false;
 		m_AltSelect = false;
 
@@ -715,6 +727,39 @@ namespace FusionEngine
 		if (m_Active)
 		{
 			m_ReceivedMouseDown = false;
+
+			Vector2i mousePos(ev.mouse_pos.x, ev.mouse_pos.y);
+			if (Vector2::distance(m_DragFrom, mousePos) < 1.f)
+			{
+				CL_Rectf nearRect(mousePos.x - 2.f, mousePos.y - 2.f, mousePos.x + 2.f, mousePos.y + 2.f);
+
+				std::set<EntityPtr> entitiesUnselected;
+				if (!m_ShiftSelect)
+					entitiesUnselected = m_SelectedEntities;
+
+				// Select entities found within the updated selection rectangle
+				std::vector<EntityPtr> entitiesUnderMouse;
+				GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, QueryType::General);
+				for (auto it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
+				{
+					const EntityPtr& map_entity = *it;
+					if (!m_ShiftSelect)
+						entitiesUnselected.erase(map_entity);
+					if (!m_AltSelect)
+						SelectEntity(map_entity);
+					else
+						DeselectEntity(map_entity);
+				}
+				// Deselect all the entities not found in the updated rectangle
+				for (auto it = entitiesUnselected.begin(), end = entitiesUnselected.end(); it != end; ++it)
+				{
+					const EntityPtr& map_entity = *it;
+					if (!m_AltSelect)
+						DeselectEntity(map_entity);
+					else
+						SelectEntity(map_entity);
+				}
+			}
 		}
 	}
 

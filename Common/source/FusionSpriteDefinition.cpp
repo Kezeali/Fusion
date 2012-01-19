@@ -153,18 +153,39 @@ namespace FusionEngine
 		node["offset"] >> frame_info.offset;
 	}
 
-	void SpriteAnimation::Load(CL_IODevice dev)
+	void SpriteAnimation::Load(CL_IODevice dev, const std::string& animation_name)
 	{
 		try
 		{
 			IO::CLStream stream(dev);
 			YAML::Parser p(stream);
 			YAML::Node doc;
-			if (p.GetNextDocument(doc))
+			bool got = false;
+			if (animation_name.empty())
+				got = p.GetNextDocument(doc);
+			else
+			{
+				while (p.GetNextDocument(doc))
+				{
+					if (auto node = doc.FindValue("name"))
+					{
+						std::string name;
+						*node >> name;
+						if (name == animation_name)
+						{
+							got = true;
+							break;
+						}
+					}
+				}
+			}
+			if (got)
 			{
 				if (auto node = doc.FindValue("default_delay"))
 					*node >> m_DefaultDelay;
 				else if (auto node = doc.FindValue("default_frame_time"))
+					*node >> m_DefaultDelay;
+				else if (auto node = doc.FindValue("default_duration"))
 					*node >> m_DefaultDelay;
 				else if (auto node = doc.FindValue("framerate"))
 				{
@@ -179,29 +200,59 @@ namespace FusionEngine
 				{
 					auto& frameNode = framesNode[i];
 
-					auto& frameRect = m_Frames.at(i);
-					frameNode >> frameRect;
-
-					if (auto node = frameNode.FindValue("delay"))
+					if (frameNode.GetType() == YAML::CONTENT_TYPE::CT_SEQUENCE)
 					{
-						double delay;
-						*node >> delay;
-						m_FrameDelays.push_back(std::make_pair(i, delay));
+						auto& frameRect = m_Frames.at(i);
+						frameNode >> frameRect;
 					}
-					else if (auto node = frameNode.FindValue("frame_time"))
+					else
 					{
-						double delay;
-						*node >> delay;
-						m_FrameDelays.push_back(std::make_pair(i, delay));
-					}
+						if (auto node = frameNode.FindValue("rect"))
+						{
+							auto& frameRect = m_Frames.at(i);
+							*node >> frameRect;
+						}
+						else if (auto node = frameNode.FindValue("frame"))
+						{
+							auto& frameRect = m_Frames.at(i);
+							*node >> frameRect;
+						}
 
-					if (auto node = frameNode.FindValue("offset"))
-					{
-						Vector2 offset;
-						*node >> offset;
-						m_FrameOffsets.push_back(std::make_pair(i, offset));
+						if (auto node = frameNode.FindValue("delay"))
+						{
+							double delay;
+							*node >> delay;
+							m_FrameDelays.push_back(std::make_pair(i, delay));
+						}
+						else if (auto node = frameNode.FindValue("duration"))
+						{
+							double delay;
+							*node >> delay;
+							m_FrameDelays.push_back(std::make_pair(i, delay));
+						}
+						else if (auto node = frameNode.FindValue("frame_time"))
+						{
+							double delay;
+							*node >> delay;
+							m_FrameDelays.push_back(std::make_pair(i, delay));
+						}
+
+						if (auto node = frameNode.FindValue("offset"))
+						{
+							// TODO: ?make this Vector2i
+							Vector2 offset;
+							*node >> offset;
+							m_FrameOffsets.push_back(std::make_pair(i, offset));
+						}
 					}
 				}
+			}
+			else
+			{
+				if (animation_name.empty())
+					FSN_EXCEPT(FileTypeException, "The given animation file contains no entries");
+				else
+					FSN_EXCEPT(FileTypeException, "The given animation file does not contain the document '" + animation_name + "'");
 			}
 		}
 		catch (YAML::Exception& ex)
@@ -212,18 +263,18 @@ namespace FusionEngine
 
 	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
-		if (resource->IsLoaded())
-		{
-			delete static_cast<SpriteAnimation*>(resource->GetDataPtr());
-		}
+		FSN_ASSERT(!resource->IsLoaded());
 
 		resource->setLoaded(false);
 
 		SpriteAnimation *data = new SpriteAnimation();
 		try
 		{
-			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
-			data->Load(dev);
+			const auto pathEnd = resource->GetPath().find(":");
+			const auto path = resource->GetPath().substr(0, pathEnd);
+			const auto animationName = pathEnd != std::string::npos ? resource->GetPath().substr(pathEnd + 1) : "";
+			auto dev = vdir.open_file(path, CL_File::open_existing, CL_File::access_read);
+			data->Load(dev, animationName);
 		}
 		catch (CL_Exception& ex)
 		{
@@ -290,6 +341,11 @@ namespace FusionEngine
 		if (m_Animation.IsLoaded())
 		{
 			sprite.set_delay((int)(m_Animation->GetDefaultDelay() * 1000 + 0.5));
+			auto& frameOffsets = m_Animation->GetFrameOffsets();
+			for (auto it = frameOffsets.begin(), end = frameOffsets.end(); it != end; ++it)
+			{
+				sprite.set_frame_offset(it->first, CL_Point(it->second.x, it->second.y));
+			}
 		}
 		return sprite;
 	}

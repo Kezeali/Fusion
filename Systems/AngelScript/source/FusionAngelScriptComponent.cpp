@@ -1122,7 +1122,7 @@ namespace FusionEngine
 			{
 				FSN_EXCEPT(SerialisationError, "String value too long");
 			}
-			RakNet::StringCompressor::Instance()->EncodeString(strVal.c_str(), strVal.length(), &stream);
+			RakNet::StringCompressor::Instance()->EncodeString(strVal.c_str(), strVal.length() + 1, &stream);
 		}
 		else if ((val.typeId & asTYPEID_SCRIPTOBJECT) != 0)
 		{
@@ -1167,10 +1167,11 @@ namespace FusionEngine
 		}
 		else if (prop->value.typeId == ASScriptSerialisaiton::s_CompressedStringTypeID)
 		{
-			RakNet::RakString strVal;
-			if (RakNet::StringCompressor::Instance()->DecodeString(&strVal, ASScriptSerialisaiton::s_MaxStringLength, &stream))
+			RakNet::RakString rakStringVal;
+			if (RakNet::StringCompressor::Instance()->DecodeString(&rakStringVal, ASScriptSerialisaiton::s_MaxStringLength, &stream))
 			{
 				auto actualTypeId = ScriptManager::getSingleton().GetStringTypeId();
+				std::string strVal(rakStringVal.C_String());
 
 				prop->Store(&strVal, actualTypeId);
 			}

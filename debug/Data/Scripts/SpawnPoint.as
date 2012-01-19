@@ -8,7 +8,8 @@ class SpawnPoint : ScriptComponent
 {
 	SpawnPoint()
 	{
-		playerSprite = "/Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		playerSprite = "/Entities/Test/Gfx/spaceshoot_body_moving.png";
+		playerAnimation = "/Entities/Test/test_anim.yaml";
 		spawnJunk = true;
 	}
 
@@ -18,6 +19,7 @@ class SpawnPoint : ScriptComponent
 	bool spawnJunk;
 	
 	string playerSprite;
+	string playerAnimation;
 
 	void onSpawn()
 	{
@@ -43,6 +45,7 @@ class SpawnPoint : ScriptComponent
 		}
 		//console.println(sprite.getType());
 		sprite.ImagePath = playerSprite;
+		sprite.AnimationPath = playerAnimation;
 		sprite.BaseAngle = 1.57f;
 		
 		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
