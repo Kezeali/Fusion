@@ -187,6 +187,37 @@ namespace FusionEngine
 		CL_Draw::fill(gc, m_SelectionBox, fillC);
 	}
 
+	class EntitySelector : public Rocket::Core::Element
+	{
+	public:
+		EntitySelector(const Rocket::Core::String& tag)
+			: Rocket::Core::Element(tag)
+		{
+			Rocket::Core::XMLAttributes attributes;
+			auto element = Rocket::Core::Factory::InstanceElement(this, "select", "select", attributes);FSN_ASSERT(element);
+			if (m_Select = dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(element))
+			{
+				AppendChild(m_Select.get());
+			}
+			element->RemoveReference();
+		}
+
+		void SetEntities(const std::vector<EntityPtr>& entities)
+		{
+			m_Entities = entities;
+			for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+			{
+				auto name = (*it)->GetName();
+				if (name.empty() && (*it)->IsSyncedEntity())
+					name = boost::lexical_cast<std::string>((*it)->GetID());
+				m_Select->Add(name.c_str(), name.c_str());
+			}
+		}
+
+		std::vector<EntityPtr> m_Entities;
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect> m_Select;
+	};
+
 	Editor::Editor(const std::vector<CL_String>& args)
 		: m_Active(false),
 		m_RebuildScripts(false),
@@ -243,6 +274,12 @@ namespace FusionEngine
 
 			Rocket::Core::Factory::RegisterElementInstancer("inspector_asscript",
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::ASScriptInspector>())->RemoveReference();
+		}
+
+		{
+			std::string tag = "entity_selector";
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<EntitySelector>())->RemoveReference();
 		}
 	}
 
@@ -726,40 +763,12 @@ namespace FusionEngine
 	{
 		if (m_Active)
 		{
-			m_ReceivedMouseDown = false;
-
-			Vector2i mousePos(ev.mouse_pos.x, ev.mouse_pos.y);
-			if (Vector2::distance(m_DragFrom, mousePos) < 1.f)
+			if (m_ReceivedMouseDown)
 			{
-				CL_Rectf nearRect(mousePos.x - 2.f, mousePos.y - 2.f, mousePos.x + 2.f, mousePos.y + 2.f);
-
-				std::set<EntityPtr> entitiesUnselected;
-				if (!m_ShiftSelect)
-					entitiesUnselected = m_SelectedEntities;
-
-				// Select entities found within the updated selection rectangle
-				std::vector<EntityPtr> entitiesUnderMouse;
-				GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, QueryType::General);
-				for (auto it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
-				{
-					const EntityPtr& map_entity = *it;
-					if (!m_ShiftSelect)
-						entitiesUnselected.erase(map_entity);
-					if (!m_AltSelect)
-						SelectEntity(map_entity);
-					else
-						DeselectEntity(map_entity);
-				}
-				// Deselect all the entities not found in the updated rectangle
-				for (auto it = entitiesUnselected.begin(), end = entitiesUnselected.end(); it != end; ++it)
-				{
-					const EntityPtr& map_entity = *it;
-					if (!m_AltSelect)
-						DeselectEntity(map_entity);
-					else
-						SelectEntity(map_entity);
-				}
+				OnMouseUp_Selection(ev);
 			}
+
+			m_ReceivedMouseDown = false;
 		}
 	}
 
@@ -780,6 +789,44 @@ namespace FusionEngine
 		m_SelectionRectangle.bottom = m_SelectionRectangle.top = m_DragFrom.y;
 	}
 
+	void Editor::OnMouseUp_Selection(const CL_InputEvent& ev)
+	{
+		Vector2i mousePos(ReturnScreenToWorld((float)ev.mouse_pos.x, (float)ev.mouse_pos.y));
+		// Detect click (no mouse movement between press and release)
+		if (Vector2::distance(m_DragFrom, mousePos) <= Vector2(1.f, 1.f).length())
+		{
+			CL_Rectf nearRect(mousePos.x - 50.f, mousePos.y - 50.f, mousePos.x + 50.f, mousePos.y + 50.f);
+
+			std::set<EntityPtr> entitiesUnselected;
+			if (!m_ShiftSelect)
+				entitiesUnselected = m_SelectedEntities;
+
+			// Select entities found within the updated selection rectangle
+			std::vector<EntityPtr> entitiesUnderMouse;
+			GetEntitiesOverlapping(entitiesUnderMouse, nearRect, QueryType::General);
+			for (auto it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
+			{
+				const EntityPtr& map_entity = *it;
+				if (!m_ShiftSelect)
+					entitiesUnselected.erase(map_entity);
+				if (!m_AltSelect)
+					SelectEntity(map_entity);
+				else
+					DeselectEntity(map_entity);
+			}
+			// Deselect all the entities not found in the updated rectangle
+			for (auto it = entitiesUnselected.begin(), end = entitiesUnselected.end(); it != end; ++it)
+			{
+				const EntityPtr& map_entity = *it;
+				if (!m_AltSelect)
+					DeselectEntity(map_entity);
+				else
+					SelectEntity(map_entity);
+			}
+		}
+		UpdateSelectionRectangle(mousePos, false);
+	}
+
 	void Editor::TranslateScreenToWorld(float* x, float* y) const
 	{
 		CL_Rectf area;
@@ -789,9 +836,8 @@ namespace FusionEngine
 
 	Vector2 Editor::ReturnScreenToWorld(float x, float y) const
 	{
-		CL_Rectf area;
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
-		return Vector2(x + area.left, y + area.top);
+		TranslateScreenToWorld(&x, &y);
+		return Vector2(x, y);
 	}
 
 	void Editor::UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position)
@@ -960,12 +1006,32 @@ namespace FusionEngine
 
 			std::map<std::string, std::pair<Inspectors::ComponentInspector*, std::vector<ComponentPtr>>> inspectors;
 
+			boost::intrusive_ptr<EntitySelector> entity_selector;
+
+			std::vector<EntityPtr> entities;
+
 			InspectorGenerator(Rocket::Core::ElementDocument* doc_)
 				: doc(doc_)
-			{}
+			{
+				FSN_ASSERT(doc);
+
+				auto element = doc->CreateElement("entity_selector"); FSN_ASSERT(element);
+				if (entity_selector = dynamic_cast<EntitySelector*>(element))
+				{
+					auto body = doc->GetFirstChild()->GetElementById("content");
+					body->AppendChild(entity_selector.get());
+				}
+				else
+				{
+					FSN_EXCEPT(Exception, "Failed to create entity_selector element.");
+				}
+				element->RemoveReference();
+			}
 
 			void ProcessEntity(const EntityPtr& entity)
 			{
+				entities.push_back(entity);
+
 				const auto& components = entity->GetComponents();
 				for (auto it = components.begin(), end = components.end(); it != end; ++it)
 					ProcessComponent(*it);
@@ -993,7 +1059,7 @@ namespace FusionEngine
 					fe_tolower(tag);
 					Rocket::Core::String rocketTag(tag.data(), tag.data() + tag.length());
 					auto element = Rocket::Core::Factory::InstanceElement(doc, rocketTag, "inspector", Rocket::Core::XMLAttributes());
-					auto body = doc->GetFirstChild();
+					auto body = doc->GetFirstChild()->GetElementById("content");
 					auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
 					if (inspector)
 					{
@@ -1033,6 +1099,15 @@ namespace FusionEngine
 
 			void Generate()
 			{
+				if (entities.size() > 1)
+					doc->SetTitle(doc->GetTitle() + (": " + boost::lexical_cast<std::string>(entities.size()) + " entities").c_str());
+				else if (!entities.empty())
+					doc->SetTitle(doc->GetTitle() + (": " + entities.front()->GetName()).c_str());
+				if (auto title = doc->GetElementById("title"))
+					title->SetInnerRML(doc->GetTitle());
+
+				entity_selector->SetEntities(entities);
+
 				for (auto it = inspectors.begin(), end = inspectors.end(); it != end; ++it)
 				{
 					it->second.first->SetComponents(it->second.second);

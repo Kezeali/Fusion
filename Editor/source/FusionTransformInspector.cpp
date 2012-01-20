@@ -164,11 +164,23 @@ namespace FusionEngine { namespace Inspectors
 		{
 			if (ev == "enter")
 			{
-				if (ev.GetTargetElement() == m_XInput.get() || ev.GetTargetElement() == m_YInput.get())
+				if (ev.GetTargetElement() == m_XInput.get())
 				{
-					Vector2 value(getUIValue<float>(m_XInput), getUIValue<float>(m_YInput));
+					Vector2 value(getUIValue<float>(m_XInput), 0.f);
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+					{
+						value.y = (*it)->Position.Get().y;
 						(*it)->Position.Set(value);
+					}
+				}
+				else if (ev.GetTargetElement() == m_YInput.get())
+				{
+					Vector2 value(0.f, getUIValue<float>(m_YInput));
+					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+					{
+						value.x = (*it)->Position.Get().x;
+						(*it)->Position.Set(value);
+					}
 				}
 				else if (ev.GetTargetElement() == m_AngleInput.get())
 				{

@@ -22,6 +22,7 @@
 			div#content
 			{
 				text-align: left;
+				overflow: scroll;
 			}
 			
 			collapsible
@@ -36,6 +37,11 @@
 			}
 			
 			inspector
+			{
+				display: block;
+			}
+			
+			entity_selector
 			{
 				display: block;
 			}

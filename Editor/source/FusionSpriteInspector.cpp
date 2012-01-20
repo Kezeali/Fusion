@@ -80,71 +80,65 @@ namespace FusionEngine { namespace Inspectors
 
 	void SpriteInspector::InitUI()
 	{
-		{
-		StringSetterCallback_t setter = [](std::string path, ComponentIPtr<ISprite> component) { component->ImagePath.Set(path); };
-		StringGetterCallback_t getter = [](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); };
 		AddTextInput("Image",
-			setter,
-			getter);
-		}
+			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->ImagePath.Set(path); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); })
+			);
 
-		{
-		StringSetterCallback_t setter = [](std::string path, ComponentIPtr<ISprite> component) { component->AnimationPath.Set(path); };
-		StringGetterCallback_t getter = [](ComponentIPtr<ISprite> component)->std::string { return component->AnimationPath.Get(); };
 		AddTextInput("Animation",
-			setter,
-			getter);
-		}
+			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->AnimationPath.Set(path); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->AnimationPath.Get(); })
+			);
 
-		{
-		StringSetterCallback_t setter = [](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(StringToOrigin(str)); };
-		StringGetterCallback_t getter = [](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); };
-		std::vector<std::string> options;
+		// Alignment
+		std::vector<std::string> originOptions;
 		for (int i = 0; i < 9; ++i)
-			options.push_back(OriginToString((CL_Origin)i));
+			originOptions.push_back(OriginToString((CL_Origin)i));
 		AddSelectInput("AlignmentOrigin",
-			options,
-			setter,
-			getter);
-		}
+			originOptions,
+			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(StringToOrigin(str)); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); }));
 
-		{
-		IntSetterCallback_t setter = [](int x, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(x, component->AlignmentOffset.Get().y)); };
-		IntGetterCallback_t getter = [](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().x; };
 		AddTextInput("AlignmentOffset-X",
-			setter,
-			getter);
-		}
-		{
-		IntSetterCallback_t setter = [](int y, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(component->AlignmentOffset.Get().x, y)); };
-		IntGetterCallback_t getter = [](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().y; };
+			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(x, component->AlignmentOffset.Get().y)); }),
+			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().x; })
+			);
 		AddTextInput("AlignmentOffset-Y",
-			setter,
-			getter);
-		}
+			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(component->AlignmentOffset.Get().x, y)); }),
+			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().y; })
+			);
 
-		{
-		FloatSetterCallback_t setter = [](float angle, ComponentIPtr<ISprite> component) { component->BaseAngle.Set(angle); };
-		FloatGetterCallback_t getter = [](ComponentIPtr<ISprite> component) { return component->BaseAngle.Get(); };
+		// Rotation Hotspot
+		AddSelectInput("RotationOrigin",
+			originOptions,
+			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->RotationOrigin.Set(StringToOrigin(str)); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->RotationOrigin.Get()); })
+			);
+
+		AddTextInput("RotationOffset-X",
+			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(x, component->RotationOffset.Get().y)); }),
+			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().x; })
+			);
+		AddTextInput("RotationOffset-Y",
+			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(component->RotationOffset.Get().x, y)); }),
+			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().y; })
+			);
+
+		// Base-Angle
 		AddTextInput("BaseAngle",
-			setter,
-			getter);
-		}
+			FloatSetter_t([](float angle, ComponentIPtr<ISprite> component) { component->BaseAngle.Set(angle); }),
+			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->BaseAngle.Get(); })
+			);
 
-		{
-		FloatSetterCallback_t setter = [](float x, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(x, component->Scale.Get().y)); };
-		FloatGetterCallback_t getter = [](ComponentIPtr<ISprite> component) { return component->Scale.Get().x; };
+		// Scale
 		AddTextInput("Scale-X",
-			setter,
-			getter);
-		}
-		{
-		FloatSetterCallback_t setter = [](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); };
-		FloatGetterCallback_t getter = [](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; };
+			FloatSetter_t([](float x, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(x, component->Scale.Get().y)); }),
+			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().x; })
+			);
 		AddTextInput("Scale-Y",
-			setter,
-			getter);
-		}
+			FloatSetter_t([](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); }),
+			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; })
+			);
 	}
 
 } }

@@ -179,6 +179,7 @@ namespace FusionEngine
 		void OnMouseMove(const CL_InputEvent& ev, const CL_InputState& state);
 
 		void OnMouseDown_Selection(const CL_InputEvent& ev);
+		void OnMouseUp_Selection(const CL_InputEvent& ev);
 
 		void TranslateScreenToWorld(float* x, float* y) const;
 		Vector2 ReturnScreenToWorld(float x, float y) const;
