@@ -75,29 +75,36 @@ namespace FusionEngine { namespace Inspectors
 
 	protected:
 
-		typedef std::function<void (bool, ComponentIPtr<ComponentT>)> BoolInputCallback_t;
-		typedef std::function<void (int, ComponentIPtr<ComponentT>)> IntInputCallback_t;
-		typedef std::function<void (float, ComponentIPtr<ComponentT>)> FloatInputCallback_t;
-		typedef std::function<void (std::string, ComponentIPtr<ComponentT>)> StringInputCallback_t;
+		typedef std::function<void (bool, ComponentIPtr<ComponentT>)> BoolSetterCallback_t;
+		typedef std::function<void (int, ComponentIPtr<ComponentT>)> IntSetterCallback_t;
+		typedef std::function<void (float, ComponentIPtr<ComponentT>)> FloatSetterCallback_t;
+		typedef std::function<void (std::string, ComponentIPtr<ComponentT>)> StringSetterCallback_t;
 
-		typedef std::function<bool (ComponentIPtr<ComponentT>)> BoolPropertyCallback_t;
-		typedef std::function<int (ComponentIPtr<ComponentT>)> IntPropertyCallback_t;
-		typedef std::function<float (ComponentIPtr<ComponentT>)> FloatPropertyCallback_t;
-		typedef std::function<std::string (ComponentIPtr<ComponentT>)> StringPropertyCallback_t;
+		typedef std::function<bool (ComponentIPtr<ComponentT>)> BoolGetterCallback_t;
+		typedef std::function<int (ComponentIPtr<ComponentT>)> IntGetterCallback_t;
+		typedef std::function<float (ComponentIPtr<ComponentT>)> FloatGetterCallback_t;
+		typedef std::function<std::string (ComponentIPtr<ComponentT>)> StringGetterCallback_t;
 
-		typedef boost::variant<BoolInputCallback_t, IntInputCallback_t, FloatInputCallback_t, StringInputCallback_t> InputCallbackVariant_t;
-		typedef boost::variant<BoolPropertyCallback_t, IntPropertyCallback_t, FloatPropertyCallback_t, StringPropertyCallback_t> PropertyCallbackVariant_t;
+		typedef boost::variant<BoolSetterCallback_t, IntSetterCallback_t, FloatSetterCallback_t, StringSetterCallback_t> SetterCallbackVariant_t;
+		typedef boost::variant<BoolGetterCallback_t, IntGetterCallback_t, FloatGetterCallback_t, StringGetterCallback_t> GetterCallbackVariant_t;
 
-		void AddTextInput(const std::string& name, InputCallbackVariant_t setter, PropertyCallbackVariant_t getter);
+		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
+
+		void AddToggleInput(const std::string& name, BoolSetterCallback_t setter, BoolGetterCallback_t getter);
+
+		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetterCallback_t setter, StringGetterCallback_t getter);
 
 	private:
-		typedef boost::variant<boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>> InputVariant_t;
+		typedef boost::variant<
+			boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>,
+			boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>
+		> InputVariant_t;
 
 		struct Input
 		{
 			InputVariant_t ui_element;
-			InputCallbackVariant_t callback;
-			PropertyCallbackVariant_t get_callback;
+			SetterCallbackVariant_t callback;
+			GetterCallbackVariant_t get_callback;
 		};
 
 		std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
@@ -117,12 +124,12 @@ namespace FusionEngine { namespace Inspectors
 			SetUIValueVisitor(bool first_, const ComponentIPtr<ComponentT>& com_)
 				: first(first_), component(com_)
 			{}
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, BoolPropertyCallback_t& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, BoolGetterCallback_t& getter) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "checkbox")
 				{
-					const bool value = callback(component);
+					const bool value = getter(component);
 					if (first)
 					{
 						if (value)
@@ -144,12 +151,12 @@ namespace FusionEngine { namespace Inspectors
 				}
 			}
 
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, std::function<int (ComponentIPtr<ComponentT>)>& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, IntGetterCallback_t& getter) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "text" || type == "range")
 				{
-					initUIValue(first, input, callback(component));
+					initUIValue(first, input, getter(component));
 					return true;
 				}
 				else
@@ -157,12 +164,12 @@ namespace FusionEngine { namespace Inspectors
 					return false;
 				}
 			}
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, std::function<float (ComponentIPtr<ComponentT>)>& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, FloatGetterCallback_t& getter) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "text" || type == "range")
 				{
-					initUIValue(first, input, callback(component));
+					initUIValue(first, input, getter(component));
 					return true;
 				}
 				else
@@ -171,23 +178,48 @@ namespace FusionEngine { namespace Inspectors
 				}
 			}
 
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringPropertyCallback_t& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringGetterCallback_t& getter) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
+				std::string currentUIValue;
+				std::string value = getter(component);
 				if (type == "text")
 				{
-					std::string currentValue = input->GetValue().CString();
-					std::string value = callback(component);
-					if (!first && value != currentValue)
-						input->SetValue("");
-					else
-						input->SetValue(value.c_str());
-					return true;
+					currentUIValue = input->GetValue().CString();
+				}
+				else if (type == "checkbox")
+				{
+					currentUIValue = input->HasAttribute("checked") ? "true" : "false";
 				}
 				else
 				{
 					return false;
 				}
+
+				if (!first && value != currentUIValue)
+					input->SetValue("");
+				else
+					input->SetValue(value.c_str());
+				return true;
+			}
+
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& input, StringGetterCallback_t& getter) const
+			{
+				std::string currentUIValue = input->GetValue().CString();
+				std::string value = getter(component);
+
+				if (!first && value != currentUIValue)
+					input->SetValue("");
+				else
+					input->SetValue(value.c_str());
+
+				return true;
+			}
+
+			template <typename U>
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& input, std::function<U (ComponentIPtr<ComponentT>)>& callback) const
+			{
+				return false;
 			}
 
 		};
@@ -199,7 +231,7 @@ namespace FusionEngine { namespace Inspectors
 			GetUIValueVisitor(const ComponentIPtr<ComponentT>& com_)
 				: component(com_)
 			{}
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, BoolInputCallback_t& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, BoolSetterCallback_t& callback) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "checkbox")
@@ -213,7 +245,7 @@ namespace FusionEngine { namespace Inspectors
 				}
 			}
 
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, std::function<void (int, ComponentIPtr<ComponentT>)>& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, IntSetterCallback_t& callback) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "text" || type == "range")
@@ -226,7 +258,7 @@ namespace FusionEngine { namespace Inspectors
 					return false;
 				}
 			}
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, std::function<void (float, ComponentIPtr<ComponentT>)>& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, FloatSetterCallback_t& callback) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "text" || type == "range")
@@ -240,7 +272,7 @@ namespace FusionEngine { namespace Inspectors
 				}
 			}
 
-			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringInputCallback_t& callback) const
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringSetterCallback_t& callback) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
 				if (type == "text")
@@ -253,6 +285,19 @@ namespace FusionEngine { namespace Inspectors
 				{
 					return false;
 				}
+			}
+
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& input, StringSetterCallback_t& callback) const
+			{
+				auto uiValue = input->GetValue();
+				callback(std::string(uiValue.CString()), component);
+				return true;
+			}
+
+			template <typename U>
+			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& input, std::function<void (U, ComponentIPtr<ComponentT>)>& callback) const
+			{
+				return false;
 			}
 
 		};
@@ -268,7 +313,7 @@ namespace FusionEngine { namespace Inspectors
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddTextInput(const std::string& name, InputCallbackVariant_t setter, PropertyCallbackVariant_t getter)
+	void GenericInspector<ComponentT>::AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -285,12 +330,12 @@ namespace FusionEngine { namespace Inspectors
 		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
 		attributes.Set("value", "0");
 		attributes.Set("size", "10");
-		Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(line,
+		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
 			"input",
 			"input",
 			attributes);
 
-		addControl(line, input_element, text_input);
+		addControl(line, input_element, element);
 
 		line->RemoveReference();
 
@@ -301,6 +346,80 @@ namespace FusionEngine { namespace Inspectors
 			inputData.callback = setter;
 			inputData.get_callback = getter;
 			m_Inputs[input_element] = inputData;
+		}
+	}
+
+	template <class ComponentT>
+	void GenericInspector<ComponentT>::AddToggleInput(const std::string& name, BoolSetterCallback_t setter, BoolGetterCallback_t getter)
+	{
+		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+
+		auto lowerName = fe_newlower(name);
+
+		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+
+		Rocket::Core::XMLAttributes attributes;
+		attributes.Set("type", "checkbox");
+		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
+		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		attributes.Set("value", Rocket::Core::String(lowerName.c_str()));
+		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+			"input",
+			"input",
+			attributes);
+
+		addControl(line, input_element, element);
+
+		line->RemoveReference();
+
+		if (input_element)
+		{
+			Input inputData;
+			inputData.ui_element = input_element;
+			inputData.callback = setter;
+			inputData.get_callback = getter;
+			m_Inputs[input_element] = inputData;
+		}
+	}
+
+	template <class ComponentT>
+	void GenericInspector<ComponentT>::AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetterCallback_t setter, StringGetterCallback_t getter)
+	{
+		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect> select_element;
+
+		auto lowerName = fe_newlower(name);
+
+		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+
+		Rocket::Core::XMLAttributes attributes;
+		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+			"select",
+			"select",
+			attributes);
+
+		addControl(line, select_element, element);
+
+		for (auto it = options.begin(), end = options.end(); it != end; ++it)
+		{
+			Rocket::Core::String rktStr(it->data(), it->data() + it->length());
+			select_element->Add(rktStr, rktStr);
+		}
+
+		line->RemoveReference();
+
+		if (select_element)
+		{
+			Input inputData;
+			inputData.ui_element = select_element;
+			inputData.callback = setter;
+			inputData.get_callback = getter;
+			m_Inputs[select_element] = inputData;
 		}
 	}
 
@@ -347,18 +466,26 @@ namespace FusionEngine { namespace Inspectors
 	class ClearUIVisitor : public boost::static_visitor<>
 	{
 	public:
-		void operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& i) const
+		void operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& element) const
 		{
-			auto type = i->GetAttribute("type", Rocket::Core::String(""));
+			auto type = element->GetAttribute("type", Rocket::Core::String(""));
 			if (type == "text")
 			{
-				i->SetValue("");
+				element->SetValue("");
 			}
 			else if (type == "checkbox")
 			{
-				i->RemoveAttribute("checked");
+				element->RemoveAttribute("checked");
 			}
 		}
+		void operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& element) const
+		{
+			element->SetValue("");
+		}
+		//void operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControl>& element) const
+		//{
+		//	element->SetValue("");
+		//}
 
 	};
 
