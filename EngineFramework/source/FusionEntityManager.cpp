@@ -1124,8 +1124,8 @@ namespace FusionEngine
 	{
 		//tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
 
-		if (entity->GetName().empty() || entity->GetName() == "default")
-			entity->_notifyDefaultName(generateName(entity));
+		//if (entity->GetName() == "default")
+		//	entity->_notifyDefaultName(generateName(entity));
 
 		{
 			m_NewEntitiesToActivate.push(entity);

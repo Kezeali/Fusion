@@ -108,9 +108,15 @@ namespace FusionEngine
 		{
 			const Rocket::Core::String &attr = *it;
 			if (attr == "selectable")
-				// The attribute can validly have no value, in which case it defaults to
+			{
+				// This attribute can validly have no value, in which case it defaults to
 				//  true
 				m_Selectable = HasAttribute("selectable") && GetAttribute<Rocket::Core::String>("selectable", "") != "false";
+			}
+			else if (attr == "source")
+			{
+				SetDataSource(GetAttribute("source", Rocket::Core::String()));
+			}
 		}
 	}
 
@@ -157,10 +163,15 @@ namespace FusionEngine
 
 		SetSelectedRow(newSelection);
 
+
 		Rocket::Core::Dictionary parameters;
 		parameters.Set("row_index", newSelection);
 		if (prevSelection != -1)
 			parameters.Set("prev_row_index", prevSelection);
+
+		auto dataSource = this->GetAttribute("source", Rocket::Core::String());
+		parameters.Set("source", dataSource);
+
 		DispatchEvent("rowselected", parameters);
 	}
 
@@ -171,6 +182,10 @@ namespace FusionEngine
 		{
 			Rocket::Core::Dictionary parameters;
 			parameters.Set("row_index", row->GetTableRelativeIndex());
+
+			auto dataSource = this->GetAttribute("source", Rocket::Core::String());
+			parameters.Set("source", dataSource);
+
 			DispatchEvent("rowdblclick", parameters);
 		}
 	}

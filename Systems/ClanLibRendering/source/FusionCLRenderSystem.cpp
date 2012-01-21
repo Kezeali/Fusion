@@ -282,8 +282,8 @@ namespace FusionEngine
 		m_Renderer(renderer)
 	{
 		auto gc = m_Renderer->GetGraphicContext();
-		m_DebugFont = CL_Font(gc, "Lucida Console", 22);
-		m_DebugFont2 = CL_Font(gc, "Lucida Console", 14);
+		m_DebugFont = CL_Font(gc, "Lucida Console", 14);
+		m_DebugFont2 = CL_Font(gc, "Lucida Console", 10);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -346,7 +346,7 @@ namespace FusionEngine
 		};
 
 		{
-			FSN_PROFILE("CLRender:Animate");
+			FSN_PROFILE("Animate");
 			float animationDt = std::min(DeltaTime::GetDeltaTime(), DeltaTime::GetActualDeltaTime());
 #define FSN_CLRENDER_PARALLEL_UPDATE
 
@@ -381,7 +381,7 @@ namespace FusionEngine
 
 		//if (outOfOrder)
 		{
-			FSN_PROFILE("CLRender:Depth Sort");
+			FSN_PROFILE("Depth Sort");
 			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
 		}
 
@@ -406,7 +406,7 @@ namespace FusionEngine
 
 	void CLRenderTask::Draw()
 	{
-		FSN_PROFILE("CLRender:Draw");
+		FSN_PROFILE("Draw");
 		auto& drawables = m_RenderWorld->GetDrawables();
 
 		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
@@ -435,18 +435,24 @@ namespace FusionEngine
 				}
 			}
 
-			worldGUICtx->Render();
+			{
+				FSN_PROFILE("GUI");
+				worldGUICtx->Render();
+			}
 
 			m_RenderWorld->RunExtensions(vp, gc);
 
 			m_Renderer->PostDraw();
 		}
 
-		for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
 		{
-			auto ctx = Rocket::Core::GetContext(i);
-			if (ctx != worldGUICtx)
-				ctx->Render();
+			FSN_PROFILE("GUI");
+			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+			{
+				auto ctx = Rocket::Core::GetContext(i);
+				if (ctx != worldGUICtx)
+					ctx->Render();
+			}
 		}
 
 		{
@@ -473,7 +479,7 @@ namespace FusionEngine
 		}
 
 		{
-			auto pf = Profiling::getSingleton().GetTimes();
+			const auto pf = Profiling::getSingleton().GetTimes();
 			CL_Pointf pfLoc(10.f, 110.f);
 			for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 			{
@@ -557,6 +563,7 @@ namespace FusionEngine
 			}
 		}
 
+
 		if (!m_PhysDebugDraw)
 		{
 			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
@@ -567,6 +574,7 @@ namespace FusionEngine
 
 		if (m_PhysDebugDraw && m_RenderWorld->m_PhysDebugDrawEnabled && !viewports.empty())
 		{
+			FSN_PROFILE("PhysicsDebugDraw");
 			m_PhysDebugDraw->SetViewport(viewports.front());
 			m_PhysDebugDraw->SetupView();
 

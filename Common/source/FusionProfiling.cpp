@@ -67,6 +67,7 @@ namespace FusionEngine
 
 	void Profiling::StoreTick()
 	{
+		m_ScopeLabel.clear();
 		m_TimesLastTick.clear();
 
 		std::pair<std::string, double> entry;
@@ -87,7 +88,7 @@ namespace FusionEngine
 	}
 
 	Profiler::Profiler(const std::string& label)
-		: m_Label(label)
+		: m_Label(Profiling::getSingleton().PushThreadScopeLabel(label))
 #ifdef FSN_PROFILER_USE_TBB_TIMER
 		, m_Start(tbb::tick_count::now())
 #endif
@@ -96,6 +97,7 @@ namespace FusionEngine
 
 	Profiler::~Profiler()
 	{
+		Profiling::getSingleton().PopThreadScopeLabel();
 #ifdef FSN_PROFILER_USE_TBB_TIMER
 		auto doneTime = tbb::tick_count::now() - m_Start;
 		Profiling::getSingleton().AddTime(m_Label, doneTime.seconds());

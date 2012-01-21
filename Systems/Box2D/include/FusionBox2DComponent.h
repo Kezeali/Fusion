@@ -400,6 +400,8 @@ namespace FusionEngine
 
 		Box2DBody* m_Body;
 
+		std::weak_ptr<Box2DWorld> m_Owner;
+
 		boost::signals2::scoped_connection m_BodyDestructionConnection;
 	};
 

@@ -1,0 +1,124 @@
+<rml>
+	<head>
+		<title>File</title>
+		<link type="text/template" href="fusion_window.rml" />
+		<style>
+			body
+			{
+				width: 640px;
+				height: 320px;
+			}
+
+			div#title_bar div#icon
+			{
+				display: none;
+			}
+
+			div#submit_close_button
+			{
+				display: inline;
+			}
+
+			div#content
+			{
+				text-align: left;
+				overflow: none;
+			}
+			
+			div.folder_icon
+			{
+				width: 12px;
+				height: 12px;
+				icon-decorator: image;
+				icon-image: present.png;
+			}
+			
+			div.file_icon,
+			div.link_icon
+			{
+				width: 12px;
+				height: 12px;
+				icon-decorator: image;
+				icon-image: high_scores_defender.png;
+			}
+			
+			button.parent_folder
+			{
+				padding: 2px 14px 5px;
+				width: 40px;
+				height: 26px;
+				font-size: 13;
+				display: inline;
+			}
+			
+			datagrid#file_list
+			{
+				display: block;
+				height: 80%;
+			}
+			form#file_form
+			{
+				display: block;
+				width: 100%;
+				height: auto;
+				
+				position: absolute;
+				bottom: 2px;
+			}
+			input.text#text_filename
+			{
+				display: inline;
+				width: 60%;
+			}
+			input.text#text_path,
+			input.text#text_relativepath
+			{
+				display: none;
+			}
+			select#text_type
+			{
+				display: inline;
+				width: 20%;
+			}
+			div#dialog_submit_buttons
+			{
+				width: auto;
+				height: auto;
+				display: block;
+			}
+			input.submit
+			{
+				right: 0px;
+				min-width: 80px;
+				max-width: 200px;
+				padding: 2px 14px 5px;
+				width: auto;
+				height: 27px;
+				font-size: 13;
+				display: inline;
+			}
+		</style>
+		<script src="file_dialog.as"/>
+	</head>
+	<body template="window" onload="%this:OnWindowLoad(event);">
+		<button class="parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
+		<datagrid selectable id="file_list" source="filesystem.#write_dir" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
+			<col fields="type" formatter="filesystem" width="20px"/>
+			<col fields="filename" />
+		</datagrid>
+		<form id="file_form">
+			<p>
+			File Name:<input type="text" id="text_filename" name="filename"/>
+			<input type="text" id="text_path" name="path"/>
+			<input type="text" id="text_relativepath" name="relativepath"/>
+			<select id="text_type" name="type">
+				<option value="*.txt">Text</option>
+			</select>
+			</p>
+			<div id="dialog_submit_buttons">
+				<input type="submit" id="button_ok" name="result" value="ok">Ok</input>
+				<input type="submit" id="button_cancel" name="result" value="cancel">Cancel</input>
+			</div>
+		</form>
+	</body>
+</rml>

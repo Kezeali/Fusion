@@ -61,6 +61,8 @@ namespace FusionEngine
 
 	class GUIDialog;
 
+	class DialogListener;
+
 	class WorldSaver;
 
 	class EditorOverlay;
@@ -77,6 +79,8 @@ namespace FusionEngine
 		virtual ~Editor();
 
 		std::string GetName() const { return "editor"; }
+
+		void CleanUp();
 
 		void Activate();
 		void Deactivate();
@@ -98,6 +102,9 @@ namespace FusionEngine
 		void Update(float time, float dt);
 
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
+
+		//! Move the camera so that the given entity is in view
+		void GoToEntity(const EntityPtr& entity);
 
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
@@ -146,6 +153,8 @@ namespace FusionEngine
 		std::string m_SaveName;
 
 		std::shared_ptr<GUIDialog> m_Dialog;
+		std::shared_ptr<DialogListener> m_SaveDialogListener;
+		std::shared_ptr<DialogListener> m_OpenDialogListener;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 

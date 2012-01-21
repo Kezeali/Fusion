@@ -1361,6 +1361,8 @@ namespace FusionEngine
 		auto archivePath = PHYSFS_getWriteDir() / physSavePath;
 		if (!archivePath.has_extension())
 			archivePath.replace_extension(".zip");
+		else
+			physSavePath.replace_extension();
 		auto archiveMountpoint = physSavePath.parent_path();
 		archivePath.make_preferred();
 

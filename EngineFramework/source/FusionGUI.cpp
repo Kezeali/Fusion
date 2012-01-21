@@ -46,6 +46,8 @@
 
 #include "FusionElementSelectableDataGrid.h"
 
+#include "FusionFilesystemDataSource.h"
+
 using namespace std::placeholders;
 
 namespace FusionEngine
@@ -408,7 +410,10 @@ namespace FusionEngine
 		LoadFonts("core/gui/fonts/");
 
 		ElementSelectableDataGrid::RegisterElement();
-		m_DataFormatters.push_back(std::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
+		m_DataFormatters.push_back(std::make_shared<ExpandButtonFormatter>());
+
+		m_DataSources.push_back(std::make_shared<FilesystemDataSource>());
+		m_DataFormatters.push_back(std::make_shared<FilesystemDataFormatter>());
 
 		CL_GraphicContext gc = m_Display.get_gc();
 		CL_InputContext ic = m_Display.get_ic();
@@ -530,10 +535,11 @@ namespace FusionEngine
 		return m_ConsoleDocument;
 	}
 
-	void GUI::InitializeDebugger()
+	void GUI::InitializeDebugger(const std::string& context)
 	{
-		if (!m_DebuggerInitialized)
-			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Contexts["screen"]->m_Context);
+		auto entry = m_Contexts.find(context);
+		if (entry != m_Contexts.end())
+			m_DebuggerInitialized = Rocket::Debugger::Initialise(entry->second->m_Context);
 	}
 
 	void GUI::ShowDebugger()
@@ -625,6 +631,24 @@ namespace FusionEngine
 			SendToConsole("Failed to register Rocket/AngelScript script classes. " + ex.m_Message);
 			return;
 		}
+
+		RegisterSingletonType<FilesystemDataSource>("FilesystemDataSource", engine);
+
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "bool isDirectory(const string &in, int row)",
+			asMETHOD(FilesystemDataSource, IsDirectory), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "string filename(const string &in, int row)",
+			asMETHOD(FilesystemDataSource, GetFilename), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "string path(const string &in, int row)",
+			asMETHOD(FilesystemDataSource, GetPath), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "string preprocessPath(const string &in)",
+			asMETHOD(FilesystemDataSource, PreproPath), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		RegisterSingletonType<GUI>("GUI", engine);
 

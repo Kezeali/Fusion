@@ -42,8 +42,8 @@ namespace FusionEngine
 {
 
 	Entity::Entity(EntityRepo* manager, PropChangedQueue *q, const ComponentPtr& transform_component)
-		: m_Name("default"),
-		m_HasDefaultName(true),
+		: m_Name(""),
+		m_HasDefaultName(false),
 		m_Id(0),
 		m_OwnerID(0),
 		m_Flags(0),

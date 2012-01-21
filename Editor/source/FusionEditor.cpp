@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -60,7 +60,9 @@
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+#include <Rocket/Controls/DataSource.h>
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Core/StreamMemory.h>
 
@@ -87,6 +89,65 @@ namespace FusionEngine
 
 	protected:
 		Rocket::Core::ElementDocument* m_Document;
+	};
+
+	class DialogListener : public Rocket::Core::EventListener
+	{
+	public:
+		DialogListener(const std::function<void (const std::map<std::string, std::string>&)>& callback)
+			: m_Callback(callback)
+		{
+		}
+
+		void Attach(const boost::intrusive_ptr<Rocket::Core::ElementDocument>& document)
+		{
+			if (m_Document)
+			{
+				m_Document->RemoveEventListener("submit", this);
+				m_Document->RemoveEventListener("close", this);
+			}
+			m_Document = document;
+			if (m_Document)
+			{
+				m_Document->AddEventListener("submit", this);
+				m_Document->AddEventListener("close", this);
+			}
+		}
+
+		void SetCallback(const std::function<void (const std::map<std::string, std::string>&)>& callback)
+		{
+			m_Callback = callback;
+		}
+
+		void ProcessEvent(Rocket::Core::Event& e)
+		{
+			if (e == "submit")
+			{
+				std::map<std::string, std::string> results;
+
+				auto params = e.GetParameters();
+				Rocket::Core::String key, value;
+				for (int pos = 0; params->Iterate(pos, key, value);)
+				{
+					results.insert(std::make_pair(key.CString(), value.CString()));
+				}
+
+				m_Callback(results);
+			}
+			else if (e == "close")
+			{
+				std::map<std::string, std::string> results;
+				results["result"] = "cancel";
+				m_Callback(results);
+			}
+
+			m_Document->Hide();
+			m_Document->GetContext()->UnloadDocument(m_Document.get());
+			m_Document.reset();
+		}
+
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_Document;
+		std::function<void (std::map<std::string, std::string>)> m_Callback;
 	};
 
 	//! Implements b2QueryCallback, returning all entities within an AABB that satisfy the passed function
@@ -205,17 +266,41 @@ namespace FusionEngine
 		void SetEntities(const std::vector<EntityPtr>& entities)
 		{
 			m_Entities = entities;
-			for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+			size_t i = 0;
+			for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it, ++i)
 			{
-				auto name = (*it)->GetName();
-				if (name.empty() && (*it)->IsSyncedEntity())
-					name = boost::lexical_cast<std::string>((*it)->GetID());
+				const auto& entity = *it;
+				std::string name = entity->GetName();
+				if (entity->IsSyncedEntity())
+					name += "ID: " + boost::lexical_cast<std::string>(entity->GetID());
+				if (name.empty() && entity->IsPseudoEntity())
+					name += "Unnamed Pseudo-Entity " + boost::lexical_cast<std::string>(i);
 				m_Select->Add(name.c_str(), name.c_str());
+			}
+		}
+
+		typedef std::function<void (const EntityPtr&)> Callback_t;
+
+		void SetCallback(Callback_t callback)
+		{
+			m_Callback = callback;
+		}
+
+		void ProcessEvent(Rocket::Core::Event& ev)
+		{
+			if (ev == "change")
+			{
+				auto selection = m_Select->GetSelection();
+				if (selection >= 0 && (size_t)selection < m_Entities.size())
+				{
+					m_Callback(m_Entities[selection]);
+				}
 			}
 		}
 
 		std::vector<EntityPtr> m_Entities;
 		boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect> m_Select;
+		Callback_t m_Callback;
 	};
 
 	Editor::Editor(const std::vector<CL_String>& args)
@@ -262,6 +347,23 @@ namespace FusionEngine
 		m_EditorOverlay = std::make_shared<EditorOverlay>();
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
+		m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
+		{
+			if (params.at("result") == "ok")
+			{
+				m_SaveName = params.at("filename");
+				m_SaveMap = true;
+			}
+		});
+		m_OpenDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
+		{
+			if (params.at("result") == "ok")
+			{
+				m_SaveName = params.at("filename");
+				m_LoadMap = true;
+			}
+		});
+
 		//m_InspectorTypes.insert(std::make_pair(ITransform::GetTypeName(), []() { return std::make_shared<Inspectors::TransformInspector>(); }));
 		{
 			auto tag = "inspector_" + ITransform::GetTypeName();
@@ -286,6 +388,13 @@ namespace FusionEngine
 	Editor::~Editor()
 	{
 		Console::getSingleton().UnbindCommand("le");
+	}
+
+	void Editor::CleanUp()
+	{
+		// These need to be cleaned up before the GUI context is destroyed
+		m_SaveDialogListener.reset();
+		m_OpenDialogListener.reset();
 	}
 
 	void Editor::Activate()
@@ -336,6 +445,7 @@ namespace FusionEngine
 		m_AngelScriptWorld = asw;
 
 		ScriptManager::getSingleton().RegisterGlobalObject("Editor editor", this);
+		ScriptManager::getSingleton().RegisterGlobalObject("FilesystemDataSource filesystem_datasource", Rocket::Controls::DataSource::GetDataSource("filesystem"));
 		if (m_Active)
 			BuildCreateEntityScript();
 	}
@@ -429,14 +539,12 @@ namespace FusionEngine
 		if (m_SaveMap)
 		{
 			m_SaveMap = false;
-			m_SaveName = "save";
 			Save();
 		}
 
 		if (m_LoadMap)
 		{
 			m_LoadMap = false;
-			m_SaveName = "save";
 			Load();
 		}
 	}
@@ -446,31 +554,62 @@ namespace FusionEngine
 		return std::vector<std::shared_ptr<RendererExtension>>();
 	}
 
+	void Editor::GoToEntity(const EntityPtr& entity)
+	{
+		const auto entityPosition = entity->GetPosition();
+		/*CL_Rectf area;
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
+		area.left = ToSimUnits(area.left);
+		area.top = ToSimUnits(area.top);
+		area.right = ToSimUnits(area.right);
+		area.bottom = ToSimUnits(area.bottom);*/
+		m_EditCam->SetSimPosition(entityPosition);
+	}
+
 	void Editor::ShowSaveDialog()
 	{
-		//auto document = m_GUIContext->LoadDocument("core/gui/SaveDialog");
-		//document->RemoveReference();
-		//m_Dialog = std::make_shared<SaveDialog>(m_SaveName);
+		auto document = m_GUIContext->LoadDocument("core/gui/file_dialog.rml");
+
+		Rocket::Core::String title("Save Map");
+		document->SetTitle(title);
+		if (auto okButton = document->GetElementById("button_ok"))
+			okButton->SetInnerRML("Save");
+		if (auto fileList = document->GetElementById("file_list"))
+			fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+
+		m_SaveDialogListener->Attach(document);
+		document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+		document->RemoveReference();
 	}
 
 	void Editor::ShowLoadDialog()
 	{
+		auto document = m_GUIContext->LoadDocument("core/gui/file_dialog.rml");
+
+		Rocket::Core::String title("Open Map");
+		document->SetTitle(title);
+		if (auto okButton = document->GetElementById("button_ok"))
+			okButton->SetInnerRML("Open");
+		if (auto fileList = document->GetElementById("file_list"))
+			fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+
+		m_OpenDialogListener->Attach(document);
+		document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+		document->RemoveReference();
 	}
 
 	void Editor::Save()
 	{
-		if (m_SaveName.empty())
+		if (!m_SaveName.empty())
 		{
-			ShowSaveDialog();
-		}
-
-		try
-		{
-			m_Saver->Save(m_SaveName, false);
-		}
-		catch (std::exception& e)
-		{
-			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			try
+			{
+				m_Saver->Save(m_SaveName, false);
+			}
+			catch (std::exception& e)
+			{
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			}
 		}
 	}
 
@@ -658,10 +797,13 @@ namespace FusionEngine
 			switch (ev.id)
 			{
 			case CL_KEY_S:
-				m_SaveMap = true;
+				if (ev.shift || m_SaveName.empty())
+					ShowSaveDialog();
+				else
+					m_SaveMap = true;
 				break;
 			case CL_KEY_O:
-				m_LoadMap = true;
+				ShowLoadDialog();
 				break;
 			}
 		}
@@ -1099,13 +1241,28 @@ namespace FusionEngine
 
 			void Generate()
 			{
+				// Generate title
+				std::string title;
 				if (entities.size() > 1)
-					doc->SetTitle(doc->GetTitle() + (": " + boost::lexical_cast<std::string>(entities.size()) + " entities").c_str());
+					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
 				else if (!entities.empty())
-					doc->SetTitle(doc->GetTitle() + (": " + entities.front()->GetName()).c_str());
+				{
+					auto front = entities.front();
+					if (front->GetName().empty() && front->IsPseudoEntity())
+						title = "Unnamed Pseudo-Entity";
+					else
+					{
+						title = front->GetName();
+						if (front->IsSyncedEntity())
+							title += " ID: " + boost::lexical_cast<std::string>(entities.size());
+					}
+				}
+				if (!title.empty())
+					doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
 				if (auto title = doc->GetElementById("title"))
 					title->SetInnerRML(doc->GetTitle());
 
+				// Set entities
 				entity_selector->SetEntities(entities);
 
 				for (auto it = inspectors.begin(), end = inspectors.end(); it != end; ++it)
@@ -1119,6 +1276,7 @@ namespace FusionEngine
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
 		generator.Generate();
+		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
 		
 		doc->Show();
 		doc->RemoveReference();

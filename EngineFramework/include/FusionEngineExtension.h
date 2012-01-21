@@ -59,6 +59,8 @@ namespace FusionEngine
 
 		virtual std::string GetName() const = 0;
 
+		virtual void CleanUp() = 0;
+
 		virtual void Activate() = 0;
 		virtual void Deactivate() = 0;
 

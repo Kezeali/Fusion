@@ -48,6 +48,7 @@
 namespace Rocket {
 	namespace Controls {
 		class DataFormatter;
+		class DataSource;
 	}
 }
 
@@ -188,7 +189,7 @@ namespace FusionEngine
 		//! Returns the console window document
 		Rocket::Core::ElementDocument *GetConsoleWindow() const;
 
-		void InitializeDebugger();
+		void InitializeDebugger(const std::string& context);
 
 		void ShowDebugger();
 
@@ -222,6 +223,7 @@ namespace FusionEngine
 		boost::intrusive_ptr<RocketRenderer> m_RocketRenderer;
 		boost::intrusive_ptr<RocketFileSystem> m_RocketFileSys;
 
+		std::list<std::shared_ptr<Rocket::Controls::DataSource>> m_DataSources;
 		std::list<std::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 
 		std::unique_ptr<MessageBoxMaker> m_MessageBoxMaker;

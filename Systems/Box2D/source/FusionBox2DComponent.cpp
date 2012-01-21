@@ -418,14 +418,19 @@ namespace FusionEngine
 
 	Box2DFixture::~Box2DFixture()
 	{
-		if (m_Fixture)
-			m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+		if (auto lock = m_Owner.lock())
+		{
+			if (m_Fixture)
+				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+		}
 	}
 
 	void Box2DFixture::ConstructFixture(Box2DBody* body_component)
 	{
 		FSN_ASSERT(body_component->Getb2Body());
 		FSN_ASSERT(m_Fixture == nullptr);
+
+		m_Owner = body_component->Owner;
 
 		m_Def.shape = GetShape();
 		m_Fixture = body_component->Getb2Body()->CreateFixture(&m_Def);

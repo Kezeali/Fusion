@@ -609,6 +609,7 @@ namespace FusionEngine
 					}
 				}
 
+#ifdef FSN_PROFILING_ENABLED
 				Profiling::getSingleton().AddTime("~Buffer size", 0.0);
 				Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
 				Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
@@ -617,12 +618,15 @@ namespace FusionEngine
 
 				// Record profiling data
 				m_Profiling->StoreTick();
+#endif
 
 				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 					quit = true;
 			} // while !quit
 
 			// Shutdown
+			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
+				(*it)->CleanUp();
 			propChangedQueue.clear();
 			m_CameraSynchroniser.reset();
 			m_EntityManager->Clear();

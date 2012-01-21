@@ -36,6 +36,7 @@
 
 #include "FusionAssert.h"
 
+#include <cstdint>
 #include <map>
 
 #ifdef FSN_TBB_AVAILABLE
@@ -46,6 +47,8 @@
 #include <tbb/tick_count.h>
 #endif
 #include <tbb/concurrent_queue.h>
+#include <tbb/enumerable_thread_specific.h>
+
 #else // TBB not available
 #include <boost/thread/mutex.hpp>
 #endif
@@ -69,7 +72,7 @@ namespace FusionEngine
 		~Profiling();
 
 		void AddTime(const std::string& label, double seconds);
-		void AddTime(const std::string& label, uint32_t miliseconds);
+		void AddTime(const std::string& label, std::uint32_t miliseconds);
 
 		//! Returns the accumulated time recoreded under the given label during the last tick
 		double GetTime(const std::string& label) const;
@@ -78,10 +81,35 @@ namespace FusionEngine
 
 		void StoreTick();
 
+		std::string PushThreadScopeLabel(const std::string& suffix)
+		{
+#ifdef FSN_TBB_AVAILABLE
+			bool exists;
+			auto& current = m_ScopeLabel.local(exists);
+			if (exists && !current.empty())
+				return current += (":" + suffix);
+			else
+				return current += suffix;
+#else
+			return suffix;
+#endif
+		};
+
+		void PopThreadScopeLabel()
+		{
+			auto pos = m_ScopeLabel.local().rfind(':');
+			if (pos != std::string::npos)
+				m_ScopeLabel.local().erase(pos);
+			else
+				m_ScopeLabel.local().clear();
+		}
+
 	private:
 		std::map<std::string, double> m_TimesLastTick;
 #ifdef FSN_TBB_AVAILABLE
 		tbb::concurrent_queue<std::pair<std::string, double>> m_IncomingTimes;
+
+		tbb::enumerable_thread_specific<std::string> m_ScopeLabel;
 #else
 		std::deque<std::pair<std::string, double>> m_IncomingTimes;
 		boost::mutex m_Mutex;
@@ -96,12 +124,17 @@ namespace FusionEngine
 		~Profiler();
 
 	private:
+//#ifdef FSN_TBB_AVAILABLE
+//		static tbb::enumerable_thread_specific<std::string> m_ScopeLabel;
+//#endif
+
+		std::string m_Label;
+
 #ifdef FSN_PROFILER_USE_TBB_TIMER
 		tbb::tick_count m_Start;
 #else
 		boost::timer::cpu_timer m_Timer;
 #endif
-		std::string m_Label;
 	};
 
 #ifdef FSN_PROFILING_ENABLED
