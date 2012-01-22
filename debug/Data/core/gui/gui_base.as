@@ -13,7 +13,8 @@ void HideThisWindow(Event@ ev)
 void UnloadThisWindow(Event@ ev)
 {
 	ElementDocument @doc = ev.GetCurrentElement().GetOwnerDocument();
-	doc.GetContext().UnloadDocument(doc);
+	doc.Close();
+	//doc.GetContext().UnloadDocument(doc);
 }
 
 void CloseThisWindow(Event@ ev)

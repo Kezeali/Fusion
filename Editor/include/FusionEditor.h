@@ -164,6 +164,8 @@ namespace FusionEngine
 
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
 
+		Vector2 m_CamVelocity;
+
 		bool m_ShiftSelect;
 		bool m_AltSelect;
 		CL_Rectf m_SelectionRectangle;
@@ -175,6 +177,8 @@ namespace FusionEngine
 		std::shared_ptr<EditorOverlay> m_EditorOverlay;
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
 
+		std::list<EntityPtr> m_ToDelete;
+
 		void ShowSaveDialog();
 		void ShowLoadDialog();
 
@@ -184,6 +188,8 @@ namespace FusionEngine
 		void BuildCreateEntityScript();
 
 		EntityPtr CreateEntity(const std::string& transform_type, const Vector2& pos, float angle, bool synced, bool streaming);
+		void DeleteEntity(const EntityPtr& entity);
+		void AddEntityToDelete(const EntityPtr& entity);
 
 		void OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state);
 		void OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state);

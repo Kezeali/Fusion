@@ -485,7 +485,7 @@ namespace FusionEngine { namespace Inspectors
 		}
 		catch (boost::bad_lexical_cast&)
 		{
-			InitUI();
+			ResetUIValues();
 		}
 	}
 

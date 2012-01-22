@@ -1473,7 +1473,7 @@ namespace FusionEngine
 
 			ref->SetGCFlag(true);
 
-			if (!ref->IsMarkedToDeactivate())
+			if (!ref->IsMarkedToDeactivate() && !ref->IsMarkedToRemove())
 			{
 				allMarked = false;
 				stack.clear();

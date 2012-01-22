@@ -73,7 +73,7 @@
       {
       /*font-weight: bold;*/
 
-      background-color: #3f2aab;
+      background-color: rgba(63,42,171,80);
       }
 
       menuitem:selected

@@ -69,6 +69,8 @@ namespace FusionEngine
 		BaseAngle.m_Value = 0.f;
 
 		AnimationFinished.m_Value = false;
+
+		AnimationFrame.m_Value = 0;
 	}
 
 	CLSprite::~CLSprite()
@@ -182,11 +184,17 @@ namespace FusionEngine
 
 			//if (!m_Sprite.is_finished())
 			{
+				const auto frameBefore = m_Sprite.get_current_frame();
+
 				// update animation
 				m_Sprite.update(int(elapsed * 1000));
 
 				if (m_Sprite.is_finished() != AnimationFinished.Get())
 					AnimationFinished.MarkChanged();
+
+				
+				if (frameBefore != m_Sprite.get_current_frame() || m_Sprite.get_current_frame() != AnimationFrame.Get())
+					AnimationFrame.MarkChanged();
 			}
 
 			// update AABB for the current frame / transform

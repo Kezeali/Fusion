@@ -327,21 +327,51 @@ namespace FusionEngine
 		Callback_t m_Callback;
 	};
 
-	class ElementCollapsible : public Rocket::Core::Element
+	class InspectorSection : public Rocket::Core::Element/*, public Rocket::Core::EventListener*/
 	{
 	public:
-		ElementCollapsible(const Rocket::Core::String& tag)
-			: Rocket::Core::Element(tag)
+		InspectorSection(const Rocket::Core::String& tag)
+			: Rocket::Core::Element(tag),
+			header(nullptr)
 		{}
 
 		void ProcessEvent(Rocket::Core::Event& ev)
 		{
-			if (ev == "click")
+			if (ev.GetTargetElement() == header && ev == "click")
 			{
-				if (GetFirstChild()->HasAttribute("style"))
-					GetFirstChild()->SetAttribute("style", "display: block;");
-				else
-					GetFirstChild()->SetAttribute("style", "display: none;");
+				Rocket::Core::ElementList elements;
+				GetElementsByTagName(elements, "collapsible");
+				for (auto it = elements.begin(), end = elements.end(); it != end; ++it)
+				{
+					Rocket::Core::Element* elem = *it;
+					auto currentStyle = elem->GetAttribute("style", Rocket::Core::String());
+					if (currentStyle.Find(Rocket::Core::String("block")) != Rocket::Core::String::npos)
+						elem->SetAttribute("style", "display: none;");
+					else
+						elem->SetAttribute("style", "display: block;");
+				}
+			}
+		}
+
+		Rocket::Core::Element* header;
+
+		void OnChildAdd(Element* child)
+		{
+			if (child->GetTagName() == "header")
+			{
+				/*if (header)
+					header->RemoveEventListener("click", this);*/
+				header = child;
+				//header->AddEventListener("click", this);
+			}
+		}
+
+		void OnChildRemove(Element* child)
+		{
+			if (child == header)
+			{
+				//header->RemoveEventListener("click", this);
+				header = nullptr;
 			}
 		}
 	};
@@ -434,9 +464,9 @@ namespace FusionEngine
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<EntitySelector>())->RemoveReference();
 
-			tag = "collapsible";
+			tag = "inspector_section";
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
-				new Rocket::Core::ElementInstancerGeneric<ElementCollapsible>())->RemoveReference();
+				new Rocket::Core::ElementInstancerGeneric<InspectorSection>())->RemoveReference();
 		}
 
 		m_RightClickMenu = boost::intrusive_ptr<ContextMenu>(new ContextMenu(m_GUIContext, true), false);
@@ -554,18 +584,22 @@ namespace FusionEngine
 
 		if (m_EditCam)
 		{
-			auto camPos = m_EditCam->GetPosition();
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
-				camPos.y -= 400 * dt;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
-				camPos.y += 400 * dt;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
-				camPos.x -= 400 * dt;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
-				camPos.x += 400 * dt;
+			if (!v2Equal(m_CamVelocity, Vector2(0.f, 0.f)))
+			{
+				auto camPos = m_EditCam->GetPosition();
+				auto camTrans = m_CamVelocity * dt;
+				m_EditCam->SetPosition(camPos.x + camTrans.x, camPos.y + camTrans.y);
 
-			m_EditCam->SetPosition(camPos.x, camPos.y);
+				if (m_CamVelocity.length() > 1.f)
+					m_CamVelocity *= 0.5f * dt;
+				else
+					m_CamVelocity.x = m_CamVelocity.y = 0.f;
+			}
 		}
+
+		for (auto it = m_ToDelete.begin(), end = m_ToDelete.end(); it != end; ++it)
+			DeleteEntity(*it);
+		m_ToDelete.clear();
 
 		if (m_RebuildScripts && m_AngelScriptWorld)
 		{
@@ -839,12 +873,6 @@ namespace FusionEngine
 			m_ShiftSelect = true;
 		if (ev.alt)
 			m_AltSelect = true;
-	}
-
-	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
-	{
-		if (!m_Active)
-			return;
 
 		for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
 		{
@@ -852,8 +880,29 @@ namespace FusionEngine
 				return;
 		}
 
+		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
+			m_CamVelocity.y = -400;
+		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
+			m_CamVelocity.y = 400;
+		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
+			m_CamVelocity.x = -400;
+		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
+			m_CamVelocity.x = 400;
+	}
+
+	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
+	{
+		if (!m_Active)
+			return;
+		
 		m_ShiftSelect = false;
 		m_AltSelect = false;
+
+		for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
+		{
+			if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
+				return;
+		}
 
 		// Ctrl + Keys
 		if (ev.ctrl)
@@ -893,6 +942,19 @@ namespace FusionEngine
 						return true;
 					});
 					CreatePropertiesWindow(selectedEntities);
+				}
+				break;
+			case CL_KEY_DELETE:
+				if (ev.shift)
+					ForEachSelected([this](const EntityPtr& entity)->bool { this->AddEntityToDelete(entity); return true; });
+				else
+				{
+					std::vector<EntityPtr> selectedEntities;
+					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
+						selectedEntities.push_back(entity);
+						return true;
+					});
+					//ShowDeleteDialog(selectedEntities);
 				}
 				break;
 			}
@@ -1259,6 +1321,25 @@ namespace FusionEngine
 		return entity;
 	}
 
+	void Editor::DeleteEntity(const EntityPtr& entity)
+	{
+		DeselectEntity(entity);
+
+		ClearCtxMenu(m_PropertiesMenu.get());
+		ClearCtxMenu(m_EntitySelectionMenu.get());
+
+		auto it = std::remove(m_NonStreamedEntities.begin(), m_NonStreamedEntities.end(), entity);
+		if (it != m_NonStreamedEntities.end())
+			m_NonStreamedEntities.erase(it, m_NonStreamedEntities.end());
+		
+		m_EntityManager->RemoveEntity(entity);
+	}
+
+	void Editor::AddEntityToDelete(const EntityPtr& entity)
+	{
+		m_ToDelete.push_back(entity);
+	}
+
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities)
 	{
 		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
@@ -1342,7 +1423,10 @@ namespace FusionEngine
 						// Subsection
 						auto subsection = doc->CreateElement("inspector_section");
 						// Title
-						Rocket::Core::Factory::InstanceElementText(subsection, Rocket::Core::String(name.data(), name.data() + name.length()));
+						auto header = Rocket::Core::Factory::InstanceElement(subsection, "header", "header", Rocket::Core::XMLAttributes());
+						subsection->AppendChild(header);
+						Rocket::Core::Factory::InstanceElementText(header, Rocket::Core::String(name.data(), name.data() + name.length()));
+						header->RemoveReference();
 						// This element can be collapsed to hide the inspector
 						auto p = Rocket::Core::Factory::InstanceElement(subsection, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
 

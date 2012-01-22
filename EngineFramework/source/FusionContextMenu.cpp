@@ -341,7 +341,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			if (ev.GetType() == "click")
+			if (ev.GetType() == "click" && ev.GetTargetElement()->GetOwnerDocument()->IsVisible())
 			{
 				MenuItemEvent item_ev;
 				item_ev.title = m_Title;
