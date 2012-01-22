@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -220,8 +220,7 @@ namespace FusionEngine
 		if (m_RecreateSprite && m_SpriteDef)
 		{
 			m_Sprite = m_SpriteDef->CreateSprite(gc);
-			//m_Sprite.set_alignment(origin_center);
-			//m_Sprite.set_rotation_hotspot(origin_center);
+
 			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
 			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
 			m_Sprite.set_color(m_Colour);
@@ -230,6 +229,8 @@ namespace FusionEngine
 			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
 
 			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
+
+			m_Sprite.set_frame(AnimationFrame.Get());
 
 			m_RecreateSprite = false;
 		}
@@ -312,7 +313,8 @@ namespace FusionEngine
 			GetColour(),
 			GetAlpha(),
 			GetScale(),
-			GetBaseAngle());
+			GetBaseAngle(),
+			GetAnimationFrame());
 	}
 
 	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
@@ -327,7 +329,8 @@ namespace FusionEngine
 			Colour.m_Value,
 			Alpha.m_Value,
 			Scale.m_Value,
-			BaseAngle.m_Value
+			BaseAngle.m_Value,
+			AnimationFrame.m_Value
 			);
 		if (changed[PropsIdx::ImagePath]) // file path changed
 			m_ReloadImage = true;
@@ -348,6 +351,8 @@ namespace FusionEngine
 				m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
 			if (changed[PropsIdx::BaseAngle])
 				m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+
+			m_Sprite.set_frame(AnimationFrame.Get());
 		}
 	}
 
@@ -618,6 +623,20 @@ namespace FusionEngine
 			return m_Sprite.is_finished();
 		else
 			return AnimationFinished.Get();
+	}
+
+	void CLSprite::SetAnimationFrame(int frame)
+	{
+		if (!m_Sprite.is_null())
+			return m_Sprite.set_frame(frame);
+	}
+	
+	int CLSprite::GetAnimationFrame() const
+	{
+		if (!m_Sprite.is_null())
+			return m_Sprite.get_current_frame();
+		else
+			return AnimationFrame.Get();
 	}
 
 }

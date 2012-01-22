@@ -110,7 +110,6 @@
 			<p>
 			File Name:<input type="text" id="text_filename" name="filename"/>
 			<input type="text" id="text_path" name="path"/>
-			<input type="text" id="text_relativepath" name="relativepath"/>
 			<select id="text_type" name="type">
 				<option value="*.txt">Text</option>
 			</select>

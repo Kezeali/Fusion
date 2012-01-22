@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -84,7 +84,9 @@ namespace FusionEngine
 			((FSN_GET_SET)(Scale))
 			((FSN_GET_SET)(BaseAngle))
 
-			((FSN_IS)(AnimationFinished)) )
+			((FSN_IS)(AnimationFinished))
+			
+			((FSN_GET_SET)(AnimationFrame)) )
 
 		ThreadSafeProperty<std::string> ImagePath;
 		ThreadSafeProperty<std::string> AnimationPath;
@@ -99,6 +101,8 @@ namespace FusionEngine
 		ThreadSafeProperty<float> BaseAngle;
 
 		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
+
+		ThreadSafeProperty<int> AnimationFrame;
 
 	private:
 		virtual void SetImagePath(const std::string& value) = 0;
@@ -131,6 +135,9 @@ namespace FusionEngine
 		virtual float GetBaseAngle() const = 0;
 
 		virtual bool IsAnimationFinished() const = 0;
+
+		virtual void SetAnimationFrame(int val) = 0;
+		virtual int GetAnimationFrame() const = 0;
 	};
 
 	class ICamera

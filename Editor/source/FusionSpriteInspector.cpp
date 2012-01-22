@@ -139,6 +139,12 @@ namespace FusionEngine { namespace Inspectors
 			FloatSetter_t([](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; })
 			);
+		
+		// Animation frame
+		AddTextInput("AnimationFrame",
+			IntSetter_t([](int frame, ComponentIPtr<ISprite> component) { component->AnimationFrame.Set(frame); }),
+			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AnimationFrame.Get(); })
+			);
 	}
 
 } }

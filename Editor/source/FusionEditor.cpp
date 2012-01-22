@@ -60,6 +60,8 @@
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
+#include "FusionContextMenu.h"
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Rocket/Controls/DataSource.h>
@@ -90,6 +92,27 @@ namespace FusionEngine
 	protected:
 		Rocket::Core::ElementDocument* m_Document;
 	};
+
+	inline void RemoveEqualElems(const boost::filesystem::path& base, boost::filesystem::path& subdir)
+	{
+		boost::filesystem::path path;
+		auto it = subdir.begin(), end = subdir.end();
+		for (auto bit = base.begin(), bend = base.end(); it != end && bit != end; ++it, ++bit)
+		{
+			if (*bit != *it)
+				break;
+		}
+		for (; it != end; ++it)
+			path /= *it;
+		subdir.swap(path);
+	}
+
+	inline std::string RemoveBasePath(const boost::filesystem::path& base, const std::string& subdir)
+	{
+		boost::filesystem::path subdirPath(subdir);
+		RemoveEqualElems(base, subdirPath);
+		return subdirPath.string();
+	}
 
 	class DialogListener : public Rocket::Core::EventListener
 	{
@@ -130,6 +153,7 @@ namespace FusionEngine
 				for (int pos = 0; params->Iterate(pos, key, value);)
 				{
 					results.insert(std::make_pair(key.CString(), value.CString()));
+					value.Clear();
 				}
 
 				m_Callback(results);
@@ -303,6 +327,25 @@ namespace FusionEngine
 		Callback_t m_Callback;
 	};
 
+	class ElementCollapsible : public Rocket::Core::Element
+	{
+	public:
+		ElementCollapsible(const Rocket::Core::String& tag)
+			: Rocket::Core::Element(tag)
+		{}
+
+		void ProcessEvent(Rocket::Core::Event& ev)
+		{
+			if (ev == "click")
+			{
+				if (GetFirstChild()->HasAttribute("style"))
+					GetFirstChild()->SetAttribute("style", "display: block;");
+				else
+					GetFirstChild()->SetAttribute("style", "display: none;");
+			}
+		}
+	};
+
 	Editor::Editor(const std::vector<CL_String>& args)
 		: m_Active(false),
 		m_RebuildScripts(false),
@@ -351,16 +394,24 @@ namespace FusionEngine
 		{
 			if (params.at("result") == "ok")
 			{
-				m_SaveName = params.at("filename");
-				m_SaveMap = true;
+				auto path = params.at("path");
+				if (!path.empty())
+				{
+					m_SaveName = (boost::filesystem::path(RemoveBasePath(PHYSFS_getWriteDir(), path)) / params.at("filename")).generic_string();
+					m_SaveMap = true;
+				}
 			}
 		});
 		m_OpenDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
 		{
 			if (params.at("result") == "ok")
 			{
-				m_SaveName = params.at("filename");
-				m_LoadMap = true;
+				auto path = params.at("path");
+				if (!path.empty())
+				{
+					m_SaveName = (boost::filesystem::path(RemoveBasePath(PHYSFS_getWriteDir(), path)) / params.at("filename")).generic_string();
+					m_LoadMap = true;
+				}
 			}
 		});
 
@@ -382,7 +433,17 @@ namespace FusionEngine
 			std::string tag = "entity_selector";
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<EntitySelector>())->RemoveReference();
+
+			tag = "collapsible";
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<ElementCollapsible>())->RemoveReference();
 		}
+
+		m_RightClickMenu = boost::intrusive_ptr<ContextMenu>(new ContextMenu(m_GUIContext, true), false);
+		m_PropertiesMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Properties", "properties"), false);
+		m_RightClickMenu->AddChild(m_PropertiesMenu.get());
+		m_EntitySelectionMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Select", "select"), false);
+		m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
 	}
 
 	Editor::~Editor()
@@ -392,6 +453,9 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
+		m_EntitySelectionMenu.reset();
+		m_PropertiesMenu.reset();
+		m_RightClickMenu.reset();
 		// These need to be cleaned up before the GUI context is destroyed
 		m_SaveDialogListener.reset();
 		m_OpenDialogListener.reset();
@@ -908,6 +972,13 @@ namespace FusionEngine
 			if (m_ReceivedMouseDown)
 			{
 				OnMouseUp_Selection(ev);
+
+				switch (ev.id)
+				{
+				case CL_MOUSE_RIGHT:
+					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_SelectedEntities);
+					break;
+				};
 			}
 
 			m_ReceivedMouseDown = false;
@@ -967,6 +1038,56 @@ namespace FusionEngine
 			}
 		}
 		UpdateSelectionRectangle(mousePos, false);
+	}
+
+	void ClearCtxMenu(MenuItem *menu)
+	{
+		menu->RemoveAllChildren();
+	}
+
+	void AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
+	{
+		MenuItem* item = new MenuItem(title, value);
+		item->SignalClicked.connect(on_clicked);
+		parent->AddChild(item);
+
+		item->release();
+	}
+
+	void AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
+	{
+		AddMenuItem(parent, title, "", on_clicked);
+	}
+
+	void Editor::ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities)
+	{
+		ClearCtxMenu(m_PropertiesMenu.get());
+		ClearCtxMenu(m_EntitySelectionMenu.get());
+
+		AddMenuItem(m_EntitySelectionMenu.get(),
+			"Deselect All",
+			std::bind(&Editor::DeselectAll, this));
+
+		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const auto &entity = *it;
+
+			const std::string title = entity->GetName().empty() ? std::string("Unnamed ") : entity->GetName() + "(" + entity->GetType() + ")";
+
+			// Add an item for this entity to the Properties sub-menu
+			AddMenuItem(m_PropertiesMenu.get(),
+				title, entity->GetName(),
+				[this, entity](const MenuItemEvent& e) { std::vector<EntityPtr> ents; ents.push_back(entity); CreatePropertiesWindow(ents); }
+			);
+
+			// Add an item for this entity to the Select sub-menu
+			AddMenuItem(m_EntitySelectionMenu.get(),
+				title, entity->GetName(),
+				[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
+			);
+		}
+
+		m_RightClickMenu->Show(position.x, position.y);
 	}
 
 	void Editor::TranslateScreenToWorld(float* x, float* y) const
@@ -1032,6 +1153,13 @@ namespace FusionEngine
 	{
 		m_SelectedEntities.erase(entity);
 		m_EditorOverlay->DeselectEntity(entity);
+	}
+
+	void Editor::DeselectAll()
+	{
+		auto selectedEntities = m_SelectedEntities;
+		for (auto it = selectedEntities.begin(), end = selectedEntities.end(); it != end; ++it)
+			DeselectEntity(*it);
 	}
 
 	void Editor::ForEachSelected(std::function<bool (const EntityPtr&)> fn)

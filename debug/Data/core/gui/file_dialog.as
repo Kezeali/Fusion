@@ -26,11 +26,13 @@ void OnFileSelected(Event@ event)
 	if (table == "")
 		return;
 	
+	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	
 	if (!filesystem_datasource.isDirectory(table, index))
 	{
+		// File selected - set the filename textbox
 		string name = filesystem_datasource.filename(table, index);
 		
-		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 		ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_filename")) );
 		if (element !is null)
 		{
@@ -39,9 +41,9 @@ void OnFileSelected(Event@ event)
 	}
 	else
 	{
+		// Folder selected
 		string path = filesystem_datasource.path(table, index);
 		
-		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
 		if (dataGrid !is null)
 		{
@@ -49,12 +51,13 @@ void OnFileSelected(Event@ event)
 
 			currentTable = path;
 		}
-		
-		ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
-		if (element !is null)
-		{
-			element.SetValue(currentTable);
-		}
+	}
+	
+	// Set the (hidden) path textbox
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
+	if (element !is null)
+	{
+		element.SetValue(currentTable);
 	}
 }
 
@@ -79,11 +82,12 @@ void OnRowDblClick(Event@ event)
 	if (table == "")
 		return;
 	
+	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	
 	if (filesystem_datasource.isDirectory(table, index))
 	{
 		string path = filesystem_datasource.path(table, index);
 		
-		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
 		if (dataGrid !is null)
 		{
@@ -91,6 +95,13 @@ void OnRowDblClick(Event@ event)
 
 			currentTable = path;
 		}
+	}
+	
+	// Set the (hidden) path textbox
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
+	if (element !is null)
+	{
+		element.SetValue(currentTable);
 	}
 }
 

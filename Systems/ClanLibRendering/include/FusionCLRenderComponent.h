@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -82,6 +82,7 @@ namespace FusionEngine
 			Colour,
 			Alpha,
 			Scale, BaseAngle,
+			AnimationFrame,
 			NumProps
 		}; };
 		typedef SerialisationHelper<
@@ -90,7 +91,8 @@ namespace FusionEngine
 			CL_Origin, Vector2i, CL_Origin, Vector2i, // Alignment, rotation hotspot
 			CL_Colorf, // colour
 			float, // alpha
-			Vector2, float> // scale, base-angle
+			Vector2, float, // scale, base-angle
+			int> // animation frame
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
@@ -177,6 +179,9 @@ namespace FusionEngine
 		float GetBaseAngle() const;
 
 		bool IsAnimationFinished() const;
+		
+		void SetAnimationFrame(int val);
+		int GetAnimationFrame() const;
 
 		boost::signals2::scoped_connection m_ImageLoadConnection;
 		ResourcePointer<CL_Texture> m_ImageResource;

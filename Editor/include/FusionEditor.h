@@ -59,7 +59,8 @@ namespace FusionEngine
 	class CLRenderWorld;
 	class Viewport;
 
-	class GUIDialog;
+	class ContextMenu;
+	class MenuItem;
 
 	class DialogListener;
 
@@ -152,9 +153,12 @@ namespace FusionEngine
 
 		std::string m_SaveName;
 
-		std::shared_ptr<GUIDialog> m_Dialog;
 		std::shared_ptr<DialogListener> m_SaveDialogListener;
 		std::shared_ptr<DialogListener> m_OpenDialogListener;
+
+		boost::intrusive_ptr<ContextMenu> m_RightClickMenu;
+		boost::intrusive_ptr<MenuItem> m_PropertiesMenu;
+		boost::intrusive_ptr<MenuItem> m_EntitySelectionMenu;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
@@ -190,12 +194,15 @@ namespace FusionEngine
 		void OnMouseDown_Selection(const CL_InputEvent& ev);
 		void OnMouseUp_Selection(const CL_InputEvent& ev);
 
+		void ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities);
+
 		void TranslateScreenToWorld(float* x, float* y) const;
 		Vector2 ReturnScreenToWorld(float x, float y) const;
 		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
 
 		void SelectEntity(const EntityPtr& entity);
 		void DeselectEntity(const EntityPtr& entity);
+		void DeselectAll();
 
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 

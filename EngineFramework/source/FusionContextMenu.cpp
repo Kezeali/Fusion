@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -142,6 +142,10 @@ namespace FusionEngine
 			Rocket::Core::Element *childElement = m_Document->CreateElement("menuitem");
 			m_Document->AppendChild(childElement);
 
+			Rocket::Core::Element *iconElement = Rocket::Core::Factory::InstanceElement(childElement, "icon", "icon", Rocket::Core::XMLAttributes());
+			childElement->AppendChild(iconElement);
+			iconElement->RemoveReference();
+
 			item->addedToMenu(this, childElement);
 		}
 		// Root menu:
@@ -149,6 +153,10 @@ namespace FusionEngine
 		{
 			Rocket::Core::Element *childElement = m_Document->CreateElement("menuitem");
 			m_Document->AppendChild(childElement);
+
+			Rocket::Core::Element *iconElement = Rocket::Core::Factory::InstanceElement(childElement, "icon", "icon", Rocket::Core::XMLAttributes());
+			childElement->AppendChild(iconElement);
+			iconElement->RemoveReference();
 
 			item->addedToMenu(this, childElement);
 		}
@@ -431,7 +439,8 @@ namespace FusionEngine
 		m_Element->SetProperty("clip", "auto");
 		m_Element->SetAttribute("menu_index", m_Index);
 		m_Element->SetId("contextmenuitem-" + Rocket::Core::String(m_Value.c_str(), m_Value.c_str()+m_Value.length()));
-		m_Element->SetInnerRML(m_Title.c_str());
+		Rocket::Core::Factory::InstanceElementText(m_Element, m_Title.c_str());
+		//m_Element->SetInnerRML(m_Title.c_str());
 
 		m_Element->AddEventListener("click", this);
 

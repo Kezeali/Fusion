@@ -664,7 +664,7 @@ namespace FusionEngine
 		//	asMETHOD(GUI, ShowMouse), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(
-			"GUI", "void enableDebugger()",
+			"GUI", "void enableDebugger(const string &in)",
 			asMETHOD(GUI, InitializeDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(

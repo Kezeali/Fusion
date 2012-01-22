@@ -58,6 +58,44 @@ body.window:focus div#title_bar
 	background-right-image-t: 157px 177px;
 }
 
+div.rounded#title_bar
+{
+	z-index: 1;
+
+	position: absolute;
+	top: 0px;
+	left: 0px;
+
+	width: auto;
+	height: 20px;
+	
+	text-align: left;
+
+	background-decorator: tiled-horizontal;
+	background-left-image: fusion.png 0px 0px 3px 30px;
+	background-center-image: fusion.png repeat-truncate 4px 0px 20px 30px;
+	background-right-image: fusion.png 160px 0px 163px 30px;
+}
+
+body.window:focus div.rounded#title_bar
+{
+	z-index: 1;
+
+	position: absolute;
+	top: 0px;
+	left: 0px;
+
+	width: auto;
+	height: 20px;
+
+	text-align: left;
+
+	background-decorator: tiled-horizontal;
+	background-left-image-t: 60px 90px;
+	background-center-image-t: 60px 90px;
+	background-right-image-t: 60px 90px;
+}
+
 div#title_bar div#icon
 {
 	position: absolute;

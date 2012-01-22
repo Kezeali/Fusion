@@ -1,7 +1,8 @@
 <rml>
   <head>
-    <title>Console</title>
+    <title>Context Menu</title>
     <link type="text/rcss" href="rkt.rcss"/>
+		<link type="text/rcss" href="fusion.rcss"/>
     <style>
       body
       {
@@ -11,58 +12,78 @@
       font-weight: normal;
       font-style: normal;
 
-      background-color: #bbb;
+      /*background-color: #ddd;*/
       border-width: 1px;
       border-color: #888;
+			
+			background-decorator: tiled-box;
+			background-top-left-image: fusion.png 0px 140px 1px 152px;
+			background-top-image: fusion.png repeat-truncate 2px 140px 18px 152px;
+			background-top-right-image: fusion.png 161px 140px 162px 152px;
+
+			background-left-image: fusion.png stretch 0px 153px 1px 154px;
+			background-center-image: fusion.png stretch 2px 153px 18px 154px;
+			background-right-image: fusion.png stretch 161px 153px 162px 154px;
+
+			background-bottom-left-image: fusion.png 0px 155px 1px 156px;
+			background-bottom-image: fusion.png stretch 2px 155px 18px 156px;
+			background-bottom-right-image: fusion.png 161px 155px 162px 156px;
       }
 
-      menuitem,
+      menuitem
       {
       display: inline-block;
 
       width: 128px;
-      height: 30px;
+      height: 22px;
 
-      color: white;
-      font-size: 18;
+      color: silver;
+      font-size: 15;
       text-align: center;
       tab-index: auto;
+			
+			shadow-font-effect: outline;
+      shadow-offset: 1px 1px;
+      shadow-color: black;
 
-      background-color: #aaa;
+      /*background-color: #aaa;*/
       }
 
       menuitem:submenu
       {
-      background-color: #3fab2a;
+			 /*background-color: #aaa;*/
+      }
+			
+			menuitem:submenu icon
+			{
+				display: block;
+				float: right;
+				width: 20px;
+				height: 100%;
+				icon-decorator: image;
+				icon-image: fusion.png 3px 435px 20px 452px;
+			}
+
+      menuitem:focus
+      {
+      /*font-weight: bold;*/
       }
 
-      menuitem:focus,
+      menuitem:hover
       {
-      font-weight: bold;
-
-      shadow-font-effect: shadow;
-      shadow-offset: 1px 1px;
-      shadow-color: black;
-      }
-
-      menuitem:hover,
-      {
-      font-weight: bold;
+      /*font-weight: bold;*/
 
       background-color: #3f2aab;
       }
 
-      menuitem:selected,
+      menuitem:selected
       {
       font-weight: bold;
 
-      shadow-font-effect: shadow;
-      shadow-offset: 1px 1px;
-      shadow-color: blue;
-      background-color: #3fadab;
+      background-color: #40aeaf;
       }
 
-      menuitem:active,
+      menuitem:active
       {
       }
     </style>
