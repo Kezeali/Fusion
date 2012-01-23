@@ -82,12 +82,14 @@ namespace FusionEngine { namespace Inspectors
 	{
 		AddTextInput("Image",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->ImagePath.Set(path); }),
-			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); })
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); }),
+			35
 			);
 
 		AddTextInput("Animation",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->AnimationPath.Set(path); }),
-			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->AnimationPath.Get(); })
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->AnimationPath.Get(); }),
+			35
 			);
 
 		// Alignment
@@ -99,11 +101,11 @@ namespace FusionEngine { namespace Inspectors
 			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(StringToOrigin(str)); }),
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); }));
 
-		AddTextInput("AlignmentOffset-X",
+		AddTextInput("AlignmentOffset",
 			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(x, component->AlignmentOffset.Get().y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().x; })
 			);
-		AddTextInput("AlignmentOffset-Y",
+		AddTextInput("",
 			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(component->AlignmentOffset.Get().x, y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().y; })
 			);
@@ -115,11 +117,11 @@ namespace FusionEngine { namespace Inspectors
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->RotationOrigin.Get()); })
 			);
 
-		AddTextInput("RotationOffset-X",
+		AddTextInput("RotationOffset",
 			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(x, component->RotationOffset.Get().y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().x; })
 			);
-		AddTextInput("RotationOffset-Y",
+		AddTextInput("",
 			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(component->RotationOffset.Get().x, y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().y; })
 			);
@@ -131,11 +133,11 @@ namespace FusionEngine { namespace Inspectors
 			);
 
 		// Scale
-		AddTextInput("Scale-X",
+		AddTextInput("Scale",
 			FloatSetter_t([](float x, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(x, component->Scale.Get().y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().x; })
 			);
-		AddTextInput("Scale-Y",
+		AddTextInput("",
 			FloatSetter_t([](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; })
 			);

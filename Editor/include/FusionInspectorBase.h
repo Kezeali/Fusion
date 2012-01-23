@@ -89,7 +89,7 @@ namespace FusionEngine { namespace Inspectors
 		typedef boost::variant<BoolSetter_t, IntSetter_t, FloatSetter_t, StringSetter_t> SetterCallbackVariant_t;
 		typedef boost::variant<BoolGetter_t, IntGetter_t, FloatGetter_t, StringGetter_t> GetterCallbackVariant_t;
 
-		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
+		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size = 0);
 
 		void AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
 
@@ -316,7 +316,7 @@ namespace FusionEngine { namespace Inspectors
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter)
+	void GenericInspector<ComponentT>::AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -331,8 +331,11 @@ namespace FusionEngine { namespace Inspectors
 		attributes.Set("type", "text");
 		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
 		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
-		attributes.Set("value", "0");
-		attributes.Set("size", "10");
+		attributes.Set("value", "");
+		if (size <= 0)
+			attributes.Set("size", 10);
+		else
+			attributes.Set("size", size);
 		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
 			"input",
 			"input",

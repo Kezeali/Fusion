@@ -57,6 +57,23 @@
 				margin-left: 6px;
 			}
 			
+			inspector input.text
+			{
+				max-width: 64px;
+			}
+			
+			inspector input.text:hover
+			{
+				max-width: 100%;
+				width: auto;
+			}
+			
+			inspector input.text:focus
+			{
+				max-width: 100%;
+				width: auto;
+			}
+			
 			entity_selector
 			{
 				display: block;

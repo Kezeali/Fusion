@@ -44,71 +44,111 @@ namespace FusionEngine { namespace Inspectors
 	{
 		// X
 		{
-			Rocket::Core::Factory::InstanceElementText(this, "X");
-
 			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("style", "margin-right: 7px;");
+			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
+				"prop_elem",
+				"prop_elem",
+				attributes);
+			this->AppendChild(prop_elem);
+
+			Rocket::Core::Factory::InstanceElementText(prop_elem, "X");
+
+			attributes.Clear();
 			attributes.Set("type", "text");
 			attributes.Set("id", "x_input");
 			attributes.Set("name", "x");
 			attributes.Set("value", "0");
 			attributes.Set("size", "6");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(this,
+			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
 				"input",
 				"input",
 				attributes);
 
-			addControl(this, m_XInput, text_input);
+			addControl(prop_elem, m_XInput, text_input);
+
+			prop_elem->RemoveReference();
 		}
 		// Y
 		{
-			Rocket::Core::Factory::InstanceElementText(this, "Y");
-
 			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("style", "margin-right: 7px;");
+			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
+				"prop_elem",
+				"prop_elem",
+				attributes);
+			this->AppendChild(prop_elem);
+
+			Rocket::Core::Factory::InstanceElementText(prop_elem, "Y");
+
+			attributes.Clear();
 			attributes.Set("type", "text");
 			attributes.Set("id", "y_input");
 			attributes.Set("name", "y");
 			attributes.Set("value", "0");
 			attributes.Set("size", "6");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(this,
+			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
 				"input",
 				"input",
 				attributes);
 
-			addControl(this, m_YInput, text_input);
+			addControl(prop_elem, m_YInput, text_input);
+
+			prop_elem->RemoveReference();
 		}
 		// Angle
 		{
-			Rocket::Core::Factory::InstanceElementText(this, "Angle");
-
 			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("style", "margin-right: 7px;");
+			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
+				"prop_elem",
+				"prop_elem",
+				attributes);
+			this->AppendChild(prop_elem);
+
+			Rocket::Core::Factory::InstanceElementText(prop_elem, "Angle");
+
+			attributes.Clear();
 			attributes.Set("type", "text");
 			attributes.Set("id", "angle_input");
 			attributes.Set("name", "angle");
 			attributes.Set("value", "0");
 			attributes.Set("size", "5");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(this,
+			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
 				"input",
 				"input",
 				attributes);
 
-			addControl(this, m_AngleInput, text_input);
+			addControl(prop_elem, m_AngleInput, text_input);
+
+			prop_elem->RemoveReference();
 		}
 		// Depth
 		{
-			Rocket::Core::Factory::InstanceElementText(this, "Depth");
-
 			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("style", "margin-right: 7px;");
+			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
+				"prop_elem",
+				"prop_elem",
+				attributes);
+			this->AppendChild(prop_elem);
+
+			Rocket::Core::Factory::InstanceElementText(prop_elem, "Depth");
+
+			attributes.Clear();
 			attributes.Set("type", "text");
 			attributes.Set("id", "depth_input");
 			attributes.Set("name", "depth");
 			attributes.Set("value", "0");
 			attributes.Set("size", "3");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(this,
+			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
 				"input",
 				"input",
 				attributes);
 
-			addControl(this, m_DepthInput, text_input);
+			addControl(prop_elem, m_DepthInput, text_input);
+
+			prop_elem->RemoveReference();
 		}
 	}
 

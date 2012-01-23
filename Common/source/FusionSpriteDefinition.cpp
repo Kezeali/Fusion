@@ -153,6 +153,22 @@ namespace FusionEngine
 		node["offset"] >> frame_info.offset;
 	}
 
+	inline const YAML::Node* FindValueOf(const YAML::Node& parent, const std::string& k0, const std::string& k1, const std::string& k2 = std::string(), const std::string& k3 = std::string(), const std::string& k4 = std::string())
+	{
+		if (auto node = parent.FindValue(k0))
+			return node;
+		else if (auto node = parent.FindValue(k1))
+			return node;
+		else if (auto node = parent.FindValue(k2))
+			return node;
+		else if (auto node = parent.FindValue(k3))
+			return node;
+		else if (auto node = parent.FindValue(k4))
+			return node;
+		else
+			return nullptr;
+	}
+
 	void SpriteAnimation::Load(CL_IODevice dev, const std::string& animation_name)
 	{
 		try
@@ -160,41 +176,46 @@ namespace FusionEngine
 			IO::CLStream stream(dev);
 			YAML::Parser p(stream);
 			YAML::Node doc;
-			bool got = false;
-			if (animation_name.empty())
-				got = p.GetNextDocument(doc);
-			else
+			if (p.GetNextDocument(doc))
 			{
-				while (p.GetNextDocument(doc))
+				if (doc.begin() == doc.end())
+					return;
+
+				auto currentAnimationNode = &(*doc.begin());
+				if (!animation_name.empty())
 				{
-					if (auto node = doc.FindValue("name"))
+					bool got = false;
+					auto it = doc.begin();
+					for (; it != doc.end(); ++it)
 					{
-						std::string name;
-						*node >> name;
-						if (name == animation_name)
+						if (auto node = it->FindValue("name"))
 						{
-							got = true;
-							break;
+							std::string name;
+							*node >> name;
+							if (name == animation_name)
+							{
+								currentAnimationNode = &(*it);
+								got = true;
+								break;
+							}
 						}
 					}
 				}
-			}
-			if (got)
-			{
-				if (auto node = doc.FindValue("default_delay"))
+					
+				if (!currentAnimationNode)
+					return;
+
+
+				if (auto node = FindValueOf(*currentAnimationNode, "default_delay", "default_frame_time", "default_duration"))
 					*node >> m_DefaultDelay;
-				else if (auto node = doc.FindValue("default_frame_time"))
-					*node >> m_DefaultDelay;
-				else if (auto node = doc.FindValue("default_duration"))
-					*node >> m_DefaultDelay;
-				else if (auto node = doc.FindValue("framerate"))
+				else if (auto node = currentAnimationNode->FindValue("framerate"))
 				{
 					double framerate;
 					*node >> framerate;
 					m_DefaultDelay = 1.0 / framerate;
 				}
 
-				auto& framesNode = doc["frames"];
+				auto& framesNode = (*currentAnimationNode)["frames"];
 				m_Frames.resize(framesNode.size());
 				for (unsigned i = 0; i < framesNode.size(); ++i)
 				{
@@ -207,30 +228,13 @@ namespace FusionEngine
 					}
 					else
 					{
-						if (auto node = frameNode.FindValue("rect"))
-						{
-							auto& frameRect = m_Frames.at(i);
-							*node >> frameRect;
-						}
-						else if (auto node = frameNode.FindValue("frame"))
+						if (auto node = FindValueOf(frameNode, "rect", "frame"))
 						{
 							auto& frameRect = m_Frames.at(i);
 							*node >> frameRect;
 						}
 
-						if (auto node = frameNode.FindValue("delay"))
-						{
-							double delay;
-							*node >> delay;
-							m_FrameDelays.push_back(std::make_pair(i, delay));
-						}
-						else if (auto node = frameNode.FindValue("duration"))
-						{
-							double delay;
-							*node >> delay;
-							m_FrameDelays.push_back(std::make_pair(i, delay));
-						}
-						else if (auto node = frameNode.FindValue("frame_time"))
+						if (auto node = FindValueOf(frameNode, "delay", "duration", "frame_time"))
 						{
 							double delay;
 							*node >> delay;
