@@ -3,3 +3,5 @@
 #endif
 
 #include "FusionStableHeaders.h"
+
+#include <Rocket/Core.h>

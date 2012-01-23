@@ -618,10 +618,17 @@ namespace FusionEngine
 #else
 			auto _where = findEntityInCell(cell, entity/*.get()*/);
 #endif
-			if (_where->second.active)
-				cell->EntryUnreferenced();
-			cell->objects.erase(_where);
-			AddHist(entity->GetStreamingCellIndex(), "Entry removed due to entity being destroyed");
+			if (_where != cell->objects.end())
+			{
+				if (_where->second.active)
+					cell->EntryUnreferenced();
+				cell->objects.erase(_where);
+				AddHist(entity->GetStreamingCellIndex(), "Entry removed due to entity being destroyed");
+			}
+			else
+			{
+				AddHist(entity->GetStreamingCellIndex(), "Entry being removed was missing from loaded cell");
+			}
 		}
 		
 		m_Archivist->Remove(entity->GetID());

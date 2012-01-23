@@ -42,26 +42,7 @@ namespace FusionEngine
 
 	void Renderer::CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset)
 	{
-		const CL_Rectf &proportions = viewport->GetArea();
-
-		area.left = proportions.left * m_GC.get_width();
-		area.top = proportions.top * m_GC.get_height();
-		area.right = proportions.right * m_GC.get_width();
-		area.bottom = proportions.bottom * m_GC.get_height();
-
-		if (apply_camera_offset)
-		{
-			const CameraPtr &camera = viewport->GetCamera();
-			if (!camera)
-				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
-
-			// Viewport offset is the top-left of the viewport in the game-world,
-			//  i.e. camera_offset - viewport_size * camera_origin
-			CL_Vec2f viewportOffset =
-				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, CL_Sizef((float)area.get_width(), (float)area.get_height()) );
-
-			area.translate(viewportOffset);
-		}
+		CalculateScreenArea(m_GC, area, viewport, apply_camera_offset);
 	}
 
 	void Renderer::CalculateScreenArea(const CL_GraphicContext& gc, CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset)
@@ -79,12 +60,17 @@ namespace FusionEngine
 			if (!camera)
 				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
 
+			auto camZoom = (1.f / camera->GetZoom());
+			const CL_Sizef zoomedSize(area.get_width() * camZoom, area.get_height() * camZoom);
+
 			// Viewport offset is the top-left of the viewport in the game-world,
 			//  i.e. camera_offset - viewport_size * camera_origin
 			CL_Vec2f viewportOffset =
-				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, zoomedSize);
 
-			area.translate(viewportOffset);
+			area.left = viewportOffset.x;
+			area.top = viewportOffset.y;
+			area.set_size(zoomedSize);
 		}
 	}
 
@@ -125,26 +111,29 @@ namespace FusionEngine
 		const CL_Vec2f &camPosition = camera->GetPosition();
 		const CL_Origin camOrigin = origin_center;
 
-		CL_Vec2f viewportOffset;
-		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
+		const CL_Sizef sizef(viewportArea.get_size());
+		// Get the top-left pixel of the viewport (unscaled) in relative to the origin point of the world
+		const CL_Vec2f viewportOffsetInWorld = camPosition * camera->GetZoom() - CL_Vec2f::calc_origin(camOrigin, sizef);
 
 		// Apply rotation, translation & scale
 		gc.push_modelview();
-		gc.set_translate(-viewportOffset.x + viewportArea.left, -viewportOffset.y + viewportArea.top);
+		gc.set_translate(-viewportOffsetInWorld.x + viewportArea.left, -viewportOffsetInWorld.y + viewportArea.top);
 		gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
 		if ( !fe_fequal(camera->GetZoom(), 1.f) )
 			gc.mult_scale(camera->GetZoom(), camera->GetZoom());
 
 		if (draw_area != nullptr)
 		{
-			// Get & scale the draw area
 			float drawAreaScale = 0.001f;
 			if (!fe_fzero(camera->GetZoom()))
 				drawAreaScale = 1.f / camera->GetZoom();
-			CL_Size size = viewportArea.get_size();
-			draw_area->left = viewportOffset.x;
-			draw_area->top = viewportOffset.y;
-			draw_area->set_size(CL_Sizef(size.width * drawAreaScale, size.height * drawAreaScale));
+			const CL_Sizef scaledSize(viewportArea.get_width() * drawAreaScale, viewportArea.get_height() * drawAreaScale);
+
+			const CL_Vec2f scaledViewportOffsetInWorld = camPosition - CL_Vec2f::calc_origin(camOrigin, scaledSize);
+
+			draw_area->left = scaledViewportOffsetInWorld.x;
+			draw_area->top = scaledViewportOffsetInWorld.y;
+			draw_area->set_size(scaledSize);
 		}
 
 		return gc;

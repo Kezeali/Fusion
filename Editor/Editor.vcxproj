@@ -74,6 +74,7 @@
     <ClInclude Include="include\FusionCircleShapeInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
+    <ClInclude Include="include\FusionEntityInspector.h" />
     <ClInclude Include="include\FusionInspectorBase.h" />
     <ClInclude Include="include\FusionInspectorUtils.h" />
     <ClInclude Include="include\FusionRigidBodyInspector.h" />
@@ -84,9 +85,11 @@
   <ItemGroup>
     <ClCompile Include="PrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
+    <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionInspectorBase.cpp" />
     <ClCompile Include="source\FusionSpriteInspector.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />

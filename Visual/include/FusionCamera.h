@@ -52,6 +52,8 @@ namespace FusionEngine
 		Vector2 GetSimPosition() const;
 		const CL_Vec2f &GetPosition() const;
 		float GetAngle() const;
+		// TODO: rename this GetScale (perhaps add GetZoom method that returns 1/GetScale())
+		//! Camera scale
 		float GetZoom() const;
 
 		void SetSimPosition(const Vector2& position);

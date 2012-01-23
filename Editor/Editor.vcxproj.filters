@@ -29,6 +29,9 @@
     <ClInclude Include="include\FusionCircleShapeInspector.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionEntityInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -53,6 +56,9 @@
       <Filter>Inspectors</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionSpriteInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionEntityInspector.cpp">
       <Filter>Inspectors</Filter>
     </ClCompile>
   </ItemGroup>

@@ -60,6 +60,8 @@
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
+#include "FusionEntityInspector.h"
+
 #include "FusionContextMenu.h"
 
 #include <boost/filesystem.hpp>
@@ -279,11 +281,16 @@ namespace FusionEngine
 			: Rocket::Core::Element(tag)
 		{
 			Rocket::Core::XMLAttributes attributes;
-			auto element = Rocket::Core::Factory::InstanceElement(this, "select", "select", attributes);FSN_ASSERT(element);
+			auto element = Rocket::Core::Factory::InstanceElement(this, "select", "select", attributes); FSN_ASSERT(element);
 			if (m_Select = dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(element))
 			{
 				AppendChild(m_Select.get());
 			}
+			element->RemoveReference();
+
+			element = Rocket::Core::Factory::InstanceElement(this, "button", "button", attributes); FSN_ASSERT(element);
+			AppendChild(element);
+			Rocket::Core::Factory::InstanceElementText(element, "Go");
 			element->RemoveReference();
 		}
 
@@ -312,7 +319,7 @@ namespace FusionEngine
 
 		void ProcessEvent(Rocket::Core::Event& ev)
 		{
-			if (ev == "change")
+			if (ev == "change" || (ev.GetTargetElement()->GetTagName() == "button" && ev == "click"))
 			{
 				auto selection = m_Select->GetSelection();
 				if (selection >= 0 && (size_t)selection < m_Entities.size())
@@ -464,6 +471,10 @@ namespace FusionEngine
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<EntitySelector>())->RemoveReference();
 
+			tag = "inspector_entity";
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::ElementEntityInspector>())->RemoveReference();
+
 			tag = "inspector_section";
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<InspectorSection>())->RemoveReference();
@@ -590,10 +601,14 @@ namespace FusionEngine
 				auto camTrans = m_CamVelocity * dt;
 				m_EditCam->SetPosition(camPos.x + camTrans.x, camPos.y + camTrans.y);
 
-				if (m_CamVelocity.length() > 1.f)
-					m_CamVelocity *= 0.5f * dt;
-				else
-					m_CamVelocity.x = m_CamVelocity.y = 0.f;
+				const auto kb = m_DisplayWindow.get_ic().get_keyboard();
+				if (!(kb.get_keycode(CL_KEY_LEFT) || kb.get_keycode(CL_KEY_UP) || kb.get_keycode(CL_KEY_RIGHT) || kb.get_keycode(CL_KEY_DOWN)))
+				{
+					if (m_CamVelocity.length() > 1.f)
+						m_CamVelocity *= 0.5f * dt;
+					else
+						m_CamVelocity.x = m_CamVelocity.y = 0.f;
+				}
 			}
 		}
 
@@ -918,6 +933,10 @@ namespace FusionEngine
 			case CL_KEY_O:
 				ShowLoadDialog();
 				break;
+
+			case CL_KEY_0:
+				m_EditCam->SetZoom(1.0);
+				break;
 			}
 		}
 		// Keys
@@ -976,11 +995,8 @@ namespace FusionEngine
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
 			if (caller)
 			{
-				CL_Rectf area;
-				Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, vp, true);
-
 				Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
-				pos.x += area.left; pos.y += area.top;
+				TranslateScreenToWorld(&pos.x, &pos.y);
 
 				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
 				{
@@ -1039,6 +1055,12 @@ namespace FusionEngine
 				{
 				case CL_MOUSE_RIGHT:
 					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_SelectedEntities);
+					break;
+				case CL_MOUSE_WHEEL_UP:
+					m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
+					break;
+				case CL_MOUSE_WHEEL_DOWN:
+					m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
 					break;
 				};
 			}
@@ -1156,6 +1178,9 @@ namespace FusionEngine
 	{
 		CL_Rectf area;
 		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
+
+		*x *= (1 / m_EditCam->GetZoom());
+		*y *= (1 / m_EditCam->GetZoom());
 		*x += area.left; *y += area.top;
 	}
 
@@ -1358,6 +1383,7 @@ namespace FusionEngine
 			std::map<std::string, std::pair<Inspectors::ComponentInspector*, std::vector<ComponentPtr>>> inspectors;
 
 			boost::intrusive_ptr<EntitySelector> entity_selector;
+			boost::intrusive_ptr<Inspectors::ElementEntityInspector> entity_inspector;
 
 			std::vector<EntityPtr> entities;
 
@@ -1370,11 +1396,20 @@ namespace FusionEngine
 				if (entity_selector = dynamic_cast<EntitySelector*>(element))
 				{
 					auto body = doc->GetFirstChild()->GetElementById("content");
+					Rocket::Core::Factory::InstanceElementText(body, "Go To:");
 					body->AppendChild(entity_selector.get());
 				}
 				else
 				{
 					FSN_EXCEPT(Exception, "Failed to create entity_selector element.");
+				}
+				element->RemoveReference();
+
+				element = Rocket::Core::Factory::InstanceElement(doc, "inspector_entity", "inspector", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
+				if (entity_inspector = dynamic_cast<Inspectors::ElementEntityInspector*>(element))
+				{
+					auto body = doc->GetFirstChild()->GetElementById("content");
+					body->AppendChild(entity_inspector.get());
 				}
 				element->RemoveReference();
 			}
@@ -1456,18 +1491,25 @@ namespace FusionEngine
 				// Generate title
 				std::string title;
 				if (entities.size() > 1)
+				{
 					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
+
+					entity_inspector->SetPseudoClass("unavailable", true);
+				}
 				else if (!entities.empty())
 				{
 					auto front = entities.front();
-					if (front->GetName().empty() && front->IsPseudoEntity())
-						title = "Unnamed Pseudo-Entity";
+					if (front->GetName().empty())
+						title = "Unnamed";
 					else
-					{
 						title = front->GetName();
-						if (front->IsSyncedEntity())
-							title += " ID: " + boost::lexical_cast<std::string>(entities.size());
-					}
+					if (front->IsPseudoEntity())
+						title += " Pseudo-Entity";
+					else
+						title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
+
+					entity_inspector->SetPseudoClass("unavailable", false);
+					entity_inspector->SetEntity(front);
 				}
 				if (!title.empty())
 					doc->SetTitle(doc->GetTitle() + (": " + title).c_str());

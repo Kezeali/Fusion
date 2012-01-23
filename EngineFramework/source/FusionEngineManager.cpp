@@ -546,6 +546,7 @@ namespace FusionEngine
 			float time = CL_System::get_time() * 0.001f;
 			float dt;
 			bool quit = false;
+			m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
 			while (!quit)
 			{
 				CL_KeepAlive::process();
@@ -619,9 +620,6 @@ namespace FusionEngine
 				// Record profiling data
 				m_Profiling->StoreTick();
 #endif
-
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
-					quit = true;
 			} // while !quit
 
 			// Shutdown

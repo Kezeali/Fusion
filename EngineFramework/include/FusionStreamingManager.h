@@ -57,7 +57,7 @@ namespace FusionEngine
 
 	struct CellHandleGreater
 	{
-		bool operator() (const CellHandle& l, const CellHandle& r)
+		bool operator() (const CellHandle& l, const CellHandle& r) const
 		{
 			if (l.y == r.y)
 				return l.x < r.x;

@@ -890,16 +890,19 @@ namespace FusionEngine
 						if (!getEntityLocation(*m_EntityLocationDB, loc, dataOffset, dataLength, id))
 							continue; // This entity hasn't been stored (so, why are you trying to move an active entity!?)
 
-						if (new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
+						if (operation == UpdateOperation::REMOVE || new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
 							new_loc = loc;
 
 						// Skip if nothing has changed
-						if (new_loc == loc && incommingConData.empty() && incommingOccData.empty())
+						if (operation != UpdateOperation::REMOVE && new_loc == loc && incommingConData.empty() && incommingOccData.empty())
 							continue;
-
 
 						auto inSourceData = GetCellStreamForReading(loc.x, loc.y);
 						auto outDestData = GetCellStreamForWriting(new_loc.x, new_loc.y);
+						
+						if (!inSourceData || !outDestData)
+								continue;
+
 						// If the data is being moved there are some more streams that need to be prepared:
 						std::unique_ptr<std::istream> inDestData;
 						std::unique_ptr<std::ostream> outSourceData;
@@ -908,9 +911,6 @@ namespace FusionEngine
 							inDestData = GetCellStreamForReading(new_loc.x, new_loc.y);
 							outSourceData = GetCellStreamForWriting(loc.x, loc.y);
 						}
-
-						if (!inSourceData || !outDestData)
-							continue;
 
 						auto newDataLength = dataLength;
 
@@ -1707,7 +1707,21 @@ namespace FusionEngine
 		}
 	}
 
-	std::streamsize RegionMapLoader::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
+	inline void CopyEditModePseudoEntityData(CopyBuffer_t& buffer, ICellStream& source_in, ICellStream& dest_in, OCellStream& dest_out)
+	{
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamReader dst_reader(&dest_in);
+
+		if (source_in != dest_in)
+			src_reader.ReadValue<std::streamsize>();
+		std::streamsize unsynchedDataLength = dst_reader.ReadValue<std::streamsize>();
+
+		FSN_ASSERT(unsynchedDataLength >= 0 && unsynchedDataLength < (1 << 24));
+
+		CopyData(buffer, dest_in, dest_out, unsynchedDataLength);
+	}
+
+	std::streamsize RegionMapLoader::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
 	{
 		CopyBuffer_t buffer;
 
@@ -1715,19 +1729,11 @@ namespace FusionEngine
 
 		IO::Streams::CellStreamReader src_reader(&source_in);
 		IO::Streams::CellStreamReader dst_reader(&dest_in);
-		IO::Streams::CellStreamWriter writer(&out);
+		IO::Streams::CellStreamWriter writer(&dest_out);
 
-		// Skip the un-synced entity data that is present in Edit Mode
+		// Skip the pseudo-entity data that is present in Edit Mode
 		if (m_EditMode)
-		{
-			src_reader.ReadValue<std::streamsize>();
-			std::streamsize unsynchedDataLength = dst_reader.ReadValue<std::streamsize>();
-
-			FSN_ASSERT(unsynchedDataLength >= 0);
-			std::streamsize remainingData = unsynchedDataLength;
-
-			CopyData(buffer, dest_in, out, remainingData);
-		}
+			CopyEditModePseudoEntityData(buffer, source_in, dest_in, dest_out);
 
 		size_t numEnts = dst_reader.ReadValue<size_t>();
 		if (destChanged)
@@ -1746,7 +1752,7 @@ namespace FusionEngine
 		{
 			std::vector<char> headerData((numEnts - 1) * sizeof(ObjectID));
 			dest_in.read(headerData.data(), headerData.size());
-			out.write(headerData.data(), headerData.size());
+			dest_out.write(headerData.data(), headerData.size());
 
 			// The the ID for the entity being merged in
 			writer.Write(id);
@@ -1755,7 +1761,7 @@ namespace FusionEngine
 		{
 			// Copy the existing ID list and note which objects come after the one being
 			//  updated, and thus will be displaced if the length changes
-			CopyIDList(objects_displaced_for, numEnts, id, dest_in, out);
+			CopyIDList(objects_displaced_for, numEnts, id, dest_in, dest_out);
 		}
 
 
@@ -1763,7 +1769,7 @@ namespace FusionEngine
 		{
 			auto remainingData = data_offset - (sizeof(size_t) + headerLength); // The offset is relative to the start of the cell data
 			// Copy existing cell data to the relevant entity data
-			CopyData(buffer, dest_in, out, remainingData);
+			CopyData(buffer, dest_in, dest_out, remainingData);
 		}
 		else
 		{
@@ -1772,7 +1778,7 @@ namespace FusionEngine
 			CopyData(buffer, source_in, source_out, remainingData);
 
 			// Re-write rest of the existing dest cell data (changed data will be written at the end)
-			CopyData(buffer, dest_in, out);
+			CopyData(buffer, dest_in, dest_out);
 		}
 
 		// Merge the data
@@ -1781,7 +1787,7 @@ namespace FusionEngine
 			CharCounter counter;
 			bio::filtering_ostream countingOut;
 			countingOut.push(counter);
-			countingOut.push(out, 0);
+			countingOut.push(dest_out, 0);
 			/*auto newEntityDataLength = */EntitySerialisationUtils::MergeEntityData(source_in, countingOut, mergeCon, mergeOcc);
 			countingOut.flush();
 			newEntityDataLength = counter.count();
@@ -1795,16 +1801,14 @@ namespace FusionEngine
 		else
 		{
 			// Re-write the rest of the un-changed cell data
-			CopyData(buffer, dest_in, out);
+			CopyData(buffer, dest_in, dest_out);
 		}
 
 		return newEntityDataLength;
 	}
 
-	void RegionMapLoader::MoveEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const
+	void RegionMapLoader::MoveEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out) const
 	{
-		// Not implemented yet (need to copy pseudo data like above):
-		FSN_ASSERT(!m_EditMode);
 		// Make sure the data is actually being moved!
 		FSN_ASSERT(&source_in != &dest_in);
 
@@ -1814,7 +1818,10 @@ namespace FusionEngine
 		IO::Streams::CellStreamWriter src_writer(&source_out);
 
 		IO::Streams::CellStreamReader dst_reader(&dest_in);
-		IO::Streams::CellStreamWriter dst_writer(&dest);
+		IO::Streams::CellStreamWriter dst_writer(&dest_out);
+
+		if (m_EditMode)
+			CopyEditModePseudoEntityData(buffer, source_in, dest_in, dest_out);
 
 		size_t numEntsInSource;// = src_reader.ReadValue<size_t>();
 		numEntsInSource = RemoveID(objects_displaced, id, source_in, source_out);
@@ -1837,15 +1844,15 @@ namespace FusionEngine
 		// Copy the dest's existing ID list
 		std::vector<char> headerData((numEnts - 1) * sizeof(ObjectID));
 		dest_in.read(headerData.data(), headerData.size());
-		dest.write(headerData.data(), headerData.size());
+		dest_out.write(headerData.data(), headerData.size());
 		// Write the new ID
 		dst_writer.Write(id);
 
 		// Copy the rest of the existing dest data
-		CopyData(buffer, dest_in, dest);
+		CopyData(buffer, dest_in, dest_out);
 
 		// Copy entity data from the source into the dest (note that not copying this back into source_out effectively deletes it from there)
-		CopyData(buffer, source_in, dest, data_length);
+		CopyData(buffer, source_in, dest_out, data_length);
 
 		// Copy the remaining source data back into the source
 		CopyData(buffer, source_in, source_out);
@@ -1853,13 +1860,13 @@ namespace FusionEngine
 
 	void RegionMapLoader::DeleteEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out) const
 	{
-		// Not implemented yet (need to copy pseudo data like above):
-		FSN_ASSERT(!m_EditMode);
-
 		CopyBuffer_t buffer;
 
 		IO::Streams::CellStreamReader src_reader(&source_in);
 		IO::Streams::CellStreamWriter src_writer(&source_out);
+
+		if (m_EditMode)
+			CopyEditModePseudoEntityData(buffer, source_in, source_in, source_out);
 
 		// Read the ID list from the source and figure out what entity data will be offset by deleting this data
 		auto numEnts = RemoveID(objects_displaced, id, source_in, source_out);

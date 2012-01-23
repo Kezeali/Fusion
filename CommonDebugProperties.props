@@ -8,7 +8,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
-      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
