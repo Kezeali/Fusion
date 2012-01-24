@@ -1,15 +1,17 @@
 <!-- Cursor document, used by the Ogre3D sample. -->
 <rml>
 	<head>
-		<title>Arrow</title>
+		<title>Move</title>
 		<style>
 			body
 			{
-				width: 10px;
+				width: 16px;
 				height: 16px;
+				top: -8px;
+				left: -8px;
 				
 				cursor-decorator: image;
-				cursor-image: cursor.png;
+				cursor-image: cursor-move.png;
 			}
 		</style>
 	</head>

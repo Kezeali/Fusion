@@ -258,7 +258,7 @@ namespace FusionEngine
 
 	void RegionMapLoader::Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell)
 	{
-		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
+		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store)
 		{
 			AddHist(CellCoord_t(x, y), "Enqueued Out");
 			// The last tuple param indicates whether the cell should be cleared (unloaded)
@@ -285,7 +285,8 @@ namespace FusionEngine
 #endif
 		auto& cell = _where->second;
 
-		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
+		auto state = cell->waiting.fetch_and_store(Cell::Retrieve);
+		if (state != Cell::Retrieve && (state != Cell::Ready || !cell->loaded))
 		{
 			AddHist(CellCoord_t(x, y), "Enqueued In");
 			m_ReadQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));

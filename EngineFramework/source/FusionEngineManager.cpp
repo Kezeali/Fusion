@@ -546,7 +546,7 @@ namespace FusionEngine
 			float time = CL_System::get_time() * 0.001f;
 			float dt;
 			bool quit = false;
-			m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
+			auto closeSig = m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
 			while (!quit)
 			{
 				CL_KeepAlive::process();

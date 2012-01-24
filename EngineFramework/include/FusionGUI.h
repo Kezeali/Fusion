@@ -71,8 +71,8 @@ namespace FusionEngine
 		void SetDimensions(const Vector2i& size);
 
 		//! Sets the period of time the mouse will be shown after it stops moving
-		void SetMouseShowPeriod(unsigned int period);
-		unsigned int GetMouseShowPeriod() const;
+		void SetMouseShowPeriod(float period);
+		float GetMouseShowPeriod() const;
 
 		void ShowMouse();
 
@@ -83,9 +83,9 @@ namespace FusionEngine
 
 	private:
 		//! How long after the mouse stops moving until it fades
-		unsigned int m_MouseShowPeriod;
+		float m_MouseShowPeriod;
 		//! When this reaches zero, the mouse will be hidden
-		int m_ShowMouseTimer;
+		float m_ShowMouseTimer;
 
 		static const float s_ClickPausePeriod;
 		// Stop mouse-move events from being processed while this is > 0 - this var is set to

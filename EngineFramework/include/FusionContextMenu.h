@@ -119,15 +119,14 @@ namespace FusionEngine
 		bool IsTopMenu() const;
 		//! Returns true if this is either an item that opens a sub-menu OR the top-level menu
 		bool IsMenu() const;
-
-		virtual void ProcessEvent(Rocket::Core::Event& ev);
-
-		virtual void EnumReferences(asIScriptEngine *engine);
-		virtual void ReleaseAllReferences(asIScriptEngine *engine);
+		
+		//! Set colour
+		void SetBGColour(const CL_Color& colour);
 
 		void onHideTimeout();
 
 		boost::signals2::signal<void (const MenuItemEvent&)> SignalClicked;
+		boost::signals2::signal<void (const MenuItemEvent&)> SignalChildClicked;
 		
 		//! Registers the script interface to this class (used internally - call ContextMenu#Register() instead)
 		static void Register(asIScriptEngine *engine);
@@ -152,6 +151,11 @@ namespace FusionEngine
 
 		Rocket::Core::ElementDocument *m_Document;
 		Rocket::Core::Context *m_Context;
+
+		virtual void ProcessEvent(Rocket::Core::Event& ev);
+
+		virtual void EnumReferences(asIScriptEngine *engine);
+		virtual void ReleaseAllReferences(asIScriptEngine *engine);
 
 		bool isPseudoClassSetOnAnyChild(const Rocket::Core::String &pseudo_class);
 

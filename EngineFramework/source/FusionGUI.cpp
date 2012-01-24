@@ -132,7 +132,7 @@ namespace FusionEngine
 
 	GUIContext::GUIContext()
 		: m_Context(nullptr),
-		m_MouseShowPeriod(1000),
+		m_MouseShowPeriod(4.f),
 		m_ShowMouseTimer(m_MouseShowPeriod),
 		m_ClickPause(0)
 	{
@@ -140,7 +140,7 @@ namespace FusionEngine
 
 	GUIContext::GUIContext(Rocket::Core::Context* context, CL_InputContext ic, bool enable_mouse)
 		: m_Context(context),
-		m_MouseShowPeriod(1000),
+		m_MouseShowPeriod(4.f),
 		m_ShowMouseTimer(m_MouseShowPeriod),
 		m_ClickPause(0)
 	{
@@ -158,7 +158,7 @@ namespace FusionEngine
 
 	GUIContext::GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size, bool enable_mouse)
 		: m_Context(nullptr),
-		m_MouseShowPeriod(1000),
+		m_MouseShowPeriod(4.f),
 		m_ShowMouseTimer(m_MouseShowPeriod),
 		m_ClickPause(0)
 	{
@@ -199,7 +199,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				m_ShowMouseTimer -= (int)dt;
+				m_ShowMouseTimer -= dt;
 			}
 		}
 	}
@@ -216,12 +216,12 @@ namespace FusionEngine
 			m_Context->SetDimensions(Rocket::Core::Vector2i(size.x, size.y));
 	}
 
-	void GUIContext::SetMouseShowPeriod(unsigned int period)
+	void GUIContext::SetMouseShowPeriod(float period)
 	{
 		m_MouseShowPeriod = period;
 	}
 
-	unsigned int GUIContext::GetMouseShowPeriod() const
+	float GUIContext::GetMouseShowPeriod() const
 	{
 		return m_MouseShowPeriod;
 	}
@@ -422,7 +422,10 @@ namespace FusionEngine
 		m_Contexts["world"] = std::make_shared<GUIContext>("world", ic, Vector2i(gc.get_width(), gc.get_height()), false);
 		auto& screenCtx = m_Contexts["screen"] = std::make_shared<GUIContext>("screen", ic, Vector2i(gc.get_width(), gc.get_height()));
 
-		screenCtx->m_Context->LoadMouseCursor("core/gui/cursor.rml");
+		if (auto c = screenCtx->m_Context->LoadMouseCursor("core/gui/cursor.rml"))
+			c->RemoveReference();
+		if (auto c = screenCtx->m_Context->LoadMouseCursor("core/gui/cursor-move.rml"))
+			c->RemoveReference();
 
 		m_MessageBoxMaker.reset(new MessageBoxMaker(screenCtx->m_Context));
 
@@ -733,8 +736,8 @@ namespace FusionEngine
 
 	void GUI::onResize(int x, int y)
 	{
-		m_Contexts["world"]->SetDimensions(Vector2i(x, y));
-		m_Contexts["screen"]->SetDimensions(Vector2i(x, y));
+		for (auto it = m_Contexts.begin(), end = m_Contexts.end(); it != end; ++it)
+			it->second->SetDimensions(Vector2i(x, y));
 	}
 
 }

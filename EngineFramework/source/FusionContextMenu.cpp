@@ -311,6 +311,14 @@ namespace FusionEngine
 		return m_Document != nullptr;
 	}
 
+	void MenuItem::SetBGColour(const CL_Color& colour)
+	{
+		std::stringstream colourStr;
+		colourStr << "rgba(" << colour.get_red() << "," << colour.get_green() << "," << colour.get_blue() << "," << colour.get_alpha() << ")";
+		Rocket::Core::String colourAttr(("border-color: " + colourStr.str() + "; border-width: 1px;").c_str());
+		m_Element->SetAttribute("style", colourAttr);
+	}
+
 	void MenuItem::ProcessEvent(Rocket::Core::Event& ev)
 	{
 		if (m_Document != nullptr)
@@ -339,7 +347,7 @@ namespace FusionEngine
 				m_HideTimer.start(500, false);
 			}
 		}
-		else
+		if (ev.GetTargetElement() == m_Element || ev.GetTargetElement() == m_Document)
 		{
 			if (ev.GetType() == "click" && ev.GetTargetElement()->GetOwnerDocument()->IsVisible())
 			{
@@ -347,7 +355,8 @@ namespace FusionEngine
 				item_ev.title = m_Title;
 				item_ev.value = m_Value;
 				SignalClicked(item_ev);
-				m_Parent->onChildClicked(this, item_ev);
+				if (m_Parent)
+					m_Parent->onChildClicked(this, item_ev);
 			}
 		}
 	}
@@ -462,7 +471,7 @@ namespace FusionEngine
 
 	void MenuItem::onChildClicked(MenuItem *clicked_child, const MenuItemEvent &ev)
 	{
-		SignalClicked(ev);
+		SignalChildClicked(ev);
 	}
 
 	ContextMenu::ContextMenu(Rocket::Core::Context *context, bool auto_hide)

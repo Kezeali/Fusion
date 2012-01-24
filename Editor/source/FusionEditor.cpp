@@ -237,7 +237,24 @@ namespace FusionEngine
 			m_Selected.erase(entity);
 		}
 
+		void SetOffset(const Vector2& offset)
+		{
+			m_Offset = offset;
+		}
+
+		CL_Colorf GetColour(const std::set<EntityPtr>::const_iterator& it) const
+		{
+			const auto fraction = std::distance(it, m_Selected.end()) / (float)m_Selected.size();
+			return CL_ColorHSVf(fraction * 360.f, 0.8f, 0.8f, 1.0f);
+		}
+
+		CL_Colorf GetColour(const EntityPtr& entity) const
+		{
+			return GetColour(m_Selected.find(entity));
+		}
+
 		std::set<EntityPtr> m_Selected;
+		Vector2 m_Offset;
 	};
 
 	void EditorOverlay::Draw(const CL_GraphicContext& gc_)
@@ -247,11 +264,15 @@ namespace FusionEngine
 		for (auto it = m_Selected.begin(), end = m_Selected.end(); it != end; ++it)
 		{
 			const auto& entity = *it;
+
 			auto pos = entity->GetPosition();
 			pos.x = ToRenderUnits(pos.x), pos.y = ToRenderUnits(pos.y);
+			pos += m_Offset;
+
 			CL_Rectf box(CL_Sizef(50, 50));
 			box.translate(pos.x - box.get_width() * 0.5f, pos.y - box.get_height() * 0.5f);
-			CL_Draw::box(gc, box, CL_Colorf::powderblue);
+
+			CL_Draw::box(gc, box, GetColour(it));
 		}
 	}
 
@@ -267,11 +288,14 @@ namespace FusionEngine
 
 	void SelectionDrawer::Draw(const CL_GraphicContext& gc_)
 	{
-		auto gc = gc_;
-		auto fillC = CL_Colorf::aquamarine;
-		fillC.set_alpha(0.20f);
-		CL_Draw::box(gc, m_SelectionBox, CL_Colorf::white);
-		CL_Draw::fill(gc, m_SelectionBox, fillC);
+		if (!fe_fzero(m_SelectionBox.get_width()) || !fe_fzero(m_SelectionBox.get_height()))
+		{
+			auto gc = gc_;
+			auto fillC = CL_Colorf::aquamarine;
+			fillC.set_alpha(0.20f);
+			CL_Draw::box(gc, m_SelectionBox, CL_Colorf::white);
+			CL_Draw::fill(gc, m_SelectionBox, fillC);
+		}
 	}
 
 	class EntitySelector : public Rocket::Core::Element
@@ -391,7 +415,8 @@ namespace FusionEngine
 		m_LoadMap(false),
 		m_ShiftSelect(false),
 		m_AltSelect(false),
-		m_ReceivedMouseDown(false)
+		m_ReceivedMouseDown(false),
+		m_Dragging(false)
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
 		context->SetMouseShowPeriod(500);
@@ -485,6 +510,8 @@ namespace FusionEngine
 		m_RightClickMenu->AddChild(m_PropertiesMenu.get());
 		m_EntitySelectionMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Select", "select"), false);
 		m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
+
+		m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindow(); });
 	}
 
 	Editor::~Editor()
@@ -595,6 +622,14 @@ namespace FusionEngine
 
 		if (m_EditCam)
 		{
+			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
+				m_CamVelocity.y = -400;
+			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
+				m_CamVelocity.y = 400;
+			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
+				m_CamVelocity.x = -400;
+			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
+				m_CamVelocity.x = 400;
 			if (!v2Equal(m_CamVelocity, Vector2(0.f, 0.f)))
 			{
 				auto camPos = m_EditCam->GetPosition();
@@ -602,12 +637,19 @@ namespace FusionEngine
 				m_EditCam->SetPosition(camPos.x + camTrans.x, camPos.y + camTrans.y);
 
 				const auto kb = m_DisplayWindow.get_ic().get_keyboard();
-				if (!(kb.get_keycode(CL_KEY_LEFT) || kb.get_keycode(CL_KEY_UP) || kb.get_keycode(CL_KEY_RIGHT) || kb.get_keycode(CL_KEY_DOWN)))
+				if (!(kb.get_keycode(CL_KEY_UP) || kb.get_keycode(CL_KEY_DOWN)))
 				{
 					if (m_CamVelocity.length() > 1.f)
-						m_CamVelocity *= 0.5f * dt;
+						m_CamVelocity.y *= 0.5f * dt;
 					else
-						m_CamVelocity.x = m_CamVelocity.y = 0.f;
+						m_CamVelocity.y = 0.f;
+				}
+				if (!(kb.get_keycode(CL_KEY_LEFT) || kb.get_keycode(CL_KEY_RIGHT)))
+				{
+					if (m_CamVelocity.length() > 1.f)
+						m_CamVelocity.x *= 0.5f * dt;
+					else
+						m_CamVelocity.x = 0.f;
 				}
 			}
 		}
@@ -894,15 +936,6 @@ namespace FusionEngine
 			if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
 				return;
 		}
-
-		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
-			m_CamVelocity.y = -400;
-		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
-			m_CamVelocity.y = 400;
-		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
-			m_CamVelocity.x = -400;
-		if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
-			m_CamVelocity.x = 400;
 	}
 
 	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
@@ -1039,6 +1072,13 @@ namespace FusionEngine
 
 			m_ReceivedMouseDown = true;
 
+			if (ev.ctrl)
+			{
+				m_Dragging = true;
+				GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Move;");
+				GUI::getSingleton().GetContext()->SetMouseCursor("Move");
+			}
+
 			OnMouseDown_Selection(ev);
 		}
 	}
@@ -1049,12 +1089,33 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
-				OnMouseUp_Selection(ev);
+				if (m_Dragging/*m_Tool == Tool::Move*/)
+				{
+					Vector2 mouseInWorld = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+					TranslateScreenToWorld(&mouseInWorld.x, &mouseInWorld.y);
 
+					auto delta = mouseInWorld - m_DragFrom;
+					delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
+
+					ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+
+					m_EditorOverlay->SetOffset(Vector2());
+				}
+				else
+				{
+					switch (ev.id)
+					{
+					case CL_MOUSE_LEFT:
+						OnMouseUp_Selection(ev);
+						break;
+					};
+				}
 				switch (ev.id)
 				{
 				case CL_MOUSE_RIGHT:
-					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_SelectedEntities);
+					if (m_EditorOverlay->m_Selected.empty())
+						OnMouseUp_Selection(ev);
+					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
 					break;
 				case CL_MOUSE_WHEEL_UP:
 					m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
@@ -1065,6 +1126,9 @@ namespace FusionEngine
 				};
 			}
 
+			GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");
+			GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
+			m_Dragging = false;
 			m_ReceivedMouseDown = false;
 		}
 	}
@@ -1074,7 +1138,14 @@ namespace FusionEngine
 		if (m_Active)
 		{
 			if (m_ReceivedMouseDown)
-				UpdateSelectionRectangle(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), true);
+			{
+				if (m_Dragging)
+				{
+					OnMouseMove_Move(ev);
+				}
+				else
+					UpdateSelectionRectangle(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), true);
+			}
 		}
 	}
 
@@ -1088,7 +1159,9 @@ namespace FusionEngine
 
 	void Editor::OnMouseUp_Selection(const CL_InputEvent& ev)
 	{
-		Vector2i mousePos(ReturnScreenToWorld((float)ev.mouse_pos.x, (float)ev.mouse_pos.y));
+		Vector2 mousePos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+		TranslateScreenToWorld(&mousePos.x, &mousePos.y);
+
 		// Detect click (no mouse movement between press and release)
 		if (Vector2::distance(m_DragFrom, mousePos) <= Vector2(1.f, 1.f).length())
 		{
@@ -1124,23 +1197,33 @@ namespace FusionEngine
 		UpdateSelectionRectangle(mousePos, false);
 	}
 
+	void Editor::OnMouseMove_Move(const CL_InputEvent& ev)
+	{
+		Vector2i mousePos(ev.mouse_pos.x, ev.mouse_pos.y);
+
+		Vector2 mouseInWorld = mousePos;
+		TranslateScreenToWorld(&mouseInWorld.x, &mouseInWorld.y);
+
+		m_EditorOverlay->SetOffset(mouseInWorld - m_DragFrom);
+	}
+
 	void ClearCtxMenu(MenuItem *menu)
 	{
 		menu->RemoveAllChildren();
 	}
 
-	void AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
+	boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
 	{
-		MenuItem* item = new MenuItem(title, value);
+		boost::intrusive_ptr<MenuItem> item(new MenuItem(title, value), false);
 		item->SignalClicked.connect(on_clicked);
-		parent->AddChild(item);
+		parent->AddChild(item.get());
 
-		item->release();
+		return item;
 	}
 
-	void AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
+	boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
 	{
-		AddMenuItem(parent, title, "", on_clicked);
+		return AddMenuItem(parent, title, "", on_clicked);
 	}
 
 	void Editor::ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities)
@@ -1159,20 +1242,51 @@ namespace FusionEngine
 			const std::string title = entity->GetName().empty() ? std::string("Unnamed ") : entity->GetName() + "(" + entity->GetType() + ")";
 
 			// Add an item for this entity to the Properties sub-menu
-			AddMenuItem(m_PropertiesMenu.get(),
+			auto item = AddMenuItem(m_PropertiesMenu.get(),
 				title, entity->GetName(),
 				[this, entity](const MenuItemEvent& e) { std::vector<EntityPtr> ents; ents.push_back(entity); CreatePropertiesWindow(ents); }
 			);
+			item->SetBGColour(m_EditorOverlay->GetColour(entity));
 
 			// Add an item for this entity to the Select sub-menu
-			AddMenuItem(m_EntitySelectionMenu.get(),
+			item = AddMenuItem(m_EntitySelectionMenu.get(),
 				title, entity->GetName(),
 				[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
 			);
+			item->SetBGColour(m_EditorOverlay->GetColour(entity));
 		}
 
 		m_RightClickMenu->Show(position.x, position.y);
 	}
+
+	//void Editor::ShowContextMenu(const Vector2i& position)
+	//{
+	//	ClearCtxMenu(m_PropertiesMenu.get());
+	//	ClearCtxMenu(m_EntitySelectionMenu.get());
+
+	//	AddMenuItem(m_EntitySelectionMenu.get(),
+	//		"Deselect All",
+	//		std::bind(&Editor::DeselectAll, this));
+
+	//	ForEachSelectedWithColours([this](const EntityPtr& entity, const CL_Colorf& colour)->bool
+	//	{
+	//		const std::string title = entity->GetName().empty() ? std::string("Unnamed ") : entity->GetName() + "(" + entity->GetType() + ")";
+
+	//		// Add an item for this entity to the Properties sub-menu
+	//		AddMenuItem(this->m_PropertiesMenu.get(),
+	//			title, entity->GetName(),
+	//			[this, entity](const MenuItemEvent& e) { std::vector<EntityPtr> ents; ents.push_back(entity); CreatePropertiesWindow(ents); }
+	//		);
+
+	//		// Add an item for this entity to the Select sub-menu
+	//		AddMenuItem(m_EntitySelectionMenu.get(),
+	//			title, entity->GetName(),
+	//			[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
+	//		);
+	//	});
+
+	//	m_RightClickMenu->Show(position.x, position.y);
+	//}
 
 	void Editor::TranslateScreenToWorld(float* x, float* y) const
 	{
@@ -1254,6 +1368,15 @@ namespace FusionEngine
 		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
 		{
 			if (!fn(*it))
+				break;
+		}
+	}
+
+	void Editor::ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn)
+	{
+		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
+		{
+			if (!fn(*it, m_EditorOverlay->GetColour(it)))
 				break;
 		}
 	}
@@ -1363,6 +1486,13 @@ namespace FusionEngine
 	void Editor::AddEntityToDelete(const EntityPtr& entity)
 	{
 		m_ToDelete.push_back(entity);
+	}
+
+	void Editor::CreatePropertiesWindow()
+	{
+		std::vector<EntityPtr> entities;
+		ForEachSelected([&](const EntityPtr& entity)->bool { entities.push_back(entity); return true; });
+		CreatePropertiesWindow(entities);
 	}
 
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities)

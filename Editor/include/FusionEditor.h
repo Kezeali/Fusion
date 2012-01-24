@@ -173,6 +173,7 @@ namespace FusionEngine
 
 		Vector2 m_DragFrom;
 		bool m_ReceivedMouseDown;
+		bool m_Dragging;
 
 		std::shared_ptr<EditorOverlay> m_EditorOverlay;
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
@@ -200,6 +201,8 @@ namespace FusionEngine
 		void OnMouseDown_Selection(const CL_InputEvent& ev);
 		void OnMouseUp_Selection(const CL_InputEvent& ev);
 
+		void OnMouseMove_Move(const CL_InputEvent& ev);
+
 		void ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities);
 
 		void TranslateScreenToWorld(float* x, float* y) const;
@@ -212,9 +215,12 @@ namespace FusionEngine
 
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 
+		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
+
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
 
 		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities);
+		void CreatePropertiesWindow();
 
 		void RegisterScriptType(asIScriptEngine* engine);
 
