@@ -169,6 +169,7 @@ namespace FusionEngine { namespace Inspectors
 			auto entry = byButtonCode.find(code);
 			if (entry != byButtonCode.end())
 			{
+				m_Inspectors.erase(entry->inspector);
 				byButtonCode.erase(entry);
 				return true;
 			}
@@ -179,6 +180,9 @@ namespace FusionEngine { namespace Inspectors
 		void RemoveEntries(const ComponentPtr& component)
 		{
 			auto& byComponent = m_Subsections.get<tags::component>();
+			auto range = byComponent.equal_range(component);
+			for (; range.first != range.second; ++range.first)
+				m_Inspectors.erase(range.first->inspector);
 			byComponent.erase(component);
 		}
 
@@ -291,7 +295,7 @@ namespace FusionEngine { namespace Inspectors
 
 	void ElementGroup::AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component)
 	{
-		auto subsection = AddSubsection(this, name, inspector);
+		auto subsection = AddSubsection(body, name, inspector);
 
 		int code =
 			m_Subsections->AddNewEntry(key, subsection.get(), inspector, initial_component);
@@ -303,14 +307,20 @@ namespace FusionEngine { namespace Inspectors
 		auto header = headerElems.front();
 
 		//  'Remove' button
+		Rocket::Core::XMLAttributes formAttributes;
+		formAttributes.Set("code", code);
+		auto form = Rocket::Core::Factory::InstanceElement(header, "form", "form", formAttributes);
+		header->AppendChild(form);
+
 		Rocket::Core::XMLAttributes buttonAttributes;
 		buttonAttributes.Set("type", "submit");
-		buttonAttributes.Set("code", code);
 		buttonAttributes.Set("name", "result");
 		buttonAttributes.Set("value", "remove_component");
 		auto removeButton = Rocket::Core::Factory::InstanceElement(header, "input", "input", buttonAttributes);
-		header->AppendChild(removeButton);
+		form->AppendChild(removeButton);
 		removeButton->RemoveReference();
+
+		form->RemoveReference();
 	}
 
 	void ElementGroup::AddFooter()
@@ -377,7 +387,7 @@ namespace FusionEngine { namespace Inspectors
 
 				if (code != -1)
 				{
-					const auto& components = m_Subsections->GetComponents(code);
+					auto components = m_Subsections->GetComponents(code);
 					std::set<boost::intrusive_ptr<Rocket::Core::Element>> subsectionsToRemove;
 
 					for (auto it = components.begin(), end = components.end(); it != end; ++it)
