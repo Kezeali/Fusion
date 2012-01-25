@@ -345,6 +345,18 @@ namespace FusionEngine
 		if (changed[PropsIdx::AnimationPath])
 			m_ReloadAnimation = true;
 
+		if (m_Offset != Offset.Get())
+			Offset.MarkChanged();
+
+		if (m_LocalDepth != LocalDepth.Get())
+			LocalDepth.MarkChanged();
+
+		if (m_ReloadImage)
+			ImagePath.MarkChanged();
+
+		if (m_ReloadAnimation)
+			AnimationPath.MarkChanged();
+
 		if (!m_Sprite.is_null()) // Copy the changes to the CL_Sprite, if it is loaded
 		{
 			if (changed[PropsIdx::AlignmentOrigin] || changed[PropsIdx::AlignmentOffset])
