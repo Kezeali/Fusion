@@ -343,7 +343,7 @@ namespace FusionEngine
 			m_EntityManager->RemoveEntity(entity);
 	}
 
-	ComponentPtr P2PEntityInstantiator::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
+	ComponentPtr P2PEntityInstantiator::AddComponent(const EntityPtr& entity, const std::string& type, const std::string& identifier)
 	{
 		if (entity)
 		{
@@ -356,10 +356,28 @@ namespace FusionEngine
 				//sendComponent(To::Populace(), entity, com);
 				return com;
 			}
-			FSN_EXCEPT(InvalidArgumentException, "Tried to add a component of unknown type " + type + " to an entity");
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a component of unknown type '" + type + "' to an entity");
 		}
 		// TODO: throw specific exception
 		FSN_EXCEPT(InvalidArgumentException, "Tried to add a component to a null entity");
+	}
+
+	bool P2PEntityInstantiator::RemoveComponent(const EntityPtr& entity, const ComponentPtr& component)
+	{
+		if (entity && component)
+		{
+			if (entity->HasComponent(component))
+			{
+				entity->RemoveComponent(component);
+				m_EntityManager->OnComponentRemoved(entity, component);
+				return true;
+			}
+			else
+				return false;
+			//sendComponent(To::Populace(), entity, com);
+		}
+		// TODO: throw specific exception
+		FSN_EXCEPT(InvalidArgumentException, "Tried to remove a component from a null entity");
 	}
 
 	void P2PEntityInstantiator::HandlePacket(Packet *packet)

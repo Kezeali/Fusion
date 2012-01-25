@@ -22,7 +22,7 @@
 			div#content
 			{
 				text-align: left;
-				overflow: none;
+				overflow: hidden;
 			}
 			
 			div.folder_icon

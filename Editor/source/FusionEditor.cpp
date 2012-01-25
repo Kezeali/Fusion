@@ -56,6 +56,8 @@
 #include "FusionScriptComponent.h"
 #include "FusionTransformComponent.h"
 
+#include "FusionElementInspectorGroup.h"
+
 #include "FusionTransformInspector.h"
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
@@ -317,6 +319,9 @@ namespace FusionEngine
 			Rocket::Core::Factory::InstanceElementText(element, "Go");
 			element->RemoveReference();
 		}
+		~EntitySelector()
+		{
+		}
 
 		void SetEntities(const std::vector<EntityPtr>& entities)
 		{
@@ -358,6 +363,7 @@ namespace FusionEngine
 		Callback_t m_Callback;
 	};
 
+
 	class InspectorSection : public Rocket::Core::Element/*, public Rocket::Core::EventListener*/
 	{
 	public:
@@ -375,11 +381,7 @@ namespace FusionEngine
 				for (auto it = elements.begin(), end = elements.end(); it != end; ++it)
 				{
 					Rocket::Core::Element* elem = *it;
-					auto currentStyle = elem->GetAttribute("style", Rocket::Core::String());
-					if (currentStyle.Find(Rocket::Core::String("block")) != Rocket::Core::String::npos)
-						elem->SetAttribute("style", "display: none;");
-					else
-						elem->SetAttribute("style", "display: block;");
+					elem->SetPseudoClass("collapsed", !elem->IsPseudoClassSet("collapsed"));
 				}
 			}
 		}
@@ -500,6 +502,10 @@ namespace FusionEngine
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::ElementEntityInspector>())->RemoveReference();
 
+			tag = "inspector_group";
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::ElementGroup>())->RemoveReference();
+
 			tag = "inspector_section";
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<InspectorSection>())->RemoveReference();
@@ -511,7 +517,7 @@ namespace FusionEngine
 		m_EntitySelectionMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Select", "select"), false);
 		m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
 
-		m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindow(); });
+		m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindowForSelected(); });
 	}
 
 	Editor::~Editor()
@@ -1239,7 +1245,8 @@ namespace FusionEngine
 		{
 			const auto &entity = *it;
 
-			const std::string title = entity->GetName().empty() ? std::string("Unnamed ") : entity->GetName() + "(" + entity->GetType() + ")";
+			const std::string title = (entity->GetName().empty() ? std::string("Unnamed") : entity->GetName()) +
+				(entity->IsSyncedEntity() ? " (" +  boost::lexical_cast<std::string>(entity->GetID()) + ")" : "");
 
 			// Add an item for this entity to the Properties sub-menu
 			auto item = AddMenuItem(m_PropertiesMenu.get(),
@@ -1488,11 +1495,113 @@ namespace FusionEngine
 		m_ToDelete.push_back(entity);
 	}
 
-	void Editor::CreatePropertiesWindow()
+	class InspectorGenerator
 	{
+	public:
+		Rocket::Core::ElementDocument* doc;
+		Rocket::Core::Element* body;
+
+		boost::intrusive_ptr<EntitySelector> entity_selector;
+		boost::intrusive_ptr<Inspectors::ElementEntityInspector> entity_inspector;
+		boost::intrusive_ptr<Inspectors::ElementGroup> inspector_group;
+
 		std::vector<EntityPtr> entities;
-		ForEachSelected([&](const EntityPtr& entity)->bool { entities.push_back(entity); return true; });
-		CreatePropertiesWindow(entities);
+
+		InspectorGenerator(Rocket::Core::ElementDocument* doc_)
+			: doc(doc_)
+		{
+			FSN_ASSERT(doc);
+
+			body = doc->GetFirstChild()->GetElementById("content");
+			if (!body)
+			{
+				FSN_EXCEPT(Exception, (doc->GetSourceURL() + " is missing the content element").CString());
+			}
+
+			auto element = doc->CreateElement("entity_selector"); FSN_ASSERT(element);
+			if (entity_selector = dynamic_cast<EntitySelector*>(element))
+			{
+				auto body = doc->GetFirstChild()->GetElementById("content");
+				Rocket::Core::Factory::InstanceElementText(body, "Go To:");
+				body->AppendChild(entity_selector.get());
+			}
+			else
+			{
+				FSN_EXCEPT(Exception, "Failed to create entity_selector element.");
+			}
+			element->RemoveReference();
+
+			element = Rocket::Core::Factory::InstanceElement(doc, "inspector_entity", "inspector", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
+			if (entity_inspector = dynamic_cast<Inspectors::ElementEntityInspector*>(element))
+			{
+				entity_inspector->SetClass("entity", true);
+				Inspectors::ElementGroup::AddSubsection(body, "Entity", entity_inspector.get());
+			}
+			element->RemoveReference();
+
+			element = Rocket::Core::Factory::InstanceElement(doc, "inspector_group", "inspector_group", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
+			if (inspector_group = dynamic_cast<Inspectors::ElementGroup*>(element))
+			{
+				body->AppendChild(inspector_group.get());
+			}
+			else
+			{
+				FSN_EXCEPT(Exception, "Failed to create inspector_group element.");
+			}
+			element->RemoveReference();
+		}
+
+		void ProcessEntity(const EntityPtr& entity)
+		{
+			entities.push_back(entity);
+
+			inspector_group->AddEntity(entity);
+		}
+
+		void Generate()
+		{
+			// Generate title
+			std::string title;
+			if (entities.size() > 1)
+			{
+				title = boost::lexical_cast<std::string>(entities.size()) + " entities";
+
+				entity_inspector->SetPseudoClass("unavailable", true);
+			}
+			else if (!entities.empty())
+			{
+				auto front = entities.front();
+				if (front->GetName().empty())
+					title = "Unnamed";
+				else
+					title = front->GetName();
+				if (front->IsPseudoEntity())
+					title += " Pseudo-Entity";
+				else
+					title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
+
+				entity_inspector->SetPseudoClass("unavailable", false);
+				entity_inspector->SetEntity(front);
+			}
+			if (!title.empty())
+				doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
+			if (auto title = doc->GetElementById("title"))
+				title->SetInnerRML(doc->GetTitle());
+
+			inspector_group->AddFooter();
+
+			inspector_group->DoneAddingEntities();
+
+			// Set entities
+			entity_selector->SetEntities(entities);
+		}
+	};
+
+	void Editor::CreatePropertiesWindow(const EntityPtr& entity)
+	{
+		std::vector<EntityPtr> e;
+		e.push_back(entity);
+		CreatePropertiesWindow(e);
 	}
 
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities)
@@ -1505,162 +1614,46 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		class InspectorGenerator
-		{
-		public:
-			Rocket::Core::ElementDocument* doc;
-
-			std::map<std::string, std::pair<Inspectors::ComponentInspector*, std::vector<ComponentPtr>>> inspectors;
-
-			boost::intrusive_ptr<EntitySelector> entity_selector;
-			boost::intrusive_ptr<Inspectors::ElementEntityInspector> entity_inspector;
-
-			std::vector<EntityPtr> entities;
-
-			InspectorGenerator(Rocket::Core::ElementDocument* doc_)
-				: doc(doc_)
-			{
-				FSN_ASSERT(doc);
-
-				auto element = doc->CreateElement("entity_selector"); FSN_ASSERT(element);
-				if (entity_selector = dynamic_cast<EntitySelector*>(element))
-				{
-					auto body = doc->GetFirstChild()->GetElementById("content");
-					Rocket::Core::Factory::InstanceElementText(body, "Go To:");
-					body->AppendChild(entity_selector.get());
-				}
-				else
-				{
-					FSN_EXCEPT(Exception, "Failed to create entity_selector element.");
-				}
-				element->RemoveReference();
-
-				element = Rocket::Core::Factory::InstanceElement(doc, "inspector_entity", "inspector", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
-				if (entity_inspector = dynamic_cast<Inspectors::ElementEntityInspector*>(element))
-				{
-					auto body = doc->GetFirstChild()->GetElementById("content");
-					body->AppendChild(entity_inspector.get());
-				}
-				element->RemoveReference();
-			}
-
-			void ProcessEntity(const EntityPtr& entity)
-			{
-				entities.push_back(entity);
-
-				const auto& components = entity->GetComponents();
-				for (auto it = components.begin(), end = components.end(); it != end; ++it)
-					ProcessComponent(*it);
-			}
-
-			void ProcessComponent(const ComponentPtr& component)
-			{
-				const bool added = AddInspector(component, component->GetType());
-
-				if (!added) // If there wasn't a specific inspector for the given type, try adding interface inspectors
-				{
-					for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
-						AddInspector(component, *iit);
-				}
-			}
-
-			bool AddInspector(const ComponentPtr& component, const std::string& inspector_type)
-			{
-				const std::string inspector_identifier = inspector_type + component->GetIdentifier();
-				auto entry = inspectors.find(inspector_identifier);
-				if (entry == inspectors.end())
-				{
-					// New component / interface type
-					auto tag = "inspector_" + inspector_type;
-					fe_tolower(tag);
-					Rocket::Core::String rocketTag(tag.data(), tag.data() + tag.length());
-					auto element = Rocket::Core::Factory::InstanceElement(doc, rocketTag, "inspector", Rocket::Core::XMLAttributes());
-					auto body = doc->GetFirstChild()->GetElementById("content");
-					auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
-					if (inspector)
-					{
-						auto& value = inspectors[inspector_identifier];
-						value.first = inspector;
-						value.second.push_back(component);
-
-						auto name = component->GetType();
-
-						// Subsection
-						auto subsection = doc->CreateElement("inspector_section");
-						// Title
-						auto header = Rocket::Core::Factory::InstanceElement(subsection, "header", "header", Rocket::Core::XMLAttributes());
-						subsection->AppendChild(header);
-						Rocket::Core::Factory::InstanceElementText(header, Rocket::Core::String(name.data(), name.data() + name.length()));
-						header->RemoveReference();
-						// This element can be collapsed to hide the inspector
-						auto p = Rocket::Core::Factory::InstanceElement(subsection, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
-
-						p->AppendChild(inspector);
-
-						subsection->AppendChild(p);
-						p->RemoveReference();
-
-						body->AppendChild(subsection);
-						subsection->RemoveReference();
-					}
-					if (element)
-						element->RemoveReference();
-
-					return inspector != nullptr;
-				}
-				else
-				{
-					// Existing type
-					entry->second.second.push_back(component);
-					return true;
-				}
-			}
-
-			void Generate()
-			{
-				// Generate title
-				std::string title;
-				if (entities.size() > 1)
-				{
-					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
-
-					entity_inspector->SetPseudoClass("unavailable", true);
-				}
-				else if (!entities.empty())
-				{
-					auto front = entities.front();
-					if (front->GetName().empty())
-						title = "Unnamed";
-					else
-						title = front->GetName();
-					if (front->IsPseudoEntity())
-						title += " Pseudo-Entity";
-					else
-						title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
-
-					entity_inspector->SetPseudoClass("unavailable", false);
-					entity_inspector->SetEntity(front);
-				}
-				if (!title.empty())
-					doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
-				if (auto title = doc->GetElementById("title"))
-					title->SetInnerRML(doc->GetTitle());
-
-				// Set entities
-				entity_selector->SetEntities(entities);
-
-				for (auto it = inspectors.begin(), end = inspectors.end(); it != end; ++it)
-				{
-					it->second.first->SetComponents(it->second.second);
-				}
-			}
-		};
-
 		InspectorGenerator generator(doc);
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
 		generator.Generate();
 		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
+		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
+		{
+			return this->m_EntityInstantiator->AddComponent(entity, type, id);
+		});
+		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
+		{
+			this->m_EntityInstantiator->RemoveComponent(entity, component);
+		});
+		
+		doc->Show();
+		doc->RemoveReference();
+	}
+
+	void Editor::CreatePropertiesWindowForSelected()
+	{
+		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
+		//{
+		//	auto script = OpenString_PhysFS("/core/gui/gui_base.as");
+		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
+		//	doc->LoadScript(strm, "/core/gui/gui_base.as");
+		//	strm->RemoveReference();
+		//}
+
+		InspectorGenerator generator(doc);
+		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });
+		generator.Generate();
+		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
+		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
+		{
+			return this->m_EntityInstantiator->AddComponent(entity, type, id);
+		});
+		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
+		{
+			this->m_EntityInstantiator->RemoveComponent(entity, component);
+		});
 		
 		doc->Show();
 		doc->RemoveReference();

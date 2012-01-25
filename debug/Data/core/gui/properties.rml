@@ -37,6 +37,12 @@
 			
 			collapsible
 			{
+				display: block;
+				background-color: rgba(200, 180, 200, 40);
+			}
+			
+			collapsible:collapsed
+			{
 				display: none;
 				background-color: rgba(200, 180, 200, 40);
 			}
@@ -55,8 +61,8 @@
 			inspector_section.entity
 			{
 				display: block;
-				margin-top: 10px;
-				margin-left: 7px;
+				margin-top: 2px;
+				margin-left: 5px;
 				margin-right: 3px;
 				
 				border-width: 0px;
@@ -103,9 +109,28 @@
 			{
 				display: block;
 			}
+			
+			inspector_section header .remove_component
+			{
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+			}
+			
+			.footer
+			{
+				display: block;
+				width: 100%;
+				background-color: rgba(150, 150, 200, 60);
+			}
+			
+			.footer input.submit
+			{
+				width: 56px;
+				height: 24px;
+			}
 		</style>
 	</head>
 	<body template="window">
-		<!--input type="text" id="entity_type" name="typen" onchange="%this: OnEntityTypeChanged(event);"/-->
 	</body>
 </rml>

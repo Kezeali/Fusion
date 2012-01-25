@@ -67,9 +67,23 @@ namespace FusionEngine
 		//! Returns the given Entity's ID to the pool
 		virtual void RemoveInstance(EntityPtr& entity) = 0;
 
-		// TODO: move to ComponentInstantiator
-		virtual ComponentPtr AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier) = 0;
-
+		// TODO: ?move to ComponentInstantiator
+		virtual ComponentPtr AddComponent(const EntityPtr& entity, const std::string& type, const std::string& identifier) = 0;
+		virtual bool RemoveComponent(const EntityPtr& entity, const ComponentPtr& component) = 0;
+		virtual bool RemoveComponent(const EntityPtr& entity, const std::string& type, const std::string& identifier)
+		{
+			auto com = entity->GetComponent(type, identifier);
+			if (com)
+			{
+				return RemoveComponent(entity, com);
+			}
+			else
+			{
+				//FSN_EXCEPT(InvalidArgumentException,
+				//	"Tried to remove non-existant component of type '" + type + "'" + (identifier.empty() ? "" : " with id '" + identifier + "'") + " from an entity");
+				return false;
+			}
+		}
 	};
 
 }

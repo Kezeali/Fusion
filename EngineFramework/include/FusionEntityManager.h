@@ -234,6 +234,7 @@ namespace FusionEngine
 		void DropReference(uint32_t token);
 
 		void OnComponentAdded(const EntityPtr& entity, const ComponentPtr& component);
+		void OnComponentRemoved(const EntityPtr& entity, const ComponentPtr& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
 		void OnRemoteActivationEvent(const RemoteActivationEvent& ev);
@@ -263,8 +264,10 @@ namespace FusionEngine
 		bool attemptToActivateEntity(const EntityPtr &entity);
 		bool attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component);
 		void activateEntity(const EntityPtr &entity);
-
+		
 		void deactivateEntity(const EntityPtr& entity);
+		void deactivateComponent(const ComponentPtr& component);
+
 		void dropEntity(const EntityPtr& entity);
 		void removeEntity(const EntityPtr& entity);
 
@@ -319,9 +322,11 @@ namespace FusionEngine
 		std::pair<uint32_t, uint32_t> m_LoadedReferenceRange;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
+		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToRemove;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
 
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToActivate;
+		std::vector<ComponentPtr> m_ComponentsToDeactivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;
 		std::vector<EntityPtr> m_EntitiesUnreferenced;
 		std::vector<EntityPtr> m_EntitiesToDeactivate;

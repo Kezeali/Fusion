@@ -1361,8 +1361,10 @@ namespace FusionEngine
 		FSN_ASSERT_MSG(!synced_only, "Not implemented");
 
 		m_ComponentsToAdd.clear();
+		m_ComponentsToRemove.clear();
 		m_NewEntitiesToActivate.clear();
 		m_ComponentsToActivate.clear();
+		m_ComponentsToDeactivate.clear();
 		m_EntitiesToActivate.clear();
 		m_EntitiesUnreferenced.clear();
 		m_EntitiesToDeactivate.clear();
@@ -1587,6 +1589,17 @@ namespace FusionEngine
 				}
 			}
 		}
+		// Removed components
+		{
+			std::pair<EntityPtr, ComponentPtr> toDeactivate;
+			while (m_ComponentsToRemove.try_pop(toDeactivate))
+			{
+				//if (toDeactivate.first->IsStreamedIn())
+				{
+					m_ComponentsToDeactivate.push_back(toDeactivate.second);
+				}
+			}
+		}
 
 		// Process newly added entities
 		{
@@ -1676,6 +1689,14 @@ namespace FusionEngine
 				else
 					++it;
 			}
+		}
+		// Deactivate components
+		{
+			for (auto it = m_ComponentsToDeactivate.begin(), end = m_ComponentsToDeactivate.end(); it != end; ++it)
+			{
+				deactivateComponent(*it);
+			}
+			m_ComponentsToDeactivate.clear();
 		}
 	}
 
@@ -1810,29 +1831,6 @@ namespace FusionEngine
 		return false;
 	}
 	
-	//bool EntityManager::attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity)
-	//{
-	//	if (!has_begun_preparing)
-	//	{
-	//		has_begun_preparing = true;
-	//		if (!prepareEntity(entity))
-	//			return false; // Not all ready, return and try again next time this is called
-	//	}
-	//	else
-	//	{
-	//		// Check unreadyness
-	//		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
-	//		{
-	//			auto& com = *it;
-	//			if (!com->IsReady())
-	//				return false;
-	//		}
-	//	}
-	//	// Getting here means all components are ready: activate!
-	//	activateEntity(entity);
-	//	return true;
-	//}
-	
 	void EntityManager::activateEntity(const EntityPtr &entity)
 	{
 		FSN_ASSERT_FAIL("Not implemented");
@@ -1846,15 +1844,19 @@ namespace FusionEngine
 
 		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
 		{
-			auto& com = *cit;
-			if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
-			{
-				world->OnDeactivation(com);
-				com->SetReadyState(IComponent::NotReady);
-			}
-			else
-				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
+			deactivateComponent(*cit);
 		}
+	}
+
+	void EntityManager::deactivateComponent(const ComponentPtr& com)
+	{
+		if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
+		{
+			world->OnDeactivation(com);
+			com->SetReadyState(IComponent::NotReady);
+		}
+		else
+			FSN_EXCEPT(InvalidArgumentException, "Herp derp");
 	}
 
 	void EntityManager::dropEntity(const EntityPtr& entity)
@@ -1914,6 +1916,11 @@ namespace FusionEngine
 	void EntityManager::OnComponentAdded(const EntityPtr &entity, const ComponentPtr& component)
 	{
 		m_ComponentsToAdd.push(std::make_pair(entity, component));
+	}
+
+	void EntityManager::OnComponentRemoved(const EntityPtr &entity, const ComponentPtr& component)
+	{
+		m_ComponentsToRemove.push(std::make_pair(entity, component));
 	}
 
 	void EntityManager::OnActivationEvent(const ActivationEvent &ev)

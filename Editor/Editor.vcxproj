@@ -74,6 +74,7 @@
     <ClInclude Include="include\FusionCircleShapeInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
+    <ClInclude Include="include\FusionElementInspectorGroup.h" />
     <ClInclude Include="include\FusionEntityInspector.h" />
     <ClInclude Include="include\FusionInspectorBase.h" />
     <ClInclude Include="include\FusionInspectorUtils.h" />
@@ -89,6 +90,7 @@
     </ClCompile>
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
+    <ClCompile Include="source\FusionElementInspectorGroup.cpp" />
     <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionInspectorBase.cpp" />
     <ClCompile Include="source\FusionSpriteInspector.cpp" />

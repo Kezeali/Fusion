@@ -185,7 +185,8 @@ namespace FusionEngine
 		//! Adds the given component
 		void AddComponent(const ComponentPtr& component, std::string identifier = std::string());
 		//! Removes the given component
-		void RemoveComponent(const ComponentPtr& component, std::string identifier = std::string());
+		void RemoveComponent(const ComponentPtr& component);
+		bool HasComponent(const ComponentPtr& component);
 
 		void OnComponentActivated(const ComponentPtr& component);
 		

@@ -123,7 +123,8 @@ namespace FusionEngine
 		//! Returns the given Entity's ID to the pool
 		void RemoveInstance(EntityPtr& entity);
 
-		ComponentPtr AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier);
+		ComponentPtr AddComponent(const EntityPtr& entity, const std::string& type, const std::string& identifier);
+		bool RemoveComponent(const EntityPtr& entity, const ComponentPtr& component);
 
 		//! Pick up entity creation packets
 		void HandlePacket(RakNet::Packet *packet);

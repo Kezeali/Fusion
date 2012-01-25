@@ -265,14 +265,16 @@ namespace FusionEngine
 		component->SetParent(this);
 	}
 
-	void Entity::RemoveComponent(const ComponentPtr& component, std::string identifier)
+	void Entity::RemoveComponent(const ComponentPtr& component)
 	{
 		FSN_ASSERT(std::find(m_Components.begin(), m_Components.end(), component) != m_Components.end());
 
 		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
+		const std::string identifier = component->GetIdentifier();
+
 		// Remove the given component from the main list, and notify all other components
-		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; )
+		for (auto it = m_Components.begin(); it != m_Components.end(); )
 		{
 			if (*it == component)
 			{
@@ -300,6 +302,11 @@ namespace FusionEngine
 			else
 				implementors.erase(identifier);
 		}
+	}
+
+	bool Entity::HasComponent(const ComponentPtr& component)
+	{
+		return std::find(m_Components.begin(), m_Components.end(), component) != m_Components.end();
 	}
 
 	void Entity::OnComponentActivated(const ComponentPtr& component)
