@@ -543,6 +543,12 @@ namespace FusionEngine
 
 			auto gc = m_DisplayWindow.get_gc();
 
+			boost::signals2::scoped_connection rawInputConnection = m_InputManager->SignalRawInput.connect([this](const RawInput& raw)
+			{
+				if (raw.InputType == RawInput::EventType::Button && !raw.ButtonPressed && raw.Code == VK_OEM_3)
+					this->m_GUI->GetConsoleWindow()->Show();
+			});
+
 			float time = CL_System::get_time() * 0.001f;
 			float dt;
 			bool quit = false;
@@ -562,8 +568,6 @@ namespace FusionEngine
 					quit |= (*it)->HasRequestedQuit();
 					ProcessExtensionMessages(*it);
 				}
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_0))
-					m_GUI->GetConsoleWindow()->Show();
 				// Update GUI
 				m_GUI->Update(dt);
 

@@ -30,6 +30,7 @@
 #include "FusionPrerequisites.h"
 
 #include <boost/functional/hash.hpp>
+#include <boost/multi_index_container_fwd.hpp>
 #include <ClanLib/display.h>
 
 #include "FusionSingleton.h"
@@ -301,6 +302,7 @@ namespace FusionEngine
 		EventType InputType;
 
 		int Code; // VK code (for buttons)
+		std::string KeyName; // Code translated to key name
 		// Key modifiers (for lazy people who don't want to keep track of these events themselves :P)
 		bool Shift;
 		bool Control;
@@ -423,6 +425,8 @@ namespace FusionEngine
 		 */
 		boost::signals2::signal<void (const RawInput&)> SignalRawInput;
 
+		boost::signals2::connection AddKeyHandler(const std::string& key_name, std::function<void (const RawInput&)> fn);
+
 	private:
 #ifdef FSN_USE_XINPUT
 		XInputControllerList m_XInputControllers;
@@ -434,6 +438,8 @@ namespace FusionEngine
 		MousePositionList m_MicePositions;
 
 		InputDefinitionLoader *m_DefinitionLoader;
+
+		std::unordered_map<std::string, boost::signals2::signal<void (const RawInput&)>> m_KeySignals;
 
 		//! The InputHandler will not be considered active till this reaches zero.
 		int m_SuspendRequests;

@@ -276,6 +276,8 @@ namespace FusionEngine { namespace Inspectors
 				//value.second.push_back(component);
 
 				auto name = component->GetType();
+				if (!component->GetIdentifier().empty())
+					name += " - " + component->GetIdentifier();
 
 				AddSubsection(key, name, inspector, component);
 			}
@@ -400,7 +402,7 @@ namespace FusionEngine { namespace Inspectors
 					}
 					for (auto it = subsectionsToRemove.begin(), end = subsectionsToRemove.end(); it != end; ++it)
 					{
-						RemoveChild(it->get());
+						body->RemoveChild(it->get());
 					}
 				}
 			}

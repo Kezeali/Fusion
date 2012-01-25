@@ -930,6 +930,18 @@ namespace FusionEngine
 		return entity;
 	}
 
+	inline bool MouseOverUI(Rocket::Core::Context* context)
+	{
+		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
+		{
+			if (context->GetDocument(i)->IsPseudoClassSet("hover"))
+				return true;
+		}
+		if (GUI::getSingleton().GetConsoleWindow()->IsPseudoClassSet("hover"))
+			return true;
+		return false;
+	}
+
 	void Editor::OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state)
 	{
 		if (!m_Active)
@@ -940,11 +952,8 @@ namespace FusionEngine
 		if (ev.alt)
 			m_AltSelect = true;
 
-		for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
-		{
-			if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
-				return;
-		}
+		if (MouseOverUI(m_GUIContext))
+			return;
 	}
 
 	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
@@ -955,11 +964,8 @@ namespace FusionEngine
 		m_ShiftSelect = false;
 		m_AltSelect = false;
 
-		for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
-		{
-			if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
-				return;
-		}
+		if (MouseOverUI(m_GUIContext))
+			return;
 
 		// Ctrl + Keys
 		if (ev.ctrl)
@@ -1073,11 +1079,8 @@ namespace FusionEngine
 		{
 			//[process global inputs here]
 
-			for (int i = 0, num = m_GUIContext->GetNumDocuments(); i < num; ++i)
-			{
-				if (m_GUIContext->GetDocument(i)->IsPseudoClassSet("hover"))
-					return;
-			}
+			if (MouseOverUI(m_GUIContext))
+				return;
 
 			m_ReceivedMouseDown = true;
 

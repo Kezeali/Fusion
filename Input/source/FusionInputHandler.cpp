@@ -896,70 +896,79 @@ namespace FusionEngine
 
 	void InputManager::fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData dev_info)
 	{
-		RawInput rawInput;
-		rawInput.DeviceType = DeviceIDToName(dev_info.Type);
-		rawInput.DeviceIndex = dev_info.Index;
-		rawInput.DeviceName = CL_StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
+		if (!SignalRawInput.empty() || !m_KeySignals.empty())
+		{
+			RawInput rawInput;
+			rawInput.DeviceType = DeviceIDToName(dev_info.Type);
+			rawInput.DeviceIndex = dev_info.Index;
+			rawInput.DeviceName = CL_StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
 
-		rawInput.Shift = ev.shift;
-		rawInput.Control = ev.ctrl;
-		rawInput.Alt = ev.alt;
-		// TODO: capslock, numlock, scrolllock
+			rawInput.Shift = ev.shift;
+			rawInput.Control = ev.ctrl;
+			rawInput.Alt = ev.alt;
+			// TODO: capslock, numlock, scrolllock
 
-		if (ev.type == CL_InputEvent::pointer_moved)
-		{
-			rawInput.InputType = RawInput::Pointer;
-			rawInput.Code = 0;
-			
-			rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
-			//rawInput.AxisPosition = 0.0;
-			//rawInput.ButtonPressed = false;
-		}
-		else if (ev.type == CL_InputEvent::axis_moved)
-		{
-			rawInput.InputType = RawInput::Axis;
-			rawInput.Code = ev.id;
-			
-			//rawInput.PointerPosition = Vector2T<int>();
-			rawInput.AxisPosition = ev.axis_pos;
-			//rawInput.ButtonPressed = false;
-		}
-		else if (ev.type == CL_InputEvent::pressed)
-		{
-			rawInput.InputType = RawInput::Button;
-			rawInput.Code = ev.id;
-			
-			if (ev.device.get_type() == CL_InputDevice::pointer)
+			if (ev.type == CL_InputEvent::pointer_moved)
+			{
+				rawInput.InputType = RawInput::Pointer;
+				rawInput.Code = 0;
+
 				rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
-			//rawInput.AxisPosition = 0.0;
-			rawInput.ButtonPressed = true;
-		}
-		else if (ev.type == CL_InputEvent::released)
-		{
-			rawInput.InputType = RawInput::Button;
-			rawInput.Code = ev.id;
-			
-			if (ev.device.get_type() == CL_InputDevice::pointer)
-				rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
-			//rawInput.AxisPosition = 0.0;
-			rawInput.ButtonPressed = false;
-		}
-		else if (ev.type == CL_InputEvent::doubleclick)
-		{
-			rawInput.InputType = RawInput::Button;
-			rawInput.Code = ev.id;
-			
-			rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
-			//rawInput.AxisPosition = 0.0;
-			rawInput.ButtonPressed = false;
-		}
-		else
-		{
-			rawInput.InputType = RawInput::Nothing;
-			rawInput.Code = ev.id;
-		}
+				//rawInput.AxisPosition = 0.0;
+				//rawInput.ButtonPressed = false;
+			}
+			else if (ev.type == CL_InputEvent::axis_moved)
+			{
+				rawInput.InputType = RawInput::Axis;
+				rawInput.Code = ev.id;
 
-		SignalRawInput(rawInput);
+				//rawInput.PointerPosition = Vector2T<int>();
+				rawInput.AxisPosition = ev.axis_pos;
+				//rawInput.ButtonPressed = false;
+			}
+			else if (ev.type == CL_InputEvent::pressed)
+			{
+				rawInput.InputType = RawInput::Button;
+				rawInput.Code = ev.id;
+
+				if (ev.device.get_type() == CL_InputDevice::pointer)
+					rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
+				//rawInput.AxisPosition = 0.0;
+				rawInput.ButtonPressed = true;
+			}
+			else if (ev.type == CL_InputEvent::released)
+			{
+				rawInput.InputType = RawInput::Button;
+				rawInput.Code = ev.id;
+
+				if (ev.device.get_type() == CL_InputDevice::pointer)
+					rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
+				//rawInput.AxisPosition = 0.0;
+				rawInput.ButtonPressed = false;
+			}
+			else if (ev.type == CL_InputEvent::doubleclick)
+			{
+				rawInput.InputType = RawInput::Button;
+				rawInput.Code = ev.id;
+
+				rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
+				//rawInput.AxisPosition = 0.0;
+				rawInput.ButtonPressed = false;
+			}
+			else
+			{
+				rawInput.InputType = RawInput::Nothing;
+				rawInput.Code = ev.id;
+			}
+
+			rawInput.KeyName = "";
+
+			SignalRawInput(rawInput);
+
+			auto keySignalEntry = m_KeySignals.find(rawInput.KeyName);
+			if (keySignalEntry != m_KeySignals.end())
+				keySignalEntry->second(rawInput);
+		}
 	}
 
 #ifdef FSN_USE_XINPUT
@@ -1006,6 +1015,8 @@ namespace FusionEngine
 			rawInput.InputType = RawInput::Nothing;
 			rawInput.Code = ev.id;
 		}
+
+		rawInput.KeyName = "";
 
 		SignalRawInput(rawInput);
 	}
