@@ -105,6 +105,8 @@ namespace FusionEngine
 		auto _where = std::find(m_Viewports.begin(), m_Viewports.end(), viewport);
 		if (_where != m_Viewports.end())
 			m_Viewports.erase(_where);
+
+		m_Extensions.erase(viewport);
 	}
 
 	void CLRenderWorld::AddQueuedViewports()
@@ -575,8 +577,10 @@ namespace FusionEngine
 		if (m_PhysDebugDraw && m_RenderWorld->m_PhysDebugDrawEnabled && !viewports.empty())
 		{
 			FSN_PROFILE("PhysicsDebugDraw");
-			m_PhysDebugDraw->SetViewport(viewports.front());
+			//m_PhysDebugDraw->SetViewport(viewports.front());
 			m_PhysDebugDraw->SetupView();
+
+			m_Renderer->SetupDraw(viewports.front());
 
 			// Draw cell division lines
 			CL_Rectf area;
@@ -602,9 +606,12 @@ namespace FusionEngine
 					m_DebugFont2.draw_text(gc, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
 				}
 			}
-			
+
 			if (m_RenderWorld->m_PhysWorld)
 				m_RenderWorld->m_PhysWorld->DrawDebugData();
+
+			m_Renderer->PostDraw();
+
 			m_PhysDebugDraw->ResetView();
 		}
 	}

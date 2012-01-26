@@ -221,47 +221,48 @@ namespace FusionEngine
 
 	void B2DebugDraw::SetupView()
 	{
-		if (m_Viewport)
-		{
+		//if (m_Viewport)
+		//{
 			m_gc.set_program_object(cl_program_color_only);
 
-			const CameraPtr &camera = m_Viewport->GetCamera();
+			//const CameraPtr &camera = m_Viewport->GetCamera();
 
-			CL_Rect viewportArea;
-			const CL_Rectf &proportions = m_Viewport->GetArea();
-			viewportArea.left = (int)floor(proportions.left * m_gc.get_width());
-			viewportArea.top = (int)floor(proportions.top * m_gc.get_height());
-			viewportArea.right = (int)ceil(proportions.right * m_gc.get_width());
-			viewportArea.bottom = (int)ceil(proportions.bottom * m_gc.get_height());
+			//CL_Rect viewportArea;
+			//const CL_Rectf &proportions = m_Viewport->GetArea();
+			//viewportArea.left = (int)floor(proportions.left * m_gc.get_width());
+			//viewportArea.top = (int)floor(proportions.top * m_gc.get_height());
+			//viewportArea.right = (int)ceil(proportions.right * m_gc.get_width());
+			//viewportArea.bottom = (int)ceil(proportions.bottom * m_gc.get_height());
 
-			//m_gc.set_cliprect(viewportArea);
+			////m_gc.set_cliprect(viewportArea);
 
-			CL_Vec2f camPosition = camera->GetPosition();
-			CL_Origin camOrigin = origin_center;//camera->GetOrigin();
+			//CL_Vec2f camPosition = camera->GetPosition();
+			//CL_Origin camOrigin = origin_center;//camera->GetOrigin();
 
-			//camPosition.x = ToRenderUnits(camPosition.x);
-			//camPosition.y = ToRenderUnits(camPosition.y);
+			////camPosition.x = ToRenderUnits(camPosition.x);
+			////camPosition.y = ToRenderUnits(camPosition.y);
 
-			CL_Vec2f viewportOffset;
-			viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
+			//CL_Vec2f viewportOffset;
+			//viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
 
-			m_gc.push_modelview();
-			m_gc.set_translate(-viewportOffset.x, -viewportOffset.y);
-			//m_gc.set_translate(0.f, 0.f);
-			//m_gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
-			//m_gc.mult_scale(s_GameUnitsPerSimUnit, s_GameUnitsPerSimUnit);
-		}
+			//m_gc.push_modelview();
+			//m_gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+			////m_gc.set_translate(0.f, 0.f);
+			////m_gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+			//if (!fe_fequal(camera->GetZoom(), 1.0f))
+			//	m_gc.mult_scale(camera->GetZoom(), camera->GetZoom());
+		//}
 	}
 
 	void B2DebugDraw::ResetView()
 	{
-		if (m_Viewport)
-		{
-			m_gc.pop_modelview();
+		//if (m_Viewport)
+		//{
+			//m_gc.pop_modelview();
 			//m_gc.reset_cliprect();
 
 			m_gc.reset_program_object();
-		}
+		//}
 	}
 
 }

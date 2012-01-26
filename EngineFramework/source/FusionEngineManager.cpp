@@ -478,18 +478,13 @@ namespace FusionEngine
 				(*exit)->SetMapLoader(m_CellArchivist);
 				(*exit)->SetStreamingManager(m_StreamingManager);
 				(*exit)->SetWorldSaver(this);
+				(*exit)->SetDataArchiver(m_CellArchivist);
 
 				if (m_EnabledExtensions.find((*exit)->GetName()) != m_EnabledExtensions.end())
 				{
 					m_ActiveExtensions.push_back(*exit);
 				}
 			}
-
-			auto mb = Rocket::Core::GetContext("world")->LoadDocument("/core/gui/message_box.rml");
-			if (auto label = mb->GetElementById("message_label"))
-				label->SetInnerRML("hello");
-			mb->Show();
-			mb->RemoveReference();
 			
 			m_ResourceManager->StartLoaderThread();
 

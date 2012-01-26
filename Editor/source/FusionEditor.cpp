@@ -36,11 +36,13 @@
 #include "FusionEntityManager.h"
 #include "FusionGUI.h"
 #include "FusionMessageBox.h"
+#include "FusionClientOptions.h"
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
 #include "FusionStreamingManager.h"
 #include "FusionWorldSaver.h"
 #include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionBinaryStream.h"
 
 #include "FusionAngelScriptSystem.h"
 #include "FusionBox2DSystem.h"
@@ -257,6 +259,9 @@ namespace FusionEngine
 
 		std::set<EntityPtr> m_Selected;
 		Vector2 m_Offset;
+
+		std::shared_ptr<Camera> m_EditCam;
+		float m_CamRange;
 	};
 
 	void EditorOverlay::Draw(const CL_GraphicContext& gc_)
@@ -275,6 +280,15 @@ namespace FusionEngine
 			box.translate(pos.x - box.get_width() * 0.5f, pos.y - box.get_height() * 0.5f);
 
 			CL_Draw::box(gc, box, GetColour(it));
+		}
+
+		if (m_EditCam)
+		{
+			CL_Colorf rangeColour(1.0f, 0.6f, 0.6f, 0.95f);
+			auto center = m_EditCam->GetPosition();
+			auto radius = ToRenderUnits(m_CamRange);
+			CL_Rectf camRect(center.x - radius, center.y - radius, center.x + radius, center.y + radius);
+			CL_Draw::box(gc, camRect, rangeColour);
 		}
 	}
 
@@ -410,7 +424,8 @@ namespace FusionEngine
 	};
 
 	Editor::Editor(const std::vector<CL_String>& args)
-		: m_Active(false),
+		: m_EditCamRange(-1.f),
+		m_Active(false),
 		m_RebuildScripts(false),
 		m_CompileMap(false),
 		m_SaveMap(false),
@@ -555,6 +570,12 @@ namespace FusionEngine
 
 		m_EditCam = camera;
 
+		m_EditorOverlay->m_EditCam = m_EditCam;
+		if (m_EditCamRange < 0.f)
+			m_EditorOverlay->m_CamRange = m_StreamingManager->GetRange();
+		else
+			m_EditorOverlay->m_CamRange = m_EditCamRange;
+
 		m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
 		m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
 	}
@@ -563,7 +584,25 @@ namespace FusionEngine
 	{
 		m_Active = false;
 
+		m_EditorOverlay->m_EditCam.reset();
+
+		m_RenderWorld->RemoveViewport(m_Viewport);
+
+		m_EditCam.reset();
+		m_Viewport.reset();
+
 		m_MapLoader->SetSavePath(m_OriginalSavePath);
+	}
+
+	void Editor::SetOptions(const ClientOptions& options)
+	{
+		try
+		{
+			m_EditCamRange = boost::lexical_cast<float>(options.GetOption_str("editor_cam_range"));
+			m_EditorOverlay->m_CamRange = m_EditCamRange;
+		}
+		catch (boost::bad_lexical_cast&)
+		{}
 	}
 
 	void Editor::SetDisplay(const CL_DisplayWindow& display)
@@ -784,8 +823,8 @@ namespace FusionEngine
 			try
 			{
 				m_Saver->Load(m_SaveName);
-				m_NonStreamedEntities = m_EntityManager->GetNonStreamedEntities();
-				m_StreamingManager->AddCamera(m_EditCam);
+				m_NonStreamedEntities = m_EntityManager->GetLastLoadedNonStreamedEntities();
+				m_StreamingManager->AddCamera(m_EditCam, m_EditCamRange);
 			}
 			catch (std::exception& e)
 			{
@@ -954,6 +993,34 @@ namespace FusionEngine
 
 		if (MouseOverUI(m_GUIContext))
 			return;
+
+		// Ctrl + Keys
+		if (ev.ctrl && ev.repeat_count == 0)
+		{
+			switch (ev.id)
+			{
+			case CL_KEY_S:
+				if (ev.shift || m_SaveName.empty())
+					ShowSaveDialog();
+				else
+					m_SaveMap = true;
+				break;
+			case CL_KEY_O:
+				ShowLoadDialog();
+				break;
+
+			case CL_KEY_C:
+				CopySelectedEntities();
+				break;
+			case CL_KEY_V:
+				{
+					Vector2 offset = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+					TranslateScreenToWorld(&offset.x, &offset.y);
+					PasteEntities(offset);
+				}
+				break;
+			}
+		}
 	}
 
 	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
@@ -972,16 +1039,6 @@ namespace FusionEngine
 		{
 			switch (ev.id)
 			{
-			case CL_KEY_S:
-				if (ev.shift || m_SaveName.empty())
-					ShowSaveDialog();
-				else
-					m_SaveMap = true;
-				break;
-			case CL_KEY_O:
-				ShowLoadDialog();
-				break;
-
 			case CL_KEY_0:
 				m_EditCam->SetZoom(1.0);
 				break;
@@ -1376,6 +1433,11 @@ namespace FusionEngine
 			DeselectEntity(*it);
 	}
 
+	size_t Editor::GetNumSelected() const
+	{
+		return m_EditorOverlay->m_Selected.size();
+	}
+
 	void Editor::ForEachSelected(std::function<bool (const EntityPtr&)> fn)
 	{
 		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
@@ -1499,6 +1561,84 @@ namespace FusionEngine
 	void Editor::AddEntityToDelete(const EntityPtr& entity)
 	{
 		m_ToDelete.push_back(entity);
+	}
+
+	void Editor::CopySelectedEntities()
+	{
+		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+		ForEachSelected([&bb](const EntityPtr& entity)->bool
+		{
+			auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
+			auto pos = transform->GetPosition();
+			if (pos.x < bb.left)
+				bb.left = pos.x;
+			if (pos.y < bb.top)
+				bb.top = pos.y;
+			if (pos.x > bb.right)
+				bb.right = pos.x;
+			if (pos.y > bb.bottom)
+				bb.bottom = pos.y;
+			return true;
+		});
+		auto c = bb.get_center();
+		Vector2 center(c.x, c.y);
+		if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))
+		{
+			IO::Streams::CellStreamWriter writer(file.get());
+			writer.Write(GetNumSelected());
+			ForEachSelected([&](const EntityPtr& entity)->bool
+			{
+				{
+					auto transform = entity->GetComponent<ITransform>();
+					auto pos = transform->GetPosition();
+					pos -= center;
+					writer.Write(pos.x);
+					writer.Write(pos.y);
+					writer.Write(transform->Angle.Get());
+				}
+				EntitySerialisationUtils::SaveEntity(*file, entity, true);
+				return true;
+			});
+		}
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to create entity clipboard file");
+	}
+
+	void Editor::PasteEntities(const Vector2& offset, float base_angle)
+	{
+		if (auto file = m_DataArchiver->LoadDataFile("editor.entity_clipboard"))
+		{
+			Vector2 simOffset(ToSimUnits(offset.x), ToSimUnits(offset.y));
+
+			IO::Streams::CellStreamReader reader(file.get());
+			size_t numEntities = reader.ReadValue<size_t>();
+			for (size_t i = 0; i < numEntities; ++i)
+			{
+				Vector2 entityPos;
+				float entityAngle = 0.f;
+				{
+					reader.Read(entityPos.x);
+					reader.Read(entityPos.y);
+					reader.Read(entityAngle);
+				}
+
+				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+
+				if (entity->GetID())
+					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());
+				entity->SetName("");
+
+				{
+					auto transform = entity->GetComponent<ITransform>();
+					transform->Position.Set(simOffset + entityPos);
+					transform->Angle.Set(base_angle + entityAngle);
+				}
+
+				m_EntityManager->AddEntity(entity);
+				if (entity->GetDomain() == SYSTEM_DOMAIN)
+					m_NonStreamedEntities.push_back(entity);
+			}
+		}
 	}
 
 	class InspectorGenerator

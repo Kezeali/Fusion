@@ -65,6 +65,7 @@ namespace FusionEngine
 	class DialogListener;
 
 	class WorldSaver;
+	class SaveDataArchive;
 
 	class EditorOverlay;
 	class SelectionDrawer;
@@ -87,6 +88,9 @@ namespace FusionEngine
 		void Deactivate();
 		bool IsActive() const { return m_Active; }
 
+		bool IsEditor() const { return true; }
+
+		void SetOptions(const ClientOptions& options);
 		void SetDisplay(const CL_DisplayWindow& display);
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
@@ -95,6 +99,7 @@ namespace FusionEngine
 		void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader);
 		void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) { m_StreamingManager = manager; }
 		void SetWorldSaver(WorldSaver* saver) { m_Saver = saver; }
+		void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) { m_DataArchiver = archiver; }
 
 		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
 
@@ -135,6 +140,9 @@ namespace FusionEngine
 		std::shared_ptr<EntityManager> m_EntityManager;
 
 		WorldSaver* m_Saver;
+		std::shared_ptr<SaveDataArchive> m_DataArchiver;
+
+		float m_EditCamRange;
 
 		std::vector<EntityPtr> m_NonStreamedEntities;
 
@@ -192,6 +200,9 @@ namespace FusionEngine
 		void DeleteEntity(const EntityPtr& entity);
 		void AddEntityToDelete(const EntityPtr& entity);
 
+		void CopySelectedEntities();
+		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
+
 		void OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state);
 		void OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
 		void OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state);
@@ -213,8 +224,8 @@ namespace FusionEngine
 		void DeselectEntity(const EntityPtr& entity);
 		void DeselectAll();
 
+		size_t GetNumSelected() const;
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
-
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
 
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);

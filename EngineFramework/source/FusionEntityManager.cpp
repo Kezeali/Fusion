@@ -1074,6 +1074,8 @@ namespace FusionEngine
 	{
 		IO::Streams::CellStreamReader reader(&stream);
 
+		m_LoadedNonStreamedEntities.clear();
+
 		size_t numEnts;
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
@@ -1081,6 +1083,7 @@ namespace FusionEngine
 			auto entity = LoadEntity(stream, true, 0, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
+			m_LoadedNonStreamedEntities.push_back(entity);
 		}
 	}
 
@@ -1267,6 +1270,11 @@ namespace FusionEngine
 		return std::move(results);
 	}
 
+	std::vector<EntityPtr> EntityManager::GetLastLoadedNonStreamedEntities() const
+	{
+		return std::move(m_LoadedNonStreamedEntities);
+	}
+
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)
 	{
 		try
@@ -1359,6 +1367,8 @@ namespace FusionEngine
 	void EntityManager::clearEntities(bool synced_only)
 	{
 		FSN_ASSERT_MSG(!synced_only, "Not implemented");
+
+		m_LoadedNonStreamedEntities.clear();
 
 		m_ComponentsToAdd.clear();
 		m_ComponentsToRemove.clear();

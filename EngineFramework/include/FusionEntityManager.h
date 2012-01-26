@@ -174,6 +174,8 @@ namespace FusionEngine
 		void QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const;
 
 		std::vector<EntityPtr> GetNonStreamedEntities() const;
+		// Hack for loading maps in the editor
+		std::vector<EntityPtr> GetLastLoadedNonStreamedEntities() const;
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
@@ -332,6 +334,8 @@ namespace FusionEngine
 		std::vector<EntityPtr> m_EntitiesToDeactivate;
 		tbb::concurrent_queue<EntityPtr> m_EntitiesToRemove;
 		EntityArray m_ActiveEntities;
+
+		std::vector<EntityPtr> m_LoadedNonStreamedEntities;
 
 		typedef tbb::spin_rw_mutex ActiveEntitiesMutex_t;
 		ActiveEntitiesMutex_t m_ActiveEntitiesMutex;

@@ -83,7 +83,6 @@
     <ClInclude Include="include\FusionCamera.h" />
     <ClInclude Include="include\FusionPhysicsDebugDraw.h" />
     <ClInclude Include="include\FusionRenderer.h" />
-    <ClInclude Include="include\FusionRendererExtension.h" />
     <ClInclude Include="include\FusionViewport.h" />
     <ClInclude Include="include\FusionCameraManager.h" />
     <ClInclude Include="PrecompiledHeaders.h" />

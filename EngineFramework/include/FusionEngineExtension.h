@@ -49,6 +49,8 @@ namespace FusionEngine
 	class RegionMapLoader;
 	class StreamingManager;
 
+	class SaveDataArchive;
+
 	class WorldSaver;
 
 	class EngineExtension
@@ -64,6 +66,9 @@ namespace FusionEngine
 		virtual void Activate() = 0;
 		virtual void Deactivate() = 0;
 
+		virtual bool IsEditor() const  { return false; }
+
+		virtual void SetOptions(const ClientOptions& options) = 0;
 		// If I change the implementation such that CLRenderSystem creates the display,
 		//  this interface can be removed and getting the display can be done in OnWorldCreated
 		//  if an extension requires it
@@ -73,6 +78,7 @@ namespace FusionEngine
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
 		virtual void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) {}
 		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
+		virtual void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) {}
 		virtual void SetWorldSaver(WorldSaver* saver) {}
 
 		virtual void RegisterScriptType(asIScriptEngine* engine) {}
