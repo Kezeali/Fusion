@@ -128,6 +128,7 @@ namespace FusionEngine
 		}
 		else if (entry.filesystem == Entry::Native)
 		{
+			FSN_ASSERT(bfs::exists(entry.path));
 			for (bfs::directory_iterator it(entry.path); it != bfs::directory_iterator(); it++)
 			{
 				entry.children.push_back(ConstructFilesystemEntry(it->path().generic_string()));
@@ -155,14 +156,20 @@ namespace FusionEngine
 
 	void FilesystemDataSource::Check(FilesystemDataSource::Entry& entry)
 	{
+		Rocket::Core::String table(entry.path.data(), entry.path.data() + entry.path.length());
+
 		Entry copy;
 		copy.filesystem = entry.filesystem;
 		copy.type = entry.type;
 		copy.name = entry.name;
 		copy.path = entry.path;
+		// Short-circuit removed native folders
+		if (copy.filesystem == Entry::Native && !bfs::exists(entry.path))
+		{
+			NotifyRowRemove(table, 0, (int)entry.children.size());
+			return;
+		}
 		Populate(copy);
-
-		Rocket::Core::String table(entry.path.data(), entry.path.data() + entry.path.length());
 
 		int first = 0, num = 0;
 		bool run = false;
