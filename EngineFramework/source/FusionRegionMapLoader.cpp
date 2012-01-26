@@ -1443,12 +1443,12 @@ namespace FusionEngine
 
 			if (bfs::is_regular_file(archiveFilePath))
 			{
-				auto physFsArchiveFilePath = bfs::path(physFsPath).replace_extension(".zip").string();
+				auto physFsArchiveFilePath = bfs::path(physFsPath).replace_extension(".zip").generic_string();
 
 				AddLogEntry("Deleting existing file at: " + archiveFilePath.string(), LOG_TRIVIAL);
-				if (PHYSFS_delete(archiveFilePath.generic_string().c_str()) == 0)
+				if (PHYSFS_delete(physFsArchiveFilePath.c_str()) == 0)
 				{
-					FSN_EXCEPT(FileSystemException, "Failed to delete existing compressed save file (" + archiveFilePath.string() + "): " + std::string(PHYSFS_getLastError()));
+					FSN_EXCEPT(FileSystemException, "Failed to delete existing compressed save file (" + physFsArchiveFilePath + "): " + std::string(PHYSFS_getLastError()));
 				}
 			}
 
