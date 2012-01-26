@@ -45,22 +45,92 @@
 namespace FusionEngine { namespace Inspectors
 {
 
+	struct EquivalentInspectorKey
+	{
+		ComponentPtr component;
+		EntityPtr entity;
+		std::string inspector_type;
+		std::string component_id;
+
+		EquivalentInspectorKey()
+		{}
+
+		EquivalentInspectorKey(const EntityPtr& entity_, const std::string& type, const std::string& id)
+			: entity(entity_), inspector_type(type), component_id(id)
+		{}
+
+		//EquivalentInspectorKey(const ComponentPtr& component_, const std::string& type);
+		EquivalentInspectorKey(const ComponentPtr& component_, const std::string& type)
+			: component(component_),
+			entity(component_->GetParent()->shared_from_this()),
+			inspector_type(type),
+			component_id(component_->GetIdentifier())
+		{}
+
+		bool operator== (const EquivalentInspectorKey& other) const
+		{
+			if (entity != other.entity)
+			{
+				return inspector_type == other.inspector_type && component_id == other.component_id;
+			}
+			else
+				return component == other.component;
+		}
+		bool operator< (const EquivalentInspectorKey& other) const
+		{
+			FSN_ASSERT_FAIL("not impl");
+			std::less<std::string> lstr;
+			if (entity != other.entity)
+			{
+				if (inspector_type == other.inspector_type)
+					return lstr(component_id, other.component_id);
+				else
+					return lstr(inspector_type, other.inspector_type);
+			}
+			else
+			{
+				if (component == other.component)
+				{
+					if (inspector_type == other.inspector_type)
+						return lstr(component_id, other.component_id);
+					else
+						return lstr(inspector_type, other.inspector_type);
+				}
+				else
+					return component < other.component;
+			}
+		}
+		EquivalentInspectorKey& operator= (const EquivalentInspectorKey& other)
+		{
+			component = other.component;
+			entity = other.entity;
+			inspector_type = other.inspector_type;
+			component_id = other.component_id;
+			return *this;
+		}
+	};
+
+	/*EquivalentInspectorKey::EquivalentInspectorKey(const ComponentPtr& component_, const std::string& type)
+		: component(component_),
+		entity(component_->GetParent()->shared_from_this()),
+		inspector_type(type),
+		component_id(component_->GetIdentifier())
+	{}*/
+
 	namespace tags {
 		struct button_code {};
 		struct inspector_key {};
 		struct component {};
 	}
-	
-	EquivalentInspectorKey::EquivalentInspectorKey(const ComponentPtr& component_, const std::string& type)
-		: component(component_),
-		entity(component_->GetParent()->shared_from_this()),
-		inspector_type(type),
-		component_id(component_->GetIdentifier())
-	{}
 
-	//std::size_t hash_value(const EquivalentInspectorKey& key)
-	//{
-	//}
+	std::size_t hash_value(const EquivalentInspectorKey& key)
+	{
+		size_t seed = 0;
+		boost::hash_combine(seed, key.inspector_type);
+		boost::hash_combine(seed, key.component_id);
+
+		return seed;
+	}
 
 	class SubsectionCollection
 	{
@@ -82,9 +152,18 @@ namespace FusionEngine { namespace Inspectors
 			FSN_ASSERT(entry != byInspectorKey.end());
 
 			auto copy = *entry;
+			copy.inspector_key = key;
 			copy.component = component;
 			auto r = m_Subsections.insert(copy);
 
+			if (!r.second)
+			{
+				auto range = m_Subsections.get<tags::button_code>().equal_range(copy.button_code);
+				for (; range.first != range.second; ++range.first)
+				{
+					auto t = *range.first;
+				}
+			}
 			FSN_ASSERT(r.second);
 
 			m_Inspectors[copy.inspector].push_back(component);
@@ -204,8 +283,8 @@ namespace FusionEngine { namespace Inspectors
 
 		boost::multi_index_container<SubsectionData,
 			boost::multi_index::indexed_by<
-			boost::multi_index::hashed_unique<boost::multi_index::tag<tags::button_code>, boost::multi_index::member<SubsectionData, int, &SubsectionData::button_code>>,
-			boost::multi_index::ordered_unique<boost::multi_index::tag<tags::inspector_key>, boost::multi_index::member<SubsectionData, EquivalentInspectorKey, &SubsectionData::inspector_key>>,
+			boost::multi_index::ordered_non_unique<boost::multi_index::tag<tags::button_code>, boost::multi_index::member<SubsectionData, int, &SubsectionData::button_code>>,
+			boost::multi_index::hashed_non_unique<boost::multi_index::tag<tags::inspector_key>, boost::multi_index::member<SubsectionData, EquivalentInspectorKey, &SubsectionData::inspector_key>>,
 			boost::multi_index::hashed_non_unique<boost::multi_index::tag<tags::component>, boost::multi_index::member<SubsectionData, ComponentPtr, &SubsectionData::component>>
 			>
 			> m_Subsections;

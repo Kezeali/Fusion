@@ -55,46 +55,7 @@ namespace FusionEngine { namespace Inspectors
 
 	class SubsectionCollection;
 
-	struct EquivalentInspectorKey
-	{
-		ComponentPtr component;
-		EntityPtr entity;
-		std::string inspector_type;
-		std::string component_id;
-
-		EquivalentInspectorKey()
-		{}
-
-		EquivalentInspectorKey(const EntityPtr& entity_, const std::string& type, const std::string& id)
-			: entity(entity_), inspector_type(type), component_id(id)
-		{}
-
-		EquivalentInspectorKey(const ComponentPtr& component_, const std::string& type);
-
-		bool operator< (const EquivalentInspectorKey& other) const
-		{
-			std::less<std::string> lstr;
-			if (entity != other.entity)
-			{
-				if (inspector_type == other.inspector_type)
-					return lstr(component_id, other.component_id);
-				else
-					return lstr(inspector_type, other.inspector_type);
-			}
-			else
-			{
-				if (component == other.component)
-				{
-					if (inspector_type == other.inspector_type)
-						return lstr(component_id, other.component_id);
-					else
-						return lstr(inspector_type, other.inspector_type);
-				}
-				else
-					return component < other.component;
-			}
-		}
-	};
+	struct EquivalentInspectorKey;
 
 	class ElementGroup : public Rocket::Core::Element
 	{
