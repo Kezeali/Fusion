@@ -1572,7 +1572,7 @@ namespace FusionEngine
 
 	void Editor::CopySelectedEntities()
 	{
-		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
 		ForEachSelected([&bb](const EntityPtr& entity)->bool
 		{
 			auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
