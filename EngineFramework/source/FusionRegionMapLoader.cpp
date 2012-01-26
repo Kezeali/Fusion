@@ -1026,18 +1026,21 @@ namespace FusionEngine
 			SendToConsole("Quick-Saving...");
 
 			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) / m_SavePath / saveName;
+
+			auto physFsPath = m_SavePath + saveName;
+
 			// Remove any extraneous extensions
 			if (savePath.has_extension())
 			{
 				AddLogEntry("Save name " + saveName + " has an extension; save names should be folders, not files: the extension will be removed.", LOG_NORMAL);
 				savePath.replace_extension();
+
+				physFsPath = m_SavePath + bfs::path(saveName).replace_extension().string();
 			}
 
 			SendToConsole("QS Path: " + savePath.string());
-
 			AddLogEntry("Saving: " + savePath.string(), LOG_INFO);
 
-			auto physFsPath = m_SavePath + savePath.filename().string();
 			if (!bfs::is_directory(savePath))
 			{
 				if (PHYSFS_mkdir(physFsPath.c_str()) == 0)
@@ -1415,9 +1418,19 @@ namespace FusionEngine
 
 			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) / m_SavePath / saveName;
 
-			SendToConsole("Original path: " + savePath.string());
-
 			auto physFsPath = m_SavePath + saveName;
+
+			// Remove any extraneous extensions
+			if (savePath.has_extension())
+			{
+				AddLogEntry("Save name " + saveName + " has an extension; save names should be folders, not files: the extension will be removed.", LOG_NORMAL);
+				savePath.replace_extension();
+
+				physFsPath = m_SavePath + bfs::path(saveName).replace_extension().string();
+			}
+
+			SendToConsole("Original path: " + savePath.string());
+			
 			if (!bfs::is_directory(savePath))
 			{
 				FSN_EXCEPT(FileSystemException, "Save path (" + physFsPath + ") not found.");
