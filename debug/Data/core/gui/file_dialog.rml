@@ -7,6 +7,8 @@
 			{
 				width: 640px;
 				height: 320px;
+				
+				margin: auto;
 			}
 
 			div#title_bar div#icon
@@ -42,10 +44,19 @@
 				icon-image: high_scores_defender.png;
 			}
 			
-			button.parent_folder
+			button#btn_parent_folder
 			{
 				padding: 2px 14px 5px;
 				width: 40px;
+				height: 26px;
+				font-size: 13;
+				display: inline;
+			}
+			
+			button#btn_refresh
+			{
+				padding: 2px 14px 5px;
+				width: 80px;
 				height: 26px;
 				font-size: 13;
 				display: inline;
@@ -101,7 +112,8 @@
 		<script src="file_dialog.as"/>
 	</head>
 	<body template="window" onload="%this:OnWindowLoad(event);">
-		<button class="parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
+		<button id="btn_parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
+		<button id="btn_refresh" onclick="%this:OnRefreshClicked(event);">Refresh</button>
 		<datagrid selectable id="file_list" source="filesystem.#write_dir" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
 			<col fields="type" formatter="filesystem" width="20px"/>
 			<col fields="filename" />
@@ -110,8 +122,7 @@
 			<p>
 			File Name:<input type="text" id="text_filename" name="filename"/>
 			<input type="text" id="text_path" name="path"/>
-			<select id="text_type" name="type">
-				<option value="*.txt">Text</option>
+			<select id="select_type" name="type">
 			</select>
 			</p>
 			<div id="dialog_submit_buttons">

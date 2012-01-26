@@ -412,8 +412,10 @@ namespace FusionEngine
 		const bool wasRunning = m_Thread.joinable();
 		if (wasRunning)
 			Stop();
-		PerformSave(save_name);
-		CompressSave(save_name);
+
+		if (PerformSave(save_name))
+			CompressSave(save_name);
+
 		if (wasRunning)
 			Start();
 	}
@@ -1014,7 +1016,7 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::PerformSave(const std::string& saveName)
+	bool RegionMapLoader::PerformSave(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1024,12 +1026,18 @@ namespace FusionEngine
 			SendToConsole("Quick-Saving...");
 
 			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) / m_SavePath / saveName;
+			// Remove any extraneous extensions
+			if (savePath.has_extension())
+			{
+				AddLogEntry("Save name " + saveName + " has an extension; save names should be folders, not files: the extension will be removed.", LOG_NORMAL);
+				savePath.replace_extension();
+			}
 
 			SendToConsole("QS Path: " + savePath.string());
 
 			AddLogEntry("Saving: " + savePath.string(), LOG_INFO);
 
-			auto physFsPath = m_SavePath + saveName;
+			auto physFsPath = m_SavePath + savePath.filename().string();
 			if (!bfs::is_directory(savePath))
 			{
 				if (PHYSFS_mkdir(physFsPath.c_str()) == 0)
@@ -1096,6 +1104,8 @@ namespace FusionEngine
 			SendToConsole("QS Progress: done copying entitylocations.kc");
 
 			SendToConsole("Done Quick-Saving.");
+
+			return true;
 		}
 		catch (bfs::filesystem_error& e)
 		{
@@ -1109,6 +1119,8 @@ namespace FusionEngine
 
 			AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
 		}
+
+		return false;
 	}
 
 	void getArchiveFileList(std::vector<boost::filesystem::path>& results, const boost::filesystem::path& path, const std::string& ext)
@@ -1174,141 +1186,6 @@ namespace FusionEngine
 
 	void RegionMapLoader::PrepareLoad(const std::string& saveName)
 	{
-		//namespace bfs = boost::filesystem;
-		//using namespace IO;
-
-		//FSN_ASSERT(boost::this_thread::get_id() != m_Thread.get_id());
-
-		//{
-		//	boost::mutex::scoped_lock lock(m_SaveToLoadMutex);
-		//	m_SaveToLoad = saveName;
-		//}
-
-		//auto physSavePath = bfs::path(m_SavePath) / saveName;
-		//auto savePath = bfs::path(PHYSFS_getWriteDir()) / physSavePath;
-
-		//auto archivePath = physSavePath;
-		//if (!archivePath.has_extension())
-		//	archivePath.replace_extension(".zip");
-
-		//// Try to mount a save archive with the given name
-		//bool archived = PHYSFS_exists(archivePath.generic_string().c_str()) && PHYSFS_mount(archivePath.generic_string().c_str(), physSavePath.string().c_str(), 1);
-
-		////if (archived)
-		////{
-		////	struct testArchive
-		////	{
-		////		unzFile file;
-		////		testArchive(const std::string& filename)
-		////		{
-		////			file = unzOpen(filename.c_str());
-		////		}
-		////		~testArchive()
-		////		{
-		////			if (file)
-		////				unzClose(file);
-		////		}
-		////		std::string getComment()
-		////		{
-		////			std::string comment(256, ' ');
-		////			auto actualSize = unzGetGlobalComment(file, comment.data(), comment.size());
-		////			comment.resize(actualSize);
-		////			return std::move(comment);
-		////		}
-		////	};
-		////	auto absoluteArchivePath = bfs::path(PHYSFS_getWriteDir()) / archivePath;
-		////	if (testArchive(absoluteArchivePath.string()).getComment() != ":)")
-		////	{
-		////		AddLogEntry("Save archive may not have been written correctly (doesn't have expected comment");
-		////	}
-		////}
-
-		//if (!archived && (!bfs::is_directory(savePath) || bfs::is_empty(savePath)))
-		//{
-		//	SendToConsole("Load Failed: save doesn't exist");
-		//	AddLogEntry("Failed to load save: either " + savePath.string() + " doesn't exist or there was an error"
-		//		"reading the archive. PhysFS last error (may not be applicable): " + std::string(PHYSFS_getLastError()));
-		//	return;
-		//}
-
-		//const bool threadRunning = m_Thread.joinable();
-		//if (threadRunning)
-		//	Stop();
-
-		//// Just to be safe
-		//m_CellsBeingProcessed.clear();
-		//m_ReadQueue.clear();
-		//m_WriteQueue.clear();
-
-		//// Everything needs to reload
-		//m_SynchLoaded.clear();
-		//// Drop file handles (files need to be deletable below)
-		//m_Cache->DropCache();
-
-		//// Unload the location DB
-		//std::string cacheDbPath = m_EntityLocationDB->path();
-		//if (cacheDbPath.empty())
-		//	cacheDbPath = m_FullBasePath + "entitylocations.kc";
-		//m_EntityLocationDB.reset();
-
-		//// Delete the cache files
-		//try
-		//{
-		//	if (!bfs::is_empty(m_FullBasePath))
-		//	{
-		//		auto fileList = PHYSFS_enumerateFiles(m_CachePath.c_str());
-		//		for (auto it = fileList; *it; ++it)
-		//		{
-		//			auto filePath = m_CachePath + "/" + *it;
-		//			if (PHYSFS_delete(filePath.c_str()) == 0)
-		//			{
-		//				PHYSFS_freeList(fileList);
-		//				FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing cache (" + filePath + "): " + std::string(PHYSFS_getLastError()));
-		//			}
-		//		}
-		//		PHYSFS_freeList(fileList);
-		//	}
-
-		//	// Copy the saved location DB into the cache
-		//	SendToConsole("Loading: copying entitylocations.kc");
-		//	{
-		//		auto saveDbPath = savePath;
-		//		saveDbPath /= "entitylocations.kc";
-
-		//		if (archived)
-		//			PhysFSHelp::copy_file(saveDbPath.generic_string().c_str(), cacheDbPath.c_str());
-		//		else
-		//			boost::filesystem::copy_file(saveDbPath, cacheDbPath, bfs::copy_option::overwrite_if_exists);
-		//	}
-		//	SendToConsole("Loading: done copying entitylocations.kc");
-
-		//	// Copy saved custom-data files
-		//	std::vector<bfs::path> dataFiles;
-		//	if (archived)
-		//		getArchiveFileList(dataFiles, m_CachePath, ".dat");
-		//	else
-		//		getNativeFileList(dataFiles, m_FullBasePath, ".dat");
-
-		//	if (archived)
-		//		copyArchivedFiles(dataFiles, m_CachePath);
-		//	else
-		//		copyNativeFiles(dataFiles, m_FullBasePath);
-		//}
-		//catch (FileSystemException& e)
-		//{
-		//	AddLogEntry(e.what());
-		//}
-		//catch (bfs::filesystem_error& e)
-		//{
-		//	AddLogEntry(e.what());
-		//}
-		//// Reload the location DB
-		//m_EntityLocationDB.reset(new kyotocabinet::HashDB);
-		//setupTuning(m_EntityLocationDB.get());
-		//m_EntityLocationDB->open(cacheDbPath, kyotocabinet::HashDB::OWRITER);
-
-		//if (threadRunning)
-		//	Start();
 	}
 
 	std::string make_relative(const std::string& base, const std::string& path)
@@ -1551,47 +1428,19 @@ namespace FusionEngine
 
 			AddLogEntry("Creating compressed save: " + savePath.string() + " -> " + archiveFilePath.string(), LOG_INFO);
 
+			if (bfs::is_regular_file(archiveFilePath))
+			{
+				AddLogEntry("Deleting existing file at: " + savePath.string(), LOG_TRIVIAL);
+				if (PHYSFS_delete(physFsPath.c_str()) == 0)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to delete existing compressed save file (" + archiveFilePath.string() + "): " + std::string(PHYSFS_getLastError()));
+				}
+			}
+
 			{
 				IO::FileType::ZipArchive archive(archiveFilePath);
 				archive.AddPath(savePath, savePath.stem());
 			}
-
-			//std::vector<bfs::path> regionFiles;
-			//std::vector<bfs::path> dataFiles;
-			//for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
-			//{
-			//	if (it->path().extension() == ".celldata")
-			//		regionFiles.push_back(it->path());
-			//	if (it->path().extension() == ".dat")
-			//		dataFiles.push_back(it->path());
-			//}
-
-			//std::stringstream numStr; numStr << regionFiles.size();
-			//std::string numRegionFilesStr = numStr.str();
-			//numStr.str(""); numStr << dataFiles.size();
-			//std::string numDataFilesStr = numStr.str();
-
-			//unsigned int i = 0;
-			//for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
-			//{
-			//	std::stringstream str; str << ++i;
-			//	SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
-
-			//	auto dest = savePath; dest /= it->filename();
-			//	boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-			//}
-			//i = 0;
-			//for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
-			//{
-			//	std::stringstream str; str << ++i;
-			//	SendToConsole("QS Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
-
-			//	auto dest = savePath; dest /= it->filename();
-			//	boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-			//}
-			//SendToConsole("QS Progress: copying entitylocations.kc");
-			//SaveEntityLocationDB((savePath /= "entitylocations.kc").string());
-			//SendToConsole("QS Progress: done copying entitylocations.kc");
 
 			{
 				auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());

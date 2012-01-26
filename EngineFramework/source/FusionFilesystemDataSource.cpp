@@ -27,6 +27,8 @@
 
 #include "PrecompiledHeaders.h"
 
+#include "FusionAssert.h"
+
 #include "FusionFilesystemDataSource.h"
 
 #include <boost/filesystem.hpp>
@@ -151,11 +153,58 @@ namespace FusionEngine
 		return entry;
 	}
 
-	FilesystemDataSource::Entry FilesystemDataSource::AquireEntry(const std::string& path)
+	void FilesystemDataSource::Check(FilesystemDataSource::Entry& entry)
+	{
+		Entry copy;
+		copy.filesystem = entry.filesystem;
+		copy.type = entry.type;
+		copy.name = entry.name;
+		copy.path = entry.path;
+		Populate(copy);
+
+		Rocket::Core::String table(entry.path.data(), entry.path.data() + entry.path.length());
+
+		int first = 0, num = 0;
+		bool run = false;
+		for (auto it = copy.children.begin(), end = copy.children.end(), it2 = entry.children.begin(), end2 = entry.children.end(); it != end && it2 != end2; ++it, ++it2)
+		{
+			if (run)
+			{
+				if (*it == *it2)
+				{
+					NotifyRowChange(table, first, num);
+				}
+				else
+					++num;
+			}
+			else if (*it != *it2)
+			{
+				first = std::distance(entry.children.begin(), it2);
+				num = 1;
+				run = true;
+			}
+		}
+		if (run)
+		{
+			NotifyRowChange(table, first, num);
+		}
+		if (copy.children.size() > entry.children.size())
+			NotifyRowAdd(table, (int)entry.children.size(), (int)(copy.children.size() - entry.children.size()));
+		if (copy.children.size() < entry.children.size())
+			NotifyRowRemove(table, (int)copy.children.size(), (int)(entry.children.size() - copy.children.size()));
+
+		entry.children.swap(copy.children);
+	}
+
+	FilesystemDataSource::Entry FilesystemDataSource::AquireEntry(const std::string& path, bool check)
 	{
 		auto r = listings.insert(std::make_pair(path, ConstructFilesystemEntry(path)));
 		if (r.second)
 			Populate(r.first->second);
+		else if (check)
+		{
+			Check(r.first->second);
+		}
 		return r.first->second;
 	}
 
@@ -163,7 +212,9 @@ namespace FusionEngine
 	{
 		auto entry = AquireEntry(PreprocessPath(table.CString()));
 
-		const auto& file = entry.children[row_index];
+		FSN_ASSERT(row_index >= 0 && (size_t)row_index < entry.children.size());
+
+		const auto& file = entry.children[(size_t)row_index];
 		for (auto it = columns.begin(), end = columns.end(); it != end; ++it)
 		{
 			if (*it == "type")
@@ -175,15 +226,15 @@ namespace FusionEngine
 
 	int FilesystemDataSource::GetNumRows(const Rocket::Core::String& table)
 	{
-		auto entry = AquireEntry(PreprocessPath(table.CString()));
+		auto entry = AquireEntry(PreprocessPath(table.CString()), true);
 
-		return entry.children.size();
+		return (int)entry.children.size();
 	}
 
 	bool FilesystemDataSource::IsDirectory(const std::string& table, int row_index)
 	{
 		auto entry = AquireEntry(PreprocessPath(table));
-		if (entry.children.size() > row_index)
+		if (row_index >= 0 && entry.children.size() > (size_t)row_index)
 			return entry.children[row_index].type == Entry::Directory;
 		else
 			return false;
@@ -192,7 +243,7 @@ namespace FusionEngine
 	std::string FilesystemDataSource::GetFilename(const std::string& table, int row_index)
 	{
 		auto entry = AquireEntry(PreprocessPath(table));
-		if (entry.children.size() > row_index)
+		if (row_index >= 0 && entry.children.size() > (size_t)row_index)
 			return entry.children[row_index].name;
 		else
 			return "";
@@ -201,7 +252,7 @@ namespace FusionEngine
 	std::string FilesystemDataSource::GetPath(const std::string& table, int row_index)
 	{
 		auto entry = AquireEntry(PreprocessPath(table));
-		if (entry.children.size() > row_index)
+		if (row_index >= 0 && entry.children.size() > (size_t)row_index)
 			return entry.children[row_index].path;
 		else
 			return "";

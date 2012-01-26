@@ -7,6 +7,8 @@
 			{
 				width: 460px;
 				height: 320px;
+				
+				margin: auto;
 			}
 
 			div#title_bar div#icon

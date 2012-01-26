@@ -127,3 +127,8 @@ void OnUpClicked(Event@ event)
 		}
 	}
 }
+
+void OnRefreshClicked(Event@ event)
+{
+	filesystem_datasource.refresh();
+}

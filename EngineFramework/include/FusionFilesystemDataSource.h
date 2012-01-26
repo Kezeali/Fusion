@@ -37,6 +37,8 @@
 #include <Rocket/Controls/DataFormatter.h>
 #include <Rocket/Controls/DataSource.h>
 
+#include <unordered_map>
+
 namespace FusionEngine
 {
 
@@ -56,6 +58,18 @@ namespace FusionEngine
 		FilesystemDataSource()
 			: Rocket::Controls::DataSource("filesystem")
 		{}
+
+		bool IsDirectory(const std::string& table, int row_index);
+		std::string GetFilename(const std::string& table, int row_index);
+		std::string GetPath(const std::string& table, int row_index);
+		std::string PreproPath(const std::string& table) const;
+
+		void ClearCache() { listings.clear(); }
+		void Refresh()
+		{
+			for (auto it = listings.begin(), end = listings.end(); it != end; ++it)
+				Check(it->second);
+		}
 
 		struct Entry
 		{
@@ -92,6 +106,14 @@ namespace FusionEngine
 				children = std::move(other.children);
 				return *this;
 			}
+			bool operator== (const Entry& other) const
+			{
+				return filesystem == other.filesystem && type == other.type && name == other.name && path == other.path;
+			}
+			bool operator!= (const Entry& other) const
+			{
+				return !(*this == other);
+			}
 			enum Filesystem { Physfs, Native };
 			Filesystem filesystem;
 			enum Type { None, Directory, File, SymbolicLink };
@@ -101,22 +123,20 @@ namespace FusionEngine
 			std::vector<Entry> children;
 		};
 
+	private:
 		Entry ConstructFilesystemEntry(const std::string& path) const;
 		void Populate(Entry& entry) const;
 
 		Entry GetFilesystemEntryRecursive(const std::string& path);
 
-		Entry AquireEntry(const std::string& path);
+		void Check(Entry& entry);
 
-		std::map<std::string, Entry> listings;
+		Entry AquireEntry(const std::string& path, bool check = false);
+
+		std::unordered_map<std::string, Entry> listings;
 
 		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
 		int GetNumRows(const Rocket::Core::String& table);
-
-		bool IsDirectory(const std::string& table, int row_index);
-		std::string GetFilename(const std::string& table, int row_index);
-		std::string GetPath(const std::string& table, int row_index);
-		std::string PreproPath(const std::string& table) const;
 
 	};
 

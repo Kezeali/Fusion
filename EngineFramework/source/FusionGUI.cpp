@@ -653,6 +653,14 @@ namespace FusionEngine
 			"FilesystemDataSource", "string preprocessPath(const string &in)",
 			asMETHOD(FilesystemDataSource, PreproPath), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "void refresh()",
+			asMETHOD(FilesystemDataSource, Refresh), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod(
+			"FilesystemDataSource", "void clearCache()",
+			asMETHOD(FilesystemDataSource, ClearCache), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		RegisterSingletonType<GUI>("GUI", engine);
 
 		//r = engine->RegisterObjectMethod(

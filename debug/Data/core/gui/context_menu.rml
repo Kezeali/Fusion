@@ -44,7 +44,7 @@
 			
 			shadow-font-effect: outline;
       shadow-offset: 1px 1px;
-      shadow-color: black;
+      shadow-color: #333;
 
       /*background-color: #aaa;*/
       }
