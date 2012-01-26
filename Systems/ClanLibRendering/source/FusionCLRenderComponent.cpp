@@ -71,6 +71,8 @@ namespace FusionEngine
 		AnimationFinished.m_Value = false;
 
 		AnimationFrame.m_Value = 0;
+
+		Looping.m_Value = true;
 	}
 
 	CLSprite::~CLSprite()
@@ -239,6 +241,8 @@ namespace FusionEngine
 			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
 
 			m_Sprite.set_frame(AnimationFrame.Get());
+
+			Looping.Set(m_Sprite.is_play_loop());
 
 			m_RecreateSprite = false;
 		}
@@ -657,6 +661,27 @@ namespace FusionEngine
 			return m_Sprite.get_current_frame();
 		else
 			return AnimationFrame.Get();
+	}
+
+	void CLSprite::SetLooping(bool loop)
+	{
+		if (!m_Sprite.is_null())
+			return m_Sprite.set_play_loop(loop);
+	}
+	
+	bool CLSprite::IsLooping() const
+	{
+		if (!m_Sprite.is_null())
+			return m_Sprite.is_play_loop();
+		else
+			return Looping.Get();
+	}
+
+	void CLSprite::Finish()
+	{
+		boost::mutex::scoped_lock lock(m_Mutex);
+		if (!m_Sprite.is_null())
+			return m_Sprite.finish();
 	}
 
 }

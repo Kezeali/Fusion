@@ -1,15 +1,15 @@
 #uses ITransform
 #uses IRigidBody
 #uses ISprite
-#uses TestB script_b
+#uses TestWalkCycle script_b
 #uses PseudoI notai
 
 class SpawnPoint : ScriptComponent
 {
 	SpawnPoint()
 	{
-		playerSprite = "/Entities/Test/Gfx/spaceshoot_body_moving.png";
-		playerAnimation = "/Entities/Test/test_anim.yaml";
+		playerSprite = "/Entities/character/walk_cycle2.png";
+		playerAnimation = "/Entities/character/walk_cycle2.yaml";
 		spawnJunk = true;
 	}
 
@@ -35,7 +35,7 @@ class SpawnPoint : ScriptComponent
 		instantiator.addComponent(newEnt, "b2Circle", "");
 		instantiator.addComponent(newEnt, "CLSprite", "sprite_main");
 		instantiator.addComponent(newEnt, "CLSprite", "sprite_shadow");
-		instantiator.addComponent(newEnt, "TestB", "script_b");
+		instantiator.addComponent(newEnt, "TestWalkCycle", "script_b");
 		instantiator.addComponent(newEnt, "StreamingCamera", "");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_main").get());
 		if (sprite is null)
@@ -46,10 +46,10 @@ class SpawnPoint : ScriptComponent
 		//console.println(sprite.getType());
 		sprite.ImagePath = playerSprite;
 		sprite.AnimationPath = playerAnimation;
-		sprite.BaseAngle = 1.57f;
+		//sprite.BaseAngle = 1.57f;
 		
 		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
-		shadow.ImagePath = "/Entities/Test/Gfx/spaceshoot_body_shadow.png";
+		shadow.ImagePath = "/Entities/character/shadow.png";
 		shadow.BaseAngle = 1.57f;
 		//shadow.Scale << Vector(1.02f, 1.02f);
 		shadow.Alpha = 0.75f;
@@ -111,6 +111,9 @@ class SpawnPoint : ScriptComponent
 		if (frames == 1)
 		{
 			seed_rand(1234);
+			
+			playerSprite = "/Entities/character/walk_cycle2.png";
+		playerAnimation = "/Entities/character/walk_cycle2.yaml";
 			
 			@entityA = createPlayerEntity(itransform.Position, 1);
 			EntityWrapper@ entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);

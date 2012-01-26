@@ -173,6 +173,8 @@ namespace FusionEngine
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, float, "float", BaseAngle);
 
 		FSN_REGISTER_PROP_ACCESSOR_R(ISprite, bool, "bool", AnimationFinished);
+
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, bool, "bool", Looping);
 	}
 
 	void IScript_RegisterScriptInterface(asIScriptEngine* engine)

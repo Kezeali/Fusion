@@ -7,9 +7,13 @@
 	<group name="move" uiname="Movement">
 		<!--should these be called 'command' rather than 'input'?
 		They are called 'command' in controls.xml-->
-		<input name="thrust" uiname="Forward" description="Moves your ship forward" binary="true" toggle="false"/>
-		<input name="left" uiname="Turn Left" description="Rotates your ship left" binary="true" toggle="false"/>
-		<input name="right" uiname="Turn Right" description="Rotates your ship right" binary="true" toggle="false"/>
+		<input name="thrust" uiname="Forward" description="Moves your character forward" binary="true" toggle="false"/>
+		<input name="rotate_left" uiname="Turn Left" description="Rotates your character left" binary="true" toggle="false"/>
+		<input name="rotate_right" uiname="Turn Right" description="Rotates your character right" binary="true" toggle="false"/>
+		<input name="up" uiname="Up" description="Moves your character up" binary="true" toggle="false"/>
+		<input name="down" uiname="Down" description="Moves your character down" binary="true" toggle="false"/>
+		<input name="left" uiname="Left" description="Moves your character left" binary="true" toggle="false"/>
+		<input name="right" uiname="Right" description="Moves your character right" binary="true" toggle="false"/>
 	</group>
 	<group name="combat" uiname="Combat">
 		<input name="primary" uiname="Primary Fire" description="Fires your primary weapon" binary="true" toggle="false"/>

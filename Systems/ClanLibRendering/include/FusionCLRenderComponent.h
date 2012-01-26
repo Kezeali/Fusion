@@ -44,6 +44,8 @@
 
 #include <ClanLib/display.h>
 
+#include <boost/thread/mutex.hpp>
+
 namespace FusionEngine
 {
 
@@ -182,6 +184,13 @@ namespace FusionEngine
 		
 		void SetAnimationFrame(int val);
 		int GetAnimationFrame() const;
+
+		void SetLooping(bool val);
+		bool IsLooping() const;
+
+		void Finish();
+
+		boost::mutex m_Mutex;
 
 		boost::signals2::scoped_connection m_ImageLoadConnection;
 		ResourcePointer<CL_Texture> m_ImageResource;

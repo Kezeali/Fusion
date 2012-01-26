@@ -86,7 +86,8 @@ namespace FusionEngine
 
 			((FSN_IS)(AnimationFinished))
 			
-			((FSN_GET_SET)(AnimationFrame)) )
+			((FSN_GET_SET)(AnimationFrame))
+			((FSN_IS_SET)(Looping)) )
 
 		ThreadSafeProperty<std::string> ImagePath;
 		ThreadSafeProperty<std::string> AnimationPath;
@@ -103,6 +104,10 @@ namespace FusionEngine
 		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
 
 		ThreadSafeProperty<int> AnimationFrame;
+
+		ThreadSafeProperty<bool> Looping;
+
+		virtual void Finish() = 0;
 
 	private:
 		virtual void SetImagePath(const std::string& value) = 0;
@@ -138,6 +143,9 @@ namespace FusionEngine
 
 		virtual void SetAnimationFrame(int val) = 0;
 		virtual int GetAnimationFrame() const = 0;
+
+		virtual void SetLooping(bool val) = 0;
+		virtual bool IsLooping() const = 0;
 	};
 
 	class ICamera

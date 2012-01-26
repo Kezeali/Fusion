@@ -1,5 +1,6 @@
 #uses ITransform
 #uses IRigidBody
+#uses ISprite
 
 class TestB : ScriptComponent
 {
@@ -25,7 +26,7 @@ class TestB : ScriptComponent
 
 	void onInput(InputEvent@ ev)
 	{
-		console.println(ev.inputName);
+		//console.println(ev.inputName);
 		
 		if (ev.inputName == "thrust")
 		{
