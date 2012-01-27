@@ -56,11 +56,18 @@ namespace FusionEngine
 
 		double GetDefaultDelay() const { return m_DefaultDelay; }
 
+		CL_Sprite::ShowOnFinish GetShowOnFinish() const { return m_ShowOnFinish; }
+		bool GetPlayLoop() const { return m_PlayLoop; }
+		bool GetPlayPingPong() const { return m_PlayPingPong; }
+
 	private:
 		std::vector<CL_Rect> m_Frames;
 		std::vector<std::pair<int, double>> m_FrameDelays;
 		std::vector<std::pair<int, Vector2i>> m_FrameOffsets;
 		double m_DefaultDelay;
+		CL_Sprite::ShowOnFinish m_ShowOnFinish;
+		bool m_PlayLoop;
+		bool m_PlayPingPong;
 	};
 
 	//! SpriteAnimation resource loader callback

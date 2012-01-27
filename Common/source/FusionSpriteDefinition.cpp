@@ -153,6 +153,16 @@ namespace FusionEngine
 		node["offset"] >> frame_info.offset;
 	}
 
+	void operator >> (const YAML::Node& node, CL_Sprite::ShowOnFinish& on_finish)
+	{
+		if (node == "none" || node == "blank")
+			on_finish = CL_Sprite::show_blank;
+		else if (node == "last")
+			on_finish = CL_Sprite::show_last_frame;
+		else if (node == "first")
+			on_finish = CL_Sprite::show_first_frame;
+	}
+
 	inline const YAML::Node* FindValueOf(const YAML::Node& parent, const std::string& k0, const std::string& k1, const std::string& k2 = std::string(), const std::string& k3 = std::string(), const std::string& k4 = std::string())
 	{
 		if (auto node = parent.FindValue(k0))
@@ -213,6 +223,21 @@ namespace FusionEngine
 					double framerate;
 					*node >> framerate;
 					m_DefaultDelay = 1.0 / framerate;
+				}
+
+				else if (auto node = currentAnimationNode->FindValue("showOnFinish"))
+				{
+					*node >> m_ShowOnFinish;
+				}
+
+				else if (auto node = currentAnimationNode->FindValue("loop"))
+				{
+					*node >> m_PlayLoop;
+				}
+
+				else if (auto node = currentAnimationNode->FindValue("pingpong"))
+				{
+					*node >> m_PlayPingPong;
 				}
 
 				auto& framesNode = (*currentAnimationNode)["frames"];
@@ -350,6 +375,9 @@ namespace FusionEngine
 			{
 				sprite.set_frame_offset(it->first, CL_Point(it->second.x, it->second.y));
 			}
+			sprite.set_play_loop(m_Animation->GetPlayLoop());
+			sprite.set_play_pingpong(m_Animation->GetPlayPingPong());
+			sprite.set_show_on_finish(m_Animation->GetShowOnFinish());
 		}
 		return sprite;
 	}
