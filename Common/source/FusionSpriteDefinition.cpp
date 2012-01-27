@@ -225,17 +225,17 @@ namespace FusionEngine
 					m_DefaultDelay = 1.0 / framerate;
 				}
 
-				else if (auto node = currentAnimationNode->FindValue("showOnFinish"))
+				if (auto node = currentAnimationNode->FindValue("showOnFinish"))
 				{
 					*node >> m_ShowOnFinish;
 				}
 
-				else if (auto node = currentAnimationNode->FindValue("loop"))
+				if (auto node = currentAnimationNode->FindValue("loop"))
 				{
 					*node >> m_PlayLoop;
 				}
 
-				else if (auto node = currentAnimationNode->FindValue("pingpong"))
+				if (auto node = currentAnimationNode->FindValue("pingpong"))
 				{
 					*node >> m_PlayPingPong;
 				}
