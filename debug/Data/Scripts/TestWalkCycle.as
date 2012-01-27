@@ -126,8 +126,9 @@ class TestWalkCycle : ScriptComponent
 		//~ {
 			//~ isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:down";
 		//~ }
-		if (irigidbody.Velocity.value.x < 0.01f && irigidbody.Velocity.value.x > -0.01f &&
-			irigidbody.Velocity.value.y < 0.01f && irigidbody.Velocity.value.y > -0.01f)
+		if (!isprite.AnimationFinished.value &&
+			(irigidbody.Velocity.value.x < 0.01f && irigidbody.Velocity.value.x > -0.01f &&
+			irigidbody.Velocity.value.y < 0.01f && irigidbody.Velocity.value.y > -0.01f))
 		{
 			isprite.Looping = false;
 		}
