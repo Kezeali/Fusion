@@ -192,10 +192,12 @@ namespace FusionEngine
 				m_Sprite.update(int(elapsed * 1000));
 
 				if (m_Sprite.is_finished() != AnimationFinished.Get())
+				{
 					AnimationFinished.MarkChanged();
+					Playing.MarkChanged();
+				}
 
-				
-				if (frameBefore != m_Sprite.get_current_frame() || m_Sprite.get_current_frame() != AnimationFrame.Get())
+				if (frameBefore != m_Sprite.get_current_frame())
 					AnimationFrame.MarkChanged();
 			}
 
@@ -652,7 +654,7 @@ namespace FusionEngine
 	void CLSprite::SetAnimationFrame(int frame)
 	{
 		if (!m_Sprite.is_null())
-			return m_Sprite.set_frame(frame);
+			m_Sprite.set_frame(frame);
 	}
 	
 	int CLSprite::GetAnimationFrame() const
@@ -663,10 +665,29 @@ namespace FusionEngine
 			return AnimationFrame.Get();
 	}
 
+	void CLSprite::SetPlaying(bool play)
+	{
+		if (!m_Sprite.is_null())
+		{
+			if (play)
+				m_Sprite.restart();
+			else
+				m_Sprite.finish();
+		}
+	}
+	
+	bool CLSprite::IsPlaying() const
+	{
+		if (!m_Sprite.is_null())
+			return !m_Sprite.is_finished();
+		else
+			return Playing.Get();
+	}
+
 	void CLSprite::SetLooping(bool loop)
 	{
 		if (!m_Sprite.is_null())
-			return m_Sprite.set_play_loop(loop);
+			m_Sprite.set_play_loop(loop);
 	}
 	
 	bool CLSprite::IsLooping() const
