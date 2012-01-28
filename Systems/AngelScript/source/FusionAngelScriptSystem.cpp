@@ -39,6 +39,10 @@
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
 
+// Collision handling
+#include "FusionBox2DSystem.h"
+#include "FusionB2ContactListenerASScript.h"
+
 #include "FusionPlayerRegistry.h"
 #include "FusionInputHandler.h"
 #include "FusionScriptInputEvent.h"
@@ -492,6 +496,15 @@ namespace FusionEngine
 
 	void AngelScriptSystem::RegisterScriptInterface(asIScriptEngine* engine)
 	{
+		ScriptInputEvent::Register(engine);
+		ScriptCollisionEvent::Register(engine);
+
+		{
+			int r = engine->RegisterGlobalFunction("bool isLocal(PlayerID)",
+				asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
+			FSN_ASSERT(r >= 0);
+		}
+
 		ASScript::ScriptInterface::Register(engine);
 
 		engine->RegisterObjectMethod("EntityInstantiator", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
@@ -511,6 +524,8 @@ namespace FusionEngine
 		
 		BuildScripts(true);
 
+		CreateScriptMethodExecutorMap();
+
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
 		m_ASTaskB = new AngelScriptTaskB(this, m_ScriptManager);
 	}
@@ -519,6 +534,22 @@ namespace FusionEngine
 	{
 		delete m_ASTaskB;
 		delete m_ASTask;
+	}
+
+	void AngelScriptWorld::OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world)
+	{
+		if (auto box2d = std::dynamic_pointer_cast<Box2DWorld>(other_world))
+		{
+			m_Box2dWorld = box2d;
+		}
+	}
+
+	void AngelScriptWorld::OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world)
+	{
+		if (auto box2d = std::dynamic_pointer_cast<Box2DWorld>(other_world))
+		{
+			m_Box2dWorld = box2d;
+		}
 	}
 
 	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
@@ -630,6 +661,11 @@ namespace FusionEngine
 			"pointer_id = initEntityPointer(owner, obj);\n"
 			"_setAppObj(obj);\n"
 			"}\n"
+			"EntityWrapper(const EntityW &in obj, const EntityW &in owner_, uint32 id) {\n"
+			"app_obj = obj;\n"
+			"owner = owner_;\n"
+			"pointer_id = id;\n"
+			"}\n"
 			"~EntityWrapper() {\n"
 			"deinitEntityPointer(owner, pointer_id, app_obj.lock());\n"
 			"}\n"
@@ -665,6 +701,25 @@ namespace FusionEngine
 			" { return EntityWrapper(instantiator.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
 			"\n" +
 			convenientComponentProperties +
+			"}\n"
+
+			"class CollisionEvent\n"
+			"{\n"
+			"CollisionEvent() {}\n"
+			"CollisionEvent(ScrCollisionEvent@ obj, EntityWrapper@ other) {\n"
+			"@internal = @obj;\n"
+			"@other_entity = @other;\n"
+			//"owner = owner_;\n"
+			//"pointer_id = pointer_id_;\n"
+			"}\n"
+			"private ScrCollisionEvent@ internal;\n"
+			//"private EntityW owner;\n"
+			//"private uint32 pointer_id;\n"
+			"private EntityWrapper@ other_entity;\n"
+			"ScrCollisionEvent@ getRaw() const { return internal; }\n"
+			"IRigidBody@ get_body() const { return internal.get_body(); }\n"
+			"IFixture@ get_fixture() const { return internal.get_fixture(); }\n"
+			"EntityWrapper@ get_entity() const { return other_entity; }\n"
 			"}\n"
 
 			"class EntityRapper\n"
@@ -1174,17 +1229,32 @@ namespace FusionEngine
 					SendToConsole(e.m_Message);
 				}
 			}
+
+			if (m_Box2dWorld)
+			{
+				bool hasCollisionHandler = script->GetMethodId("void onSensorEnter(CollisionEvent@)") >= 0;
+				hasCollisionHandler |= script->GetMethodId("void onSensorExit(CollisionEvent@)") >= 0;
+				hasCollisionHandler |= script->GetMethodId("void onCollisionEnter(CollisionEvent@)") >= 0;
+				hasCollisionHandler |= script->GetMethodId("void onCollisionExit(CollisionEvent@)") >= 0;
+				if (hasCollisionHandler)
+				{
+					m_Box2dWorld->AddContactListener(script->GetContactListener());
+				}
+			}
+			// Initialise the method index
+			for (auto it = m_ScriptMethodExecutors.begin(); it != m_ScriptMethodExecutors.end(); ++it)
+			{
+				script->GetMethodId(it->first);
+			}
 		}
+
 		return true;
 	}
 
 	void AngelScriptTaskB::Update(const float delta)
 	{
-		{
 		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
 		std::vector<boost::intrusive_ptr<ASScript>> notInstantiated;
-
-		//tbb::spin_mutex mutex;
 
 		auto instantiate_objects = [&](const tbb::blocked_range<size_t>& range)
 		{
@@ -1209,16 +1279,69 @@ namespace FusionEngine
 		};
 
 		m_AngelScriptWorld->m_Updating = true;
-//#ifdef FSN_PARALLEL_SCRIPT_EXECUTION
-//		tbb::parallel_for(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()), instantiate_objects);
-//#else
+
 		instantiate_objects(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()));
-//#endif
+
 		m_AngelScriptWorld->m_Updating = false;
 
 		scripts_to_instantiate.clear();
 		scripts_to_instantiate.swap(notInstantiated);
-		} // scope for instantiate_objects lambda
+	}
+
+	void AngelScriptWorld::CreateScriptMethodExecutorMap()
+	{
+		m_ScriptMethodExecutors["void onSensorEnter(CollisionEvent@)"];
+		m_ScriptMethodExecutors["void onSensorExit(CollisionEvent@)"];
+
+		m_ScriptMethodExecutors["void onCollisionEnter(CollisionEvent@)"];
+		m_ScriptMethodExecutors["void onCollisionExit(CollisionEvent@)"];
+
+		m_ScriptMethodExecutors["void onInput(InputEvent@)"];
+		m_ScriptMethodExecutors["void update()"];
+	}
+
+	bool ExecuteCollisionEvent(const boost::intrusive_ptr<asIScriptContext>& ctx, const boost::intrusive_ptr<ASScript>& script, const boost::intrusive_ptr<ScriptCollisionEvent>& ev)
+	{
+		auto module = script->GetScriptModule();
+
+		if (!module)
+			return false;
+
+		int id = module->GetTypeIdByDecl("CollisionEvent");
+
+		if (id >= 0)
+		{
+			auto scriptEventType = ctx->GetEngine()->GetObjectTypeById(id);
+			auto ctor = ScriptUtils::Calling::Caller::FactoryCaller(scriptEventType, "ScrCollisionEvent@, EntityWrapper@");
+
+			if (ctor)
+			{
+				//auto otherEntityWrapper = script->CreateEntityWrapper(ev->GetOtherEntity().lock());
+
+				ev->addRef();
+				//otherEntityWrapper->AddRef();
+				auto scriptEv = *static_cast<asIScriptObject**>(ctor(ev.get(), nullptr));
+				if (scriptEv)
+				{
+					scriptEv->AddRef();
+					ctx->SetArgObject(0, scriptEv);
+					int r = ctx->Execute();
+					if (r == asEXECUTION_SUSPENDED)
+					{
+						// TODO: write yeild handling function
+						//script->m_ActiveCoroutines.push_back(ctx);
+					}
+				}
+				else
+				{
+					ev->release();
+					//otherEntityWrapper->Release();
+				}
+
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void AngelScriptTask::Update(const float delta)
@@ -1265,56 +1388,99 @@ namespace FusionEngine
 					// Conditional coroutines (not generated by yields, as they were handled and earased from this container already)
 					for (auto it = script->m_ActiveCoroutinesWithConditions.begin(), end = script->m_ActiveCoroutinesWithConditions.end(); it != end; ++it)
 					{
+						FSN_ASSERT(it->second.new_ctx);
 						script->m_ActiveCoroutines.push_back(std::make_pair(it->second.new_ctx, std::move(it->second)));
 					}
 					script->m_ActiveCoroutinesWithConditions.clear();
 
-					if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
 					{
-						int localPlayer = (int)PlayerRegistry::GetPlayer(script->GetParent()->GetOwnerID()).LocalIndex;
-						auto playerInputEventsEntry = m_PlayerInputEvents.find(localPlayer);
-						if (playerInputEventsEntry != m_PlayerInputEvents.end())
+						boost::intrusive_ptr<ScriptCollisionEvent> ev;
+						while (script->PopCollisionEnterEvent(ev))
 						{
-							auto& eventQueue = playerInputEventsEntry->second;
-							for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
+							if (!ev->m_Sensor)
 							{
-								auto &queuedEvent = *it;//eventQueue.front();
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onInput(InputEvent@)"))
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onCollisionEnter(CollisionEvent@)"))
+									ExecuteCollisionEvent(ctx, script, ev);
+							}
+							else
+							{
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onSensorEnter(CollisionEvent@)"))
+									ExecuteCollisionEvent(ctx, script, ev);
+							}
+						}
+						while (script->PopCollisionExitEvent(ev))
+						{
+							if (!ev->m_Sensor)
+							{
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onCollisionExit(CollisionEvent@)"))
+									ExecuteCollisionEvent(ctx, script, ev);
+							}
+							else
+							{
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onSensorExit(CollisionEvent@)"))
+									ExecuteCollisionEvent(ctx, script, ev);
+							}
+						}
+					}
+
+					for (auto mit = script->m_ScriptMethods.begin(); mit != script->m_ScriptMethods.end(); ++mit)
+					{
+						// Input event handler
+						if (mit->first == "void onInput(InputEvent@)")
+						{
+							if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
+							{
+								int localPlayer = (int)PlayerRegistry::GetPlayer(script->GetParent()->GetOwnerID()).LocalIndex;
+								auto playerInputEventsEntry = m_PlayerInputEvents.find(localPlayer);
+								if (playerInputEventsEntry != m_PlayerInputEvents.end())
 								{
-									auto inputEvent = new ScriptInputEvent(queuedEvent);
-									ctx->SetArgObject(0, inputEvent);
-									int r = ctx->Execute();
-									if (r == asEXECUTION_SUSPENDED)
+									auto& eventQueue = playerInputEventsEntry->second;
+									for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
 									{
-										// TODO: write yeild handling function
-										//script->m_ActiveCoroutines.push_back(ctx);
+										auto &queuedEvent = *it;//eventQueue.front();
+										if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+										{
+											auto inputEvent = new ScriptInputEvent(queuedEvent);
+											ctx->SetArgObject(0, inputEvent);
+											int r = ctx->Execute();
+											if (r == asEXECUTION_SUSPENDED)
+											{
+												// TODO: write yeild handling function
+												//script->m_ActiveCoroutines.push_back(ctx);
+											}
+										}
+										else
+										{
+											break;
+										}
 									}
 								}
-								else
+							}
+						}
+
+						// Update method
+						else if (mit->first == "void update()")
+						{
+							if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+							{
+								int r = ctx->Execute();
+								if (r == asEXECUTION_SUSPENDED)
 								{
-									break;
+									ConditionalCoroutine cco;
+									// Check whether a condition was registered when this yield occured
+									auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
+									if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
+									{
+										cco = std::move(conditionEntry->second);
+										script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
+									}
+									script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
 								}
 							}
 						}
+
+						script->CheckChangedPropertiesIn();
 					}
-					if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void update()"))
-					{
-						int r = ctx->Execute();
-						if (r == asEXECUTION_SUSPENDED)
-						{
-							ConditionalCoroutine cco;
-							// Check whether a condition was registered when this yield occured
-							auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
-							if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
-							{
-								cco = std::move(conditionEntry->second);
-								script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
-							}
-							script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
-						}
-					}
-					
-					script->CheckChangedPropertiesIn();
 				}
 			}
 		};

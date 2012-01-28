@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionBox2DComponent.h" />
+    <ClInclude Include="include\FusionBox2DContactListener.h" />
     <ClInclude Include="include\FusionBox2DSystem.h" />
     <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>

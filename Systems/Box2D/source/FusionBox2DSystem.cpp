@@ -32,12 +32,13 @@
 #include "FusionBox2DComponent.h"
 #include "FusionDeltaTime.h"
 #include "FusionMaths.h"
+#include "FusionBox2DContactListener.h"
 
 // TEMP: For authority contact listener:
 #include "FusionEntity.h"
 #include "FusionPlayerRegistry.h"
 #include "FusionNetworkManager.h"
-#include "FusionRender2DComponent.h"
+//#include "FusionRender2DComponent.h"
 
 #include <tbb/parallel_do.h>
 
@@ -45,6 +46,52 @@ namespace FusionEngine
 {
 
 	using namespace Maths;
+
+	class Box2DContactListenerDelegator : public b2ContactListener
+	{
+	public:
+		void AddListener(const std::shared_ptr<Box2DContactListener>& listener)
+		{
+			m_Listeners.insert(listener);
+		}
+
+		void RemoveListener(const std::shared_ptr<Box2DContactListener>& listener)
+		{
+			m_Listeners.erase(listener);
+		}
+
+	private:
+		void BeginContact(b2Contact* contact)
+		{
+			for (auto it = m_Listeners.begin(); it != m_Listeners.end(); ++it)
+			{
+				(*it)->BeginContact(contact);
+			}
+		}
+		void EndContact(b2Contact* contact)
+		{
+			for (auto it = m_Listeners.begin(); it != m_Listeners.end(); ++it)
+			{
+				(*it)->EndContact(contact);
+			}
+		}
+		void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
+		{
+			for (auto it = m_Listeners.begin(); it != m_Listeners.end(); ++it)
+			{
+				(*it)->PreSolve(contact, oldManifold);
+			}
+		}
+		void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse)
+		{
+			for (auto it = m_Listeners.begin(); it != m_Listeners.end(); ++it)
+			{
+				(*it)->PostSolve(contact, impulse);
+			}
+		}
+
+		std::set<std::shared_ptr<Box2DContactListener>> m_Listeners;
+	};
 
 	Box2DSystem::Box2DSystem()
 	{
@@ -55,30 +102,30 @@ namespace FusionEngine
 		return std::make_shared<Box2DWorld>(this);
 	}
 
-	class AuthorityContactFilter : public b2ContactFilter
-	{
-	public:
-		bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
-		{
-			Box2DBody* bodyComA = static_cast<Box2DBody*>(fixtureA->GetBody()->GetUserData());
-			Box2DBody* bodyComB = static_cast<Box2DBody*>(fixtureB->GetBody()->GetUserData());
-			if (bodyComA && bodyComB)
-			{
-				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
-				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
-				authA = std::max(ownerA, authA); authB = std::max(ownerB, authB);
-				if (authA != 0 && authB != 0 && !PlayerRegistry::IsLocal(authA) && !PlayerRegistry::IsLocal(authB))
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-	};
+	//class AuthorityContactFilter : public b2ContactFilter
+	//{
+	//public:
+	//	bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
+	//	{
+	//		Box2DBody* bodyComA = static_cast<Box2DBody*>(fixtureA->GetBody()->GetUserData());
+	//		Box2DBody* bodyComB = static_cast<Box2DBody*>(fixtureB->GetBody()->GetUserData());
+	//		if (bodyComA && bodyComB)
+	//		{
+	//			auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
+	//			auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
+	//			authA = std::max(ownerA, authA); authB = std::max(ownerB, authB);
+	//			if (authA != 0 && authB != 0 && !PlayerRegistry::IsLocal(authA) && !PlayerRegistry::IsLocal(authB))
+	//			{
+	//				return false;
+	//			}
+	//		}
+	//		return true;
+	//	}
+	//};
 
 #define FSN_PARALLEL_PROC_AUTH
 
-	class TransformPinner : public b2ContactListener
+	class TransformPinner : public Box2DContactListener
 	{
 	public:
 		TransformPinner()
@@ -130,10 +177,6 @@ namespace FusionEngine
 			//}
 		}
 
-		void PostSolve(b2Contact* contact, const b2Manifold* oldManifold)
-		{
-		}
-
 		void Unpin()
 		{
 			for (auto it = pinnedBodies.begin(), end = pinnedBodies.end(); it != end; ++it)
@@ -143,10 +186,10 @@ namespace FusionEngine
 		}
 	};
 
-	class AuthorityContactListener
+	class AuthorityContactManager
 	{
 	public:
-		AuthorityContactListener()
+		AuthorityContactManager()
 		{
 		}
 
@@ -245,10 +288,13 @@ namespace FusionEngine
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity);
 
-		m_AuthContactListener = new AuthorityContactListener();
-		m_TransformPinner = new TransformPinner();
-		//m_World->SetContactListener(m_AuthContactListener);
-		m_World->SetContactListener(m_TransformPinner);
+		m_AuthorityContactManager = new AuthorityContactManager();
+
+		m_ContactListenerDelegator = new Box2DContactListenerDelegator();
+		m_World->SetContactListener(m_ContactListenerDelegator);
+
+		//m_TransformPinner = std::make_shared<TransformPinner>();
+		//m_ContactListenerDelegator->AddListener(m_TransformPinner);
 
 		m_B2DTask = new Box2DTask(this, m_World);
 		m_B2DInterpTask = new Box2DInterpolateTask(this);
@@ -261,8 +307,19 @@ namespace FusionEngine
 		delete m_B2DInterpTask;
 		delete m_B2DTask;
 		delete m_World;
-		delete m_AuthContactListener;
-		delete m_TransformPinner;
+		delete m_ContactListenerDelegator;
+
+		delete m_AuthorityContactManager;
+	}
+
+	void Box2DWorld::AddContactListener(const std::shared_ptr<Box2DContactListener>& listener)
+	{
+		m_ContactListenerDelegator->AddListener(listener);
+	}
+
+	void Box2DWorld::RemoveContactListener(const std::shared_ptr<Box2DContactListener>& listener)
+	{
+		m_ContactListenerDelegator->RemoveListener(listener);
 	}
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
@@ -507,7 +564,7 @@ namespace FusionEngine
 
 		// Setup property synch by marking them as changed and
 		//  process interactions which affect authority (network sync stuff)
-		m_B2DSysWorld->m_AuthContactListener->ClearInteractions();
+		m_B2DSysWorld->m_AuthorityContactManager->ClearInteractions();
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
@@ -532,7 +589,7 @@ namespace FusionEngine
 					const PlayerID authority = /*body->GetParent()->GetOwnerID();*/((body->GetParent()->GetOwnerID() != 0) ? body->GetParent()->GetOwnerID() : body->GetParent()->GetAuthority());
 					if (authority != 0)
 					{
-						m_B2DSysWorld->m_AuthContactListener->WalkInteractions(authority, body.get());
+						m_B2DSysWorld->m_AuthorityContactManager->WalkInteractions(authority, body.get());
 					}
 				}
 				else
@@ -559,8 +616,8 @@ namespace FusionEngine
 		}
 		//m_B2DSysWorld->m_TransformPinner->Unpin();
 
-		m_B2DSysWorld->m_AuthContactListener->ParseAuthority();
-		m_B2DSysWorld->m_AuthContactListener->ClearInteractions();
+		m_B2DSysWorld->m_AuthorityContactManager->ParseAuthority();
+		m_B2DSysWorld->m_AuthorityContactManager->ClearInteractions();
 	}
 
 	Box2DInterpolateTask::Box2DInterpolateTask(Box2DWorld* sysworld)

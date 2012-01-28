@@ -364,14 +364,6 @@ namespace FusionEngine
 
 		engine->RegisterTypedef("PlayerID", "uint8");
 
-		ScriptInputEvent::Register(engine);
-
-		{
-			int r = engine->RegisterGlobalFunction("bool isLocal(PlayerID)",
-				asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
-			FSN_ASSERT(r >= 0);
-		}
-
 		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
 		struct ScriptRect
 		{

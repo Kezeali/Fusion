@@ -50,6 +50,8 @@ namespace FusionEngine
 
 	class InputEvent;
 
+	class Box2DWorld;
+
 	class ASScript;
 
 	class AngelScriptWorld;
@@ -82,6 +84,11 @@ namespace FusionEngine
 	public:
 		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
 		~AngelScriptWorld();
+
+		void CreateScriptMethodExecutorMap();
+
+		void OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world);
+		void OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world);
 
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
@@ -164,6 +171,10 @@ namespace FusionEngine
 		asIScriptEngine* m_Engine;
 		AngelScriptTask* m_ASTask;
 		AngelScriptTaskB* m_ASTaskB;
+
+		std::shared_ptr<Box2DWorld> m_Box2dWorld;
+
+		std::unordered_map<std::string, std::function<void (ASScript*, int)>> m_ScriptMethodExecutors;
 
 		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
 

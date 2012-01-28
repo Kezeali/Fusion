@@ -32,6 +32,8 @@
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
 
+#include "FusionB2ContactListenerASScript.h"
+
 #include "FusionException.h"
 #include "FusionLogger.h"
 
@@ -388,7 +390,7 @@ namespace FusionEngine
 
 	// TODO: implement a asScriptObject* MakeEntityWrapper(activeScript, entityReferenced)
 	//! Init an entity wrapper in an arbitory object
-	static uint32_t InitEntityPtr(const EntityPtr& referenceHolder, const EntityPtr& entityReferenced)
+	static std::uint32_t InitEntityPtr(const EntityPtr& referenceHolder, const EntityPtr& entityReferenced)
 	{
 		if (entityReferenced)
 		{
@@ -481,6 +483,47 @@ namespace FusionEngine
 		}
 	}
 
+	std::uint32_t ASScript::CreateEntityWrapperId(const EntityPtr& entityReferenced)
+	{
+		return InitEntityPtr(GetParent()->shared_from_this(), entityReferenced);
+	}
+
+	asIScriptObject* ASScript::CreateEntityWrapper(const EntityPtr& entityReferenced)
+	{
+		if (!m_ScriptObject)
+			return nullptr;
+		if (!m_ScriptObject->object)
+			return nullptr;
+
+		int entityTypeId = m_ScriptObject->object->GetEngine()->GetTypeIdByDecl("EntityW");
+
+		FSN_ASSERT(GetParent());
+		auto parentEntity = GetParent()->shared_from_this();
+
+		// Alloc a wrapper
+		const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
+		asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+
+		// Init the wrapper
+		auto token = InitEntityPtr(parentEntity, entityReferenced);
+
+		{
+			FSN_ASSERT(entityWrapper->GetPropertyTypeId(0) == entityTypeId && entityWrapper->GetPropertyTypeId(1) == entityTypeId &&
+				entityWrapper->GetPropertyTypeId(2) == asTYPEID_UINT32);
+
+			auto app_obj = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(0));
+			*app_obj = entityReferenced;
+
+			auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
+			*owner = parentEntity;
+
+			auto pointerId = static_cast<std::uint32_t*>(entityWrapper->GetAddressOfProperty(2));
+			*pointerId = token;
+		}
+
+		return entityWrapper;
+	}
+
 	ASScript::ASScript()
 		: m_ReloadScript(false),
 		m_ModuleReloaded(false),
@@ -494,23 +537,40 @@ namespace FusionEngine
 		m_ModuleLoadedConnection.disconnect();
 	}
 
+	std::shared_ptr<Box2DContactListener> ASScript::GetContactListener()
+	{
+		if (m_ContactListener)
+			return m_ContactListener;
+		else
+			return m_ContactListener = std::make_shared<ASScriptB2ContactListener>(this);
+	}
+
+	bool ASScript::PopCollisionEnterEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev)
+	{
+		if (m_ContactListener)
+			return m_ContactListener->m_CollisionEnterEvents.try_pop(ev);
+		else
+			return false;
+	}
+
+	bool ASScript::PopCollisionExitEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev)
+	{
+		if (m_ContactListener)
+			return m_ContactListener->m_CollisionExitEvents.try_pop(ev);
+		else
+			return false;
+	}
+
 	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, const std::string& decl)
 	{
-		boost::intrusive_ptr<asIScriptContext> ctx;
+		if (!m_ScriptObject)
+			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
+
 		auto _where = m_ScriptMethods.find(decl);
 		if (_where != m_ScriptMethods.end())
 		{
-			ctx = script_manager->CreateContext();
-			int r = ctx->Prepare(_where->second);
-			if (r >= 0)
-			{
-				ctx->SetObject(m_ScriptObject->object.get());
-			}
-			else
-			{
-				ctx->SetObject(NULL);
-				ctx.reset();
-			}
+			return PrepareMethod(script_manager, _where->second);
+			
 			//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
 			//m_ScriptManager->ConnectToCaller(caller);
 		}
@@ -521,20 +581,45 @@ namespace FusionEngine
 
 			int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 
-			ctx = script_manager->CreateContext();
-			int r = ctx->Prepare(funcId);
-			if (r >= 0)
+			if (auto ctx = PrepareMethod(script_manager, funcId))
 			{
-				ctx->SetObject(m_ScriptObject->object.get());
 				m_ScriptMethods[decl] = funcId;
-			}
-			else
-			{
-				ctx->SetObject(NULL);
-				ctx.reset();
+				return ctx;
 			}
 		}
+
+		return boost::intrusive_ptr<asIScriptContext>();
+	}
+
+	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, int id)
+	{
+		auto ctx = script_manager->CreateContext();
+
+		int r = ctx->Prepare(id);
+		if (r >= 0)
+		{
+			ctx->SetObject(m_ScriptObject->object.get());
+		}
+		else
+		{
+			ctx->SetObject(NULL);
+			ctx.reset();
+		}
+
 		return ctx;
+	}
+
+	int ASScript::GetMethodId(const std::string& decl)
+	{
+		if (!m_ScriptObject)
+			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
+
+		int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+		if (funcId >= 0)
+		{
+			m_ScriptMethods[decl] = funcId;
+		}
+		return funcId;
 	}
 
 	void ASScript::Yield()

@@ -34,5 +34,8 @@
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionBox2DContactListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -102,6 +102,9 @@ namespace FusionEngine
 			return message;
 		}
 
+		virtual void OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world) {}
+		virtual void OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world) {}
+
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
 		//! Instanciate method for physics / transform components

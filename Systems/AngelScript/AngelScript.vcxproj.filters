@@ -14,6 +14,8 @@
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionScriptCollisionEvent.h" />
+    <ClInclude Include="include\FusionB2ContactListenerASScript.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

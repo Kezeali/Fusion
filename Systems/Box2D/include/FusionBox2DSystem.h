@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -49,6 +49,9 @@ namespace FusionEngine
 	class Box2DTask;
 	class Box2DInterpolateTask;
 
+	class Box2DContactListenerDelegator;
+	class Box2DContactListener;
+
 	//! Creates Box2DWorld
 	class Box2DSystem : public IComponentSystem
 	{
@@ -66,7 +69,7 @@ namespace FusionEngine
 		std::shared_ptr<ISystemWorld> CreateWorld();
 	};
 
-	class AuthorityContactListener;
+	class AuthorityContactManager;
 	class TransformPinner;
 
 	//! Manages a b2World
@@ -78,6 +81,9 @@ namespace FusionEngine
 		//! CTOR
 		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
+
+		void AddContactListener(const std::shared_ptr<Box2DContactListener>& listener);
+		void RemoveContactListener(const std::shared_ptr<Box2DContactListener>& listener);
 
 		// NOTE: due to how Box2DBody destruction is handled, Box2DWorld should
 		//  NEVER have a Clear method (that clears the b2World), nor should you
@@ -104,12 +110,14 @@ namespace FusionEngine
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
 
-		AuthorityContactListener* m_AuthContactListener;
-		TransformPinner* m_TransformPinner;
+		AuthorityContactManager* m_AuthorityContactManager;
+		std::shared_ptr<TransformPinner> m_TransformPinner;
 
 		b2World* m_World;
 		Box2DTask* m_B2DTask;
 		Box2DInterpolateTask* m_B2DInterpTask;
+
+		Box2DContactListenerDelegator* m_ContactListenerDelegator;
 	};
 
 	//! Updates Box2D-based physics components

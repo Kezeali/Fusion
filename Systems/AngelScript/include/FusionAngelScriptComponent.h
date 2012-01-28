@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -42,6 +42,7 @@
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 
+#include <tbb/concurrent_queue.h>
 #include <physfs.h>
 
 #ifdef Yield
@@ -52,6 +53,10 @@ class CScriptAny;
 
 namespace FusionEngine
 {
+
+	class ScriptCollisionEvent;
+	class Box2DContactListener;
+	class ASScriptB2ContactListener;
 
 	class CLBinaryStream : public asIBinaryStream
 	{
@@ -158,7 +163,17 @@ namespace FusionEngine
 		ASScript();
 		virtual ~ASScript();
 
+		std::shared_ptr<Box2DContactListener> GetContactListener();
+
+		bool HasContactListener() { return (bool)m_ContactListener; }
+
+		bool PopCollisionEnterEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev);
+		bool PopCollisionExitEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev);
+
 		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, const std::string& decl);
+		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, int id);
+
+		int GetMethodId(const std::string& decl);
 
 		void Yield();
 		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
@@ -166,6 +181,10 @@ namespace FusionEngine
 		void CreateCoroutine(asIScriptFunction* function);
 		CScriptAny* GetProperty(unsigned int index);
 		bool SetProperty(unsigned int index, void* ref, int typeId);
+
+		std::uint32_t CreateEntityWrapperId(const EntityPtr& entityReferenced);
+
+		asIScriptObject* CreateEntityWrapper(const EntityPtr& entityReferenced);
 
 		class ScriptInterface : public GarbageCollected<ScriptInterface>
 		{
@@ -203,6 +222,8 @@ namespace FusionEngine
 		void CheckChangedPropertiesIn();
 		
 		void OnModuleLoaded(ResourceDataPtr resource);
+
+		asIScriptModule* GetScriptModule() const { return m_Module.Get(); }
 
 		// Called after the script is loaded
 		bool InitialiseEntityWrappers();
@@ -246,6 +267,8 @@ namespace FusionEngine
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		std::vector<PropInfo> m_ScriptPropertyInfo;
+
+		std::shared_ptr<ASScriptB2ContactListener> m_ContactListener;
 
 		IComponent::SerialiseMode m_LastDeserMode;
 		std::vector<boost::intrusive_ptr<CScriptAny>> m_CachedProperties;

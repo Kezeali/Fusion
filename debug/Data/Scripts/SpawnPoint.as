@@ -1,7 +1,7 @@
 #uses ITransform
 #uses IRigidBody
 #uses ISprite
-#uses TestWalkCycle script_b
+#uses TestWalkCycle walkcycle
 #uses PseudoI notai
 
 class SpawnPoint : ScriptComponent
@@ -35,7 +35,7 @@ class SpawnPoint : ScriptComponent
 		instantiator.addComponent(newEnt, "b2Circle", "");
 		instantiator.addComponent(newEnt, "CLSprite", "sprite_main");
 		instantiator.addComponent(newEnt, "CLSprite", "sprite_shadow");
-		instantiator.addComponent(newEnt, "TestWalkCycle", "script_b");
+		instantiator.addComponent(newEnt, "TestWalkCycle", "walkcycle");
 		instantiator.addComponent(newEnt, "StreamingCamera", "");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_main").get());
 		if (sprite is null)
@@ -132,12 +132,12 @@ class SpawnPoint : ScriptComponent
 			
 			if (entityA !is null)
 			{
-				entityA.script_b.speed = 3.0f;
+				entityA.walkcycle.speed = 3.0f;
 			}
 			
 			if (entityB !is null)
 			{
-				entityB.script_b.speed = 3.0f;
+				entityB.walkcycle.speed = 3.0f;
 			}
 			
 			isprite.ImagePath = "";

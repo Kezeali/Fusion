@@ -92,7 +92,6 @@ class TestWalkCycle : ScriptComponent
 		Vector currentVelocity;
 		if (entity.input.getButton("up"))
 		{
-			console.println("at " + speed);
 			currentVelocity.y = -speed;
 		}
 		if (entity.input.getButton("down"))

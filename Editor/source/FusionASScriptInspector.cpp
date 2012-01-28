@@ -209,18 +209,18 @@ namespace FusionEngine { namespace Inspectors
 		auto typeName = object->GetScriptInterface()->object->GetObjectType()->GetName();
 		Rocket::Core::Factory::InstanceElementText(this, "Script Type: " + Rocket::Core::String(typeName));
 
-		auto collapsible_section = Rocket::Core::Factory::InstanceElement(this, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
-		this->AppendChild(collapsible_section);
+		//auto collapsible_section = Rocket::Core::Factory::InstanceElement(this, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
+		//this->AppendChild(collapsible_section);
 
 		const auto& props = object->GetScriptProperties();
 		unsigned int index = 0;
 		for (auto it = props.begin(), end = props.end(); it != end; ++it, ++index)
 		{
 			const auto& prop = *it;
-			AddPropertyControl(collapsible_section, index, prop.name, prop.type_id);
+			AddPropertyControl(this, index, prop.name, prop.type_id);
 		}
 
-		collapsible_section->RemoveReference();
+		//collapsible_section->RemoveReference();
 
 		ResetUIValues();
 	}

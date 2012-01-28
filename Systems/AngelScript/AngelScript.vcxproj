@@ -81,6 +81,8 @@
   <ItemGroup>
     <ClInclude Include="include\FusionAngelScriptComponent.h" />
     <ClInclude Include="include\FusionAngelScriptSystem.h" />
+    <ClInclude Include="include\FusionB2ContactListenerASScript.h" />
+    <ClInclude Include="include\FusionScriptCollisionEvent.h" />
     <ClInclude Include="include\FusionScriptInputEvent.h" />
     <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>

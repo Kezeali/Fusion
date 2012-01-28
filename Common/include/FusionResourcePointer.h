@@ -118,15 +118,9 @@ namespace FusionEngine
 		}
 
 		//! Returns the resource data ptr
-		T* Get()
+		T* Get() const
 		{
 			return static_cast<T*>( m_Resource->GetDataPtr() );
-		}
-
-		//! Returns the resource data ptr
-		T const* Get() const
-		{
-			return static_cast<const T*>( m_Resource->GetDataPtr() );
 		}
 
 		//! Indirect member access operator.

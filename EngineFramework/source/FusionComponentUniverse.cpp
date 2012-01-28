@@ -44,18 +44,30 @@ namespace FusionEngine
 
 	void ComponentUniverse::AddWorld(const std::shared_ptr<ISystemWorld>& world)
 	{
-		m_Worlds.insert(world);
-
 		auto types = world->GetTypes();
 		for (auto it = types.begin(), end = types.end(); it != end; ++it)
 		{
 			m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, world));
 		}
+
+		for (auto it = m_Worlds.begin(); it != m_Worlds.end(); ++it)
+		{
+			(*it)->OnWorldAdded(world);
+			world->OnWorldAdded(*it);
+		}
+
+		m_Worlds.insert(world);
 	}
 
 	void ComponentUniverse::RemoveWorld(const std::shared_ptr<ISystemWorld>& world)
 	{
 		m_Worlds.erase(world);
+
+		for (auto it = m_Worlds.begin(); it != m_Worlds.end(); ++it)
+		{
+			world->OnWorldRemoved(*it);
+			(*it)->OnWorldRemoved(world);
+		}
 
 		m_ComponentTypes.by<tag::world>().erase(world);
 	}
