@@ -116,6 +116,7 @@ namespace FusionEngine
 		bool m_Fullscreen;
 
 		tbb::concurrent_queue<std::pair<std::string, bool>> m_SaveQueue;
+		tbb::spin_mutex m_LoadQueueMutex;
 		std::string m_SaveToLoad;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;

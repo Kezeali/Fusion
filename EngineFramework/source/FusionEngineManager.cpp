@@ -255,6 +255,7 @@ namespace FusionEngine
 
 	void EngineManager::EnqueueLoad(const std::string& name)
 	{
+		tbb::spin_mutex::scoped_lock lock(m_LoadQueueMutex);
 		m_SaveToLoad = name;
 	}
 
@@ -623,8 +624,14 @@ namespace FusionEngine
 						while (m_SaveQueue.try_pop(enqueued))
 							Save(enqueued.first, enqueued.second);
 					}
-					if (!m_SaveToLoad.empty())
-						Load(m_SaveToLoad);
+					{
+						tbb::spin_mutex::scoped_lock lock(m_LoadQueueMutex);
+						if (!m_SaveToLoad.empty())
+						{
+							Load(m_SaveToLoad);
+							m_SaveToLoad.clear();
+						}
+					}
 				}
 
 #ifdef FSN_PROFILING_ENABLED
