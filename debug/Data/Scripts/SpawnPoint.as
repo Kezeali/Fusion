@@ -171,7 +171,7 @@ class SpawnPoint : ScriptComponent
 			entityB.icamera.AngleEnabled = false;
 		}
 		
-		console.println("P" + numPlayers);
+		console.println("onAddPlayer" + numPlayers);
 		
 		if (numPlayers == 1)
 		{
@@ -216,8 +216,28 @@ class SpawnPoint : ScriptComponent
 
 		if (entityA !is null)
 		{
-			if (frames % 120 == 0)
+			if (frames % 60 == 0)
+			{
 				console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
+				
+				// Hack alert!
+				if (getNumLocalPlayers() == 1)
+				{
+					if (entityA !is null)
+						entityA.icamera.ViewportRect << Rect(0, 0, 1, 1);
+					if (entityB !is null)
+					{
+						entityB.icamera.ViewportRect << Rect(0, 0, 0, 0);
+					}
+				}
+				else if (getNumLocalPlayers() == 2)
+				{
+					if (entityA !is null)
+						entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+					if (entityB !is null)
+						entityB.icamera.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+				}
+			}
 		}
 	}
 }

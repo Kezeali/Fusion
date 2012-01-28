@@ -503,6 +503,10 @@ namespace FusionEngine
 			int r = engine->RegisterGlobalFunction("bool isLocal(PlayerID)",
 				asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
 			FSN_ASSERT(r >= 0);
+
+			r = engine->RegisterGlobalFunction("uint getNumLocalPlayers()",
+				asFUNCTION(PlayerRegistry::GetLocalPlayerCount), asCALL_CDECL);
+			FSN_ASSERT(r >= 0);
 		}
 
 		ASScript::ScriptInterface::Register(engine);
