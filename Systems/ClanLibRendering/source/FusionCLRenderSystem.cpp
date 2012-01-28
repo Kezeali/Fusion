@@ -85,10 +85,21 @@ namespace FusionEngine
 		m_Renderer = new Renderer(window.get_gc());
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
 		m_GUITask = new CLRenderGUITask(this, window, m_Renderer);
+
+		Console::getSingleton().BindCommand("phys_debug_draw", [this](const std::vector<std::string>& params)->std::string
+		{
+			if (params.size() == 1 || params[1] == "on")
+				this->m_PhysDebugDrawEnabled = true;
+			else
+				this->m_PhysDebugDrawEnabled = false;
+			return "";
+		});
 	}
 
 	CLRenderWorld::~CLRenderWorld()
 	{
+		Console::getSingleton().UnbindCommand("phys_debug_draw");
+
 		delete m_GUITask;
 		delete m_RenderTask;
 		delete m_Renderer;
