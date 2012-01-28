@@ -46,11 +46,12 @@ class SpawnPoint : ScriptComponent
 		//console.println(sprite.getType());
 		sprite.ImagePath = playerSprite;
 		sprite.AnimationPath = playerAnimation;
+		sprite.Offset << Vector(0.0f, -16.f);
 		//sprite.BaseAngle = 1.57f;
 		
 		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
 		shadow.ImagePath = "/Entities/character/shadow.png";
-		shadow.BaseAngle = 1.57f;
+		//shadow.BaseAngle = 1.57f;
 		//shadow.Scale << Vector(1.02f, 1.02f);
 		shadow.Alpha = 0.75f;
 		shadow.LocalDepth = -1;
