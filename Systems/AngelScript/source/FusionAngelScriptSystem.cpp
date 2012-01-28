@@ -979,6 +979,12 @@ namespace FusionEngine
 				rebuiltScript.component->m_Module->GetTypeIdByDecl("EntityWrapper@");
 			FSN_ASSERT(rebuiltScript.component->m_EntityWrapperTypeId >= 0);
 
+			if (rebuiltScript.component->m_EntityWrapperTypeId < 0)
+			{
+				SendToConsole("Failed to rebuild scripts");
+				break;
+			}
+
 			if (instantiateScript(rebuiltScript.component))
 			{
 				if (rebuiltScript.occasionalData)
