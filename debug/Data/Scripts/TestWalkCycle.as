@@ -17,6 +17,7 @@ class TestWalkCycle : ScriptComponent
 		foo = 1;
 		speed = 1.0f;
 		go = false;
+		quicksaveSlot = 0;
 	}
 	
 	~TestWalkCycle()
@@ -28,6 +29,8 @@ class TestWalkCycle : ScriptComponent
 	uint foo;
 	private bool go;
 	float speed;
+	
+	uint quicksaveSlot;
 
 	void onInput(InputEvent@ ev)
 	{
@@ -36,6 +39,10 @@ class TestWalkCycle : ScriptComponent
 			if (ev.inputName == "quicksave")
 			{
 				game.save("quicksave", true);
+				game.save("quicksave" + quicksaveSlot, true);
+				++quicksaveSlot;
+				if (quicksaveSlot > 4)
+					quicksaveSlot = 0;
 			}
 			if (ev.inputName == "quickload")
 			{

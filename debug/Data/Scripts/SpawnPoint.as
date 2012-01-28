@@ -189,6 +189,8 @@ class SpawnPoint : ScriptComponent
 		{
 			seed_rand(1234);
 			
+			numPlayers = 0;
+			
 			@doc = gui.getContext().LoadDocument("/Entities/gui/add_player.rml");
 			doc.Show();
 			
