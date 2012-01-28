@@ -1,0 +1,42 @@
+<rml>
+	<head>
+		<title>GAME!</title>
+		<link type="text/template" href="/core/gui/fusion_window.rml" />
+		<style>
+			body
+			{
+			width: 380px;
+			height: 200px;
+
+			margin: auto;
+			}
+			
+			form
+			{
+			display: block;
+			}
+			
+			form#load_form
+			{
+			margin-top: 20px;
+			display: block;
+			}
+			
+    </style>
+	</head>
+	<body template="window" onshow="OnWindowLoad(event)">
+		<form onsubmit="%Scripts/SpawnPoint.as:OnSelectPlayer(event);">
+			<p style="margin-left: 6px">Splitscreen is for cool-kids.</p>
+			<input type="submit" name="num_players" value="1">Start 1P Game</input>
+			<input type="submit" name="num_players" value="2">Start 2P Game</input>
+		</form>
+		<form id="load_form" onsubmit="%Scripts/SpawnPoint.as:OnSubmitLd(event);">
+			<h1>Load</h1>
+			<dataselect source="filesystem./Saves" fields="filename" name="filename" value="quicksave"/>
+			<p>
+			<input type="submit" name="num_players" value="1">Load 1P</input>
+			<input type="submit" name="num_players" value="2">Load 2P</input>
+			</p>
+		</form>
+	</body>
+</rml>

@@ -145,7 +145,7 @@ class SpawnPoint : ScriptComponent
 	void onPlayerAdded(uint local_num, PlayerID net_num)
 	{
 		++numPlayers;
-		if (local_num == 0)
+		if (local_num == 0 && entityA is null)
 		{
 			@entityA = createPlayerEntity(itransform.Position, net_num);
 			if (entityA !is null)
@@ -155,7 +155,7 @@ class SpawnPoint : ScriptComponent
 			
 			entityA.icamera.AngleEnabled = false;
 		}
-		if (local_num == 1)
+		if (local_num == 1 && entityB is null)
 		{
 			@entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), net_num);
 			if (entityB !is null)
@@ -215,12 +215,27 @@ class SpawnPoint : ScriptComponent
 	}
 }
 
-void OnFormSubmit(Event@ event)
+void OnSelectPlayer(Event@ event)
 {
 	string numPlayersStr = event.GetParameter(rString("num_players"), rString());
 	int numPlayers = parseInt(numPlayersStr);
 	for (int i = 0; i < numPlayers; ++i)
 		game.requestPlayer();
+	
+	ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
+	doc.Close();
+}
+
+void OnSubmitLd(Event@ event)
+{
+	string saveName = event.GetParameter(rString("filename"), rString());
+	
+	string numPlayersStr = event.GetParameter(rString("num_players"), rString());
+	int numPlayers = parseInt(numPlayersStr);
+	for (int i = 0; i < numPlayers; ++i)
+		game.requestPlayer();
+
+	game.load(saveName);
 	
 	ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
 	doc.Close();
