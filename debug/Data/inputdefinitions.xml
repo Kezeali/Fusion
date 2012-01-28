@@ -3,6 +3,8 @@
 	<group name="system" uiname="System">
 		<input name="quit" uiname="Quit" description="Quits the game" binary="true" toggle="false"/>
 		<input name="debug" uiname="Debug" description="Shows debug info" binary="true" toggle="false"/>
+		<input name="quicksave" uiname="Quck-Save" description="Saves into the next quicksave slot" binary="true" toggle="false"/>
+		<input name="quickload" uiname="Quck-Load" description="Loads the most recent quicksave" binary="true" toggle="false"/>
 	</group>
 	<group name="move" uiname="Movement">
 		<!--should these be called 'command' rather than 'input'?

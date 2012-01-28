@@ -31,6 +31,15 @@ class TestWalkCycle : ScriptComponent
 
 	void onInput(InputEvent@ ev)
 	{
+		console.println("input");
+		if (ev.inputName == "quicksave")
+		{
+			game.save("quicksave", true);
+		}
+		if (ev.inputName == "quickload")
+		{
+			game.load("quicksave");
+		}
 	}
 
 	void update()

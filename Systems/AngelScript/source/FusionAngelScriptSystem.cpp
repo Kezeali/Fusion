@@ -1161,14 +1161,29 @@ namespace FusionEngine
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{
-		InputManager::getSingleton().SignalInputChanged.connect([this](const InputEvent& ev)
+		m_PlayerInputConnection = InputManager::getSingleton().SignalInputChanged.connect([this](const InputEvent& ev)
 		{
 			m_PlayerInputEvents[ev.Player].push_back(ev);
+		});
+		m_PlayerAddedConnection = PlayerRegistry::getSingleton().SignalPlayerAdded.connect([this](const PlayerInfo& info)
+		{
+			tbb::spin_mutex::scoped_lock lock(m_PlayerAddedMutex);
+			if (info.IsLocal())
+				m_PlayerAddedEvents.push_back(std::make_pair(info.LocalIndex, info.NetID));
+		});
+		m_PlayerRemovedConnection = PlayerRegistry::getSingleton().SignalPlayerRemoved.connect([this](const PlayerInfo& info)
+		{
+			tbb::spin_mutex::scoped_lock lock(m_PlayerAddedMutex);
+			if (info.IsLocal())
+				m_PlayerRemovedEvents.push_back(std::make_pair(info.LocalIndex, info.NetID));
 		});
 	}
 
 	AngelScriptTask::~AngelScriptTask()
 	{
+		m_PlayerInputConnection.disconnect();
+		m_PlayerAddedConnection.disconnect();
+		m_PlayerRemovedConnection.disconnect();
 	}
 
 	AngelScriptTaskB::AngelScriptTaskB(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
@@ -1302,7 +1317,10 @@ namespace FusionEngine
 		m_ScriptMethodExecutors["void onCollisionEnter(CollisionEvent@)"];
 		m_ScriptMethodExecutors["void onCollisionExit(CollisionEvent@)"];
 
+		m_ScriptMethodExecutors["void onPlayerAdded(uint, PlayerID)"];
+
 		m_ScriptMethodExecutors["void onInput(InputEvent@)"];
+
 		m_ScriptMethodExecutors["void update()"];
 	}
 
@@ -1354,6 +1372,14 @@ namespace FusionEngine
 	{
 		{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
+
+		std::vector<std::pair<unsigned int, PlayerID>> playerAddedEvents;
+		std::vector<std::pair<unsigned int, PlayerID>> playerRemovedEvents;
+		{
+			tbb::spin_mutex::scoped_lock lock(m_PlayerAddedMutex);
+			playerAddedEvents.swap(m_PlayerAddedEvents);
+			playerRemovedEvents.swap(m_PlayerRemovedEvents);
+		}
 
 		auto execute_scripts = [&](const tbb::blocked_range<size_t>& range)
 		{
@@ -1431,8 +1457,67 @@ namespace FusionEngine
 
 					for (auto mit = script->m_ScriptMethods.begin(); mit != script->m_ScriptMethods.end(); ++mit)
 					{
+						// event handler
+						if (mit->first == "void onPlayerAdded(uint, PlayerID)")
+						{
+							for (auto it = playerAddedEvents.begin(); it != playerAddedEvents.end(); ++it)
+							{
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+								{
+									int r = ctx->SetArgDWord(0, it->first); FSN_ASSERT(r >=0);
+									r = ctx->SetArgByte(1, it->second); FSN_ASSERT(r >=0);
+									r = ctx->Execute();
+									if (r == asEXECUTION_SUSPENDED)
+									{
+										ConditionalCoroutine cco;
+										// Check whether a condition was registered when this yield occured
+										auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
+										if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
+										{
+											cco = std::move(conditionEntry->second);
+											script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
+										}
+										script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+
+						else if (mit->first == "void onPlayerRemoved(uint, PlayerID)")
+						{
+							for (auto it = playerRemovedEvents.begin(); it != playerRemovedEvents.end(); ++it)
+							{
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+								{
+									ctx->SetArgDWord(0, it->first);
+									ctx->SetArgWord(1, it->second);
+									int r = ctx->Execute();
+									if (r == asEXECUTION_SUSPENDED)
+									{
+										ConditionalCoroutine cco;
+										// Check whether a condition was registered when this yield occured
+										auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
+										if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
+										{
+											cco = std::move(conditionEntry->second);
+											script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
+										}
+										script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+						}
+
 						// Input event handler
-						if (mit->first == "void onInput(InputEvent@)")
+						else if (mit->first == "void onInput(InputEvent@)")
 						{
 							if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
 							{
