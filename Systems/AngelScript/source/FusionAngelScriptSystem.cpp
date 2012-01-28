@@ -1078,6 +1078,8 @@ namespace FusionEngine
 		auto scriptComponent = boost::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
+			if (scriptComponent->HasContactListener())
+				m_Box2dWorld->RemoveContactListener(scriptComponent->GetContactListener());
 			// Find and remove the deactivated script
 			{
 				auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
