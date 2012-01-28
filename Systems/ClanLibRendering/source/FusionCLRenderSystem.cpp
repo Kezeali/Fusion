@@ -248,6 +248,18 @@ namespace FusionEngine
 			{
 				if (camComponent->m_Viewport)
 				{
+					// Hack to remove viewport from the queue
+					std::vector<ViewportPtr> keptViewports;
+					ViewportPtr viewport;
+					while (m_ViewportsToAdd.try_pop(viewport))
+					{
+						if (viewport != camComponent->m_Viewport)
+							keptViewports.push_back(viewport);
+					}
+					for (auto it = keptViewports.begin(); it != keptViewports.end(); ++it)
+					{
+						m_ViewportsToAdd.push(*it);
+					}
 					RemoveViewport(camComponent->m_Viewport);
 					camComponent->m_Viewport.reset();
 				}
