@@ -185,6 +185,9 @@ namespace FusionEngine
 		void SetAnimationFrame(int val);
 		int GetAnimationFrame() const;
 
+		void SetPlaying(bool val);
+		bool IsPlaying() const;
+
 		void SetLooping(bool val);
 		bool IsLooping() const;
 

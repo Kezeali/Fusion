@@ -354,7 +354,9 @@ namespace FusionEngine { namespace Inspectors
 	{
 		try
 		{
-			if (ev == "enter")
+			const bool enterEvent = ev == "enter";
+			const bool changeEvent = ev == "change";
+			if (enterEvent || changeEvent)
 			{
 				const auto& controls = m_Inputs.get<1>();
 				auto entry = controls.find(
@@ -363,6 +365,9 @@ namespace FusionEngine { namespace Inspectors
 					)));
 				if (entry != controls.end())
 				{
+					if (changeEvent && entry->input->GetAttribute("type", Rocket::Core::String()) != "checkbox")
+						return;
+
 					const unsigned int index = entry->index;
 					// Check for built-in types
 					switch (entry->type_id)

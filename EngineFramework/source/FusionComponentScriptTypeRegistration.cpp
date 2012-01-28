@@ -174,6 +174,10 @@ namespace FusionEngine
 
 		FSN_REGISTER_PROP_ACCESSOR_R(ISprite, bool, "bool", AnimationFinished);
 
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, int, "int", AnimationFrame);
+
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, bool, "bool", Playing);
+
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, bool, "bool", Looping);
 	}
 

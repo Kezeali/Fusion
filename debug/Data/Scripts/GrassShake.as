@@ -25,7 +25,8 @@ class GrassShake : ScriptComponent
 			//~ pos.y = pos.y + 0.1f;
 			//~ ev.entity.itransform.Position << pos;
 		//~ }
-		isprite.AnimationPath << "/Entities/grass_anim.yaml";
+		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
+		isprite.AnimationFrame << 1;
 		//isprite.Looping << true;
 	}
 	
@@ -38,7 +39,8 @@ class GrassShake : ScriptComponent
 			//~ pos.y = pos.y + 0.1f;
 			//~ ev.entity.itransform.Position << pos;
 		//~ }
-		isprite.AnimationPath << "/Entities/grass_anim.yaml";
+		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
+		isprite.AnimationFrame << 0;
 		//isprite.Looping << false;
 	}
 

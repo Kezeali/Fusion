@@ -1,0 +1,9 @@
+- name: shake
+  framerate: 4
+  loop: false
+  pingpong: false
+  showOnFinish: last
+  frames:
+  - rect: [0, 0, 162, 100]
+  - rect: [163, 0, 324, 100]
+...

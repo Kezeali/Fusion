@@ -87,6 +87,7 @@ namespace FusionEngine
 			((FSN_IS)(AnimationFinished))
 			
 			((FSN_GET_SET)(AnimationFrame))
+			((FSN_IS_SET)(Playing))
 			((FSN_IS_SET)(Looping)) )
 
 		ThreadSafeProperty<std::string> ImagePath;
@@ -105,6 +106,7 @@ namespace FusionEngine
 
 		ThreadSafeProperty<int> AnimationFrame;
 
+		ThreadSafeProperty<bool> Playing;
 		ThreadSafeProperty<bool> Looping;
 
 		virtual void Finish() = 0;
@@ -143,6 +145,9 @@ namespace FusionEngine
 
 		virtual void SetAnimationFrame(int val) = 0;
 		virtual int GetAnimationFrame() const = 0;
+
+		virtual void SetPlaying(bool val) = 0;
+		virtual bool IsPlaying() const = 0;
 
 		virtual void SetLooping(bool val) = 0;
 		virtual bool IsLooping() const = 0;
