@@ -97,7 +97,7 @@ namespace FusionEngine
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->removePlayer(local_index);
+		registry->removeLocalPlayer(local_index);
 	}
 
 	void PlayerRegistry::RemovePlayersFrom(const RakNetGUID& guid)

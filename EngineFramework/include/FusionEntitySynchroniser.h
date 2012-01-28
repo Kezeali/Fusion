@@ -56,6 +56,8 @@ namespace FusionEngine
 		ConsolidatedInput(InputManager *input_manager);
 		~ConsolidatedInput();
 
+		void Clear();
+
 		void SetState(PlayerID player, const std::string input, bool active, float position);
 		PlayerInputPtr GetInputsForPlayer(PlayerID player);
 
@@ -89,6 +91,8 @@ namespace FusionEngine
 	public:
 		EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser, StreamingManager* streaming_manager);
 		~EntitySynchroniser();
+
+		void Clear();
 
 		void SetUseJitterBuffer(bool use) { m_UseJitterBuffer = use; }
 		bool IsUsingJitterBuffer() const { return m_UseJitterBuffer; }

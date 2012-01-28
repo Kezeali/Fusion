@@ -78,6 +78,11 @@ namespace FusionEngine
 		m_InputChangedConnection.disconnect();
 	}
 
+	void ConsolidatedInput::Clear()
+	{
+		m_PlayerInputs.clear();
+	}
+
 	void ConsolidatedInput::SetState(PlayerID player, const std::string input, bool active, float position)
 	{
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
@@ -181,6 +186,20 @@ namespace FusionEngine
 		str.str("");
 		str << "MaxStateSize: " << m_MaxContinuousStateSize;
 		AddLogEntry("Network", str.str());
+	}
+
+	void EntitySynchroniser::Clear()
+	{
+		m_PlayerInputs->Clear();
+		m_ToInform.clear();
+		m_EntitiesToReceive.clear();
+		m_TEMPQueuedEntities.clear();
+		m_RemoteTicks.clear();
+		m_JitterBuffers.clear();
+		m_ReceivedStates.clear();
+		m_SentStates.clear();
+		m_EntityPriorityQueue.clear();
+		m_ImportantEntities.clear();
 	}
 
 	void EntitySynchroniser::WriteHeaderAndInput(bool important, RakNet::BitStream& packetData)

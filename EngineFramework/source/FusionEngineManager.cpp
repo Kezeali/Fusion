@@ -306,11 +306,17 @@ namespace FusionEngine
 			//cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 			//propChangedQueue = entityManager->m_PropChangedQueue;
 			m_EntityManager->Clear();
+			m_EntitySynchroniser->Clear();
 			m_EntityInstantiator->Reset();
 			SendToConsole("Loading: Clearing cells...");
 			m_StreamingManager->Reset();
 			SendToConsole("Loading: Garbage-collecting...");
 			int r = m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE); FSN_ASSERT(r == 0);
+
+			// Hack: Remove local players to re-generate join events
+			std::vector<PlayerInfo> localPlayers(PlayerRegistry::LocalPlayersBegin(), PlayerRegistry::LocalPlayersEnd());
+			for (unsigned int i = 0; i < PlayerRegistry::GetLocalPlayerCount(); ++i)
+				PlayerRegistry::RemoveLocalPlayer(i);
 
 			if (m_Map)
 			{
@@ -334,6 +340,10 @@ namespace FusionEngine
 			if (auto file = m_CellArchivist->LoadDataFile("active_entities"))
 				m_EntityManager->LoadActiveEntities(*file);
 			// TODO: allow the entity manager to pause the simulation until all these entities are active
+
+			// Hack, contd.: Re-add the local players
+			for (auto it = localPlayers.begin(); it != localPlayers.end(); ++it)
+				PlayerRegistry::AddLocalPlayer(it->NetID, it->LocalIndex);
 		}
 		catch (std::exception& e)
 		{
