@@ -171,6 +171,8 @@ class SpawnPoint : ScriptComponent
 			entityB.icamera.AngleEnabled = false;
 		}
 		
+		console.println("P" + numPlayers);
+		
 		if (numPlayers == 1)
 		{
 			if (entityA !is null)
