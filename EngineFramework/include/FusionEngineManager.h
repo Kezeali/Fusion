@@ -91,6 +91,8 @@ namespace FusionEngine
 
 		void Load(const std::string& name);
 
+		unsigned int RequestPlayer();
+
 	private:
 		std::unique_ptr<Logger> m_Logger;
 		std::unique_ptr<Console> m_Console;

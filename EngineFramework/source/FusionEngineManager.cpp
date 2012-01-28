@@ -191,6 +191,8 @@ namespace FusionEngine
 			m_Save = false;
 			m_Load = false;
 
+			m_ScriptManager->RegisterGlobalObject("Game game", this);
+
 #ifdef PROFILE_BUILD
 			m_Scheduler->SetFramerateLimiter(false);
 			m_Scheduler->SetUnlimited(true);
@@ -353,6 +355,11 @@ namespace FusionEngine
 		m_EnabledExtensions.insert(activeExtensions.begin(), activeExtensions.end());
 	}
 
+	unsigned int EngineManager::RequestPlayer()
+	{
+		return m_PlayerManager->RequestNewPlayer();
+	}
+
 	void EngineManager::RegisterScriptTypes()
 	{
 		auto engine = m_ScriptManager->GetEnginePtr();
@@ -363,6 +370,12 @@ namespace FusionEngine
 		ContextMenu::Register(engine);
 
 		engine->RegisterTypedef("PlayerID", "uint8");
+
+		RegisterSingletonType<EngineManager>("Game", engine);
+		engine->RegisterObjectMethod("Game", "uint requestPlayer()", asMETHODPR(EngineManager, RequestPlayer, (void), unsigned int), asCALL_THISCALL);
+		//engine->RegisterObjectMethod("Game", "void requestPlayer(uint)", asMETHODPR(EngineManager, RequestPlayer, (unsigned int), bool), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Game", "void save(const string &in, bool quick = false)", asMETHOD(EngineManager, Save), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Game", "void load(const string &in)", asMETHOD(EngineManager, Save), asCALL_THISCALL);
 
 		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
 		struct ScriptRect
@@ -521,10 +534,6 @@ namespace FusionEngine
 			}
 			// Start the asynchronous cell loader
 			m_CellArchivist->Start();
-
-			// Add some playas
-			auto playerInd = m_PlayerManager->RequestNewPlayer();
-			playerInd = m_PlayerManager->RequestNewPlayer();
 
 			bool connecting = false;
 
