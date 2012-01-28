@@ -144,7 +144,8 @@ class SpawnPoint : ScriptComponent
 	
 	void onPlayerAdded(uint local_num, PlayerID net_num)
 	{
-		++numPlayers;
+		numPlayers = local_num + 1;
+		//++numPlayers;
 		if (local_num == 0 && entityA is null)
 		{
 			@entityA = createPlayerEntity(itransform.Position, net_num);
@@ -152,6 +153,8 @@ class SpawnPoint : ScriptComponent
 			{
 				entityA.walkcycle.speed = 3.0f;
 			}
+			
+			console.println("p1 spawned");
 			
 			entityA.icamera.AngleEnabled = false;
 		}
@@ -162,6 +165,8 @@ class SpawnPoint : ScriptComponent
 			{
 				entityB.walkcycle.speed = 3.0f;
 			}
+			
+			console.println("p2 spawned");
 			
 			entityB.icamera.AngleEnabled = false;
 		}
@@ -183,13 +188,11 @@ class SpawnPoint : ScriptComponent
 	}
 	
 	void update()
-	{	
+	{
 		++frames;
 		if (frames == 1)
 		{
 			seed_rand(1234);
-			
-			numPlayers = 0;
 			
 			@doc = gui.getContext().LoadDocument("/Entities/gui/add_player.rml");
 			doc.Show();

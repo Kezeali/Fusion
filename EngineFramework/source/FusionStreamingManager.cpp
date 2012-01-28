@@ -979,7 +979,7 @@ namespace FusionEngine
 	
 	void StreamingManager::RemoteActivateEntity(CellEntry& cell_entry, ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state)
 	{
-		FSN_ASSERT(cell_entry.active != CellEntry::Active); // TODO: Maybe not neccessary?
+		//FSN_ASSERT(cell_entry.active != CellEntry::Active); // TODO: Maybe not neccessary?
 
 		// Note that this intentionally doesn't increase the ref-count of the local cell, because the cell
 		//  is no longer needed now that the state has been extracted and passed to the interested parties

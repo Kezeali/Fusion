@@ -459,9 +459,12 @@ namespace FusionEngine
 				ObjectID id = sit->first;
 				auto& state = sit->second;
 
-				packetData.Write(id);
-				packetData.Write(state->GetNumberOfBitsUsed());
-				packetData.Write(state);
+				if (state)
+				{
+					packetData.Write(id);
+					packetData.Write(state->GetNumberOfBitsUsed());
+					packetData.Write(*state);
+				}
 			}
 
 			network->Send(NetDestination(dest, false), false, MTID_CORRECTION, &packetData, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYSYNC);
@@ -1971,7 +1974,7 @@ namespace FusionEngine
 		switch (ev.type)
 		{
 		case ActivationEvent::Activate:
-			queueEntityToSynch(ev.entity, ev.viewer, ev.state);
+			//queueEntityToSynch(ev.entity, ev.viewer, ev.state);
 			break;
 		}
 	}
