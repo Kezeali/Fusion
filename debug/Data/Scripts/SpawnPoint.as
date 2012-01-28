@@ -77,7 +77,7 @@ class SpawnPoint : ScriptComponent
 			
 			ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
 			shadow.ImagePath = "/Entities/character/shadow.png";
-			shadow.BaseAngle = 1.57f;
+			//shadow.BaseAngle = 1.57f;
 			//shadow.Scale << Vector(1.02f, 1.02f);
 			shadow.Alpha = 0.75f;
 			shadow.LocalDepth = -1;
@@ -169,7 +169,7 @@ class SpawnPoint : ScriptComponent
 
 		if (entityA !is null)
 		{
-			if (frames % 60 == 0)
+			if (frames % 120 == 0)
 				console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
 		}
 	}
