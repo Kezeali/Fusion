@@ -77,9 +77,7 @@ namespace FusionEngine
 	EngineManager::EngineManager(const std::vector<CL_String>& args)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
-		m_Fullscreen(false),
-		m_Save(false),
-		m_Load(false)
+		m_Fullscreen(false)
 	{
 		// Configure PhysFS
 		SetupPhysFS::configure("lastflare", "Fusion", "7z");
@@ -188,8 +186,6 @@ namespace FusionEngine
 			m_TaskManager.reset(new TaskManager());
 			m_Scheduler.reset(new TaskScheduler(m_TaskManager.get(), m_EntityManager.get(), m_CellArchivist.get()));
 
-			m_Save = false;
-			m_Load = false;
 
 			m_ScriptManager->RegisterGlobalObject("Game game", this);
 
@@ -250,6 +246,16 @@ namespace FusionEngine
 				MessageBoxA(m_DisplayWindow.get_hwnd(), (std::string("Failed to initialise engine: ") + ex.what()).c_str(), "Error", MB_OK);
 #endif
 		}
+	}
+
+	void EngineManager::EnqueueSave(const std::string& name, bool quick)
+	{
+		m_SaveQueue.push(std::make_pair(name, quick));
+	}
+
+	void EngineManager::EnqueueLoad(const std::string& name)
+	{
+		m_SaveToLoad = name;
 	}
 
 	void EngineManager::Save(const std::string& name, bool quick)
@@ -374,8 +380,8 @@ namespace FusionEngine
 		RegisterSingletonType<EngineManager>("Game", engine);
 		engine->RegisterObjectMethod("Game", "uint requestPlayer()", asMETHODPR(EngineManager, RequestPlayer, (void), unsigned int), asCALL_THISCALL);
 		//engine->RegisterObjectMethod("Game", "void requestPlayer(uint)", asMETHODPR(EngineManager, RequestPlayer, (unsigned int), bool), asCALL_THISCALL);
-		engine->RegisterObjectMethod("Game", "void save(const string &in, bool quick = false)", asMETHOD(EngineManager, Save), asCALL_THISCALL);
-		engine->RegisterObjectMethod("Game", "void load(const string &in)", asMETHOD(EngineManager, Save), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Game", "void save(const string &in, bool quick = false)", asMETHOD(EngineManager, EnqueueSave), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Game", "void load(const string &in)", asMETHOD(EngineManager, EnqueueLoad), asCALL_THISCALL);
 
 		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
 		struct ScriptRect
@@ -610,6 +616,17 @@ namespace FusionEngine
 					}
 				}
 
+				if (executed & SystemType::Simulation)
+				{
+					{
+						std::pair<std::string, bool> enqueued;
+						while (m_SaveQueue.try_pop(enqueued))
+							Save(enqueued.first, enqueued.second);
+					}
+					if (!m_SaveToLoad.empty())
+						Load(m_SaveToLoad);
+				}
+
 #ifdef FSN_PROFILING_ENABLED
 				Profiling::getSingleton().AddTime("~Buffer size", 0.0);
 				Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
@@ -663,10 +680,10 @@ namespace FusionEngine
 			switch (message.first)
 			{
 			case EngineExtension::MessageType::Save:
-				m_Save = true;
+				Save(message.second);
 				break;
 			case EngineExtension::MessageType::Load:
-				m_Load = true;
+				Load(message.second);
 				break;
 			case EngineExtension::MessageType::SwitchToEditMode:
 				// TODO: restart engine-manager in edit-mode (perhaps set the edit-mode option and make Run exit with a 'restart' flag?)

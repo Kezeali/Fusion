@@ -39,6 +39,8 @@
 #include <ClanLib/display.h>
 #include <ClanLib/sound.h>
 
+#include <tbb/concurrent_queue.h>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -67,10 +69,13 @@ namespace FusionEngine
 
 	void BootUp();
 
+	//! EngineManager
 	class EngineManager : public WorldSaver
 	{
 	public:
+		//! CTOR
 		EngineManager(const std::vector<CL_String>& args);
+		//! DTOR
 		~EngineManager();
 
 		void Initialise();
@@ -87,9 +92,13 @@ namespace FusionEngine
 
 		void Run();
 
+		//! Saves immeadiately
 		void Save(const std::string& name, bool quick = false);
-
+		//! Load immeadiately
 		void Load(const std::string& name);
+
+		void EnqueueSave(const std::string& name, bool quick = false);
+		void EnqueueLoad(const std::string& name);
 
 		unsigned int RequestPlayer();
 
@@ -106,8 +115,8 @@ namespace FusionEngine
 		Vector2i m_DisplayDimensions;
 		bool m_Fullscreen;
 
-		bool m_Save;
-		bool m_Load;
+		tbb::concurrent_queue<std::pair<std::string, bool>> m_SaveQueue;
+		std::string m_SaveToLoad;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
