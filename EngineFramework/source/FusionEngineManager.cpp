@@ -305,8 +305,8 @@ namespace FusionEngine
 			//instantiationSynchroniser.reset(new P2PEntityInstantiator(componentUniverse.get(), entityManager.get()));
 			//cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 			//propChangedQueue = entityManager->m_PropChangedQueue;
-			m_EntityManager->Clear();
 			m_EntitySynchroniser->Clear();
+			m_EntityManager->Clear();
 			m_EntityInstantiator->Reset();
 			SendToConsole("Loading: Clearing cells...");
 			m_StreamingManager->Reset();

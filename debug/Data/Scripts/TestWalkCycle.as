@@ -39,7 +39,7 @@ class TestWalkCycle : ScriptComponent
 			if (ev.inputName == "quicksave")
 			{
 				game.save("quicksave", true);
-				game.save("quicksave" + quicksaveSlot, true);
+				//game.save("quicksave" + quicksaveSlot, true);
 				++quicksaveSlot;
 				if (quicksaveSlot > 4)
 					quicksaveSlot = 0;

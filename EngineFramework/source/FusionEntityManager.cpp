@@ -1468,6 +1468,7 @@ namespace FusionEngine
 						world->CancelPreparation(com);
 					}
 				}
+				deactivateEntity(entity);
 			}
 		}
 	}

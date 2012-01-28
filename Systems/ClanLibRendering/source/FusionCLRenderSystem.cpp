@@ -246,7 +246,7 @@ namespace FusionEngine
 		{
 			if (auto camComponent = boost::dynamic_pointer_cast<StreamingCamera>(component))
 			{
-				if (camComponent->m_ViewportEnabled && camComponent->m_Viewport)
+				if (camComponent->m_Viewport)
 				{
 					RemoveViewport(camComponent->m_Viewport);
 					camComponent->m_Viewport.reset();
