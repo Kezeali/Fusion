@@ -27,7 +27,6 @@ class GrassShake : ScriptComponent
 		//~ }
 		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
 		isprite.AnimationFrame << 1;
-		console.println("frame: " + isprite.AnimationFrame.value);
 		//isprite.Looping << true;
 	}
 	
@@ -42,7 +41,6 @@ class GrassShake : ScriptComponent
 		//~ }
 		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
 		isprite.AnimationFrame << 0;
-		console.println("frame: " + isprite.AnimationFrame.value);
 		//isprite.Looping << false;
 	}
 

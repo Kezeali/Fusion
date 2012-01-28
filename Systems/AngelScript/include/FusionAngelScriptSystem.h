@@ -43,6 +43,8 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 
+#include <tbb/spin_mutex.h>
+
 #define FSN_PARALLEL_SCRIPT_EXECUTION
 
 namespace FusionEngine
@@ -207,6 +209,15 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
 		std::map<int, std::vector<InputEvent>> m_PlayerInputEvents;
+
+		tbb::spin_mutex m_PlayerAddedMutex;
+
+		std::vector<std::pair<unsigned int, PlayerID>> m_PlayerAddedEvents;
+		std::vector<std::pair<unsigned int, PlayerID>> m_PlayerRemovedEvents;
+
+		boost::signals2::connection m_PlayerInputConnection;
+		boost::signals2::connection m_PlayerAddedConnection;
+		boost::signals2::connection m_PlayerRemovedConnection;
 	};
 
 	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!

@@ -3,6 +3,7 @@
 #uses ISprite
 #uses TestWalkCycle walkcycle
 #uses PseudoI notai
+#uses ICamera
 
 class SpawnPoint : ScriptComponent
 {
@@ -11,12 +12,15 @@ class SpawnPoint : ScriptComponent
 		playerSprite = "/Entities/character/walk_cycle2.png";
 		playerAnimationFile = "/Entities/character/walk_cycle2.yaml";
 		spawnJunk = true;
+		numPlayers = 0;
 	}
 
 	uint frames;
 	float runtime;
 	
 	bool spawnJunk;
+	
+	int numPlayers;
 	
 	string playerSprite;
 	string playerAnimationFile;
@@ -45,35 +49,37 @@ class SpawnPoint : ScriptComponent
 			instantiator.addComponent(newEnt, "StreamingCamera", "");
 			ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_idle").get());
 
+			Vector offset = Vector(0, -18.f);
+			
 			//console.println(sprite.getType());
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":shuffle";
-			sprite.Offset << Vector(0, -0.16f);
+			sprite.Offset << offset;
 			//sprite.BaseAngle = 1.57f;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_left").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":left";
-			sprite.Offset << Vector(0, -0.16f);
+			sprite.Offset << offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_up").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":up";
-			sprite.Offset << Vector(0, -0.16f);
+			sprite.Offset << offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_right").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":right";
-			sprite.Offset << Vector(0, -0.16f);
+			sprite.Offset << offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_down").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":down";
-			sprite.Offset << Vector(0, -0.16f);
+			sprite.Offset << offset;
 			
 			ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
 			shadow.ImagePath = "/Entities/character/shadow.png";
@@ -89,12 +95,13 @@ class SpawnPoint : ScriptComponent
 			
 			cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
 			
-			ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
+			/*ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
 			cam.AngleEnabled = false;
+			
 			if (owner == 1)
 				cam.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
 			if (owner == 2)
-				cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+				cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);*/
 			
 			return EntityWrapper(newEnt);
 		}
@@ -107,30 +114,73 @@ class SpawnPoint : ScriptComponent
 		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, 0);
 		if (!newEnt.isNull())
 		{
-		instantiator.addComponent(newEnt, "b2Circle", "");
-		instantiator.addComponent(newEnt, "CLSprite", "");
-		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
-		if (sprite is null)
-		{
-			return EntityWrapper();
-		}
-		//console.println(sprite.getType());
-		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
-		sprite.BaseAngle = 1.57f;
-		
-		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
-		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
-		
-		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
-		
-		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
-		
-		return EntityWrapper(newEnt);
+			instantiator.addComponent(newEnt, "b2Circle", "");
+			instantiator.addComponent(newEnt, "CLSprite", "");
+			ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
+			if (sprite is null)
+			{
+				return EntityWrapper();
+			}
+			//console.println(sprite.getType());
+			sprite.ImagePath = "Entities/shrub_shadowed.png";
+			//sprite.BaseAngle = 1.57f;
+			
+			//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
+			cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
+			
+			cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+			
+			cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
+			
+			return EntityWrapper(newEnt);
 		}
 		return null;
 	}
 	
 	EntityWrapper@ entityA;
+	EntityWrapper@ entityB;
+	
+	private ElementDocument@ doc;
+	
+	void onPlayerAdded(uint local_num, PlayerID net_num)
+	{
+		++numPlayers;
+		if (local_num == 0)
+		{
+			@entityA = createPlayerEntity(itransform.Position, net_num);
+			if (entityA !is null)
+			{
+				entityA.walkcycle.speed = 3.0f;
+			}
+			
+			entityA.icamera.AngleEnabled = false;
+		}
+		if (local_num == 1)
+		{
+			@entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), net_num);
+			if (entityB !is null)
+			{
+				entityB.walkcycle.speed = 3.0f;
+			}
+			
+			entityB.icamera.AngleEnabled = false;
+		}
+		
+		if (numPlayers == 1)
+		{
+			if (entityA !is null)
+				entityA.icamera.ViewportRect << Rect(0, 0, 1, 1);
+			if (entityB !is null)
+				entityB.icamera.ViewportRect << Rect(0, 0, 1, 1);
+		}
+		else if (numPlayers == 2)
+		{
+			if (entityA !is null)
+				entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+			if (entityB !is null)
+				entityB.icamera.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+		}
+	}
 	
 	void update()
 	{	
@@ -139,8 +189,8 @@ class SpawnPoint : ScriptComponent
 		{
 			seed_rand(1234);
 			
-			@entityA = createPlayerEntity(itransform.Position, 1);
-			EntityWrapper@ entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
+			@doc = gui.getContext().LoadDocument("/Entities/gui/add_player.rml");
+			doc.Show();
 			
 			Vector pos = itransform.Position;
 			for (uint i = 0; i < 50; ++i)
@@ -154,16 +204,6 @@ class SpawnPoint : ScriptComponent
 				createBeachBall(pos);
 			}
 			
-			if (entityA !is null)
-			{
-				entityA.walkcycle.speed = 3.0f;
-			}
-			
-			if (entityB !is null)
-			{
-				entityB.walkcycle.speed = 3.0f;
-			}
-			
 			isprite.ImagePath = "";
 		}
 
@@ -175,6 +215,16 @@ class SpawnPoint : ScriptComponent
 	}
 }
 
+void OnFormSubmit(Event@ event)
+{
+	string numPlayersStr = event.GetParameter(rString("num_players"), rString());
+	int numPlayers = parseInt(numPlayersStr);
+	for (int i = 0; i < numPlayers; ++i)
+		game.requestPlayer();
+	
+	ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
+	doc.Close();
+}
 
 void mandle(uint ImageHeight, uint ImageWidth)
 {
