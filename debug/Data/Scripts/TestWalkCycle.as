@@ -1,6 +1,11 @@
 #uses ITransform
 #uses IRigidBody
-#uses ISprite
+#uses ISprite sprite_left
+#uses ISprite sprite_up
+#uses ISprite sprite_right
+#uses ISprite sprite_down
+#uses ISprite sprite_idle
+
 
 class TestWalkCycle : ScriptComponent
 {
@@ -26,63 +31,6 @@ class TestWalkCycle : ScriptComponent
 
 	void onInput(InputEvent@ ev)
 	{
-		//console.println(ev.inputName);
-		
-		Vector currentVelocity = irigidbody.Velocity.value;
-		if (ev.inputName == "up")
-		{
-			//console.println("at " + speed);
-			if (ev.isDown)
-			{
-				currentVelocity.y = -speed;
-				isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:up";
-				isprite.Looping = true;
-			}
-			else
-				currentVelocity.y = 0;
-			go = ev.isDown;
-		}
-		if (ev.inputName == "down")
-		{
-			//console.println("at " + speed);
-			if (ev.isDown)
-			{
-				currentVelocity.y = speed;
-				isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:down";
-				isprite.Looping = true;
-			}
-			else
-				currentVelocity.y = 0;
-			go = ev.isDown;
-		}
-		if (ev.inputName == "left")
-		{
-			if (ev.isDown)
-			{
-				currentVelocity.x = -speed;
-				isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:left";
-				isprite.Looping = true;
-			}
-			else
-				currentVelocity.x = 0;
-		}
-		if (ev.inputName == "right")
-		{
-			if (ev.isDown)
-			{
-				currentVelocity.x = speed;
-				isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:right";
-				isprite.Looping = true;
-			}
-			else
-				currentVelocity.x = 0;
-		}
-		irigidbody.Velocity = currentVelocity;
-		//if (ev.inputName == "special")
-		//{
-		//	if (ev.isDown)
-		//		irigidbody.Interpolate = !irigidbody.Interpolate;
-		//}
 	}
 
 	void update()
@@ -92,44 +40,66 @@ class TestWalkCycle : ScriptComponent
 		Vector currentVelocity;
 		if (entity.input.getButton("up"))
 		{
-			currentVelocity.y = -speed;
+			currentVelocity.y -= speed;
 		}
 		if (entity.input.getButton("down"))
 		{
 			//console.println("at " + speed);
-				currentVelocity.y = speed;
+				currentVelocity.y += speed;
 		}
 		if (entity.input.getButton("left"))
 		{
-				currentVelocity.x = -speed;
+				currentVelocity.x -= speed;
 		}
 		if (entity.input.getButton("right"))
 		{
-				currentVelocity.x = speed;
+				currentVelocity.x += speed;
 		}
 		irigidbody.Velocity = currentVelocity;
 		
-		//~ if (irigidbody.Velocity.value.x < -0.01f)
-		//~ {
-			//~ isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:left";
-		//~ }
-		//~ else if (irigidbody.Velocity.value.x > 0.01f)
-		//~ {
-			//~ isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:right";
-		//~ }
-		//~ if (irigidbody.Velocity.value.y < -0.01f)
-		//~ {
-			//~ isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:up";
-		//~ }
-		//~ else if (irigidbody.Velocity.value.y > 0.01f)
-		//~ {
-			//~ isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:down";
-		//~ }
-		if (!isprite.AnimationFinished.value &&
-			(irigidbody.Velocity.value.x < 0.01f && irigidbody.Velocity.value.x > -0.01f &&
-			irigidbody.Velocity.value.y < 0.01f && irigidbody.Velocity.value.y > -0.01f))
+		sprite_left.Alpha = 0.0f;
+		sprite_up.Alpha = 0.0f;
+		sprite_right.Alpha = 0.0f;
+		sprite_down.Alpha = 0.0f;
+		sprite_idle.Alpha = 1.0f;
+		
+		if (irigidbody.Velocity.value.x < -0.01f)
 		{
-			isprite.Looping = false;
+			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:left";
+			sprite_left.Playing = true;
+			sprite_up.Alpha = 1.0f;
+			sprite_right.Alpha = 1.0f;
+			sprite_down.Alpha = 1.0f;
+		}
+		else if (irigidbody.Velocity.value.x > 0.01f)
+		{
+			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:right";
+			sprite_right.Playing = true;
+			sprite_up.Alpha = 1.0f;
+			sprite_left.Alpha = 1.0f;
+			sprite_down.Alpha = 1.0f;
+		}
+		if (irigidbody.Velocity.value.y < -0.01f)
+		{
+			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:up";
+			sprite_up.Playing = true;
+			sprite_left.Alpha = 1.0f;
+			sprite_right.Alpha = 1.0f;
+			sprite_down.Alpha = 1.0f;
+		}
+		else if (irigidbody.Velocity.value.y > 0.01f)
+		{
+			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:down";
+			sprite_down.Playing = true;
+			sprite_up.Alpha = 1.0f;
+			sprite_right.Alpha = 1.0f;
+			sprite_left.Alpha = 1.0f;
+		}
+		if (irigidbody.Velocity.value.x < 0.01f && irigidbody.Velocity.value.x > -0.01f &&
+			irigidbody.Velocity.value.y < 0.01f && irigidbody.Velocity.value.y > -0.01f)
+		{
+			sprite_down.Playing = false;
+			sprite_idle.Alpha = 1.0f;
 		}
 	}
 }

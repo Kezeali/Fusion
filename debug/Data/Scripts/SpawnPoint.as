@@ -9,7 +9,7 @@ class SpawnPoint : ScriptComponent
 	SpawnPoint()
 	{
 		playerSprite = "/Entities/character/walk_cycle2.png";
-		playerAnimation = "/Entities/character/walk_cycle2.yaml";
+		playerAnimationFile = "/Entities/character/walk_cycle2.yaml";
 		spawnJunk = true;
 	}
 
@@ -19,7 +19,7 @@ class SpawnPoint : ScriptComponent
 	bool spawnJunk;
 	
 	string playerSprite;
-	string playerAnimation;
+	string playerAnimationFile;
 
 	void onSpawn()
 	{
@@ -32,45 +32,71 @@ class SpawnPoint : ScriptComponent
 		Entity newEnt = instantiator.instantiate("b2Dynamic", true, pos, 0.f, owner);
 		if (!newEnt.isNull())
 		{
-		instantiator.addComponent(newEnt, "b2Circle", "");
-		instantiator.addComponent(newEnt, "CLSprite", "sprite_main");
-		instantiator.addComponent(newEnt, "CLSprite", "sprite_shadow");
-		instantiator.addComponent(newEnt, "TestWalkCycle", "walkcycle");
-		instantiator.addComponent(newEnt, "StreamingCamera", "");
-		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_main").get());
-		if (sprite is null)
-		{
-			console.println("sprite cast failed");
-			return EntityWrapper();
-		}
-		//console.println(sprite.getType());
-		sprite.ImagePath = playerSprite;
-		sprite.AnimationPath = playerAnimation;
-		sprite.Offset << Vector(0.0f, -16.f);
-		//sprite.BaseAngle = 1.57f;
-		
-		ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
-		shadow.ImagePath = "/Entities/character/shadow.png";
-		//shadow.BaseAngle = 1.57f;
-		//shadow.Scale << Vector(1.02f, 1.02f);
-		shadow.Alpha = 0.75f;
-		shadow.LocalDepth = -1;
-		//shadow.Offset << Vector(0.0f, 0.25f);
-		
-		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
-		
-		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
-		
-		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
-		
-		ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
-		cam.AngleEnabled = false;
-		if (owner == 1)
-			cam.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
-		if (owner == 2)
-			cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
-		
-		return EntityWrapper(newEnt);
+			instantiator.addComponent(newEnt, "b2Circle", "");
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_idle");
+			
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_left");
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_up");
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_right");
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_down");
+			
+			instantiator.addComponent(newEnt, "CLSprite", "sprite_shadow");
+			instantiator.addComponent(newEnt, "TestWalkCycle", "walkcycle");
+			instantiator.addComponent(newEnt, "StreamingCamera", "");
+			ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_idle").get());
+
+			//console.println(sprite.getType());
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":shuffle";
+			sprite.Offset << Vector(0, -0.16f);
+			//sprite.BaseAngle = 1.57f;
+			
+			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_left").get());
+			
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":left";
+			sprite.Offset << Vector(0, -0.16f);
+			
+			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_up").get());
+			
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":up";
+			sprite.Offset << Vector(0, -0.16f);
+			
+			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_right").get());
+			
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":right";
+			sprite.Offset << Vector(0, -0.16f);
+			
+			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_down").get());
+			
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":down";
+			sprite.Offset << Vector(0, -0.16f);
+			
+			ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
+			shadow.ImagePath = "/Entities/character/shadow.png";
+			shadow.BaseAngle = 1.57f;
+			//shadow.Scale << Vector(1.02f, 1.02f);
+			shadow.Alpha = 0.75f;
+			shadow.LocalDepth = -1;
+			//shadow.Offset << Vector(0.0f, 0.25f);
+			
+			//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
+			
+			cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+			
+			cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 0;
+			
+			ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
+			cam.AngleEnabled = false;
+			if (owner == 1)
+				cam.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+			if (owner == 2)
+				cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+			
+			return EntityWrapper(newEnt);
 		}
 		return null;
 	}
@@ -112,9 +138,6 @@ class SpawnPoint : ScriptComponent
 		if (frames == 1)
 		{
 			seed_rand(1234);
-			
-			playerSprite = "/Entities/character/walk_cycle2.png";
-		playerAnimation = "/Entities/character/walk_cycle2.yaml";
 			
 			@entityA = createPlayerEntity(itransform.Position, 1);
 			EntityWrapper@ entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
