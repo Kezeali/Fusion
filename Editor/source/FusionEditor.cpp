@@ -61,6 +61,8 @@
 #include "FusionElementInspectorGroup.h"
 
 #include "FusionTransformInspector.h"
+#include "FusionRigidBodyInspector.h"
+#include "FusionCircleShapeInspector.h"
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
@@ -509,6 +511,14 @@ namespace FusionEngine
 			auto tag = "inspector_" + ITransform::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::TransformInspector>())->RemoveReference();
+
+			tag = "inspector_" + IRigidBody::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::RigidBodyInspector>())->RemoveReference();
+
+			tag = "inspector_" + ICircleShape::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::CircleShapeInspector>())->RemoveReference();
 
 			tag = "inspector_" + ISprite::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
@@ -1024,6 +1034,21 @@ namespace FusionEngine
 					Vector2 offset = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 					TranslateScreenToWorld(&offset.x, &offset.y);
 					PasteEntities(offset);
+				}
+				break;
+
+			case CL_KEY_LEFT:
+				{
+					if (!m_Dragging)
+					{
+						Vector2 delta(1.f, 1.f);
+						delta *= m_EditCam->GetZoom();
+						delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
+
+						ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+
+						m_EditorOverlay->SetOffset(Vector2());
+					}
 				}
 				break;
 			}

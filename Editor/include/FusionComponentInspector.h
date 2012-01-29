@@ -55,6 +55,8 @@ namespace FusionEngine { namespace Inspectors
 		virtual void SetComponents(const std::vector<ComponentPtr>& components) = 0;
 		virtual void ReleaseComponents() = 0;
 
+		virtual void ReceiveCircleInput(const std::string& name, const Vector2& position, float radius) {}
+
 	};
 
 } }

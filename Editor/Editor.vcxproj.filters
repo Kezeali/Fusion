@@ -67,5 +67,11 @@
     <ClCompile Include="source\FusionElementInspectorGroup.cpp">
       <Filter>Inspectors</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionCircleShapeInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionRigidBodyInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

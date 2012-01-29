@@ -201,7 +201,8 @@ namespace FusionEngine { namespace Inspectors
 		std::vector<boost::intrusive_ptr<Rocket::Core::Element>> GetSubsections(const ComponentPtr& component)
 		{
 			std::vector<boost::intrusive_ptr<Rocket::Core::Element>> subsections;
-
+			GetSubsections(component, std::back_inserter(subsections));
+			return subsections;
 		}
 
 		template <class Iter>
@@ -308,9 +309,12 @@ namespace FusionEngine { namespace Inspectors
 
 		m_EntityBeingProcessed = entity;
 
+		ProcessComponent(entity->GetTransform(), false);
+
 		const auto& components = entity->GetComponents();
 		for (auto it = components.begin(), end = components.end(); it != end; ++it)
-			ProcessComponent(*it);
+			if (*it != entity->GetTransform())
+				ProcessComponent(*it);
 
 		m_EntityBeingProcessed.reset();
 	}
@@ -324,20 +328,20 @@ namespace FusionEngine { namespace Inspectors
 		});*/
 	}
 
-	void ElementGroup::ProcessComponent(const ComponentPtr& component)
+	void ElementGroup::ProcessComponent(const ComponentPtr& component, bool removable)
 	{
-		bool added = AddInspector(component, component->GetType());
+		bool added = AddInspector(component, component->GetType(), removable);
 
 		if (!added) // If there wasn't a specific inspector for the given type, try adding interface inspectors
 		{
 			for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
-				added |= AddInspector(component, *iit);
+				added |= AddInspector(component, *iit, removable);
 		}
 		if (!added)
 			SendToConsole("No inspector for component type: " + component->GetType());
 	}
 
-	bool ElementGroup::AddInspector(const ComponentPtr& component, const std::string& inspector_type)
+	bool ElementGroup::AddInspector(const ComponentPtr& component, const std::string& inspector_type, bool removable)
 	{
 		EquivalentInspectorKey key(component, inspector_type);
 		if (!m_Subsections->Contains(key))
@@ -355,10 +359,12 @@ namespace FusionEngine { namespace Inspectors
 				//value.second.push_back(component);
 
 				auto name = component->GetType();
+				if (name != inspector_type)
+					name += " (" + inspector_type + " interface)";
 				if (!component->GetIdentifier().empty())
 					name += " - " + component->GetIdentifier();
 
-				AddSubsection(key, name, inspector, component);
+				AddSubsection(key, name, inspector, component, removable);
 			}
 			if (element)
 				element->RemoveReference();
@@ -370,21 +376,32 @@ namespace FusionEngine { namespace Inspectors
 			// Existing type
 			//entry->second.second.push_back(component);
 			m_Subsections->Add(key, component);
+			if (!removable)
+			{
+				auto subsections = m_Subsections->GetSubsections(component);
+				for (auto it = subsections.begin(); it != subsections.end(); ++it)
+					(*it)->SetClass("locked_component", true);
+			}
 			return true;
 		}
 	}
 
-	void ElementGroup::AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component)
+	void ElementGroup::AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable)
 	{
 		auto subsection = AddSubsection(body, name, inspector);
 
 		int code =
 			m_Subsections->AddNewEntry(key, subsection.get(), inspector, initial_component);
 
+		if (!removable)
+		{
+			subsection->SetClass("locked_component", true);
+		}
+
 		Rocket::Core::ElementList headerElems;
 		subsection->GetElementsByTagName(headerElems, "header");
 		FSN_ASSERT(!headerElems.empty());
-		
+
 		auto header = headerElems.front();
 
 		//  'Remove' button

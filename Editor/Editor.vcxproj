@@ -89,10 +89,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
+    <ClCompile Include="source\FusionCircleShapeInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionElementInspectorGroup.cpp" />
     <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionInspectorBase.cpp" />
+    <ClCompile Include="source\FusionRigidBodyInspector.cpp" />
     <ClCompile Include="source\FusionSpriteInspector.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />
   </ItemGroup>

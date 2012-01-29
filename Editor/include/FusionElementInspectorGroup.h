@@ -76,9 +76,9 @@ namespace FusionEngine { namespace Inspectors
 		void SetAddCallback(AddCallback_t fn) { m_AddCallback = fn; }
 		void SetRemoveCallback(RemoveCallback_t fn) { m_RemoveCallback = fn; }
 
-		bool AddInspector(const ComponentPtr& component, const std::string& inspector_type);
+		bool AddInspector(const ComponentPtr& component, const std::string& inspector_type, bool removable);
 
-		void ProcessComponent(const ComponentPtr& component);
+		void ProcessComponent(const ComponentPtr& component, bool removable = true);
 
 		static inline boost::intrusive_ptr<Rocket::Core::Element> AddSubsection(Rocket::Core::Element* parent, const std::string& name, Rocket::Core::Element* inspector);
 
@@ -110,7 +110,7 @@ namespace FusionEngine { namespace Inspectors
 		AddCallback_t m_AddCallback;
 		RemoveCallback_t m_RemoveCallback;
 
-		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component);
+		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 
 		void ProcessEvent(Rocket::Core::Event& ev);
 		

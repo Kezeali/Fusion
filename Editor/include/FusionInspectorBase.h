@@ -97,6 +97,8 @@ namespace FusionEngine { namespace Inspectors
 
 		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
 
+		void AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
+
 	private:
 		typedef boost::variant<
 			boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>,
@@ -466,6 +468,45 @@ namespace FusionEngine { namespace Inspectors
 			m_Inputs[select_element] = inputData;
 		}
 	}
+	
+	template <class ComponentT>
+	void GenericInspector<ComponentT>::AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter)
+	{
+		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+
+		Rocket::Core::Factory::InstanceElementText(line, "circle");
+
+		auto addComponentInput = [&](const FloatSetter_t& setter, const FloatGetter_t& getter)
+		{
+			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("class", "circle_input");
+			attributes.Set("type", "text");
+			attributes.Set("size", 10);
+			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+				"input",
+				"input",
+				attributes);
+
+			addControl(line, input_element, element);
+
+			if (input_element)
+			{
+				Input inputData;
+				inputData.ui_element = input_element;
+				inputData.callback = setter;
+				inputData.get_callback = getter;
+				m_Inputs[input_element] = inputData;
+			}
+		};
+		addComponentInput(x_setter, x_getter);
+		addComponentInput(y_setter, y_getter);
+		addComponentInput(radius_setter, radius_getter);
+
+		line->RemoveReference();
+	}
 
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::ProcessEvent(Rocket::Core::Event& ev)
@@ -475,7 +516,9 @@ namespace FusionEngine { namespace Inspectors
 			const bool isSelectElem =
 				dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(ev.GetTargetElement()) ||
 				dynamic_cast<Rocket::Controls::ElementFormControlDataSelect*>(ev.GetTargetElement());
-			if (ev == "enter" || (isSelectElem && ev == "change"))
+			auto inputElem = dynamic_cast<Rocket::Controls::ElementFormControlInput*>(ev.GetTargetElement());
+			const bool isCheckboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "checkbox";
+			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change"))
 			{
 				auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(ev.GetTargetElement()));
 				if (entry != m_Inputs.end())
@@ -483,8 +526,15 @@ namespace FusionEngine { namespace Inspectors
 					auto& inputData = entry->second;
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 						boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
+
+					if (ev == "enter")
+						entry->first->Blur();
 				}
 			}
+			//else if (ev.GetTargetElement()->IsClassSet("circle_input") && ev == "focus")
+			//{
+			//	RequestCircleInput(ev.GetTargetElement()->GetAttribute("name", ""));
+			//}
 		}
 		catch (boost::bad_lexical_cast&)
 		{

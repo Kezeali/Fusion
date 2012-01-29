@@ -126,6 +126,11 @@
 				icon-z-index: 1;
 			}
 			
+			inspector_section.locked_component header .submit
+			{
+			display: none;
+			}
+			
 			.footer
 			{
 				display: block;
