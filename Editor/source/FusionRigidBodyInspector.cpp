@@ -94,8 +94,7 @@ namespace FusionEngine { namespace Inspectors
 			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->AngularDamping.Get(); })
 			);
 
-		AddRangeInput("GravityScale",
-			0.f, 1.f,
+		AddTextInput("GravityScale",
 			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->GravityScale.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->GravityScale.Get(); })
 			);
