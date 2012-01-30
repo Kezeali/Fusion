@@ -1,8 +1,45 @@
 string currentTable;
 string root;
 
+class ResourcePreviewFormatter : IDataFormatter
+{
+	ResourcePreviewFormatter()
+	{
+		AddDataFormatter(rString("resource_preview"), this);
+	}
+	~ResourcePreviewFormatter()
+	{
+	}
+	
+	rString FormatData(const StringList &in raw_data)
+	{
+		string formattedData = "";
+		if (raw_data.size() > 0)
+		{
+			string r0 = raw_data[0];
+			formattedData =
+				"<span style=\"icon-decorator: image; icon-image:" + r0 + ";\" "
+				"onmouseover=\"%this:GeneratePreviewPopup('" + r0 + "', event);\" "
+				"onmousemove=\"%this:MovePreviewPopup(event);\" "
+				"onmouseout=\"%this:HidePreviewPopup(event);\">" +
+				r0 +
+				"</span>";
+		}
+		return formattedData;
+	}
+};
+
+ResourcePreviewFormatter@ previewFormatter = @ResourcePreviewFormatter();
+
 void OnWindowLoad(Event@ event)
 {
+	//@previewFormatter = ResourcePreviewFormatter();
+	//AddDataFormatter(rString("resource_preview"), @previewFormatter);
+}
+
+void OnWindowUnload(Event@ event)
+{
+	RemoveDataFormatter(rString("resource_preview"));
 }
 
 void OnFileSelected(Event@ event)
@@ -131,4 +168,55 @@ void OnUpClicked(Event@ event)
 void OnRefreshClicked(Event@ event)
 {
 	filesystem_datasource.refresh();
+}
+
+ElementDocument@ tooltip = null;
+Element@ content = null;
+void GeneratePreviewPopup(string filename, Event@ event)
+{
+	ElementDocument@ document = event.GetTargetElement().GetOwnerDocument();
+	if (document !is null)
+	{
+		if (tooltip is null)
+		{
+			//@tooltip = document.GetContext().LoadDocument(rString("/core/gui/popup.rml"));
+			@tooltip = gui.getContext().LoadDocument(rString("/core/gui/popup.rml"));
+			//tooltip.SetAttribute(rString('id'), rString("tooltip"));
+			@content = document.CreateElement(rString("div"));
+			content.SetAttribute(rString('id'), rString('tooltip_content'));
+			
+			tooltip.GetFirstChild().AppendChild(content);
+			//document.GetFirstChild().AppendChild(tooltip);
+		}
+		tooltip.Show(DocumentFocusFlags::NONE);
+		
+		string mouse_x = event.GetParameter(rString("mouse_x"), rString());
+		string mouse_y = event.GetParameter(rString("mouse_y"), rString());
+		
+		content.SetAttribute(rString("style"),
+			rString("display: block; width: 60px; position: absolute; left: " + mouse_x + "; top: " + mouse_y + ";"));
+		
+		content.SetInnerRML(rString('<img src="' + currentTable + '/' + filename + '" width="60px" height="60px"/>'));
+	}
+}
+
+void MovePreviewPopup(Event@ event)
+{
+	string mouse_x = event.GetParameter(rString("mouse_x"), rString());
+	string mouse_y = event.GetParameter(rString("mouse_y"), rString());
+	content.SetAttribute(rString("style"),
+		rString("display: block; width: 60px; position: absolute; left: " + mouse_x + "; top: " + mouse_y + ";"));
+}
+
+void HidePreviewPopup(Event@ event)
+{
+	ElementDocument@ document = event.GetTargetElement().GetOwnerDocument();
+	if (document !is null)
+	{
+		if (tooltip !is null)
+		{
+			content.SetAttribute(rString("style"), rString("display: none;"));
+			tooltip.Hide();
+		}
+	}
 }

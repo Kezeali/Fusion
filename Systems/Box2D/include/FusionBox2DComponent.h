@@ -38,6 +38,7 @@
 #include "FusionPhysicalComponent.h"
 
 #include "FusionCommon.h"
+#include "FusionResourcePointer.h"
 
 #include "FusionSerialisationHelper.h"
 
@@ -457,23 +458,12 @@ namespace FusionEngine
 	public:
 		FSN_LIST_INTERFACES((IFixture)(IPolygonShape))
 
-		//struct ShapePropsIdx { enum Names : size_t {
-		//	Radius,
-		//	Position,
-		//	NumProps
-		//}; };
-		//typedef SerialisationHelper<
-		//	float, // radius
-		//	Vector2> // Position
-		//	ShapeDeltaSerialiser_t;
-		//static_assert(ShapePropsIdx::NumProps == ShapeDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
-
 		Box2DPolygonFixture();
 
-		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
+		void Update();
 
 	private:
-		b2Shape* GetShape() { return &m_PolygonShape; }
+		b2Shape* GetShape() { return m_PolygonShape.Get(); }
 
 		// IComponent
 		std::string GetType() const { return "b2Polygon"; }
@@ -484,16 +474,20 @@ namespace FusionEngine
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
-		//ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
-		bool m_VerticiesChanged;
-		b2PolygonShape m_PolygonShape;
+		bool m_ReconstructFixture;
+		ResourcePointer<b2PolygonShape> m_PolygonShape;
+
+		std::string m_PolygonFile;
+		bool m_ReloadPolygonResource;
+
+		boost::signals2::connection m_PolygonLoadConnection;
 
 		// IPolygonShape
+		const std::string& GetPolygonFile() const;
+		void SetPolygonFile(const std::string& center);
+
 		float GetRadius() const;
 
-		void SetAsBoxImpl(float half_width, float half_height);
-		void SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle);
-		void SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2);
 	};
 
 }

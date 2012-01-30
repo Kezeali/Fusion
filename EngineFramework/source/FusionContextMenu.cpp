@@ -588,6 +588,17 @@ namespace FusionEngine
 		return slot;
 	}
 
+	ScriptedSlotWrapper *MenuItem_ConnectToChildClick(const std::string &decl, MenuItem *obj)
+	{
+		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
+		if (slot != nullptr)
+		{
+			boost::signals2::connection c = obj->SignalChildClicked.connect( std::bind(&ScriptedSlotWrapper::Callback<const MenuItemEvent &>, slot, _1) );
+			slot->HoldConnection(c);
+		}
+		return slot;
+	}
+
 	void MenuItem::Register(asIScriptEngine *engine)
 	{
 		MenuItem::RegisterType<MenuItem>(engine, "MenuItem");
@@ -647,6 +658,7 @@ namespace FusionEngine
 		engine->RegisterObjectMethod(type.c_str(), "bool isMenu() const", asMETHOD(MenuItem, IsMenu), asCALL_THISCALL);
 
 		engine->RegisterObjectMethod(type.c_str(), "SignalConnection@ connectToClick(const string &in)", asFUNCTION(MenuItem_ConnectToClick), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod(type.c_str(), "SignalConnection@ connectToChildClick(const string &in)", asFUNCTION(MenuItem_ConnectToChildClick), asCALL_CDECL_OBJLAST);
 	}
 
 	ContextMenu *ContextMenu_FactoryDefault()

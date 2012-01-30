@@ -554,8 +554,8 @@ undomenu selectbox option
 
 select selectbox option:nth-child(even),
 dataselect selectbox option:nth-child(even),
-undomenu selectbox option:nth-child(even),
-datagrid datagridrow:nth-child(even)
+undomenu selectbox option:nth-child(even)/*,
+datagrid datagridrow:nth-child(even)*/
 {
 	background: #C0F5FFA0;
 }

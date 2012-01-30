@@ -5,10 +5,8 @@
 </head>
 <body class="window">
 	<div id="title_bar">
-		<handle class="move_target" move_target="#document">
 			<div id="icon"></div>
 			<div id="title"></div>
-		</handle>
 			<div class="close_button" id="close_button" onclick="UnloadThisWindow(event)"></div>
 			<div class="close_button" id="hide_button" onclick="HideThisWindow(event)"></div>
 			<div class="close_button" id="submit_close_button" onclick="CloseThisWindow(event)"></div>
@@ -17,9 +15,5 @@
 		<div id="content">
 		</div>
 	</div>
-	<handle class="size_target" size_target="#document" style="position: absolute; right: 3px; bottom: -2px; width: 16px; height: 16px;">
-		<div id="size_target">
-		</div>
-	</handle>
 </body>
 </template>

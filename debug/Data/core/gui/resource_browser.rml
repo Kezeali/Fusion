@@ -1,14 +1,12 @@
 <rml>
 	<head>
-		<title>File</title>
-		<link type="text/template" href="fusion_window.rml" />
+		<title>Resource Browser</title>
+		<link type="text/template" href="fusion_window_static.rml" />
 		<style>
 			body
 			{
-				width: 640px;
-				height: 320px;
-				
-				margin: auto;
+				width: 200px;
+				height: 100%;
 			}
 
 			div#title_bar div#icon
@@ -16,7 +14,7 @@
 				display: none;
 			}
 
-			div#submit_close_button
+			div#hide_button
 			{
 				display: inline;
 			}
@@ -32,7 +30,7 @@
 				width: 12px;
 				height: 12px;
 				icon-decorator: image;
-				icon-image: present.png;
+				icon-image: folder.png;
 			}
 			
 			div.file_icon,
@@ -41,7 +39,7 @@
 				width: 12px;
 				height: 12px;
 				icon-decorator: image;
-				icon-image: high_scores_defender.png;
+				icon-image: file.png;
 			}
 			
 			button#btn_parent_folder
@@ -86,11 +84,6 @@
 			{
 				display: none;
 			}
-			select#select_type
-			{
-				display: inline;
-				width: 20%;
-			}
 			div#dialog_submit_buttons
 			{
 				width: auto;
@@ -111,24 +104,12 @@
 		</style>
 		<script src="file_dialog.as"/>
 	</head>
-	<body template="window" onload="%this:OnWindowLoad(event);">
+	<body template="window" onload="%this:OnWindowLoad(event);" onunload="%this:OnWindowUnload(event);">
 		<button id="btn_parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
 		<button id="btn_refresh" onclick="%this:OnRefreshClicked(event);">Refresh</button>
-		<datagrid selectable id="file_list" source="filesystem.#write_dir" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
+		<datagrid selectable id="file_list" source="filesystem.physfs:/Data" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
 			<col fields="type" formatter="filesystem" width="20px"/>
-			<col fields="filename" />
+			<col fields="filename" formatter="resource_preview"/>
 		</datagrid>
-		<form id="file_form">
-			<p>
-			File Name:<input type="text" id="text_filename" name="filename"/>
-			<input type="text" id="text_path" name="path"/>
-			<select id="select_type" name="type">
-			</select>
-			</p>
-			<div id="dialog_submit_buttons">
-				<input type="submit" id="button_ok" name="result" value="ok">Ok</input>
-				<input type="submit" id="button_cancel" name="result" value="cancel">Cancel</input>
-			</div>
-		</form>
 	</body>
 </rml>

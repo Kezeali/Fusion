@@ -50,22 +50,6 @@
 namespace FusionEngine { namespace Inspectors
 {
 
-	/*class InspectorBaseImpl : public ComponentInspector
-	{
-	public:
-		InspectorBaseImpl(const Rocket::Core::String& tag);
-
-	private:
-		typedef boost::variant<boost::intrusive_ptr<Rocket::Core::Element>> InputVariant_t;
-		std::set<InputVariant_t> m_Inputs;
-
-		void AddTextInput(const std::string& name);
-
-		void InitUI();
-
-		void ProcessEvent(Rocket::Core::Event& ev);
-	};*/
-
 	template <class ComponentT>
 	class GenericInspector : public ComponentInspector
 	{

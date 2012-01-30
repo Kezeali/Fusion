@@ -72,6 +72,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+#include <Rocket/Controls/DataFormatter.h>
 #include <Rocket/Controls/DataSource.h>
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Core/StreamMemory.h>
@@ -99,6 +100,28 @@ namespace FusionEngine
 
 	protected:
 		Rocket::Core::ElementDocument* m_Document;
+	};
+
+	class PreviewFormatter : public Rocket::Controls::DataFormatter
+	{
+	public:
+		PreviewFormatter()
+			: Rocket::Controls::DataFormatter("resource_preview")
+		{}
+
+	private:
+		void FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data)
+		{
+			if (!raw_data.empty())
+			{
+				formatted_data =
+					"<span style=\"icon-decorator: image; icon-image:" + raw_data[0] + ";\" "
+					"onmouseover=\"%this:GeneratePreviewPopup('" + raw_data[0] + "', event);\" "
+					"onmouseover=\"%this:HidePreviewPopup('" + raw_data[0] + "', event);\">" +
+					raw_data[0] +
+					"</span>";
+			}
+		}
 	};
 
 	inline void RemoveEqualElems(const boost::filesystem::path& base, boost::filesystem::path& subdir)
@@ -425,6 +448,18 @@ namespace FusionEngine
 		}
 	};
 
+	inline bool MouseOverUI(Rocket::Core::Context* context)
+	{
+		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
+		{
+			if (context->GetDocument(i)->IsPseudoClassSet("hover"))
+				return true;
+		}
+		if (GUI::getSingleton().GetConsoleWindow()->IsPseudoClassSet("hover"))
+			return true;
+		return false;
+	}
+
 	Editor::Editor(const std::vector<CL_String>& args)
 		: m_EditCamRange(-1.f),
 		m_Active(false),
@@ -546,6 +581,8 @@ namespace FusionEngine
 				new Rocket::Core::ElementInstancerGeneric<InspectorSection>())->RemoveReference();
 		}
 
+		//m_PreviewFormatter.reset(new PreviewFormatter);
+
 		m_RightClickMenu = boost::intrusive_ptr<ContextMenu>(new ContextMenu(m_GUIContext, true), false);
 		m_PropertiesMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Properties", "properties"), false);
 		m_RightClickMenu->AddChild(m_PropertiesMenu.get());
@@ -645,6 +682,8 @@ namespace FusionEngine
 		ScriptManager::getSingleton().RegisterGlobalObject("FilesystemDataSource filesystem_datasource", Rocket::Controls::DataSource::GetDataSource("filesystem"));
 		if (m_Active)
 			BuildCreateEntityScript();
+
+		ScriptManager::getSingleton().AddFile("/core/gui/gui_popup.as", "gui_popup.as");
 	}
 
 	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
@@ -685,16 +724,19 @@ namespace FusionEngine
 		// Bodies have to be forced to create since the simulation isn't running
 		m_Box2DWorld->InitialiseActiveComponents();
 
-		if (m_EditCam)
+		if (m_EditCam && !MouseOverUI(m_GUIContext))
 		{
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
-				m_CamVelocity.y = -400;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
-				m_CamVelocity.y = 400;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
-				m_CamVelocity.x = -400;
-			if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
-				m_CamVelocity.x = 400;
+			if (!m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL))
+			{
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
+					m_CamVelocity.y = -400;
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
+					m_CamVelocity.y = 400;
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
+					m_CamVelocity.x = -400;
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
+					m_CamVelocity.x = 400;
+			}
 			if (!v2Equal(m_CamVelocity, Vector2(0.f, 0.f)))
 			{
 				auto camPos = m_EditCam->GetPosition();
@@ -705,7 +747,7 @@ namespace FusionEngine
 				if (!(kb.get_keycode(CL_KEY_UP) || kb.get_keycode(CL_KEY_DOWN)))
 				{
 					if (m_CamVelocity.length() > 1.f)
-						m_CamVelocity.y *= 0.5f * dt;
+						m_CamVelocity.y *= 0.75f * dt;
 					else
 						m_CamVelocity.y = 0.f;
 				}
@@ -850,6 +892,45 @@ namespace FusionEngine
 		}
 	}
 
+	void Editor::ToggleResourceBrowser()
+	{
+		if (IsResourceBrowserVisible())
+			HideResourceBrowser();
+		else
+			ShowResourceBrowser();
+	}
+
+	bool Editor::IsResourceBrowserVisible() const
+	{
+		return m_ResourceBrowser && m_ResourceBrowser->IsVisible();
+	}
+
+	void Editor::ShowResourceBrowser()
+	{
+		if (!m_ResourceBrowser)
+		{
+			m_ResourceBrowser = m_GUIContext->LoadDocument("/core/gui/resource_browser.rml");
+			m_ResourceBrowser->RemoveReference();
+		}
+		if (m_ResourceBrowser)
+		{
+			m_ResourceBrowser->Show();
+
+			auto area = m_Viewport->GetArea();
+			area.left = m_ResourceBrowser->GetOffsetWidth() / m_DisplayWindow.get_gc().get_width();
+			m_Viewport->SetArea(area);
+		}
+	}
+
+	void Editor::HideResourceBrowser()
+	{
+		if (m_ResourceBrowser)
+		{
+			m_ResourceBrowser->Hide();
+			m_Viewport->SetArea(0.f, 0.f, 1.f, 1.f);
+		}
+	}
+
 	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, EntityInstantiator* instantiator, ComponentFactory* factory, EntityManager* entityManager)
 	{
 		position.x = ToSimUnits(position.x); position.y = ToSimUnits(position.y);
@@ -986,16 +1067,15 @@ namespace FusionEngine
 		return entity;
 	}
 
-	inline bool MouseOverUI(Rocket::Core::Context* context)
+	void Editor::NudgeSelectedEntities(const Vector2& delta_pixels)
 	{
-		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
-		{
-			if (context->GetDocument(i)->IsPseudoClassSet("hover"))
-				return true;
-		}
-		if (GUI::getSingleton().GetConsoleWindow()->IsPseudoClassSet("hover"))
-			return true;
-		return false;
+		Vector2 delta = delta_pixels;
+		delta *= 1.f / m_EditCam->GetZoom();
+		delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
+
+		ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+
+		m_EditorOverlay->SetOffset(Vector2());
 	}
 
 	void Editor::OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state)
@@ -1037,19 +1117,42 @@ namespace FusionEngine
 				}
 				break;
 
-			case CL_KEY_LEFT:
+			case CL_KEY_R:
 				{
-					if (!m_Dragging)
-					{
-						Vector2 delta(1.f, 1.f);
-						delta *= m_EditCam->GetZoom();
-						delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
-
-						ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
-
-						m_EditorOverlay->SetOffset(Vector2());
-					}
+					ToggleResourceBrowser();
 				}
+				break;
+
+			case CL_KEY_0:
+				m_EditCam->SetZoom(1.0);
+				break;
+
+			case CL_KEY_P:
+				{
+					std::vector<EntityPtr> selectedEntities;
+					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
+						selectedEntities.push_back(entity);
+						return true;
+					});
+					CreatePropertiesWindow(selectedEntities);
+				}
+				break;
+
+			case CL_KEY_LEFT:
+				if (!m_Dragging)
+					NudgeSelectedEntities(Vector2(-1.f, 0.f));
+				break;
+			case CL_KEY_RIGHT:
+				if (!m_Dragging)
+					NudgeSelectedEntities(Vector2(1.f, 0.f));
+				break;
+			case CL_KEY_UP:
+				if (!m_Dragging)
+					NudgeSelectedEntities(Vector2(0.f, -1.f));
+				break;
+			case CL_KEY_DOWN:
+				if (!m_Dragging)
+					NudgeSelectedEntities(Vector2(0.f, 1.f));
 				break;
 			}
 		}
@@ -1069,12 +1172,6 @@ namespace FusionEngine
 		// Ctrl + Keys
 		if (ev.ctrl)
 		{
-			switch (ev.id)
-			{
-			case CL_KEY_0:
-				m_EditCam->SetZoom(1.0);
-				break;
-			}
 		}
 		// Keys
 		else
@@ -1090,27 +1187,12 @@ namespace FusionEngine
 			case CL_KEY_F7:
 				m_RebuildScripts = true;
 				break;
-			case CL_KEY_P:
-				{
-					std::vector<EntityPtr> selectedEntities;
-					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
-						selectedEntities.push_back(entity);
-						return true;
-					});
-					CreatePropertiesWindow(selectedEntities);
-				}
-				break;
 			case CL_KEY_DELETE:
 				if (ev.shift)
 					ForEachSelected([this](const EntityPtr& entity)->bool { this->AddEntityToDelete(entity); return true; });
 				else
 				{
-					std::vector<EntityPtr> selectedEntities;
-					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
-						selectedEntities.push_back(entity);
-						return true;
-					});
-					//ShowDeleteDialog(selectedEntities);
+					//ShowDeleteDialog();
 				}
 				break;
 			}
@@ -1219,10 +1301,26 @@ namespace FusionEngine
 					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
 					break;
 				case CL_MOUSE_WHEEL_UP:
-					m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
+					if (ev.ctrl)
+					{
+						if (ev.alt)
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+						else
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
+					}
+					else
+						m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
 					break;
 				case CL_MOUSE_WHEEL_DOWN:
-					m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
+					if (ev.ctrl)
+					{
+						if (ev.alt)
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+						else
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
+					}
+					else
+						m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
 					break;
 				};
 			}
@@ -1392,12 +1490,15 @@ namespace FusionEngine
 
 	void Editor::TranslateScreenToWorld(float* x, float* y) const
 	{
-		CL_Rectf area;
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
+		CL_Rectf worldArea, screenArea;
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, m_Viewport, true);
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, m_Viewport, false);
+
+		*x -= screenArea.left, *y -= screenArea.top;
 
 		*x *= (1 / m_EditCam->GetZoom());
 		*y *= (1 / m_EditCam->GetZoom());
-		*x += area.left; *y += area.top;
+		*x += worldArea.left, *y += worldArea.top;
 	}
 
 	Vector2 Editor::ReturnScreenToWorld(float x, float y) const

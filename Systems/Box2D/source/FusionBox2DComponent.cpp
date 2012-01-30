@@ -31,6 +31,8 @@
 
 #include "FusionMaths.h"
 
+#include "FusionResourceManager.h"
+
 // TEMP: auth test
 #include "FusionEntity.h"
 #include "FusionRender2DComponent.h"
@@ -428,9 +430,12 @@ namespace FusionEngine
 	void Box2DFixture::ConstructFixture(Box2DBody* body_component)
 	{
 		FSN_ASSERT(body_component->Getb2Body());
-		FSN_ASSERT(m_Fixture == nullptr);
+
+		if (m_Fixture)
+			body_component->Getb2Body()->DestroyFixture(m_Fixture);
 
 		m_Owner = body_component->Owner;
+		m_Body = body_component;
 
 		m_Def.shape = GetShape();
 		m_Fixture = body_component->Getb2Body()->CreateFixture(&m_Def);
@@ -614,19 +619,16 @@ namespace FusionEngine
 		std::bitset<ShapeDeltaSerialiser_t::NumParams> changes;
 		m_CircleDeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, m_CircleShape.m_radius, position);
 
-		if (changes[ShapePropsIdx::Position])
-			m_CircleShape.m_p.Set(position.x, position.y);
+		m_CircleShape.m_p.Set(position.x, position.y);
 
-		if (m_Fixture && changes.any())
+		if (m_Fixture)
 		{
 			FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
 			auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
 
-			if (changes[ShapePropsIdx::Radius])
-				shape->m_radius = m_CircleShape.m_radius;
-			if (changes[ShapePropsIdx::Position])
-				//SetPosition(position);
-				shape->m_p.Set(position.x, position.y);
+			shape->m_radius = m_CircleShape.m_radius;
+			//SetPosition(position);
+			shape->m_p.Set(position.x, position.y);
 
 			if (m_Body)
 				m_Body->OnFixtureMassChanged();
@@ -667,7 +669,8 @@ namespace FusionEngine
 
 			m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Position);
 
-			m_Body->OnFixtureMassChanged();
+			if (m_Body)
+				m_Body->OnFixtureMassChanged();
 		}
 		else
 			m_CircleShape.m_p.Set(position.x, position.y);
@@ -682,24 +685,37 @@ namespace FusionEngine
 	}
 
 	Box2DPolygonFixture::Box2DPolygonFixture()
+		: m_ReconstructFixture(false)
 	{
 	}
 
-	void Box2DPolygonFixture::CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
+	void Box2DPolygonFixture::Update()
 	{
-		Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, delta);
-
-		if (delta.ReadBit())
+		if (m_ReloadPolygonResource)
 		{
-			int32 numVerts;
-			delta.Read(numVerts);
+			Radius.MarkChanged();
 
-			std::vector<unsigned char> verts(numVerts);
-			if (delta.ReadBits(verts.data(), sizeof(float) * 2 * numVerts * 8))
-				FSN_EXCEPT(Exception, "Failed to copy changes");
+			if (!m_PolygonFile.empty())
+			{
+				m_PolygonLoadConnection.disconnect();
+				m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource(
+					"POLYGON",
+					m_PolygonFile,
+					[this](ResourceDataPtr data) { m_PolygonShape.SetTarget(data); m_ReconstructFixture = true; });
+			}
+			else
+			{
+				m_PolygonShape.Release();
+			}
 
-			result.Write(numVerts);
-			result.WriteBits(verts.data(), sizeof(float) * 2 * numVerts * 8);
+			m_ReloadPolygonResource = false;
+		}
+
+		if (m_ReconstructFixture && m_PolygonShape.IsLoaded() && m_Body)
+		{
+			m_ReconstructFixture = false;
+			ConstructFixture(m_Body);
+			m_Body->OnFixtureMassChanged();
 		}
 	}
 
@@ -717,85 +733,75 @@ namespace FusionEngine
 		bool changesWritten;
 
 		changesWritten = Box2DFixture::SerialiseOccasional(stream, mode);
+
+		SerialisationUtils::write(stream, m_PolygonFile);
 		
-		if (m_VerticiesChanged || mode == All)
-		{
-			if (mode != All)
-				stream.Write1();
-			stream.Write(m_PolygonShape.GetVertexCount());
-			for (int i = 0; i < m_PolygonShape.GetVertexCount(); ++i)
-			{
-				const b2Vec2& vert = m_PolygonShape.GetVertex(i);
-				stream.Write(vert.x);
-				stream.Write(vert.y);
-			}
+		//stream.Write(m_PolygonShape.GetVertexCount());
+		//for (int i = 0; i < m_PolygonShape.GetVertexCount(); ++i)
+		//{
+		//	const b2Vec2& vert = m_PolygonShape.GetVertex(i);
+		//	stream.Write(vert.x);
+		//	stream.Write(vert.y);
+		//}
 
-			changesWritten = true;
-		}
-		else if (mode != All)
-			stream.Write0();
-
-		return changesWritten;
+		return true;
 	}
 
 	void Box2DPolygonFixture::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
-		FSN_EXCEPT(NotImplementedException, "this aint done (need to update the actual fixture)");
-
 		Box2DFixture::DeserialiseOccasional(stream, mode);
 
-		//float radius;
-		Vector2 position;
-		
-		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_polygon);
-		auto circleShape = static_cast<b2PolygonShape*>(m_Fixture->GetShape());
+		SerialisationUtils::read(stream, m_PolygonFile);
+		m_ReloadPolygonResource = true;
+		if (m_PolygonFile != PolygonFile.Get())
+			PolygonFile.MarkChanged();
 
-		if (mode == All || stream.ReadBit())
+		/*
+		int32 vertexCount;
+		stream.Read(vertexCount);
+		std::vector<b2Vec2> verts;
+		verts.resize(vertexCount);
+		bool newShape = vertexCount != m_PolygonShape.GetVertexCount();
+		for (int i = 0; i < vertexCount; ++i)
 		{
-			int32 vertexCount;
-			stream.Read(vertexCount);
-			std::vector<b2Vec2> verts;
-			verts.resize(vertexCount);
-			for (int i = 0; i < vertexCount; ++i)
-			{
-				auto& vert = verts[i];
-				stream.Read(vert.x);
-				stream.Read(vert.y);
-			}
+			auto& vert = verts[i];
+			stream.Read(vert.x);
+			stream.Read(vert.y);
+
+			if (!newShape && !(vert == m_PolygonShape.GetVertex(i)))
+				newShape = true;
+		}
+
+		if (newShape)
+		{
 			m_PolygonShape.Set(verts.data(), verts.size());
 
-			m_Body->OnFixtureMassChanged();
+			ConstructFixture(m_Body);
 		}
+
+		if (m_Body)
+			m_Body->OnFixtureMassChanged();*/
+	}
+
+	const std::string& Box2DPolygonFixture::GetPolygonFile() const
+	{
+		return m_PolygonFile;
+	}
+
+	void Box2DPolygonFixture::SetPolygonFile(const std::string& filename)
+	{
+		m_PolygonFile = filename;
+		m_ReloadPolygonResource = true;
 	}
 
 	float Box2DPolygonFixture::GetRadius() const
 	{
 		if (m_Fixture)
 			return m_Fixture->GetShape()->m_radius;
+		else if (m_PolygonShape.IsLoaded())
+			return m_PolygonShape->m_radius;
 		else
-			return m_PolygonShape.m_radius;
-	}
-
-	void Box2DPolygonFixture::SetAsBoxImpl(float half_width, float half_height)
-	{
-		m_PolygonShape.SetAsBox(half_width, half_height);
-
-		m_VerticiesChanged = true;
-	}
-
-	void Box2DPolygonFixture::SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle)
-	{
-		m_PolygonShape.SetAsBox(half_width, half_height, b2Vec2(center.x, center.y), angle);
-
-		m_VerticiesChanged = true;
-	}
-
-	void Box2DPolygonFixture::SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2)
-	{
-		std::array<b2Vec2, 2> verts = { b2Vec2(v1.x, v1.y), b2Vec2(v2.x, v2.y) };
-		m_PolygonShape.Set(verts.data(), 2);
-
-		m_VerticiesChanged = true;
+			return Radius.Get();
 	}
 
 }

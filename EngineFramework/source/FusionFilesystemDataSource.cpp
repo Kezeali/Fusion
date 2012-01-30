@@ -82,20 +82,33 @@ namespace FusionEngine
 	{
 		Entry entry;
 
-		entry.path = path;
-		entry.name = bfs::path(path).filename().string();
+		// Check for type identifiers
+		const std::string physfs_dev = "physfs:";
+		const std::string native_dev = "native:";
+		bool forcePhysfs = false;
+		std::string actualPath = path;
+		if (path.compare(0, physfs_dev.length(), physfs_dev) == 0)
+		{
+			forcePhysfs = true;
+			actualPath.erase(0, physfs_dev.length());
+		}
+		else if (path.compare(0, native_dev.length(), native_dev) == 0)
+		{
+			actualPath.erase(0, native_dev.length());
+		}
 
-		const std::string physfs_dev = "physfs://";
-		const std::string native_dev = "native://";
-		if (bfs::exists(path) || path.substr(0, native_dev.length()) == native_dev)
+		entry.path = actualPath;
+		entry.name = bfs::path(actualPath).filename().string();
+
+		if (bfs::exists(actualPath) && !forcePhysfs)
 		{
 			entry.filesystem = Entry::Native;
 
-			if (bfs::is_directory(path))
+			if (bfs::is_directory(actualPath))
 				entry.type = Entry::Directory;
-			else if (bfs::is_symlink(path))
+			else if (bfs::is_symlink(actualPath))
 				entry.type = Entry::SymbolicLink;
-			else if (bfs::is_regular_file(path))
+			else if (bfs::is_regular_file(actualPath))
 				entry.type = Entry::File;
 			else
 				entry.type = Entry::None;
@@ -104,9 +117,9 @@ namespace FusionEngine
 		{
 			entry.filesystem = Entry::Physfs;
 
-			if (PHYSFS_isDirectory(path.c_str()))
+			if (PHYSFS_isDirectory(actualPath.c_str()))
 				entry.type = Entry::Directory;
-			else if (PHYSFS_isSymbolicLink(path.c_str()))
+			else if (PHYSFS_isSymbolicLink(actualPath.c_str()))
 				entry.type = Entry::SymbolicLink;
 			else
 				entry.type = Entry::File;
@@ -122,7 +135,7 @@ namespace FusionEngine
 			auto files = PHYSFS_enumerateFiles(entry.path.c_str());
 			for (auto it = files; *it != NULL; ++it)
 			{
-				entry.children.push_back(ConstructFilesystemEntry(entry.path + PHYSFS_getDirSeparator() + *it));
+				entry.children.push_back(ConstructFilesystemEntry(entry.path + "/" + *it));
 			}
 			PHYSFS_freeList(files);
 		}

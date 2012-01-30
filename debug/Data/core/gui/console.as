@@ -48,7 +48,7 @@ class ConsoleElement : ScriptElement
 		@onClearConnection = console.connectToClear("void OnClear()");
 
 		@autocomplete_menu = @ContextMenu(gui.getContext(), false);
-		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
+		@autocompleteCon = autocomplete_menu.connectToChildClick("void OnAutocompleteClick(const MenuItemEvent &in)");
 	}
 
 	~ConsoleElement()

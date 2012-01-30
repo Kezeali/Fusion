@@ -45,6 +45,7 @@
 
 namespace Rocket { namespace Core {
 	class Context;
+	class ElementDocument;
 } }
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr);
@@ -69,6 +70,8 @@ namespace FusionEngine
 
 	class EditorOverlay;
 	class SelectionDrawer;
+
+	class PreviewFormatter;
 
 	namespace Inspectors {
 		class ComponentInspector;
@@ -168,6 +171,10 @@ namespace FusionEngine
 		boost::intrusive_ptr<MenuItem> m_PropertiesMenu;
 		boost::intrusive_ptr<MenuItem> m_EntitySelectionMenu;
 
+		std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
+
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
+
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
@@ -191,6 +198,11 @@ namespace FusionEngine
 		void ShowSaveDialog();
 		void ShowLoadDialog();
 
+		void ToggleResourceBrowser();
+		bool IsResourceBrowserVisible() const;
+		void ShowResourceBrowser();
+		void HideResourceBrowser();
+
 		void Save();
 		void Load();
 
@@ -202,6 +214,8 @@ namespace FusionEngine
 
 		void CopySelectedEntities();
 		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
+
+		void NudgeSelectedEntities(const Vector2& pixels);
 
 		void OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state);
 		void OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state);

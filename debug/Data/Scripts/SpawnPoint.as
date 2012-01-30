@@ -183,9 +183,9 @@ class SpawnPoint : ScriptComponent
 		else if (numPlayers == 2)
 		{
 			if (entityA !is null)
-				entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+				entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.005f, 1);
 			if (entityB !is null)
-				entityB.icamera.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+				entityB.icamera.ViewportRect << Rect(0.5f + 0.005f, 0, 1, 1);
 		}
 	}
 	
@@ -233,9 +233,9 @@ class SpawnPoint : ScriptComponent
 				else if (getNumLocalPlayers() == 2)
 				{
 					if (entityA !is null)
-						entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+						entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.005f, 1);
 					if (entityB !is null)
-						entityB.icamera.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
+						entityB.icamera.ViewportRect << Rect(0.5f + 0.005f, 0, 1, 1);
 				}
 			}
 		}

@@ -35,6 +35,9 @@
     <ClInclude Include="include\FusionElementInspectorGroup.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionFixtureInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -71,6 +74,9 @@
       <Filter>Inspectors</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionRigidBodyInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionFixtureInspector.cpp">
       <Filter>Inspectors</Filter>
     </ClCompile>
   </ItemGroup>

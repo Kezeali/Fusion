@@ -278,38 +278,55 @@ namespace FusionEngine
 		virtual ~IPolygonShape() {}
 
 		FSN_COIFACE_CTOR(IPolygonShape,
+			((FSN_GET_SET)(PolygonFile))
 			((FSN_GET)(Radius)) )
 
+		ThreadSafeProperty<std::string> PolygonFile;
 		ThreadSafeProperty<float, NullWriter<float>> Radius;
 
-		//! Returns true
-		static bool IsThreadSafe() { return true; }
+	protected:
+		virtual const std::string& GetPolygonFile() const = 0;
+		virtual void SetPolygonFile(const std::string& center) = 0;
 
-		void SetAsBox(float half_width, float half_height)
-		{
-			CL_MutexSection lock(&m_InternalMutex);
-			SetAsBoxImpl(half_width, half_height);
-		}
-		void SetAsBox(float half_width, float half_height, const Vector2& center, float angle)
-		{
-			CL_MutexSection lock(&m_InternalMutex);
-			SetAsBoxImpl(half_width, half_height, center, angle);
-		}
-		void SetAsEdge(const Vector2 &v1, const Vector2 &v2)
-		{
-			CL_MutexSection lock(&m_InternalMutex);
-			SetAsEdgeImpl(v1, v2);
-		}
+		virtual float GetRadius() const = 0;
+	};
 
-	private:
-		CL_Mutex m_InternalMutex;
+	class IBoxShape
+	{
+	public:
+		static std::string GetTypeName() { return "IBoxShape"; }
+		virtual ~IBoxShape() {}
+
+		FSN_COIFACE_CTOR(IBoxShape,
+			((FSN_GET_SET)(Center))
+			((FSN_GET_SET)(Extents)) )
+
+		ThreadSafeProperty<Vector2> Center;
+		ThreadSafeProperty<Vector2> Extents;
 
 	protected:
-		virtual float GetRadius() const = 0;
+		virtual Vector2 GetCenter() const = 0;
+		virtual void SetCenter(const Vector2& center) = 0;
 
-		virtual void SetAsBoxImpl(float half_width, float half_height) = 0;
-		virtual void SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle) = 0;
-		virtual void SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2) = 0;
+		virtual Vector2 GetExtents() const = 0;
+		virtual void SetExtents(const Vector2& center) = 0;
+	};
+
+	class IEdgeShape
+	{
+	public:
+		static std::string GetTypeName() { return "IEdgeShape"; }
+		virtual ~IEdgeShape() {}
+
+		FSN_COIFACE_CTOR(IEdgeShape,
+			((FSN_GET_SET)(EdgeFile)) )
+
+		ThreadSafeProperty<std::string> EdgeFile;
+		ThreadSafeProperty<float, NullWriter<float>> Radius;
+
+	protected:
+		virtual const std::string& GetEdgeFile() const = 0;
+		virtual void SetEdgeFile(const std::string& center) = 0;
 	};
 
 }
