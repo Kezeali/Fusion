@@ -1,4 +1,4 @@
-<template name="window" content="content">
+<template name="window_static" content="content">
 <head>
 	<link type="text/rcss" href="rkt.rcss"/>
 	<link type="text/rcss" href="fusion.rcss"/>

@@ -239,8 +239,12 @@ namespace FusionEngine
 		{
 			if (*it == "type")
 				row.push_back(TypeToString(file.type).c_str());
-			if (*it == "filename")
+			else if (*it == "filename")
 				row.push_back(file.name.c_str());
+			else if (*it == "path")
+				row.push_back(file.path.c_str());
+			else if (*it == "filesystem")
+				row.push_back(file.filesystem == Entry::Native ? "native" : "physfs");
 		}
 	}
 

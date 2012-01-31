@@ -91,13 +91,13 @@
 			
 			inspector input.text:hover
 			{
-				max-width: 100%;
+				max-width: 50%;
 				width: auto;
 			}
 			
 			inspector input.text:focus
 			{
-				max-width: 100%;
+				max-width: 50%;
 				width: auto;
 			}
 			

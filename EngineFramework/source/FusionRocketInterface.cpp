@@ -449,6 +449,11 @@ namespace FusionEngine
 		return (size_t)PHYSFS_tell((PHYSFS_File*)file);
 	}
 
+	size_t RocketFileSystem::Length(Rocket::Core::FileHandle file)
+	{
+		return (size_t)PHYSFS_fileLength((PHYSFS_File*)file);
+	}
+
 	//void RocketFileSystem::Release()
 	//{
 	//	delete this;

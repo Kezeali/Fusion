@@ -1,4 +1,3 @@
-<!-- Cursor document, used by the Ogre3D sample. -->
 <rml>
 	<head>
 		<title>Arrow</title>
@@ -8,8 +7,18 @@
 				width: 10px;
 				height: 16px;
 				
+				display: block;
+				
+				clip: none;
+				
 				cursor-decorator: image;
 				cursor-image: cursor.png;
+				
+				font-family: Delicious;
+				font-weight: normal;
+				font-style: normal;
+				font-size: 15;
+				color: black;
 			}
 		</style>
 	</head>

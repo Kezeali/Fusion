@@ -130,6 +130,8 @@ namespace FusionEngine
 		/// Returns the current position of the file pointer.		
 		virtual size_t Tell(Rocket::Core::FileHandle file);
 
+		virtual size_t Length(Rocket::Core::FileHandle file);
+
 		//virtual void Release();
 
 	//protected:

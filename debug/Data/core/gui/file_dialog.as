@@ -6,24 +6,31 @@ class ResourcePreviewFormatter : IDataFormatter
 	ResourcePreviewFormatter()
 	{
 		AddDataFormatter(rString("resource_preview"), this);
+		console.println("adding preview formatter");
 	}
 	~ResourcePreviewFormatter()
 	{
+		console.println("deleting preview formatter");
 	}
 	
 	rString FormatData(const StringList &in raw_data)
 	{
 		string formattedData = "";
-		if (raw_data.size() > 0)
+		if (raw_data.size() >= 2)
 		{
 			string r0 = raw_data[0];
-			formattedData =
-				"<span style=\"icon-decorator: image; icon-image:" + r0 + ";\" "
+			string r1 = raw_data[1];
+			/*formattedData =
+				"<span id=\"r_filename\" style=\"icon-decorator: image; icon-image:" + r0 + ";\" "
 				"onmouseover=\"%this:GeneratePreviewPopup('" + r0 + "', event);\" "
 				"onmousemove=\"%this:MovePreviewPopup(event);\" "
 				"onmouseout=\"%this:HidePreviewPopup(event);\">" +
 				r0 +
 				"</span>";
+			*/
+			formattedData =
+				"<div class=\"resource_row\"><div class=\"r_filename\" style=\"display: inline; width: auto;\">" + r1 + "</div>" +
+				"<info class=\"r_path\" style=\"display: none;\" path=\"" + r0 + "\">" + r0 + "</info></div>";
 		}
 		return formattedData;
 	}
