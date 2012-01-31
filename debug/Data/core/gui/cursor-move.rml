@@ -7,6 +7,12 @@
 			{
 				width: 16px;
 				height: 16px;
+			}
+			div.cursor
+			{
+				width: 16px;
+				height: 16px;
+				position: absolute;
 				top: -8px;
 				left: -8px;
 				
@@ -16,5 +22,6 @@
 		</style>
 	</head>
 	<body>
+	<div class="cursor"/>
 	</body>
 </rml>

@@ -113,13 +113,6 @@
 				font-size: 13;
 				display: inline;
 			}
-			.drag
-			{
-				drag: clone;
-				width: 50px;
-				height: 50px;
-				clip: none;
-			}
 		</style>
 		<script src="file_dialog.as"/>
 	</head>
@@ -131,6 +124,5 @@
 			<!--col fields="filename" formatter="resource_preview"/-->
 			<col fields="path,filename" formatter="resource_preview"/>
 		</datagrid>
-		<div class="drag"><img src="/core/gui/folder.png" /></div>
 	</body>
 </rml>
