@@ -25,33 +25,41 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionTransformInspector
-#define H_FusionTransformInspector
-
-#if _MSC_VER > 1000
-#pragma once
-#endif
+#ifndef H_FusionElementPropertyConnectionInfo
+#define H_FusionElementPropertyConnectionInfo
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include <Rocket/Core/Element.h>
 
-#include "FusionTransformComponent.h"
+#include "FusionEntityComponent.h"
+
+#include <functional>
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class TransformInspector : public GenericInspector<ITransform>
+	class ElementPropertyConnection : public Rocket::Core::Element
 	{
 	public:
-		TransformInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		ElementPropertyConnection(const Rocket::Core::String& tag)
+			: Rocket::Core::Element(tag)
 		{
-			InitUI();
 		}
 
 	private:
-		void InitUI();
+	};
+
+	template <class T>
+	class ElementPropertyConnectionGeneric : public ElementPropertyConnection
+	{
+	public:
+		ElementPropertyConnectionGeneric(const Rocket::Core::String& tag)
+			: ElementPropertyConnection(tag)
+		{
+		}
+
+	private:
 	};
 
 } }

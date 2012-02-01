@@ -62,6 +62,7 @@
 
 #include "FusionTransformInspector.h"
 #include "FusionRigidBodyInspector.h"
+#include "FusionFixtureInspector.h"
 #include "FusionCircleShapeInspector.h"
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
@@ -387,6 +388,7 @@ namespace FusionEngine
 
 		void ProcessEvent(Rocket::Core::Event& ev)
 		{
+			Rocket::Core::Element::ProcessEvent(ev);
 			if (ev == "change" || (ev.GetTargetElement()->GetTagName() == "button" && ev == "click"))
 			{
 				auto selection = m_Select->GetSelection();
@@ -413,6 +415,7 @@ namespace FusionEngine
 
 		void ProcessEvent(Rocket::Core::Event& ev)
 		{
+			Rocket::Core::Element::ProcessEvent(ev);
 			if (ev.GetTargetElement() == header && ev == "click")
 			{
 				Rocket::Core::ElementList elements;
@@ -541,7 +544,6 @@ namespace FusionEngine
 			}
 		});
 
-		//m_InspectorTypes.insert(std::make_pair(ITransform::GetTypeName(), []() { return std::make_shared<Inspectors::TransformInspector>(); }));
 		{
 			auto tag = "inspector_" + ITransform::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
@@ -550,6 +552,10 @@ namespace FusionEngine
 			tag = "inspector_" + IRigidBody::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::RigidBodyInspector>())->RemoveReference();
+
+			tag = "inspector_" + IFixture::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::FixtureInspector>())->RemoveReference();
 
 			tag = "inspector_" + ICircleShape::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),

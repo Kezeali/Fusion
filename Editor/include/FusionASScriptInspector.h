@@ -63,7 +63,6 @@ namespace FusionEngine { namespace Inspectors
 		};
 		boost::multi_index_container<ScriptPropertyInput, boost::multi_index::indexed_by<
 			boost::multi_index::sequenced<>,
-			//boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, const std::string, &ScriptPropertyInput::name>>,
 			boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>, &ScriptPropertyInput::input>>
 		>> m_Inputs;
 

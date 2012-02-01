@@ -457,6 +457,8 @@ namespace FusionEngine { namespace Inspectors
 
 	void ElementGroup::ProcessEvent(Rocket::Core::Event& ev)
 	{
+		Rocket::Core::Element::ProcessEvent(ev);
+
 		if (ev == "submit")
 		{
 			const bool add = ev.GetParameter("result", Rocket::Core::String()) == "add_component";

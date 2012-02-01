@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionComponentInspector.h"
+#include "FusionElementPropertyConnection.h"
 
 #include "FusionInspectorUtils.h"
 
@@ -495,6 +496,7 @@ namespace FusionEngine { namespace Inspectors
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::ProcessEvent(Rocket::Core::Event& ev)
 	{
+		Rocket::Core::Element::ProcessEvent(ev);
 		try
 		{
 			const bool isSelectElem =
@@ -529,22 +531,35 @@ namespace FusionEngine { namespace Inspectors
 					auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(dest_container));
 					if (entry != m_Inputs.end())
 					{
-						Rocket::Core::ElementList fnameInfoElems;
-						drag_element->GetElementsByTagName(fnameInfoElems, "info");
-						if (!fnameInfoElems.empty())
 						{
-							auto fname = fnameInfoElems.front();
-							auto textval = fname->GetAttribute("path", Rocket::Core::String());
-							if (!textval.Empty())
+							Rocket::Core::ElementList fnameInfoElems;
+							drag_element->GetElementsByTagName(fnameInfoElems, "fileinfo");
+							if (!fnameInfoElems.empty())
 							{
-								std::string tvstr(textval.CString(), textval.CString() + textval.Length());
-								if (auto* cb = boost::get<StringSetter_t>(&entry->second.callback))
+								auto finfo = fnameInfoElems.front();
+								auto textval = finfo->GetAttribute("path", Rocket::Core::String());
+								if (!textval.Empty())
 								{
-									for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-										(*cb)(tvstr, *it);
-									SetUIValueVisitor v(true, m_Components.front());
-									GetterCallbackVariant_t fgetter = StringGetter_t([tvstr](ComponentIPtr<ComponentT>)->std::string { return tvstr; });
-									boost::apply_visitor(v, entry->second.ui_element, fgetter);
+									std::string tvstr(textval.CString(), textval.CString() + textval.Length());
+									if (auto* cb = boost::get<StringSetter_t>(&entry->second.callback))
+									{
+										for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+											(*cb)(tvstr, *it);
+										SetUIValueVisitor v(true, m_Components.front());
+										GetterCallbackVariant_t fgetter = StringGetter_t([tvstr](ComponentIPtr<ComponentT>)->std::string { return tvstr; });
+										boost::apply_visitor(v, entry->second.ui_element, fgetter);
+									}
+								}
+							}
+						}
+						{
+							Rocket::Core::ElementList propertyLinkElems;
+							drag_element->GetElementsByTagName(propertyLinkElems, "proplink");
+							if (!propertyLinkElems.empty())
+							{
+								auto elem = propertyLinkElems.front();
+								if (auto linkInfo = dynamic_cast<ElementPropertyConnection*>(elem))
+								{
 								}
 							}
 						}

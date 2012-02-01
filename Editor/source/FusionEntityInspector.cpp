@@ -207,6 +207,7 @@ namespace FusionEngine { namespace Inspectors
 
 	void ElementEntityInspector::ProcessEvent(Rocket::Core::Event& ev)
 	{
+		Rocket::Core::Element::ProcessEvent(ev);
 		try
 		{
 			const bool isSelectElem =

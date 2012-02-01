@@ -101,6 +101,8 @@ namespace FusionEngine
 		void SetDebugDraw(bool value) { m_PhysDebugDrawEnabled = value; }
 		void ToggleDebugDraw() { m_PhysDebugDrawEnabled = !m_PhysDebugDrawEnabled; }
 
+		bool IsDebugTextEnabled() const { return m_DebugTextEnabled; }
+
 		const std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<CLSprite>>& GetSprites() { return m_Sprites; }
@@ -135,6 +137,8 @@ namespace FusionEngine
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
 
 		std::multimap<ViewportPtr, std::weak_ptr<CLRenderExtension>> m_Extensions;
+
+		bool m_DebugTextEnabled;
 
 		CameraSynchroniser* m_CameraManager;
 

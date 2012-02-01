@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionTransformInspector
-#define H_FusionTransformInspector
+#ifndef H_FusionFixtureInspector
+#define H_FusionFixtureInspector
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,21 +36,20 @@
 
 #include "FusionInspectorBase.h"
 
-#include "FusionTransformComponent.h"
+#include "FusionPhysicalComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class TransformInspector : public GenericInspector<ITransform>
+	class FixtureInspector : public GenericInspector<IFixture>
 	{
 	public:
-		TransformInspector(const Rocket::Core::String& tag)
+		FixtureInspector(const Rocket::Core::String& tag)
 			: GenericInspector(tag)
 		{
 			InitUI();
 		}
 
-	private:
 		void InitUI();
 	};
 

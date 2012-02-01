@@ -39,207 +39,30 @@
 namespace FusionEngine { namespace Inspectors
 {
 
-	TransformInspector::TransformInspector(const Rocket::Core::String& tag)
-		: ComponentInspector(tag)
-	{
-		// X
-		{
-			Rocket::Core::XMLAttributes attributes;
-			attributes.Set("style", "margin-right: 7px;");
-			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
-				"prop_elem",
-				"prop_elem",
-				attributes);
-			this->AppendChild(prop_elem);
-
-			Rocket::Core::Factory::InstanceElementText(prop_elem, "X");
-
-			attributes.Clear();
-			attributes.Set("type", "text");
-			attributes.Set("id", "x_input");
-			attributes.Set("name", "x");
-			attributes.Set("value", "0");
-			attributes.Set("size", "6");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
-				"input",
-				"input",
-				attributes);
-
-			addControl(prop_elem, m_XInput, text_input);
-
-			prop_elem->RemoveReference();
-		}
-		// Y
-		{
-			Rocket::Core::XMLAttributes attributes;
-			attributes.Set("style", "margin-right: 7px;");
-			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
-				"prop_elem",
-				"prop_elem",
-				attributes);
-			this->AppendChild(prop_elem);
-
-			Rocket::Core::Factory::InstanceElementText(prop_elem, "Y");
-
-			attributes.Clear();
-			attributes.Set("type", "text");
-			attributes.Set("id", "y_input");
-			attributes.Set("name", "y");
-			attributes.Set("value", "0");
-			attributes.Set("size", "6");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
-				"input",
-				"input",
-				attributes);
-
-			addControl(prop_elem, m_YInput, text_input);
-
-			prop_elem->RemoveReference();
-		}
-		// Angle
-		{
-			Rocket::Core::XMLAttributes attributes;
-			attributes.Set("style", "margin-right: 7px;");
-			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
-				"prop_elem",
-				"prop_elem",
-				attributes);
-			this->AppendChild(prop_elem);
-
-			Rocket::Core::Factory::InstanceElementText(prop_elem, "Angle");
-
-			attributes.Clear();
-			attributes.Set("type", "text");
-			attributes.Set("id", "angle_input");
-			attributes.Set("name", "angle");
-			attributes.Set("value", "0");
-			attributes.Set("size", "5");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
-				"input",
-				"input",
-				attributes);
-
-			addControl(prop_elem, m_AngleInput, text_input);
-
-			prop_elem->RemoveReference();
-		}
-		// Depth
-		{
-			Rocket::Core::XMLAttributes attributes;
-			attributes.Set("style", "margin-right: 7px;");
-			Rocket::Core::Element* prop_elem = Rocket::Core::Factory::InstanceElement(this,
-				"prop_elem",
-				"prop_elem",
-				attributes);
-			this->AppendChild(prop_elem);
-
-			Rocket::Core::Factory::InstanceElementText(prop_elem, "Depth");
-
-			attributes.Clear();
-			attributes.Set("type", "text");
-			attributes.Set("id", "depth_input");
-			attributes.Set("name", "depth");
-			attributes.Set("value", "0");
-			attributes.Set("size", "3");
-			Rocket::Core::Element* text_input = Rocket::Core::Factory::InstanceElement(prop_elem,
-				"input",
-				"input",
-				attributes);
-
-			addControl(prop_elem, m_DepthInput, text_input);
-
-			prop_elem->RemoveReference();
-		}
-	}
-
-	void TransformInspector::SetComponents(const std::vector<ComponentPtr>& components)
-	{
-		for (auto it = components.begin(), end = components.end(); it != end; ++it)
-		{
-			if (auto typed = ComponentIPtr<ITransform>(*it))
-				m_Components.push_back(typed);
-		}
-
-		if (!m_Components.empty())
-			InitUI();
-	}
-
-	void TransformInspector::ReleaseComponents()
-	{
-		m_Components.clear();
-	}
-
 	void TransformInspector::InitUI()
 	{
-		m_XInput->SetValue("");
-		m_YInput->SetValue("");
-		m_AngleInput->SetValue("");
-		m_DepthInput->SetValue("");
-		bool first = true;
-		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-		{
-			const auto pos = (*it)->Position.Get();
-			if (first)
-			{
-				initUIValue(m_XInput, pos.x);
-				initUIValue(m_YInput, pos.y);
-				initUIValue(m_AngleInput, (*it)->Angle.Get());
-				initUIValue(m_DepthInput, (*it)->Depth.Get());
-			}
-			else
-			{
-				clearIfNotEqual(m_XInput, pos.x);
-				clearIfNotEqual(m_YInput, pos.y);
-				clearIfNotEqual(m_AngleInput, (*it)->Angle.Get());
-				clearIfNotEqual(m_DepthInput, (*it)->Depth.Get());
-			}
+		AddTextInput("X",
+			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
+			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
+			6
+			);
+		AddTextInput("Y",
+			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
+			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
+			6
+			);
 
-			first = false;
-		}
-	}
+		AddTextInput("Angle",
+			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Angle.Set(value); }),
+			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Angle.Get(); }),
+			5
+			);
 
-	void TransformInspector::ProcessEvent(Rocket::Core::Event& ev)
-	{
-		try
-		{
-			if (ev == "enter")
-			{
-				if (ev.GetTargetElement() == m_XInput.get())
-				{
-					Vector2 value(getUIValue<float>(m_XInput), 0.f);
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-					{
-						value.y = (*it)->Position.Get().y;
-						(*it)->Position.Set(value);
-					}
-				}
-				else if (ev.GetTargetElement() == m_YInput.get())
-				{
-					Vector2 value(0.f, getUIValue<float>(m_YInput));
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-					{
-						value.x = (*it)->Position.Get().x;
-						(*it)->Position.Set(value);
-					}
-				}
-				else if (ev.GetTargetElement() == m_AngleInput.get())
-				{
-					auto value = getUIValue<float>(m_AngleInput);
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-						(*it)->Angle.Set(value);
-				}
-				else if (ev.GetTargetElement() == m_DepthInput.get())
-				{
-					auto value = getUIValue<int>(m_DepthInput);
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-						(*it)->Depth.Set(value);
-				}
-			}
-		}
-		catch (boost::bad_lexical_cast&)
-		{
-			InitUI();
-		}
+		AddTextInput("Depth",
+			IntSetter_t([](int value, ComponentIPtr<ITransform> component) { component->Depth.Set(value); }),
+			IntGetter_t([](ComponentIPtr<ITransform> component)->int { return component->Depth.Get(); }),
+			3
+			);
 	}
 
 } }

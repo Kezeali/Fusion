@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -80,7 +80,8 @@ namespace FusionEngine
 		: ISystemWorld(system),
 		m_CameraManager(camera_sync),
 		m_PhysWorld(nullptr),
-		m_PhysDebugDrawEnabled(false)
+		m_PhysDebugDrawEnabled(false),
+		m_DebugTextEnabled(false)
 	{
 		m_Renderer = new Renderer(window.get_gc());
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
@@ -94,10 +95,20 @@ namespace FusionEngine
 				this->m_PhysDebugDrawEnabled = false;
 			return "";
 		});
+
+		Console::getSingleton().BindCommand("r_debug_text", [this](const std::vector<std::string>& params)->std::string
+		{
+			if (params.size() == 1 || params[1] == "on")
+				this->m_DebugTextEnabled = true;
+			else
+				this->m_DebugTextEnabled = false;
+			return "";
+		});
 	}
 
 	CLRenderWorld::~CLRenderWorld()
 	{
+		Console::getSingleton().UnbindCommand("r_debug_text");
 		Console::getSingleton().UnbindCommand("phys_debug_draw");
 
 		delete m_GUITask;
@@ -480,114 +491,118 @@ namespace FusionEngine
 			}
 		}
 
+		if (m_RenderWorld->IsDebugTextEnabled())
 		{
-			std::stringstream str;
-			str << DeltaTime::GetFramesSkipped();
-			std::string debug_text = "Frames Skipped: " + str.str();
-			str.str("");
-			str << DeltaTime::GetDeltaTime();
-			debug_text += "\nDT: " + str.str() + "sec";
-			str.str("");
-			str << viewports.size();
-			debug_text += "\nViewports: " + str.str();
-			m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
-
-			CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
-			CL_Rectf fill = bar;
-			fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
-			CL_Colorf c1 = CL_Colorf::aqua;
-			CL_Colorf c0 = c1;
-			c0.set_alpha(0.25f);
-			c1.set_alpha(DeltaTime::GetInterpolationAlpha());
-			CL_Draw::box(gc, bar, CL_Colorf::silver);
-			CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
-		}
-
-		{
-			const auto pf = Profiling::getSingleton().GetTimes();
-			CL_Pointf pfLoc(10.f, 110.f);
-			for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 			{
-				std::stringstream secStr, percentStr;
-				secStr.setf(std::ios::fixed);
-				secStr.precision(5);
-				percentStr.precision(3);
+				std::stringstream str;
+				str << DeltaTime::GetFramesSkipped();
+				std::string debug_text = "Frames Skipped: " + str.str();
+				str.str("");
+				str << DeltaTime::GetDeltaTime();
+				debug_text += "\nDT: " + str.str() + "sec";
+				str.str("");
+				str << viewports.size();
+				debug_text += "\nViewports: " + str.str();
+				m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
 
-				secStr << it->second;
-				std::string line = it->first + ": " + secStr.str() + "sec";
-
-				if (it->second > 0.0 && DeltaTime::GetDeltaTime() > 0.f)
-				{
-					percentStr << (it->second / DeltaTime::GetDeltaTime()) * 100.f;
-					line += " (" + percentStr.str() + "%)";
-				}
-
-				m_DebugFont.draw_text(gc, pfLoc, line);
-
-				pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
+				CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
+				CL_Rectf fill = bar;
+				fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
+				CL_Colorf c1 = CL_Colorf::aqua;
+				CL_Colorf c0 = c1;
+				c0.set_alpha(0.25f);
+				c1.set_alpha(DeltaTime::GetInterpolationAlpha());
+				CL_Draw::box(gc, bar, CL_Colorf::silver);
+				CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
 			}
-		}
 
-		{
-			auto network = NetworkManager::GetNetwork();
-
-			if (network->IsConnected())
+#ifdef FSN_PROFILING_ENABLED
 			{
-				CL_Pointf pfLoc(400.f, 40.f);
-
-				unsigned short numberSystems = network->GetPeerInterface()->GetMaximumNumberOfPeers();
-				network->GetPeerInterface()->GetConnectionList(nullptr, &numberSystems);
-				std::vector<RakNet::SystemAddress> remoteSystems(numberSystems);
-				network->GetPeerInterface()->GetConnectionList(remoteSystems.data(), &numberSystems);
-
-				RakNet::RakNetStatistics stats;
-				for (unsigned short i = 0; i < numberSystems; ++i)
+				const auto pf = Profiling::getSingleton().GetTimes();
+				CL_Pointf pfLoc(10.f, 110.f);
+				for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 				{
-					network->GetPeerInterface()->GetStatistics(remoteSystems[i], &stats);
+					std::stringstream secStr, percentStr;
+					secStr.setf(std::ios::fixed);
+					secStr.precision(5);
+					percentStr.precision(3);
 
-					std::vector<std::string> lines;
+					secStr << it->second;
+					std::string line = it->first + ": " + secStr.str() + "sec";
 
+					if (it->second > 0.0 && DeltaTime::GetDeltaTime() > 0.f)
 					{
-						char address[256];
-						remoteSystems[i].ToString(true, address);
-						lines.push_back(std::string(address) + ":");
+						percentStr << (it->second / DeltaTime::GetDeltaTime()) * 100.f;
+						line += " (" + percentStr.str() + "%)";
 					}
 
-					std::stringstream str;
+					m_DebugFont.draw_text(gc, pfLoc, line);
 
-					int ping = network->GetPeerInterface()->GetAveragePing(remoteSystems[i]);
-					str << ping;
-					lines.push_back("Ping: " + str.str());
-					str.str("");
+					pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
+				}
+			}
+#endif
 
-					str << stats.BPSLimitByCongestionControl;
-					lines.push_back(
-						std::string("Congested: ") + std::string(stats.isLimitedByCongestionControl ? "yes" : "no") + std::string(stats.isLimitedByOutgoingBandwidthLimit ? " (arb)" : "") + std::string("  BPS limit: ") + str.str()
-						);
-					str.str("");
-					for (size_t p = 0; p < NUMBER_OF_PRIORITIES; ++p)
+			{
+				auto network = NetworkManager::GetNetwork();
+
+				if (network->IsConnected())
+				{
+					CL_Pointf pfLoc(400.f, 40.f);
+
+					unsigned short numberSystems = network->GetPeerInterface()->GetMaximumNumberOfPeers();
+					network->GetPeerInterface()->GetConnectionList(nullptr, &numberSystems);
+					std::vector<RakNet::SystemAddress> remoteSystems(numberSystems);
+					network->GetPeerInterface()->GetConnectionList(remoteSystems.data(), &numberSystems);
+
+					RakNet::RakNetStatistics stats;
+					for (unsigned short i = 0; i < numberSystems; ++i)
 					{
-						str << "P" << p;
-						str << "  Msg: " << stats.messageInSendBuffer[p] << " (r " << stats.messagesInResendBuffer << ")";
-						str << "  Byt: " << stats.bytesInSendBuffer[p] << " (r " << stats.bytesInResendBuffer << ")";
+						network->GetPeerInterface()->GetStatistics(remoteSystems[i], &stats);
+
+						std::vector<std::string> lines;
+
+						{
+							char address[256];
+							remoteSystems[i].ToString(true, address);
+							lines.push_back(std::string(address) + ":");
+						}
+
+						std::stringstream str;
+
+						int ping = network->GetPeerInterface()->GetAveragePing(remoteSystems[i]);
+						str << ping;
+						lines.push_back("Ping: " + str.str());
+						str.str("");
+
+						str << stats.BPSLimitByCongestionControl;
+						lines.push_back(
+							std::string("Congested: ") + std::string(stats.isLimitedByCongestionControl ? "yes" : "no") + std::string(stats.isLimitedByOutgoingBandwidthLimit ? " (arb)" : "") + std::string("  BPS limit: ") + str.str()
+							);
+						str.str("");
+						for (size_t p = 0; p < NUMBER_OF_PRIORITIES; ++p)
+						{
+							str << "P" << p;
+							str << "  Msg: " << stats.messageInSendBuffer[p] << " (r " << stats.messagesInResendBuffer << ")";
+							str << "  Byt: " << stats.bytesInSendBuffer[p] << " (r " << stats.bytesInResendBuffer << ")";
+							lines.push_back(str.str());
+							str.str("");
+						}
+						str << "Packet loss: " << stats.packetlossLastSecond;
 						lines.push_back(str.str());
 						str.str("");
-					}
-					str << "Packet loss: " << stats.packetlossLastSecond;
-					lines.push_back(str.str());
-					str.str("");
 
-					lines.push_back("---");
+						lines.push_back("---");
 
-					for (auto it = lines.begin(), end = lines.end(); it != end; ++it)
-					{
-						m_DebugFont2.draw_text(gc, pfLoc, *it);
-						pfLoc.y += m_DebugFont2.get_text_size(gc, *it).height;
+						for (auto it = lines.begin(), end = lines.end(); it != end; ++it)
+						{
+							m_DebugFont2.draw_text(gc, pfLoc, *it);
+							pfLoc.y += m_DebugFont2.get_text_size(gc, *it).height;
+						}
 					}
 				}
 			}
 		}
-
 
 		if (!m_PhysDebugDraw)
 		{

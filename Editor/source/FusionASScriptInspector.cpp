@@ -352,6 +352,7 @@ namespace FusionEngine { namespace Inspectors
 
 	void ASScriptInspector::ProcessEvent(Rocket::Core::Event& ev)
 	{
+		Rocket::Core::Element::ProcessEvent(ev);
 		try
 		{
 			const bool enterEvent = ev == "enter";

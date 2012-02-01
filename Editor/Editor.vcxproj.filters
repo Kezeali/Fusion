@@ -38,6 +38,9 @@
     <ClInclude Include="include\FusionFixtureInspector.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionElementPropertyConnection.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

@@ -30,7 +30,7 @@ class ResourcePreviewFormatter : IDataFormatter
 			*/
 			formattedData =
 				"<div class=\"resource_row\"><div class=\"r_filename\" style=\"display: inline; width: auto;\">" + r1 + "</div>" +
-				"<info class=\"r_path\" style=\"display: none;\" path=\"" + r0 + "\">" + r0 + "</info></div>";
+				"<fileinfo class=\"r_path\" style=\"display: none;\" path=\"" + r0 + "\"/></div>";
 		}
 		return formattedData;
 	}
