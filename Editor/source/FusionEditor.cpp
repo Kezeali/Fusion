@@ -605,6 +605,13 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
+		if (m_ResourceBrowser)
+		{
+			m_ResourceBrowser->RemoveEventListener("hide", m_DockedWindowsListener.get());
+			m_ResourceBrowser->RemoveEventListener("resize", m_DockedWindowsListener.get());
+		}
+		m_ResourceBrowser.reset();
+		m_DockedWindowsListener.reset();
 		m_EntitySelectionMenu.reset();
 		m_PropertiesMenu.reset();
 		m_RightClickMenu.reset();
@@ -911,12 +918,65 @@ namespace FusionEngine
 		return m_ResourceBrowser && m_ResourceBrowser->IsVisible();
 	}
 
+	class FunctorEventListener : public Rocket::Core::EventListener
+	{
+	public:
+		FunctorEventListener()
+		{}
+
+		FunctorEventListener(const std::function<void (Rocket::Core::Event&)>& handler)
+			: m_Handler(handler)
+		{}
+
+		~FunctorEventListener()
+		{
+			//for (auto it = m_AttachedElements.begin(); it != m_AttachedElements.end(); ++it)
+			//{
+			//	(*it)->RemoveEventListener(
+			//}
+		}
+
+	private:
+		void ProcessEvent(Rocket::Core::Event& ev) { FSN_ASSERT(m_Handler); m_Handler(ev); }
+
+		void OnAttach(Rocket::Core::Element*)
+		{
+			//m_AttachedElements.insert(element);
+		}
+
+		void OnDetach(Rocket::Core::Element*)
+		{
+			//m_AttachedElements.erase(element);
+		}
+
+		std::function<void (Rocket::Core::Event&)> m_Handler;
+
+		//std::set<Rocket::Core::Element*> m_AttachedElements;
+	};
+
 	void Editor::ShowResourceBrowser()
 	{
 		if (!m_ResourceBrowser)
 		{
 			m_ResourceBrowser = m_GUIContext->LoadDocument("/core/gui/resource_browser.rml");
 			m_ResourceBrowser->RemoveReference();
+			m_DockedWindowsListener = std::make_shared<FunctorEventListener>([this](Rocket::Core::Event& ev)
+			{
+				if (ev == "hide")
+					this->m_Viewport->SetArea(0.f, 0.f, 1.f, 1.f);
+				else if (ev == "resize")
+				{
+					if (m_ResourceBrowser->IsVisible())
+					{
+						auto area = m_Viewport->GetArea();
+						area.left = m_ResourceBrowser->GetOffsetWidth() / m_DisplayWindow.get_gc().get_width();
+						m_Viewport->SetArea(area);
+					}
+				}
+			});
+			m_ResourceBrowser->AddEventListener("hide", m_DockedWindowsListener.get());
+			m_ResourceBrowser->AddEventListener("resize", m_DockedWindowsListener.get());
+			//m_ResourceBrowser->RemoveReference();
 		}
 		if (m_ResourceBrowser)
 		{

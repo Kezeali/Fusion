@@ -46,6 +46,7 @@
 namespace Rocket { namespace Core {
 	class Context;
 	class ElementDocument;
+	class EventListener;
 } }
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr);
@@ -174,6 +175,7 @@ namespace FusionEngine
 		std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
 
 		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
+		std::shared_ptr<Rocket::Core::EventListener> m_DockedWindowsListener;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
