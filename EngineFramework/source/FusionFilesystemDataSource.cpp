@@ -28,6 +28,7 @@
 #include "PrecompiledHeaders.h"
 
 #include "FusionAssert.h"
+#include "FusionExceptionFactory.h"
 
 #include "FusionFilesystemDataSource.h"
 
@@ -285,6 +286,25 @@ namespace FusionEngine
 	std::string FilesystemDataSource::PreproPath(const std::string& table) const
 	{
 		return FusionEngine::PreprocessPath(table);
+	}
+
+	std::pair<Rocket::Core::String, int> FilesystemDataSource::ReverseLookup(const std::string& path)
+	{
+		bfs::path filepath(path);
+
+		std::string parentStr = filepath.parent_path().string();
+		std::string filenameStr = filepath.filename().string();
+
+		auto entry = AquireEntry(parentStr, true);
+		auto childEntryIt = std::find_if(entry.children.begin(), entry.children.end(), [&filenameStr](const Entry& child) { return child.name == filenameStr; });
+		if (childEntryIt != entry.children.end())
+		{
+			return std::make_pair(Rocket::Core::String(parentStr.data(), parentStr.data() + parentStr.length()), std::distance(entry.children.begin(), childEntryIt));
+		}
+		else
+		{
+			FSN_EXCEPT(FileSystemException, "Path not found: " + path);
+		}
 	}
 
 }

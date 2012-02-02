@@ -260,6 +260,7 @@ namespace FusionEngine
 			{
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
+				SignalResourceLoaded(res);
 			}
 			else
 			{

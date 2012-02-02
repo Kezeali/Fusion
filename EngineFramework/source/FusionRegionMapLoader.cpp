@@ -153,7 +153,7 @@ namespace FusionEngine
 			return false;
 	}
 
-	static void setupTuning(kyotocabinet::HashDB* db)
+	inline void setupTuning(kyotocabinet::HashDB* db)
 	{
 		db->tune_defrag(8);
 		db->tune_map(2LL << 20); // 2MB memory-map

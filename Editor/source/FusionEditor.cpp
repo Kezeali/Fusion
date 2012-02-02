@@ -34,11 +34,15 @@
 #include "FusionComponentFactory.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
+#include "FusionFilesystemDataSource.h"
 #include "FusionGUI.h"
 #include "FusionMessageBox.h"
 #include "FusionClientOptions.h"
+#include "FusionPolygonResourceEditor.h"
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
+#include "FusionResource.h"
+#include "FusionResourceDatabase.h"
 #include "FusionStreamingManager.h"
 #include "FusionWorldSaver.h"
 #include "FusionScriptTypeRegistrationUtils.h"
@@ -91,17 +95,79 @@ void intrusive_ptr_release(asIScriptFunction *ptr)
 namespace FusionEngine
 {
 
-	class GUIDialog
+	class ResourceBrowserDataSource : public Rocket::Controls::DataSource
 	{
 	public:
-		virtual ~GUIDialog()
+		ResourceBrowserDataSource(const std::shared_ptr<ResourceDatabase>& database)
+			: Rocket::Controls::DataSource("resource_browser"),
+			filesystem_ds(nullptr),
+			m_ResourceDatabase(database)
 		{
-			m_Document->RemoveReference();
+			using namespace std::placeholders;
+			m_OnResourceLoadedConnection =
+				ResourceManager::getSingleton().SignalResourceLoaded.connect(std::bind(&ResourceBrowserDataSource::OnResourceLoaded, this, _1));
+
+			filesystem_ds = dynamic_cast<FilesystemDataSource*>(Rocket::Controls::DataSource::GetDataSource("filesystem"));
+		}
+		~ResourceBrowserDataSource()
+		{
+			m_OnResourceLoadedConnection.disconnect();
 		}
 
-	protected:
-		Rocket::Core::ElementDocument* m_Document;
+		void OnResourceLoaded(const ResourceDataPtr& resource);
+
+	private:
+		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
+		int GetNumRows(const Rocket::Core::String& table);
+
+		FilesystemDataSource* filesystem_ds;
+
+		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
+
+		boost::signals2::connection m_OnResourceLoadedConnection;
 	};
+
+	void ResourceBrowserDataSource::OnResourceLoaded(const ResourceDataPtr& resource)
+	{
+		if (filesystem_ds)
+		{
+			try
+			{
+				auto entry = filesystem_ds->ReverseLookup(resource->GetPath());
+				NotifyRowChange(entry.first, entry.second, 1);
+			}
+			catch (FileSystemException&)
+			{
+			}
+		}
+	}
+
+	void ResourceBrowserDataSource::GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns)
+	{
+		if (filesystem_ds)
+		{
+			filesystem_ds->GetRow(row, table, row_index, columns);
+			for (auto it = columns.begin(); it != columns.end(); ++it)
+			{
+				if (*it == "resource_type")
+				{
+					const std::string path = filesystem_ds->GetPath(filesystem_ds->PreproPath(table.CString()), row_index);
+					const std::string type = m_ResourceDatabase->GetResourceType(path);
+					row.insert(row.begin() + std::distance(columns.begin(), it), Rocket::Core::String(type.c_str()));
+				}
+			}
+		}
+	}
+
+	int ResourceBrowserDataSource::GetNumRows(const Rocket::Core::String& table)
+	{
+		if (filesystem_ds)
+		{
+			return filesystem_ds->GetNumRows(table);
+		}
+		else
+			return 0;
+	}
 
 	class PreviewFormatter : public Rocket::Controls::DataFormatter
 	{
@@ -506,6 +572,64 @@ namespace FusionEngine
 		});
 		Console::getSingleton().SetCommandHelpText("le", "List selected entities", StringVector());
 
+		Console::getSingleton().BindCommand("editor_resourcedb_reset", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			if (this->m_ResourceDatabase)
+			{
+				this->m_ResourceDatabase->Clear();
+				return "resource database cleared";
+			}
+			else return "resource database not initialised";
+		});
+		Console::getSingleton().SetCommandHelpText("editor_resourcedb_reset", "Clear stored resource types", StringVector());
+
+		Console::getSingleton().BindCommand("editor_resourcedb_delete", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			if (this->m_ResourceDatabase)
+			{
+				if (cmdargs.size() >= 2)
+				{
+					if (this->m_ResourceDatabase->RemoveResourceType(cmdargs[1]))
+						return cmdargs[1] + "removed from database";
+					else return cmdargs[1] + "not found";
+				}
+				return "";
+			}
+			else return "resource database not initialised";
+		});
+		Console::getSingleton().SetCommandHelpText("editor_resourcedb_delete", "Remove the stored type for the given resource", StringVector());
+
+		{
+			Console::getSingleton().BindCommand("resource_load", [](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 3)
+				{
+					auto con = ResourceManager::getSingleton().GetResource(cmdargs[2], cmdargs[1], ResourceContainer::LoadedFn());
+					con.disconnect();
+					return "Attempting...";
+				}
+				else
+					return "Enter a path and type";
+			}, [](int arg_i, const std::string& arg)->std::vector<std::string>
+			{
+				std::vector<std::string> completions;
+				if (arg_i == 2)
+				{
+					//auto types = ResourceManager::getSingleton().GetResourceLoaderTypes();
+					//completions.insert(types.begin(), types.end());
+					completions.push_back("IMAGE");
+					completions.push_back("ANIMATION");
+					completions.push_back("TEXTURE");
+					completions.push_back("AUDIO");
+					completions.push_back("AUDIO:STREAM");
+					std::sort(completions.begin(), completions.end());
+				}
+				return completions;
+			});
+			std::vector<std::string> args; args.push_back("path"); args.push_back("type");
+			Console::getSingleton().SetCommandHelpText("resource_load", "Load the given resource. Can be used to populate the editor's resource-database", args);
+		}
+
 		m_EditorOverlay = std::make_shared<EditorOverlay>();
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
@@ -543,6 +667,12 @@ namespace FusionEngine
 				}
 			}
 		});
+
+		m_ResourceEditors["POLYGON"] = std::make_shared<PolygonResourceEditor>();
+		m_ResourceEditors["ANIMATION"] = std::make_shared<PolygonResourceEditor>();
+
+		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
+		m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);
 
 		{
 			auto tag = "inspector_" + ITransform::GetTypeName();
@@ -601,6 +731,9 @@ namespace FusionEngine
 	Editor::~Editor()
 	{
 		Console::getSingleton().UnbindCommand("le");
+		Console::getSingleton().UnbindCommand("editor_resourcedb_reset");
+		Console::getSingleton().UnbindCommand("editor_resourcedb_delete");
+		Console::getSingleton().UnbindCommand("resource_load");
 	}
 
 	void Editor::CleanUp()
@@ -824,15 +957,19 @@ namespace FusionEngine
 		return std::vector<std::shared_ptr<RendererExtension>>();
 	}
 
+	bool Editor::IsResourceEditable(const std::string& filename) const
+	{
+		return m_ResourceEditors.find(m_ResourceDatabase->GetResourceType(filename)) != m_ResourceEditors.end();
+	}
+	
+	void Editor::StartResourceEditor(const std::string& filename)
+	{
+		SendToConsole("editing: " + filename);
+	}
+
 	void Editor::GoToEntity(const EntityPtr& entity)
 	{
 		const auto entityPosition = entity->GetPosition();
-		/*CL_Rectf area;
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), area, m_Viewport, true);
-		area.left = ToSimUnits(area.left);
-		area.top = ToSimUnits(area.top);
-		area.right = ToSimUnits(area.right);
-		area.bottom = ToSimUnits(area.bottom);*/
 		m_EditCam->SetSimPosition(entityPosition);
 	}
 
@@ -1020,21 +1157,21 @@ namespace FusionEngine
 
 			void ShrinkArea(boost::intrusive_ptr<Rocket::Core::ElementDocument> document, DockedWindowManager::Side side)
 			{
-					switch (side)
-					{
-					case DockedWindowManager::Left:
-						m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
-						break;
-					case DockedWindowManager::Top:
-						m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
-						break;
-					case DockedWindowManager::Right:
-						m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
-						break;
-					case DockedWindowManager::Bottom:
-						m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
-						break;
-					};
+				switch (side)
+				{
+				case DockedWindowManager::Left:
+					m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
+					break;
+				case DockedWindowManager::Top:
+					m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
+					break;
+				case DockedWindowManager::Right:
+					m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
+					break;
+				case DockedWindowManager::Bottom:
+					m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
+					break;
+				};
 			}
 
 			void ProcessEvent(Rocket::Core::Event& ev)
@@ -2116,6 +2253,9 @@ namespace FusionEngine
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
 		r = engine->RegisterObjectMethod("Editor", "Entity CreateEntity(const string &in, const Vector &in, float, bool, bool)", asMETHOD(Editor, CreateEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "bool isResourceEditable(const string &in) const", asMETHOD(Editor, IsResourceEditable), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "void startResourceEditor(const string &in)", asMETHOD(Editor, StartResourceEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "bool goToEntity(const Entity &in)", asMETHOD(Editor, GoToEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 }

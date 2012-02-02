@@ -52,19 +52,30 @@ namespace FusionEngine
 		void FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data);
 	};
 
+	//! A datasource which returns filesystem entries
 	class FilesystemDataSource : public Rocket::Controls::DataSource
 	{
 	public:
+		//! CTOR
 		FilesystemDataSource()
 			: Rocket::Controls::DataSource("filesystem")
 		{}
 
+		//! Returns true if the item at the given index is a directory
 		bool IsDirectory(const std::string& table, int row_index);
+		//! Returns the filename of the item at the given index
 		std::string GetFilename(const std::string& table, int row_index);
+		//! Returns the path of the item at the given index
 		std::string GetPath(const std::string& table, int row_index);
+		//! Processes any special tokens in the given table string to return a usable path
 		std::string PreproPath(const std::string& table) const;
 
+		//! Returns the table & index where the given file resides
+		std::pair<Rocket::Core::String, int> ReverseLookup(const std::string& filename);
+
+		//! Clears all the cached directory listings
 		void ClearCache() { listings.clear(); }
+		//! Refreshes the cached directory listings
 		void Refresh()
 		{
 			for (auto it = listings.begin(), end = listings.end(); it != end; ++it)
@@ -123,6 +134,9 @@ namespace FusionEngine
 			std::vector<Entry> children;
 		};
 
+		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
+		int GetNumRows(const Rocket::Core::String& table);
+
 	private:
 		Entry ConstructFilesystemEntry(const std::string& path) const;
 		void Populate(Entry& entry) const;
@@ -134,9 +148,6 @@ namespace FusionEngine
 		Entry AquireEntry(const std::string& path, bool check = false);
 
 		std::unordered_map<std::string, Entry> listings;
-
-		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
-		int GetNumRows(const Rocket::Core::String& table);
 
 	};
 

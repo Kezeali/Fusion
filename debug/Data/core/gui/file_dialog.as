@@ -1,5 +1,6 @@
 string currentTable;
 string root;
+string datasource_name;
 
 class ResourcePreviewFormatter : IDataFormatter
 {
@@ -29,7 +30,7 @@ class ResourcePreviewFormatter : IDataFormatter
 				"</span>";
 			*/
 			formattedData =
-				"<div class=\"resource_row\"><div class=\"r_filename\" style=\"display: inline; width: auto;\">" + r1 + "</div>" +
+				"<div class=\"resource_row\"><div class=\"r_filename\">" + r1 + "</div>" +
 				"<fileinfo class=\"r_path\" style=\"display: none;\" path=\"" + r0 + "\"/></div>";
 		}
 		return formattedData;
@@ -61,7 +62,10 @@ void OnFileSelected(Event@ event)
 	{
 		int p = dataSource.findFirst(".");
 		if (p != -1)
+		{
 			table = dataSource.substr(p+1);
+			datasource_name = dataSource.substr(0, p);
+		}
 		root = filesystem_datasource.preprocessPath(table);
 	}
 	else
@@ -91,7 +95,7 @@ void OnFileSelected(Event@ event)
 		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
 		if (dataGrid !is null)
 		{
-			dataGrid.SetDataSource(rString("filesystem.'" + path + "'"));
+			dataGrid.SetDataSource(rString(datasource_name + ".'" + path + "'"));
 
 			currentTable = path;
 		}
@@ -117,7 +121,10 @@ void OnRowDblClick(Event@ event)
 	{
 		int p = dataSource.findFirst(".");
 		if (p != -1)
+		{
 			table = dataSource.substr(p+1);
+			datasource_name = dataSource.substr(0, p);
+		}
 		root = filesystem_datasource.preprocessPath(table);
 	}
 	else
@@ -135,7 +142,7 @@ void OnRowDblClick(Event@ event)
 		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
 		if (dataGrid !is null)
 		{
-			dataGrid.SetDataSource(rString("filesystem.'" + path + "'"));
+			dataGrid.SetDataSource(rString(datasource_name + ".'" + path + "'"));
 
 			currentTable = path;
 		}
@@ -161,7 +168,7 @@ void OnUpClicked(Event@ event)
 		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
 		if (dataGrid !is null)
 		{
-			dataGrid.SetDataSource(rString("filesystem.'" + currentTable + "'"));
+			dataGrid.SetDataSource(rString(datasource_name + ".'" + currentTable + "'"));
 		}
 		
 		ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );

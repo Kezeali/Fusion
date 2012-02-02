@@ -80,6 +80,9 @@
     <ClInclude Include="include\FusionFixtureInspector.h" />
     <ClInclude Include="include\FusionInspectorBase.h" />
     <ClInclude Include="include\FusionInspectorUtils.h" />
+    <ClInclude Include="include\FusionPolygonResourceEditor.h" />
+    <ClInclude Include="include\FusionResourceDatabase.h" />
+    <ClInclude Include="include\FusionResourceEditor.h" />
     <ClInclude Include="include\FusionRigidBodyInspector.h" />
     <ClInclude Include="include\FusionSpriteInspector.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />
@@ -97,6 +100,7 @@
     <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionFixtureInspector.cpp" />
     <ClCompile Include="source\FusionInspectorBase.cpp" />
+    <ClCompile Include="source\FusionResourceDatabase.cpp" />
     <ClCompile Include="source\FusionRigidBodyInspector.cpp" />
     <ClCompile Include="source\FusionSpriteInspector.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />

@@ -76,6 +76,11 @@ namespace FusionEngine
 
 	class PreviewFormatter;
 
+	class ResourceDatabase;
+	class ResourceBrowserDataSource;
+
+	class ResourceEditor;
+
 	namespace Inspectors {
 		class ComponentInspector;
 	}
@@ -117,6 +122,10 @@ namespace FusionEngine
 
 		const std::shared_ptr<Viewport>& GetViewport() const { return m_Viewport; }
 		Rocket::Core::Context* GetGUIContext() const { return m_GUIContext; }
+
+		bool IsResourceEditable(const std::string& file) const;
+
+		void StartResourceEditor(const std::string& path);
 
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
@@ -179,12 +188,18 @@ namespace FusionEngine
 
 		std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
 
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
 		std::shared_ptr<DockedWindowManager> m_DockedWindows;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
+
+		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
+		std::shared_ptr<ResourceBrowserDataSource> m_ResourceBrowserDataSource;
+
+		std::map<std::string, std::shared_ptr<ResourceEditor>> m_ResourceEditors;
+		
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
 
 		Vector2 m_CamVelocity;
 
