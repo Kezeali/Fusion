@@ -605,13 +605,8 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
-		if (m_ResourceBrowser)
-		{
-			m_ResourceBrowser->RemoveEventListener("hide", m_DockedWindowsListener.get());
-			m_ResourceBrowser->RemoveEventListener("resize", m_DockedWindowsListener.get());
-		}
 		m_ResourceBrowser.reset();
-		m_DockedWindowsListener.reset();
+		m_DockedWindows.reset();
 		m_EntitySelectionMenu.reset();
 		m_PropertiesMenu.reset();
 		m_RightClickMenu.reset();
@@ -930,28 +925,151 @@ namespace FusionEngine
 
 		~FunctorEventListener()
 		{
-			//for (auto it = m_AttachedElements.begin(); it != m_AttachedElements.end(); ++it)
-			//{
-			//	(*it)->RemoveEventListener(
-			//}
 		}
 
 	private:
 		void ProcessEvent(Rocket::Core::Event& ev) { FSN_ASSERT(m_Handler); m_Handler(ev); }
 
-		void OnAttach(Rocket::Core::Element*)
+		void OnAttach(Rocket::Core::Element* element)
 		{
-			//m_AttachedElements.insert(element);
+			m_AttachedElements.insert(element);
 		}
 
-		void OnDetach(Rocket::Core::Element*)
+		void OnDetach(Rocket::Core::Element* element)
 		{
-			//m_AttachedElements.erase(element);
+			m_AttachedElements.erase(element);
 		}
 
 		std::function<void (Rocket::Core::Event&)> m_Handler;
 
-		//std::set<Rocket::Core::Element*> m_AttachedElements;
+		std::set<Rocket::Core::Element*> m_AttachedElements;
+	};
+
+	class DockedWindowManager
+	{
+	public:
+		DockedWindowManager(Editor* editor)
+			: m_Listener(editor)
+		{
+		}
+
+		~DockedWindowManager()
+		{
+		}
+
+		enum Side
+		{
+			Left,
+			Top,
+			Right,
+			Bottom
+		};
+
+		void AddWindow(Rocket::Core::ElementDocument* window, Side dock_side)
+		{
+			m_Listener.AddWindow(window, dock_side);
+		}
+
+		void RemoveWindow(Rocket::Core::ElementDocument* window)
+		{
+			m_Listener.RemoveWindow(window);
+		}
+
+	private:
+		class EventListener : public Rocket::Core::EventListener
+		{
+		public:
+			EventListener(Editor* editor)
+				: m_Editor(editor)
+			{
+				m_Editor->GetGUIContext()->AddEventListener("resize", this);
+			}
+
+			~EventListener()
+			{
+				if (m_Editor->GetGUIContext())
+					m_Editor->GetGUIContext()->RemoveEventListener("resize", this);
+
+				auto attached = m_AttachedDocuments;
+				m_AttachedDocuments.clear();
+				for (auto it = attached.begin(); it != attached.end(); ++it)
+				{
+					it->first->RemoveEventListener("close", this);
+					it->first->RemoveEventListener("hide", this);
+					it->first->RemoveEventListener("resize", this);
+				}
+			}
+
+			void AddWindow(Rocket::Core::ElementDocument* window, DockedWindowManager::Side dock_side)
+			{
+				auto r = m_AttachedDocuments.insert(std::make_pair(window, dock_side));
+				FSN_ASSERT(r.second); // don't allow duplicates
+
+				window->AddEventListener("close", this);
+				window->AddEventListener("hide", this);
+				window->AddEventListener("resize", this);
+			}
+
+			void RemoveWindow(Rocket::Core::ElementDocument* window)
+			{
+				window->RemoveEventListener("close", this);
+				window->RemoveEventListener("hide", this);
+				window->RemoveEventListener("resize", this);
+				m_AttachedDocuments.erase(window);
+			}
+
+			void ShrinkArea(boost::intrusive_ptr<Rocket::Core::ElementDocument> document, DockedWindowManager::Side side)
+			{
+					switch (side)
+					{
+					case DockedWindowManager::Left:
+						m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
+						break;
+					case DockedWindowManager::Top:
+						m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
+						break;
+					case DockedWindowManager::Right:
+						m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
+						break;
+					case DockedWindowManager::Bottom:
+						m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
+						break;
+					};
+			}
+
+			void ProcessEvent(Rocket::Core::Event& ev)
+			{
+				FSN_ASSERT(m_Editor);
+
+				if (ev == "resize" || ev == "hide" || ev == "close")
+				{
+					m_Area.left = m_Area.top = 0.f;
+					m_Area.right = m_Area.bottom = 1.f;
+
+					for (auto it = m_AttachedDocuments.begin(); it != m_AttachedDocuments.end(); ++it)
+					{
+						if (it->first->IsVisible())
+							ShrinkArea(it->first, it->second);
+					}
+
+					m_Editor->GetViewport()->SetArea(m_Area);
+				}
+			}
+
+			void OnDetach(Rocket::Core::Element* element)
+			{
+				if (auto window = dynamic_cast<Rocket::Core::ElementDocument*>(element))
+					m_AttachedDocuments.erase(window);
+			}
+
+			Editor* m_Editor;
+
+			CL_Rectf m_Area;
+
+			std::map<Rocket::Core::ElementDocument*, DockedWindowManager::Side> m_AttachedDocuments;
+		};
+
+		EventListener m_Listener;
 	};
 
 	void Editor::ShowResourceBrowser()
@@ -960,23 +1078,9 @@ namespace FusionEngine
 		{
 			m_ResourceBrowser = m_GUIContext->LoadDocument("/core/gui/resource_browser.rml");
 			m_ResourceBrowser->RemoveReference();
-			m_DockedWindowsListener = std::make_shared<FunctorEventListener>([this](Rocket::Core::Event& ev)
-			{
-				if (ev == "hide")
-					this->m_Viewport->SetArea(0.f, 0.f, 1.f, 1.f);
-				else if (ev == "resize")
-				{
-					if (m_ResourceBrowser->IsVisible())
-					{
-						auto area = m_Viewport->GetArea();
-						area.left = m_ResourceBrowser->GetOffsetWidth() / m_DisplayWindow.get_gc().get_width();
-						m_Viewport->SetArea(area);
-					}
-				}
-			});
-			m_ResourceBrowser->AddEventListener("hide", m_DockedWindowsListener.get());
-			m_ResourceBrowser->AddEventListener("resize", m_DockedWindowsListener.get());
-			//m_ResourceBrowser->RemoveReference();
+
+			m_DockedWindows = std::make_shared<DockedWindowManager>(this);
+			m_DockedWindows->AddWindow(m_ResourceBrowser.get(), DockedWindowManager::Left);
 		}
 		if (m_ResourceBrowser)
 		{
@@ -1554,17 +1658,20 @@ namespace FusionEngine
 	//	m_RightClickMenu->Show(position.x, position.y);
 	//}
 
-	void Editor::TranslateScreenToWorld(float* x, float* y) const
+	bool Editor::TranslateScreenToWorld(float* x, float* y) const
 	{
 		CL_Rectf worldArea, screenArea;
 		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, m_Viewport, true);
 		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, m_Viewport, false);
 
+		const bool withinViewport = *x >= screenArea.left && *y >= screenArea.top;
 		*x -= screenArea.left, *y -= screenArea.top;
 
 		*x *= (1 / m_EditCam->GetZoom());
 		*y *= (1 / m_EditCam->GetZoom());
 		*x += worldArea.left, *y += worldArea.top;
+
+		return withinViewport;
 	}
 
 	Vector2 Editor::ReturnScreenToWorld(float x, float y) const

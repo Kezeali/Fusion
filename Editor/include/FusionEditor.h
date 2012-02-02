@@ -66,6 +66,8 @@ namespace FusionEngine
 
 	class DialogListener;
 
+	class DockedWindowManager;
+
 	class WorldSaver;
 	class SaveDataArchive;
 
@@ -112,6 +114,9 @@ namespace FusionEngine
 		void Update(float time, float dt);
 
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
+
+		const std::shared_ptr<Viewport>& GetViewport() const { return m_Viewport; }
+		Rocket::Core::Context* GetGUIContext() const { return m_GUIContext; }
 
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
@@ -175,7 +180,7 @@ namespace FusionEngine
 		std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
 
 		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
-		std::shared_ptr<Rocket::Core::EventListener> m_DockedWindowsListener;
+		std::shared_ptr<DockedWindowManager> m_DockedWindows;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
@@ -232,7 +237,7 @@ namespace FusionEngine
 
 		void ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities);
 
-		void TranslateScreenToWorld(float* x, float* y) const;
+		bool TranslateScreenToWorld(float* x, float* y) const;
 		Vector2 ReturnScreenToWorld(float x, float y) const;
 		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
 
