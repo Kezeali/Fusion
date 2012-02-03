@@ -66,6 +66,7 @@
 // Resource Loaders
 #include "FusionAudioLoader.h"
 #include "FusionImageLoader.h"
+#include "FusionPolygonLoader.h"
 
 #include <angelscript.h>
 #include <boost/lexical_cast.hpp>
@@ -428,11 +429,15 @@ namespace FusionEngine
 	{
 		m_ResourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, NULL);
 		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC));
+
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
+
 		m_ResourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
 		m_ResourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
 
 		m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
+
+		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
 	}
 
 	const CL_DisplayWindow& EngineManager::GetDisplayWindow() const

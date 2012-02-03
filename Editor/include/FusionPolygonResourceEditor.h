@@ -37,6 +37,11 @@
 #include "FusionResource.h"
 
 #include "FusionResourceEditor.h"
+#include "FusionEditorPolygonTool.h"
+
+#include "FusionPolygonLoader.h"
+#include "FusionConsole.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 
 namespace FusionEngine
 {
@@ -47,33 +52,100 @@ namespace FusionEngine
 		PolygonResourceEditor();
 		virtual ~PolygonResourceEditor() {}
 
+		void SetPolygonToolExecutor(PolygonToolExecutor_t fn);
+
 		void SetResource(const ResourceDataPtr& resource);
+
+		void Finish();
 
 		void CancelEditing();
 
 		bool IsDoneEditing() const;
 
+		void OnPolygonToolDone(const std::vector<Vector2>& verts);
+
 		bool m_DoneEditing;
 
+		PolygonToolExecutor_t m_PolygonEditorCb;
 		ResourceDataPtr m_Resource;
+		std::unique_ptr<b2PolygonShape> m_EditedShape;
 	};
 
-	PolygonResourceEditor::PolygonResourceEditor()
+	inline PolygonResourceEditor::PolygonResourceEditor()
 		: m_DoneEditing(true)
 	{}
 
-	void PolygonResourceEditor::SetResource(const ResourceDataPtr& resource)
+	inline void PolygonResourceEditor::SetPolygonToolExecutor(PolygonToolExecutor_t fn)
 	{
-		m_Resource = resource;
+		m_PolygonEditorCb = fn;
 	}
 
-	void PolygonResourceEditor::CancelEditing()
+	void PolygonResourceEditor::OnPolygonToolDone(const std::vector<Vector2>& verts)
 	{
-		m_Resource.reset();
+		std::vector<b2Vec2> b2Verts;
+		b2Verts.reserve(verts.size());
+		for (auto it = verts.begin(); it != verts.end(); ++it)
+		{
+			b2Verts.push_back(b2Vec2(it->x, it->y));
+		}
+
+		if (!m_EditedShape)
+			m_EditedShape.reset(new b2PolygonShape);
+
+		std::unique_ptr<b2PolygonShape> newShape(new b2PolygonShape);
+		newShape->Set(b2Verts.data(), b2Verts.size());
+		if (newShape->Validate())
+			m_EditedShape.swap(newShape);
+		Finish();
+	}
+
+	inline void PolygonResourceEditor::SetResource(const ResourceDataPtr& resource)
+	{
+		m_Resource = resource;
+		std::vector<Vector2> verts;
+		auto polygon = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
+		for (int i = 0; i < polygon->GetVertexCount(); ++i)
+		{
+			Vector2 vert = b2v2(polygon->GetVertex(i));
+			verts.push_back(vert);
+		}
+
+		m_EditedShape.reset(new b2PolygonShape(*polygon));
+
+		using namespace std::placeholders;
+		m_PolygonEditorCb(verts, std::bind(&PolygonResourceEditor::OnPolygonToolDone, this, _1));
+	}
+
+	inline void PolygonResourceEditor::Finish()
+	{
+		if (m_Resource && m_EditedShape)
+		{
+			try
+			{
+				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				auto dev = vdir.open_file(m_Resource->GetPath(), CL_File::create_always, CL_File::access_write);
+				PolygonResource::Save(dev, *m_EditedShape);
+			}
+			catch (CL_Exception& e)
+			{
+				SendToConsole("Failed to save polygon resource '" + m_Resource->GetPath() + "': " + e.what());
+			}
+
+			auto oldData = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
+			m_Resource->SetDataPtr(m_EditedShape.release());
+			delete oldData;
+			m_Resource->SigReLoaded(m_Resource);
+			m_Resource.reset();
+		}
 		m_DoneEditing = true;
 	}
 
-	bool PolygonResourceEditor::IsDoneEditing() const
+	inline void PolygonResourceEditor::CancelEditing()
+	{
+		Finish();
+	}
+
+	inline bool PolygonResourceEditor::IsDoneEditing() const
 	{
 		return m_DoneEditing;
 	}

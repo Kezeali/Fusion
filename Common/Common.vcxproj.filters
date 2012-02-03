@@ -167,6 +167,9 @@
     <ClCompile Include="source\FusionIDStack.cpp" />
     <ClCompile Include="source\FusionPlayerRegistry.cpp" />
     <ClCompile Include="source\FusionTimer.cpp" />
+    <ClCompile Include="source\FusionPolygonLoader.cpp">
+      <Filter>Resources\Loaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptConsoleCallback.h">
@@ -329,6 +332,12 @@
     <ClInclude Include="include\FusionTypes.h" />
     <ClInclude Include="include\FusionVectorTypes.h">
       <Filter>Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionPolygonLoader.h">
+      <Filter>Resources\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCLStream.h">
+      <Filter>IO\Streams</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

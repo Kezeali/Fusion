@@ -60,19 +60,15 @@ namespace FusionEngine
 	*/
 	class ResourceContainer
 	{
-	protected:
+	private:
 		std::string m_Type;
 		std::string m_Path;
 
-		void *m_Data;
-		// Data that isn't unloaded until the resource is released
-		void *m_QuickLoadData;
+		tbb::atomic<void*> m_Data;
 
 		bool m_RequiresGC;
 
 		bool m_Loaded;
-
-		bool m_HasQuickLoadData;
 
 		tbb::atomic<long int> m_RefCount;
 
@@ -85,7 +81,7 @@ namespace FusionEngine
 	public:
 		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
 		LoadedSignal SigLoaded;
-
+		LoadedSignal SigReLoaded;
 		typedef std::function<void (ResourceDataPtr)> LoadedFn;
 
 		typedef std::function<void (ResourceContainer*)> ReleasedFn;
@@ -100,22 +96,13 @@ namespace FusionEngine
 		//! Dtor
 		~ResourceContainer();
 
-	public:
 		//! Returns the type name (of resource loader to be used for this resource)
 		const std::string& GetType() const;
 		//! Returns the path property
 		const std::string& GetPath() const;
 
-		//! Specifically for StringLoader
-		/*!
-		* Allows StringLoader to save memory by making the Data property point directly
-		* to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
-		*  - note (2011): this comment was written in around 2007, and is kept mostly for my amusement :p
-		*/
-		std::string *_getTextPtr();
-
 		//! Makes this resource hold a reference to another resource that it depends on (e.g. sprites hold textures)
-		void AttachDependency(ResourceDataPtr& dep);
+		void AttachDependency(const ResourceDataPtr& dep);
 		const std::vector<ResourceDataPtr>& GetDependencies() const;
 
 		//! Used by a resource loader when it requires access to the GC in order to finish loading the resource
@@ -139,23 +126,6 @@ namespace FusionEngine
 
 		//! Returns true if the resource data is valid
 		bool IsLoaded() const;
-
-		//! Sets the data
-		void SetQuickLoadDataPtr(void* ptr);
-		//! Returns the resource ptr
-		void* GetQuickLoadDataPtr();
-
-		//! Validates / invalidates this resource
-		/*!
-		* A resource is valid if the pointer is valid. A resource becomes
-		* invalid when it fails to load or it is cleaned up by garbage
-		* collection.
-		* This method is to be used by a ResourceLoader whenever it validates
-		* / invalidates a resource.
-		*/
-		void setHasQuickLoadData(bool has_data);
-		//! Returns true if the resource data is valid
-		bool HasQuickLoadData() const;
 
 		//! Notifies the resource of its queue status
 		inline bool setQueuedToLoad(const bool is_queued);

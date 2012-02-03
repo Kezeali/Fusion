@@ -118,6 +118,7 @@
     <ClCompile Include="source\FusionPhysFSIODeviceProvider.cpp" />
     <ClCompile Include="source\FusionPhysFSIOStream.cpp" />
     <ClCompile Include="source\FusionPlayerRegistry.cpp" />
+    <ClCompile Include="source\FusionPolygonLoader.cpp" />
     <ClCompile Include="source\FusionProfiling.cpp" />
     <ClCompile Include="source\FusionResource.cpp" />
     <ClCompile Include="source\FusionResourceManager.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="include\FusionBinaryStream.h" />
     <ClInclude Include="include\FusionBoostSignals2.h" />
     <ClInclude Include="include\FusionClientOptions.h" />
+    <ClInclude Include="include\FusionCLStream.h" />
     <ClInclude Include="include\FusionCmdOptions.h" />
     <ClInclude Include="include\FusionCommon.h" />
     <ClInclude Include="include\FusionConsole.h" />
@@ -175,6 +177,7 @@
     <ClInclude Include="include\FusionPhysFSIODeviceProvider.h" />
     <ClInclude Include="include\FusionPhysFSIOStream.h" />
     <ClInclude Include="include\FusionPlayerRegistry.h" />
+    <ClInclude Include="include\FusionPolygonLoader.h" />
     <ClInclude Include="include\FusionPrerequisites.h" />
     <ClInclude Include="include\FusionProfiling.h" />
     <ClInclude Include="include\FusionRefCounted.h" />

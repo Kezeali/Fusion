@@ -50,11 +50,9 @@ namespace FusionEngine
 	ResourceContainer::ResourceContainer()
 		: m_Type(""),
 		m_Path(""),
-		m_Data(nullptr),
-		m_QuickLoadData(nullptr),
-		m_RequiresGC(false),
-		m_HasQuickLoadData(false)
+		m_RequiresGC(false)
 	{
+		m_Data = nullptr;
 		m_RefCount = 0;
 		m_QueuedToLoad = false;
 		m_QueuedToUnLoad = false;
@@ -64,11 +62,9 @@ namespace FusionEngine
 	ResourceContainer::ResourceContainer(const std::string& type, const std::string& path, void* ptr)
 		: m_Type(type),
 		m_Path(path),
-		m_Data(ptr),
-		m_QuickLoadData(nullptr),
-		m_RequiresGC(false),
-		m_HasQuickLoadData(false)
+		m_RequiresGC(false)
 	{
+		m_Data = nullptr;
 		m_RefCount = 0;
 		m_QueuedToLoad = false;
 		m_QueuedToUnLoad = false;
@@ -81,10 +77,6 @@ namespace FusionEngine
 		if (m_Loaded || m_Data != nullptr)
 		{
 			SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - Resource Data leaked.");
-		}
-		if (m_HasQuickLoadData || m_QuickLoadData != nullptr)
-		{
-			SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
 		}
 #endif
 	}
@@ -99,12 +91,7 @@ namespace FusionEngine
 		return m_Path;
 	}
 
-	std::string *ResourceContainer::_getTextPtr()
-	{
-		return &m_Path;
-	}
-
-	void ResourceContainer::AttachDependency(ResourceDataPtr& dep)
+	void ResourceContainer::AttachDependency(const ResourceDataPtr& dep)
 	{
 		m_Dependencies.push_back(dep);
 	}
@@ -142,26 +129,6 @@ namespace FusionEngine
 	bool ResourceContainer::IsLoaded() const
 	{
 		return m_Loaded;
-	}
-
-	void ResourceContainer::SetQuickLoadDataPtr(void* ptr)
-	{
-		m_QuickLoadData = ptr;
-	}
-
-	void* ResourceContainer::GetQuickLoadDataPtr()
-	{
-		return m_QuickLoadData;
-	}
-
-	void ResourceContainer::setHasQuickLoadData(bool has_data)
-	{
-		m_HasQuickLoadData = has_data;
-	}
-
-	bool ResourceContainer::HasQuickLoadData() const
-	{
-		return m_HasQuickLoadData;
 	}
 
 	void ResourceContainer::AddReference()

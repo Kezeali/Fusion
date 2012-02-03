@@ -606,7 +606,7 @@ namespace FusionEngine
 				{
 					auto con = ResourceManager::getSingleton().GetResource(cmdargs[2], cmdargs[1], ResourceContainer::LoadedFn());
 					con.disconnect();
-					return "Attempting...";
+					return "Getting resource";
 				}
 				else
 					return "Enter a path and type";
@@ -615,13 +615,8 @@ namespace FusionEngine
 				std::vector<std::string> completions;
 				if (arg_i == 2)
 				{
-					//auto types = ResourceManager::getSingleton().GetResourceLoaderTypes();
-					//completions.insert(types.begin(), types.end());
-					completions.push_back("IMAGE");
-					completions.push_back("ANIMATION");
-					completions.push_back("TEXTURE");
-					completions.push_back("AUDIO");
-					completions.push_back("AUDIO:STREAM");
+					auto types = ResourceManager::getSingleton().GetResourceLoaderTypes();
+					completions.assign(types.begin(), types.end());
 					std::sort(completions.begin(), completions.end());
 				}
 				return completions;
@@ -669,7 +664,6 @@ namespace FusionEngine
 		});
 
 		m_ResourceEditors["POLYGON"] = std::make_shared<PolygonResourceEditor>();
-		m_ResourceEditors["ANIMATION"] = std::make_shared<PolygonResourceEditor>();
 
 		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
 		m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);

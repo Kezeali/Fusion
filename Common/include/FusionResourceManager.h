@@ -81,6 +81,8 @@ namespace FusionEngine
 		//! Creates a new resource loader using the given callbacks
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData);
 
+		std::vector<std::string> GetResourceLoaderTypes() const;
+
 		//! Starts loading resources in the background
 		void StartLoaderThread();
 		//! Stops loading resources in the background

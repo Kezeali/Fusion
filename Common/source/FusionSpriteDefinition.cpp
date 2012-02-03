@@ -29,90 +29,15 @@
 
 #include "FusionSpriteDefinition.h"
 
+#include "FusionCLStream.h"
 #include "FusionExceptionFactory.h"
 #include "FusionPhysFS.h"
 #include "FusionXML.h"
-
-//#include "FusionPhysFSIOStream.h"
-#include <boost/iostreams/stream.hpp>
 
 #include <yaml-cpp/yaml.h>
 
 namespace FusionEngine
 {
-
-	namespace IO
-	{
-
-		class CLStreamDevice
-		{
-		public:
-			struct category
-				: boost::iostreams::seekable_device_tag/*, boost::iostreams::flushable_tag*/, boost::iostreams::closable_tag
-			{};
-			typedef char char_type;
-
-			CLStreamDevice(CL_IODevice dev);
-
-			void close();
-
-			std::streamsize read(char* s, std::streamsize n);
-			std::streamsize write(const char* s, std::streamsize n);
-			std::streampos seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way);
-
-		private:
-			CL_IODevice m_Device;
-		};
-
-		typedef boost::iostreams::stream<CLStreamDevice> CLStream;
-
-		CLStreamDevice::CLStreamDevice(CL_IODevice dev)
-			: m_Device(dev)
-		{
-			if (m_Device.is_null())
-				FSN_EXCEPT(FileSystemException, "Tried to load data from an invalid source");
-		}
-
-		void CLStreamDevice::close()
-		{
-			m_Device = CL_IODevice();
-		}
-
-		std::streamsize CLStreamDevice::read(char* s, std::streamsize n)
-		{
-			int ret = m_Device.read(static_cast<void*>(s), (int)n);
-			return std::streamsize(ret);
-		}
-
-		std::streamsize CLStreamDevice::write(const char* s, std::streamsize n)
-		{
-			int ret = m_Device.write(static_cast<const void*>(s), (int)n);
-			return std::streamsize(ret);
-		}
-
-		std::streampos CLStreamDevice::seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way)
-		{
-			CL_IODevice::SeekMode clSeekMode;
-			switch (way)
-			{
-			case std::ios_base::cur:
-				clSeekMode = CL_IODevice::seek_cur;
-				break;
-			case std::ios_base::end:
-				clSeekMode = CL_IODevice::seek_end;
-				break;
-			default:
-				clSeekMode = CL_IODevice::seek_set;
-				break;
-			};
-
-			if (m_Device.seek((int)off, clSeekMode))
-				FSN_EXCEPT(FileSystemException, "Tried to go to an invalid position within a data-source");
-
-			return std::streampos(m_Device.get_position());
-		}
-
-	}
 
 	SpriteAnimation::SpriteAnimation()
 		: m_DefaultDelay(0.0f)
