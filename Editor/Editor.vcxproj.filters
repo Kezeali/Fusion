@@ -44,6 +44,7 @@
     <ClInclude Include="include\FusionResourceDatabase.h" />
     <ClInclude Include="include\FusionResourceEditor.h" />
     <ClInclude Include="include\FusionPolygonResourceEditor.h" />
+    <ClInclude Include="include\FusionEditorPolygonTool.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

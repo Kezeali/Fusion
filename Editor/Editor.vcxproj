@@ -74,6 +74,7 @@
     <ClInclude Include="include\FusionCircleShapeInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
     <ClInclude Include="include\FusionEditor.h" />
+    <ClInclude Include="include\FusionEditorPolygonTool.h" />
     <ClInclude Include="include\FusionElementInspectorGroup.h" />
     <ClInclude Include="include\FusionElementPropertyConnection.h" />
     <ClInclude Include="include\FusionEntityInspector.h" />
