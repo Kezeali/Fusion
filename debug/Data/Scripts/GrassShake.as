@@ -28,6 +28,7 @@ class GrassShake : ScriptComponent
 		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
 		isprite.AnimationFrame << 1;
 		//isprite.Looping << true;
+		console.println("sensed");
 	}
 	
 	void onSensorExit(CollisionEvent@ ev)

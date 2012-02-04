@@ -463,7 +463,7 @@ namespace FusionEngine
 		void Update();
 
 	private:
-		b2Shape* GetShape() { return m_PolygonShape.Get(); }
+		b2Shape* GetShape() { return m_PolygonResource.IsLoaded() ? m_PolygonResource.Get() : &m_PolyShape; }
 
 		// IComponent
 		std::string GetType() const { return "b2Polygon"; }
@@ -475,7 +475,8 @@ namespace FusionEngine
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		bool m_ReconstructFixture;
-		ResourcePointer<b2PolygonShape> m_PolygonShape;
+		ResourcePointer<b2PolygonShape> m_PolygonResource;
+		b2PolygonShape m_PolyShape;
 
 		std::string m_PolygonFile;
 		bool m_ReloadPolygonResource;

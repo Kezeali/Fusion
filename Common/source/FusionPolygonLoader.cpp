@@ -61,7 +61,8 @@ namespace FusionEngine
 				if (doc.begin() == doc.end())
 					return std::unique_ptr<b2PolygonShape>();
 
-				auto& vertsNode = doc["verts"];
+				//const auto& vertsNode = doc["verts"];
+				const auto& vertsNode = doc;
 
 				if (vertsNode.size() > b2_maxPolygonVertices)
 				{
@@ -106,10 +107,12 @@ namespace FusionEngine
 			IO::CLStream stream(dev);
 			YAML::Emitter emitter;
 			
+			emitter << YAML::BeginSeq;
 			for (int i = 0; i < shape.GetVertexCount(); ++i)
 			{
 				emitter << shape.GetVertex(i);
 			}
+			emitter << YAML::EndSeq;
 			dev.write(emitter.c_str(), emitter.size());
 		}
 		catch (YAML::Exception& ex)

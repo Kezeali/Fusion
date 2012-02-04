@@ -13,6 +13,8 @@ class SpawnPoint : ScriptComponent
 		playerAnimationFile = "/Entities/character/walk_cycle2.yaml";
 		spawnJunk = true;
 		numPlayers = 0;
+		frames = 0;
+		runtime = 0.0f;
 	}
 
 	uint frames;

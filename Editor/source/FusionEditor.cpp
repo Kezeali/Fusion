@@ -32,6 +32,7 @@
 #include "FusionCamera.h"
 #include "FusionCellCache.h"
 #include "FusionComponentFactory.h"
+#include "FusionEditorPolygonTool.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
 #include "FusionFilesystemDataSource.h"
@@ -68,6 +69,7 @@
 #include "FusionRigidBodyInspector.h"
 #include "FusionFixtureInspector.h"
 #include "FusionCircleShapeInspector.h"
+#include "FusionPolygonShapeInspector.h"
 #include "FusionSpriteInspector.h"
 #include "FusionASScriptInspector.h"
 
@@ -321,6 +323,11 @@ namespace FusionEngine
 	class EditorOverlay : public CLRenderExtension
 	{
 	public:
+		EditorOverlay(const std::shared_ptr<EditorPolygonTool>& poly_tool)
+			: m_PolygonTool(poly_tool)
+		{
+		}
+
 		void Draw(const CL_GraphicContext& gc);
 
 		void SelectEntity(const EntityPtr& entity)
@@ -354,6 +361,8 @@ namespace FusionEngine
 
 		std::shared_ptr<Camera> m_EditCam;
 		float m_CamRange;
+
+		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
 	};
 
 	void EditorOverlay::Draw(const CL_GraphicContext& gc_)
@@ -382,6 +391,9 @@ namespace FusionEngine
 			CL_Rectf camRect(center.x - radius, center.y - radius, center.x + radius, center.y + radius);
 			CL_Draw::box(gc, camRect, rangeColour);
 		}
+
+		if (m_PolygonTool)
+			m_PolygonTool->Draw(gc);
 	}
 
 	class SelectionDrawer : public CLRenderExtension
@@ -625,7 +637,9 @@ namespace FusionEngine
 			Console::getSingleton().SetCommandHelpText("resource_load", "Load the given resource. Can be used to populate the editor's resource-database", args);
 		}
 
-		m_EditorOverlay = std::make_shared<EditorOverlay>();
+		m_PolygonTool = std::make_shared<EditorPolygonTool>();
+
+		m_EditorOverlay = std::make_shared<EditorOverlay>(m_PolygonTool);
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
 		m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
@@ -663,7 +677,17 @@ namespace FusionEngine
 			}
 		});
 
-		m_ResourceEditors["POLYGON"] = std::make_shared<PolygonResourceEditor>();
+		{
+			auto polygonResourceEditor = std::make_shared<PolygonResourceEditor>();
+			m_ResourceEditors["POLYGON"] = polygonResourceEditor;
+			polygonResourceEditor->SetPolygonToolExecutor([this](const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_cb)
+			{
+				this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Freeform);
+				this->m_Tool = Editor::Tool::Polygon;
+			});
+			//using namespace std::placeholders;
+			//polygonResourceEditor->SetPolygonToolExecutor(std::bind(&EditorPolygonTool::Start, m_PolygonTool, _1, _2, EditorPolygonTool::Freeform));
+		}
 
 		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
 		m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);
@@ -684,6 +708,10 @@ namespace FusionEngine
 			tag = "inspector_" + ICircleShape::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::CircleShapeInspector>())->RemoveReference();
+
+			tag = "inspector_" + IPolygonShape::GetTypeName();
+			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
+				new Rocket::Core::ElementInstancerGeneric<Inspectors::PolygonShapeInspector>())->RemoveReference();
 
 			tag = "inspector_" + ISprite::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
@@ -958,7 +986,24 @@ namespace FusionEngine
 	
 	void Editor::StartResourceEditor(const std::string& filename)
 	{
-		SendToConsole("editing: " + filename);
+		auto type = m_ResourceDatabase->GetResourceType(filename);
+		if (!type.empty())
+		{
+			auto editorEntry = m_ResourceEditors.find(type);
+			if (editorEntry != m_ResourceEditors.end())
+			{
+				auto path = boost::filesystem::path(filename).parent_path();
+				if (path.has_parent_path())
+					PHYSFS_mkdir(path.string().c_str());
+
+				auto editor = editorEntry->second;
+				ResourceManager::getSingleton().GetResource(type, filename, [editor](ResourceDataPtr d) { editor->SetResource(d); });
+			}
+			else
+				SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
+		}
+		else
+			SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
 	}
 
 	void Editor::GoToEntity(const EntityPtr& entity)
@@ -1457,6 +1502,17 @@ namespace FusionEngine
 				break;
 			}
 		}
+		else
+		{
+			if (m_Tool == Tool::Polygon)
+			{
+				if (ev.id == CL_KEY_RETURN)
+				{
+					m_Tool = Tool::None;
+					m_PolygonTool->Finish();
+				}
+			}
+		}
 	}
 
 	void Editor::OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state)
@@ -1573,57 +1629,65 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
-				if (m_Dragging/*m_Tool == Tool::Move*/)
+				if (m_Tool == Tool::Polygon)
 				{
-					Vector2 mouseInWorld = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-					TranslateScreenToWorld(&mouseInWorld.x, &mouseInWorld.y);
-
-					auto delta = mouseInWorld - m_DragFrom;
-					delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
-
-					ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
-
-					m_EditorOverlay->SetOffset(Vector2());
+					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+					m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
 				}
 				else
 				{
+					if (m_Dragging/*m_Tool == Tool::Move*/)
+					{
+						Vector2 mouseInWorld = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+						TranslateScreenToWorld(&mouseInWorld.x, &mouseInWorld.y);
+
+						auto delta = mouseInWorld - m_DragFrom;
+						delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
+
+						ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+
+						m_EditorOverlay->SetOffset(Vector2());
+					}
+					else
+					{
+						switch (ev.id)
+						{
+						case CL_MOUSE_LEFT:
+							OnMouseUp_Selection(ev);
+							break;
+						};
+					}
 					switch (ev.id)
 					{
-					case CL_MOUSE_LEFT:
-						OnMouseUp_Selection(ev);
+					case CL_MOUSE_RIGHT:
+						if (m_EditorOverlay->m_Selected.empty())
+							OnMouseUp_Selection(ev);
+						ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
+						break;
+					case CL_MOUSE_WHEEL_UP:
+						if (ev.ctrl)
+						{
+							if (ev.alt)
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+							else
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
+						}
+						else
+							m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
+						break;
+					case CL_MOUSE_WHEEL_DOWN:
+						if (ev.ctrl)
+						{
+							if (ev.alt)
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+							else
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
+						}
+						else
+							m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
 						break;
 					};
 				}
-				switch (ev.id)
-				{
-				case CL_MOUSE_RIGHT:
-					if (m_EditorOverlay->m_Selected.empty())
-						OnMouseUp_Selection(ev);
-					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
-					break;
-				case CL_MOUSE_WHEEL_UP:
-					if (ev.ctrl)
-					{
-						if (ev.alt)
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
-						else
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
-					}
-					else
-						m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
-					break;
-				case CL_MOUSE_WHEEL_DOWN:
-					if (ev.ctrl)
-					{
-						if (ev.alt)
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
-						else
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
-					}
-					else
-						m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
-					break;
-				};
 			}
 
 			GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");
@@ -1637,7 +1701,12 @@ namespace FusionEngine
 	{
 		if (m_Active)
 		{
-			if (m_ReceivedMouseDown)
+			if (m_Tool == Tool::Polygon)
+			{
+				Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+				m_PolygonTool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
+			}
+			else if (m_ReceivedMouseDown)
 			{
 				if (m_Dragging)
 				{

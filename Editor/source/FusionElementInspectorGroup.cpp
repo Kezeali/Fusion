@@ -166,7 +166,9 @@ namespace FusionEngine { namespace Inspectors
 			}
 			FSN_ASSERT(r.second);
 
-			m_Inspectors[copy.inspector].push_back(component);
+			auto& inspectorComponents = m_Inspectors[copy.inspector];
+			if (std::find(inspectorComponents.begin(), inspectorComponents.end(), component) == inspectorComponents.end())
+				inspectorComponents.push_back(component);
 		}
 
 		int AddNewEntry(const EquivalentInspectorKey& key, Rocket::Core::Element* subsection, Inspectors::ComponentInspector* inspector, const ComponentPtr& component)
@@ -493,6 +495,7 @@ namespace FusionEngine { namespace Inspectors
 					for (auto it = components.begin(), end = components.end(); it != end; ++it)
 					{
 						const auto& com = *it;
+						FSN_ASSERT(com->GetParent());
 						m_RemoveCallback(com->GetParent()->shared_from_this(), com);
 
 						m_Subsections->GetSubsections(com, std::inserter(subsectionsToRemove, subsectionsToRemove.begin()));

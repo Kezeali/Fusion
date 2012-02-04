@@ -38,11 +38,44 @@
 #include <functional>
 #include <vector>
 
+#include <ClanLib/display.h>
+
 namespace FusionEngine
 {
 
 	typedef std::function<void (const std::vector<Vector2>&)> PolygonToolCallback_t;
 	typedef std::function<void (const std::vector<Vector2>&, const PolygonToolCallback_t&)> PolygonToolExecutor_t;
+
+	class EditorPolygonTool
+	{
+	public:
+		EditorPolygonTool();
+		
+		enum Mode { Freeform, Convex, Line };
+
+		void Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, Mode mode);
+		void Finish();
+
+		void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
+		void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
+
+		void Draw(CL_GraphicContext& gc);
+
+	private:
+		Mode m_Mode;
+		std::vector<Vector2> m_Verts;
+		PolygonToolCallback_t m_DoneCallback;
+
+		Vector2 m_FeedbackPoint;
+
+		size_t m_GrabbedPoint;
+
+		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
+		void RemoveNearestPoint(const Vector2& pos);
+		void GrabNearestPoint(const Vector2& pos);
+
+		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
+	};
 
 }
 

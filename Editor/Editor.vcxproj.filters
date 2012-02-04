@@ -45,6 +45,9 @@
     <ClInclude Include="include\FusionResourceEditor.h" />
     <ClInclude Include="include\FusionPolygonResourceEditor.h" />
     <ClInclude Include="include\FusionEditorPolygonTool.h" />
+    <ClInclude Include="include\FusionPolygonShapeInspector.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -87,5 +90,9 @@
       <Filter>Inspectors</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionResourceDatabase.cpp" />
+    <ClCompile Include="source\FusionEditorPolygonTool.cpp" />
+    <ClCompile Include="source\FusionPolygonShapeInspector.cpp">
+      <Filter>Inspectors</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

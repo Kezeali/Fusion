@@ -27,31 +27,16 @@
 
 #include "PrecompiledHeaders.h"
 
-#include "FusionFixtureInspector.h"
+#include "FusionPolygonShapeInspector.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	void FixtureInspector::InitUI()
+	void PolygonShapeInspector::InitUI()
 	{
-		AddToggleInput("Sensor",
-			BoolSetter_t([](bool value, ComponentIPtr<IFixture> component) { component->Sensor.Set(value); }),
-			BoolGetter_t([](ComponentIPtr<IFixture> component)->bool { return component->Sensor.Get(); })
-			);
-
-		AddTextInput("Density",
-			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Density.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Density.Get(); })
-			);
-
-		AddTextInput("Friction",
-			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Friction.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Friction.Get(); })
-			);
-
-		AddTextInput("Restitution",
-			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Restitution.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Restitution.Get(); })
+		AddTextInput("PolygonFile",
+			StringSetter_t([](std::string value, ComponentIPtr<IPolygonShape> component) { component->PolygonFile.Set(value); }),
+			StringGetter_t([](ComponentIPtr<IPolygonShape> component)->std::string { return component->PolygonFile.Get(); })
 			);
 	}
 

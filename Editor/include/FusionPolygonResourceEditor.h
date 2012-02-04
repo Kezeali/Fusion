@@ -42,6 +42,7 @@
 #include "FusionPolygonLoader.h"
 #include "FusionConsole.h"
 #include "FusionVirtualFileSource_PhysFS.h"
+#include "FusionResourceManager.h"
 
 namespace FusionEngine
 {
@@ -86,16 +87,23 @@ namespace FusionEngine
 		b2Verts.reserve(verts.size());
 		for (auto it = verts.begin(); it != verts.end(); ++it)
 		{
-			b2Verts.push_back(b2Vec2(it->x, it->y));
+			b2Verts.push_back(b2Vec2(ToSimUnits(it->x), ToSimUnits(it->y)));
 		}
 
 		if (!m_EditedShape)
 			m_EditedShape.reset(new b2PolygonShape);
 
-		std::unique_ptr<b2PolygonShape> newShape(new b2PolygonShape);
-		newShape->Set(b2Verts.data(), b2Verts.size());
-		if (newShape->Validate())
-			m_EditedShape.swap(newShape);
+		if (verts.size() < b2_maxPolygonVertices)
+		{
+			std::unique_ptr<b2PolygonShape> newShape(new b2PolygonShape);
+			newShape->Set(b2Verts.data(), b2Verts.size());
+			if (newShape->Validate())
+				m_EditedShape.swap(newShape);
+		}
+		else
+		{
+			SendToConsole("Too many verticies in edited polygon");
+		}
 		Finish();
 	}
 
@@ -106,8 +114,8 @@ namespace FusionEngine
 		auto polygon = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
 		for (int i = 0; i < polygon->GetVertexCount(); ++i)
 		{
-			Vector2 vert = b2v2(polygon->GetVertex(i));
-			verts.push_back(vert);
+			const auto& b2vert = polygon->GetVertex(i);
+			verts.push_back(Vector2(ToRenderUnits(b2vert.x), ToRenderUnits(b2vert.y)));
 		}
 
 		m_EditedShape.reset(new b2PolygonShape(*polygon));
@@ -122,7 +130,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "/");
 				auto dev = vdir.open_file(m_Resource->GetPath(), CL_File::create_always, CL_File::access_write);
 				PolygonResource::Save(dev, *m_EditedShape);
 			}

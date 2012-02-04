@@ -698,22 +698,29 @@ namespace FusionEngine
 			if (!m_PolygonFile.empty())
 			{
 				m_PolygonLoadConnection.disconnect();
-				m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource(
-					"POLYGON",
-					m_PolygonFile,
-					[this](ResourceDataPtr data) { m_PolygonShape.SetTarget(data); m_ReconstructFixture = true; });
+				m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource("POLYGON", m_PolygonFile, [this](ResourceDataPtr data)
+				{
+					m_PolygonResource.SetTarget(data); m_ReconstructFixture = true;
+					// TEMP (until update can be called automatically)
+					if (m_Body)
+					{
+						ConstructFixture(m_Body);
+						m_Body->OnFixtureMassChanged();
+					}
+				});
 			}
 			else
 			{
-				m_PolygonShape.Release();
+				m_PolygonResource.Release();
 			}
 
 			m_ReloadPolygonResource = false;
 		}
 
-		if (m_ReconstructFixture && m_PolygonShape.IsLoaded() && m_Body)
+		if (m_ReconstructFixture && m_PolygonResource.IsLoaded() && m_Body)
 		{
 			m_ReconstructFixture = false;
+			Radius.MarkChanged();
 			ConstructFixture(m_Body);
 			m_Body->OnFixtureMassChanged();
 		}
@@ -736,10 +743,10 @@ namespace FusionEngine
 
 		SerialisationUtils::write(stream, m_PolygonFile);
 		
-		//stream.Write(m_PolygonShape.GetVertexCount());
-		//for (int i = 0; i < m_PolygonShape.GetVertexCount(); ++i)
+		//stream.Write(m_PolygonResource.GetVertexCount());
+		//for (int i = 0; i < m_PolygonResource.GetVertexCount(); ++i)
 		//{
-		//	const b2Vec2& vert = m_PolygonShape.GetVertex(i);
+		//	const b2Vec2& vert = m_PolygonResource.GetVertex(i);
 		//	stream.Write(vert.x);
 		//	stream.Write(vert.y);
 		//}
@@ -756,25 +763,27 @@ namespace FusionEngine
 		if (m_PolygonFile != PolygonFile.Get())
 			PolygonFile.MarkChanged();
 
+		Update();
+
 		/*
 		int32 vertexCount;
 		stream.Read(vertexCount);
 		std::vector<b2Vec2> verts;
 		verts.resize(vertexCount);
-		bool newShape = vertexCount != m_PolygonShape.GetVertexCount();
+		bool newShape = vertexCount != m_PolygonResource.GetVertexCount();
 		for (int i = 0; i < vertexCount; ++i)
 		{
 			auto& vert = verts[i];
 			stream.Read(vert.x);
 			stream.Read(vert.y);
 
-			if (!newShape && !(vert == m_PolygonShape.GetVertex(i)))
+			if (!newShape && !(vert == m_PolygonResource.GetVertex(i)))
 				newShape = true;
 		}
 
 		if (newShape)
 		{
-			m_PolygonShape.Set(verts.data(), verts.size());
+			m_PolygonResource.Set(verts.data(), verts.size());
 
 			ConstructFixture(m_Body);
 		}
@@ -792,14 +801,15 @@ namespace FusionEngine
 	{
 		m_PolygonFile = filename;
 		m_ReloadPolygonResource = true;
+		Update();
 	}
 
 	float Box2DPolygonFixture::GetRadius() const
 	{
 		if (m_Fixture)
 			return m_Fixture->GetShape()->m_radius;
-		else if (m_PolygonShape.IsLoaded())
-			return m_PolygonShape->m_radius;
+		else if (m_PolygonResource.IsLoaded())
+			return m_PolygonResource->m_radius;
 		else
 			return Radius.Get();
 	}

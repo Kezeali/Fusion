@@ -81,6 +81,8 @@ namespace FusionEngine
 
 	class ResourceEditor;
 
+	class EditorPolygonTool;
+
 	namespace Inspectors {
 		class ComponentInspector;
 	}
@@ -131,6 +133,15 @@ namespace FusionEngine
 		void GoToEntity(const EntityPtr& entity);
 
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
+
+		enum Tool
+		{
+			None,
+			Polygon,
+			Line,
+			Circle,
+			Rectangle
+		};
 
 	private:
 		enum QueryType
@@ -212,8 +223,12 @@ namespace FusionEngine
 		bool m_ReceivedMouseDown;
 		bool m_Dragging;
 
+		Tool m_Tool;
+
 		std::shared_ptr<EditorOverlay> m_EditorOverlay;
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
+
+		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
 
 		std::list<EntityPtr> m_ToDelete;
 
