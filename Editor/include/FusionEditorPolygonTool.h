@@ -56,6 +56,8 @@ namespace FusionEngine
 		void Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, Mode mode);
 		void Finish();
 
+		bool IsActive() const { return m_Active; }
+
 		void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
 		void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
 
@@ -65,6 +67,8 @@ namespace FusionEngine
 		Mode m_Mode;
 		std::vector<Vector2> m_Verts;
 		PolygonToolCallback_t m_DoneCallback;
+
+		bool m_Active;
 
 		Vector2 m_FeedbackPoint;
 

@@ -55,7 +55,7 @@ namespace FusionEngine
 
 		void SetPolygonToolExecutor(PolygonToolExecutor_t fn);
 
-		void SetResource(const ResourceDataPtr& resource);
+		void SetResource(const ResourceDataPtr& resource, const Vector2& offset = Vector2());
 
 		void Finish();
 
@@ -70,6 +70,8 @@ namespace FusionEngine
 		PolygonToolExecutor_t m_PolygonEditorCb;
 		ResourceDataPtr m_Resource;
 		std::unique_ptr<b2PolygonShape> m_EditedShape;
+
+		Vector2 m_Offset;
 	};
 
 	inline PolygonResourceEditor::PolygonResourceEditor()
@@ -87,7 +89,7 @@ namespace FusionEngine
 		b2Verts.reserve(verts.size());
 		for (auto it = verts.begin(); it != verts.end(); ++it)
 		{
-			b2Verts.push_back(b2Vec2(ToSimUnits(it->x), ToSimUnits(it->y)));
+			b2Verts.push_back(b2Vec2(ToSimUnits(it->x - m_Offset.x), ToSimUnits(it->y - m_Offset.y)));
 		}
 
 		if (!m_EditedShape)
@@ -107,7 +109,7 @@ namespace FusionEngine
 		Finish();
 	}
 
-	inline void PolygonResourceEditor::SetResource(const ResourceDataPtr& resource)
+	inline void PolygonResourceEditor::SetResource(const ResourceDataPtr& resource, const Vector2& offset)
 	{
 		m_Resource = resource;
 		std::vector<Vector2> verts;
@@ -115,8 +117,10 @@ namespace FusionEngine
 		for (int i = 0; i < polygon->GetVertexCount(); ++i)
 		{
 			const auto& b2vert = polygon->GetVertex(i);
-			verts.push_back(Vector2(ToRenderUnits(b2vert.x), ToRenderUnits(b2vert.y)));
+			verts.push_back(Vector2(ToRenderUnits(b2vert.x), ToRenderUnits(b2vert.y)) + offset);
 		}
+
+		m_Offset = offset;
 
 		m_EditedShape.reset(new b2PolygonShape(*polygon));
 

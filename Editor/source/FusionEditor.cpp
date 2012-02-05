@@ -392,7 +392,7 @@ namespace FusionEngine
 			CL_Draw::box(gc, camRect, rangeColour);
 		}
 
-		if (m_PolygonTool)
+		if (m_PolygonTool && m_PolygonTool->IsActive())
 			m_PolygonTool->Draw(gc);
 	}
 
@@ -996,8 +996,15 @@ namespace FusionEngine
 				if (path.has_parent_path())
 					PHYSFS_mkdir(path.string().c_str());
 
+				Vector2 offset(m_EditCam->GetPosition().x, m_EditCam->GetPosition().y);				
+				if (GetNumSelected() > 0)
+				{
+					auto c = GetBBOfSelected().get_center();
+					offset = Vector2(ToRenderUnits(c.x), ToRenderUnits(c.y));
+				}
+
 				auto editor = editorEntry->second;
-				ResourceManager::getSingleton().GetResource(type, filename, [editor](ResourceDataPtr d) { editor->SetResource(d); });
+				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
 			}
 			else
 				SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
@@ -1475,12 +1482,7 @@ namespace FusionEngine
 
 			case CL_KEY_P:
 				{
-					std::vector<EntityPtr> selectedEntities;
-					ForEachSelected([&selectedEntities](const EntityPtr& entity)->bool {
-						selectedEntities.push_back(entity);
-						return true;
-					});
-					CreatePropertiesWindow(selectedEntities);
+					CreatePropertiesWindowForSelected();
 				}
 				break;
 
@@ -1814,7 +1816,7 @@ namespace FusionEngine
 			// Add an item for this entity to the Properties sub-menu
 			auto item = AddMenuItem(m_PropertiesMenu.get(),
 				title, entity->GetName(),
-				[this, entity](const MenuItemEvent& e) { std::vector<EntityPtr> ents; ents.push_back(entity); CreatePropertiesWindow(ents); }
+				[this, entity](const MenuItemEvent& e) { CreatePropertiesWindow(entity); }
 			);
 			item->SetBGColour(m_EditorOverlay->GetColour(entity));
 
@@ -1962,6 +1964,26 @@ namespace FusionEngine
 		}
 	}
 
+	CL_Rectf Editor::GetBBOfSelected()
+	{
+		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+		ForEachSelected([&bb](const EntityPtr& entity)->bool
+		{
+			auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
+			auto pos = transform->GetPosition();
+			if (pos.x < bb.left)
+				bb.left = pos.x;
+			if (pos.y < bb.top)
+				bb.top = pos.y;
+			if (pos.x > bb.right)
+				bb.right = pos.x;
+			if (pos.y > bb.bottom)
+				bb.bottom = pos.y;
+			return true;
+		});
+		return bb;
+	}
+
 	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const CL_Rectf &rectangle, const Editor::QueryType query_type)
 	{
 		// Figure out where the rectangle is in the world
@@ -2071,21 +2093,7 @@ namespace FusionEngine
 
 	void Editor::CopySelectedEntities()
 	{
-		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
-		ForEachSelected([&bb](const EntityPtr& entity)->bool
-		{
-			auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
-			auto pos = transform->GetPosition();
-			if (pos.x < bb.left)
-				bb.left = pos.x;
-			if (pos.y < bb.top)
-				bb.top = pos.y;
-			if (pos.x > bb.right)
-				bb.right = pos.x;
-			if (pos.y > bb.bottom)
-				bb.bottom = pos.y;
-			return true;
-		});
+		auto bb = GetBBOfSelected();
 		auto c = bb.get_center();
 		Vector2 center(c.x, c.y);
 		if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))

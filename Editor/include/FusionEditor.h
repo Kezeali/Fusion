@@ -139,8 +139,8 @@ namespace FusionEngine
 			None,
 			Polygon,
 			Line,
-			Circle,
-			Rectangle
+			Rectangle,
+			Elipse
 		};
 
 	private:
@@ -278,6 +278,8 @@ namespace FusionEngine
 		size_t GetNumSelected() const;
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
+
+		CL_Rectf GetBBOfSelected();
 
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
 

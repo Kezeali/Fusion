@@ -35,7 +35,8 @@ namespace FusionEngine
 {
 
 	EditorPolygonTool::EditorPolygonTool()
-		: m_Mode(Freeform)
+		: m_Mode(Freeform),
+		m_Active(false)
 	{}
 
 	void EditorPolygonTool::Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, EditorPolygonTool::Mode mode)
@@ -43,6 +44,8 @@ namespace FusionEngine
 		m_Verts = verts;
 		m_DoneCallback = done_callback;
 		m_Mode = mode;
+
+		m_Active = true;
 	}
 
 	void EditorPolygonTool::Finish()
@@ -50,6 +53,8 @@ namespace FusionEngine
 		m_DoneCallback(m_Verts);
 		m_DoneCallback = PolygonToolCallback_t();
 		m_Verts.clear();
+
+		m_Active = false;
 	}
 
 	void EditorPolygonTool::MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)

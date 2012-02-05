@@ -44,7 +44,7 @@ namespace FusionEngine
 	public:
 		virtual ~ResourceEditor() {}
 
-		virtual void SetResource(const ResourceDataPtr& resource) = 0;
+		virtual void SetResource(const ResourceDataPtr& resource, const Vector2& offset = Vector2()) = 0;
 
 		virtual void CancelEditing() = 0;
 
