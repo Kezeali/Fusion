@@ -42,11 +42,15 @@
       <Filter>Inspectors</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionResourceDatabase.h" />
-    <ClInclude Include="include\FusionResourceEditor.h" />
-    <ClInclude Include="include\FusionPolygonResourceEditor.h" />
     <ClInclude Include="include\FusionEditorPolygonTool.h" />
     <ClInclude Include="include\FusionPolygonShapeInspector.h">
       <Filter>Inspectors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionPolygonResourceEditor.h">
+      <Filter>ResourceEditors</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionResourceEditor.h">
+      <Filter>ResourceEditors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -55,6 +59,9 @@
     </Filter>
     <Filter Include="Inspectors">
       <UniqueIdentifier>{2c0d9974-07df-4683-a82c-235e37dad302}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ResourceEditors">
+      <UniqueIdentifier>{04c5ff56-eafd-4f29-94f4-e1721df8dc58}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +100,9 @@
     <ClCompile Include="source\FusionEditorPolygonTool.cpp" />
     <ClCompile Include="source\FusionPolygonShapeInspector.cpp">
       <Filter>Inspectors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionPolygonResourceEditor.cpp">
+      <Filter>ResourceEditors</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

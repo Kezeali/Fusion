@@ -103,6 +103,7 @@
     <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionFixtureInspector.cpp" />
     <ClCompile Include="source\FusionInspectorBase.cpp" />
+    <ClCompile Include="source\FusionPolygonResourceEditor.cpp" />
     <ClCompile Include="source\FusionPolygonShapeInspector.cpp" />
     <ClCompile Include="source\FusionResourceDatabase.cpp" />
     <ClCompile Include="source\FusionRigidBodyInspector.cpp" />

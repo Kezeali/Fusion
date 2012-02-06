@@ -1444,6 +1444,11 @@ namespace FusionEngine
 		if (MouseOverUI(m_GUIContext))
 			return;
 
+		if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
+		{
+			m_PolygonTool->KeyChange(ev.shift, ev.ctrl, ev.alt);
+		}
+
 		// Ctrl + Keys
 		if (ev.ctrl && ev.repeat_count == 0)
 		{
@@ -1506,7 +1511,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			if (m_Tool == Tool::Polygon)
+			if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
 			{
 				if (ev.id == CL_KEY_RETURN)
 				{
@@ -1614,14 +1619,22 @@ namespace FusionEngine
 
 			m_ReceivedMouseDown = true;
 
-			if (ev.ctrl)
+			if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
 			{
-				m_Dragging = true;
-				GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Move;");
-				GUI::getSingleton().GetContext()->SetMouseCursor("Move");
+				Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+				m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
 			}
+			else
+			{
+				if (ev.ctrl)
+				{
+					m_Dragging = true;
+					GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Move;");
+					GUI::getSingleton().GetContext()->SetMouseCursor("Move");
+				}
 
-			OnMouseDown_Selection(ev);
+				OnMouseDown_Selection(ev);
+			}
 		}
 	}
 
@@ -1631,10 +1644,10 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
-				if (m_Tool == Tool::Polygon)
+				if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
 				{
 					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-					m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
+					m_PolygonTool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
 				}
 				else
 				{
@@ -1703,7 +1716,7 @@ namespace FusionEngine
 	{
 		if (m_Active)
 		{
-			if (m_Tool == Tool::Polygon)
+			if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
 			{
 				Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 				m_PolygonTool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);

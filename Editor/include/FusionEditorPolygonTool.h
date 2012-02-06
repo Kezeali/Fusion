@@ -35,7 +35,9 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionVectorTypes.h"
+#include <array>
 #include <functional>
+#include <set>
 #include <vector>
 
 #include <ClanLib/display.h>
@@ -58,8 +60,10 @@ namespace FusionEngine
 
 		bool IsActive() const { return m_Active; }
 
+		void KeyChange(bool shift, bool ctrl, bool alt);
 		void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
 		void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
+		void MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
 
 		void Draw(CL_GraphicContext& gc);
 
@@ -70,15 +74,28 @@ namespace FusionEngine
 
 		bool m_Active;
 
+		enum Tool { AddVert, SelectVert } m_PrimaryAction; // What clicking without any modifiers does
+
 		Vector2 m_FeedbackPoint;
+		enum FeedbackType { Add, Move, Remove } m_FeedbackType;
+		std::array<Vector2, 3> m_FeedbackTri;
+		bool m_DrawFeedbackTri;
 
-		size_t m_GrabbedPoint;
+		bool m_Moving;
+		Vector2 m_MoveFrom;
 
-		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
-		void RemoveNearestPoint(const Vector2& pos);
-		void GrabNearestPoint(const Vector2& pos);
+		std::set<size_t> m_GrabbedVerts;
 
 		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
+
+		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
+		void RemoveNearestVert(const Vector2& pos);
+
+		void GrabNearestVert(const Vector2& pos);
+		void UngrabNearestVert(const Vector2& pos);
+		size_t GetNearestVert(const Vector2& pos, const float max_distance = std::numeric_limits<float>::max());
+
+		void MoveGrabbedVerts(const Vector2& to);
 	};
 
 }
