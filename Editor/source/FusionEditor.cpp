@@ -1635,12 +1635,7 @@ namespace FusionEngine
 
 			m_ReceivedMouseDown = true;
 
-			if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-			{
-				Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-				m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-			}
-			else
+			if (m_Tool == Tool::None)
 			{
 				if (ev.ctrl)
 				{
@@ -1651,6 +1646,16 @@ namespace FusionEngine
 
 				OnMouseDown_Selection(ev);
 			}
+			else if (ev.id == CL_MOUSE_LEFT) // Tools only get lmouse
+			{
+				if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
+				{
+					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+					// MousePress & MouseRelease could return a bool indicating wheter they handled the input, thus blocking the GUI from using it
+					//  (might be better than explicitly deciding what the tools handle here)
+					m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
+				}
+			}
 		}
 	}
 
@@ -1660,12 +1665,7 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
-				if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-				{
-					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-					m_PolygonTool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-				}
-				else
+				if (m_Tool == Tool::None)
 				{
 					if (m_Dragging/*m_Tool == Tool::Move*/)
 					{
@@ -1688,37 +1688,45 @@ namespace FusionEngine
 							break;
 						};
 					}
-					switch (ev.id)
-					{
-					case CL_MOUSE_RIGHT:
-						if (m_EditorOverlay->m_Selected.empty())
-							OnMouseUp_Selection(ev);
-						ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
-						break;
-					case CL_MOUSE_WHEEL_UP:
-						if (ev.ctrl)
-						{
-							if (ev.alt)
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
-							else
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
-						}
-						else
-							m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
-						break;
-					case CL_MOUSE_WHEEL_DOWN:
-						if (ev.ctrl)
-						{
-							if (ev.alt)
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
-							else
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
-						}
-						else
-							m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
-						break;
-					};
 				}
+				else if (ev.id == CL_MOUSE_LEFT)
+				{
+					if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
+					{
+						Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+						m_PolygonTool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
+					}
+				}
+				switch (ev.id)
+				{
+				case CL_MOUSE_RIGHT:
+					if (m_EditorOverlay->m_Selected.empty())
+						OnMouseUp_Selection(ev);
+					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
+					break;
+				case CL_MOUSE_WHEEL_UP:
+					if (ev.ctrl)
+					{
+						if (ev.alt)
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+						else
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
+					}
+					else
+						m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
+					break;
+				case CL_MOUSE_WHEEL_DOWN:
+					if (ev.ctrl)
+					{
+						if (ev.alt)
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+						else
+							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
+					}
+					else
+						m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
+					break;
+				};
 			}
 
 			GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");

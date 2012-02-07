@@ -37,6 +37,7 @@ namespace FusionEngine
 	EditorPolygonTool::EditorPolygonTool()
 		: m_Mode(Freeform),
 		m_Active(false),
+		m_FeedbackType(Add),
 		m_DrawFeedbackTri(false),
 		m_Moving(false)
 	{}
@@ -319,12 +320,14 @@ namespace FusionEngine
 	{
 		m_GrabbedVerts.clear();
 
+		const float max_distance = 10.f;
+
 		float dist = std::numeric_limits<float>::max();
 		auto nearestIt = m_Verts.end();
 		for (auto it = m_Verts.begin(); it != m_Verts.end(); ++it)
 		{
 			const float curDist = Vector2::distance(pos, *it);
-			if (curDist < dist)
+			if (curDist < dist && curDist < max_distance)
 			{
 				nearestIt = it;
 				dist = curDist;
