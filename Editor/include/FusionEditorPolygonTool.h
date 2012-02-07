@@ -57,6 +57,8 @@ namespace FusionEngine
 
 		void Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, Mode mode);
 		void Finish();
+		void Reset();
+		void Cancel();
 
 		bool IsActive() const { return m_Active; }
 
@@ -72,6 +74,8 @@ namespace FusionEngine
 		std::vector<Vector2> m_Verts;
 		PolygonToolCallback_t m_DoneCallback;
 
+		std::vector<Vector2> m_InitialVerts;
+
 		bool m_Active;
 
 		enum Tool { AddVert, SelectVert } m_PrimaryAction; // What clicking without any modifiers does
@@ -81,17 +85,20 @@ namespace FusionEngine
 		std::array<Vector2, 3> m_FeedbackTri;
 		bool m_DrawFeedbackTri;
 
+		Vector2 m_LastMousePos;
+
 		bool m_Moving;
 		Vector2 m_MoveFrom;
 
 		std::set<size_t> m_GrabbedVerts;
+		size_t m_TempGrabbedVert;
 
 		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
 
 		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
 		void RemoveNearestVert(const Vector2& pos);
 
-		void GrabNearestVert(const Vector2& pos);
+		void GrabNearestVert(const Vector2& pos, bool hold = true);
 		void UngrabNearestVert(const Vector2& pos);
 		size_t GetNearestVert(const Vector2& pos, const float max_distance = std::numeric_limits<float>::max());
 

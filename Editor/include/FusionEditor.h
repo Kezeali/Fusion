@@ -82,6 +82,8 @@ namespace FusionEngine
 	class ResourceEditor;
 
 	class EditorPolygonTool;
+	class RectanglePolygonTool;
+	class CirclePolygonTool;
 
 	namespace Inspectors {
 		class ComponentInspector;
@@ -229,6 +231,8 @@ namespace FusionEngine
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
 
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
+		std::shared_ptr<RectanglePolygonTool> m_RectangleTool;
+		std::shared_ptr<CirclePolygonTool> m_CircleTool;
 
 		std::list<EntityPtr> m_ToDelete;
 

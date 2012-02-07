@@ -37,6 +37,7 @@ namespace FusionEngine
 	EditorPolygonTool::EditorPolygonTool()
 		: m_Mode(Freeform),
 		m_Active(false),
+		m_DrawFeedbackTri(false),
 		m_Moving(false)
 	{}
 
@@ -45,6 +46,8 @@ namespace FusionEngine
 		m_Verts = verts;
 		m_DoneCallback = done_callback;
 		m_Mode = mode;
+
+		m_InitialVerts = verts;
 
 		m_Active = true;
 	}
@@ -55,16 +58,35 @@ namespace FusionEngine
 		m_DoneCallback = PolygonToolCallback_t();
 		m_Verts.clear();
 
+		m_InitialVerts.clear();
+
+		m_GrabbedVerts.clear();
+
+		m_DrawFeedbackTri = false;
+
 		m_Active = false;
+	}
+
+	void EditorPolygonTool::Reset()
+	{
+		m_Verts = m_InitialVerts;
+	}
+
+	void EditorPolygonTool::Cancel()
+	{
+		Reset();
+		Finish();
 	}
 
 	void EditorPolygonTool::KeyChange(bool shift, bool ctrl, bool alt)
 	{
-		MouseMove(m_FeedbackPoint, 0, shift, ctrl, alt);
+		MouseMove(m_LastMousePos, 0, shift, ctrl, alt);
 	}
 
 	void EditorPolygonTool::MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
 	{
+		m_LastMousePos = pos;
+
 		m_DrawFeedbackTri = false;
 		if (m_Moving)
 		{
@@ -75,8 +97,12 @@ namespace FusionEngine
 		{
 			const auto v = GetNearestVert(pos, 10.f);
 			if (v < m_Verts.size())
+			{
 				m_FeedbackPoint = m_Verts[v];
-			m_FeedbackType = ctrl ? Remove : Move;
+				m_FeedbackType = ctrl ? Remove : Move;
+			}
+			else
+				m_FeedbackPoint = pos;
 		}
 		else
 		{
@@ -92,13 +118,13 @@ namespace FusionEngine
 				break;
 			};
 			m_FeedbackType = Add;
-			m_DrawFeedbackTri = true;
+			if (!m_Verts.empty())
+				m_DrawFeedbackTri = true;
 		}
 	}
 
 	void EditorPolygonTool::MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
 	{
-		
 		if (shift)
 		{
 			if (alt)
@@ -109,8 +135,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				if (m_GrabbedVerts.empty())
-					GrabNearestVert(pos);
+				GrabNearestVert(pos, false);
 				m_Moving = true;
 				m_MoveFrom = pos;
 			}
@@ -140,7 +165,9 @@ namespace FusionEngine
 		if (m_Moving && !m_GrabbedVerts.empty())
 		{
 			MoveGrabbedVerts(pos);
+			m_GrabbedVerts.erase(m_TempGrabbedVert);
 		}
+		m_TempGrabbedVert = std::numeric_limits<size_t>::max();
 		m_Moving = false;
 		m_MoveFrom = Vector2();
 	}
@@ -186,10 +213,11 @@ namespace FusionEngine
 			}
 		}
 		
+		CL_Colorf grabbedColour(0.40f, 0.40f, 1.f);
 		for (auto it = m_GrabbedVerts.begin(); it != m_GrabbedVerts.end(); ++it)
 		{
 			const Vector2& v = m_Verts[*it];
-			CL_Draw::circle(gc, v.x, v.y, 0.5f, feedbackColour);
+			CL_Draw::circle(gc, v.x, v.y, 0.5f, grabbedColour);
 		}
 	}
 
@@ -201,8 +229,11 @@ namespace FusionEngine
 		{
 			m_FeedbackPoint = pos;
 
-			m_FeedbackTri[0] = m_Verts.back();
-			m_FeedbackTri[2] = !to_nearest_edge ? m_Verts.back() : m_Verts.front();
+			if (!m_Verts.empty())
+			{
+				m_FeedbackTri[0] = m_Verts.back();
+				m_FeedbackTri[2] = !to_nearest_edge ? m_Verts.back() : m_Verts.front();
+			}
 		}
 		else
 		{
@@ -245,6 +276,8 @@ namespace FusionEngine
 
 	void EditorPolygonTool::AddFreeformPoint(const Vector2& pos, bool to_nearest_edge)
 	{
+		m_GrabbedVerts.clear();
+
 		if (!to_nearest_edge || m_Verts.size() < 2)
 		{
 			m_Verts.push_back(pos);
@@ -284,6 +317,8 @@ namespace FusionEngine
 
 	void EditorPolygonTool::RemoveNearestVert(const Vector2& pos)
 	{
+		m_GrabbedVerts.clear();
+
 		float dist = std::numeric_limits<float>::max();
 		auto nearestIt = m_Verts.end();
 		for (auto it = m_Verts.begin(); it != m_Verts.end(); ++it)
@@ -299,11 +334,16 @@ namespace FusionEngine
 			m_Verts.erase(nearestIt);
 	}
 
-	void EditorPolygonTool::GrabNearestVert(const Vector2& pos)
+	void EditorPolygonTool::GrabNearestVert(const Vector2& pos, bool hold)
 	{
 		const auto v = GetNearestVert(pos, 10.f);
 		if (v < m_Verts.size())
-			m_GrabbedVerts.insert(v);
+		{
+			if (hold)
+				m_GrabbedVerts.insert(v);
+			else if (m_GrabbedVerts.insert(v).second)
+				m_TempGrabbedVert = v;
+		}
 	}
 	
 	void EditorPolygonTool::UngrabNearestVert(const Vector2& pos)

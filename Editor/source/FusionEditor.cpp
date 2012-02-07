@@ -551,7 +551,8 @@ namespace FusionEngine
 		m_ShiftSelect(false),
 		m_AltSelect(false),
 		m_ReceivedMouseDown(false),
-		m_Dragging(false)
+		m_Dragging(false),
+		m_Tool(Tool::None)
 	{
 		auto& context = GUI::getSingleton().CreateContext("editor");
 		context->SetMouseShowPeriod(500);
@@ -1511,12 +1512,27 @@ namespace FusionEngine
 		}
 		else
 		{
+			switch (ev.id)
+			{
+			case CL_KEY_L:
+				{
+					std::vector<Vector2> verts;
+					m_PolygonTool->Start(verts, [](const std::vector<Vector2>& v) {}, EditorPolygonTool::Line);
+					m_Tool = Tool::Polygon;
+				}
+				break;
+			};
 			if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
 			{
 				if (ev.id == CL_KEY_RETURN)
 				{
 					m_Tool = Tool::None;
 					m_PolygonTool->Finish();
+				}
+				else if (ev.id == CL_KEY_ESCAPE)
+				{
+					m_Tool = Tool::None;
+					m_PolygonTool->Cancel();
 				}
 			}
 		}
