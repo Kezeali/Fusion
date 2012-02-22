@@ -49,18 +49,18 @@ namespace FusionEngine
 
 	void PolygonResourceEditor::OnPolygonToolDone(const std::vector<Vector2>& verts)
 	{
-		std::vector<b2Vec2> b2Verts;
-		b2Verts.reserve(verts.size());
-		for (auto it = verts.begin(); it != verts.end(); ++it)
-		{
-			b2Verts.push_back(b2Vec2(ToSimUnits(it->x - m_Offset.x), ToSimUnits(it->y - m_Offset.y)));
-		}
-
-		if (!m_EditedShape)
-			m_EditedShape.reset(new b2PolygonShape);
-
 		if (verts.size() < b2_maxPolygonVertices)
 		{
+			std::vector<b2Vec2> b2Verts;
+			b2Verts.reserve(verts.size());
+			for (auto it = verts.begin(); it != verts.end(); ++it)
+			{
+				b2Verts.push_back(b2Vec2(ToSimUnits(it->x - m_Offset.x), ToSimUnits(it->y - m_Offset.y)));
+			}
+
+			if (!m_EditedShape)
+				m_EditedShape.reset(new b2PolygonShape);
+
 			std::unique_ptr<b2PolygonShape> newShape(new b2PolygonShape);
 			newShape->Set(b2Verts.data(), b2Verts.size());
 			if (newShape->Validate())
@@ -69,6 +69,15 @@ namespace FusionEngine
 		else
 		{
 			SendToConsole("Too many verticies in edited polygon");
+			if (m_ErrorCallback)
+			{
+				std::stringstream str; str << b2_maxPolygonVertices;
+				m_ErrorCallback("Too many verticies in edited polygon. Reduce the verts to less than " + str.str() + " before saving.");
+			}
+			// Restart the editor
+			auto vertsCopy = verts;
+			using namespace std::placeholders;
+			m_PolygonEditorCb(vertsCopy, std::bind(&PolygonResourceEditor::OnPolygonToolDone, this, _1));
 		}
 		Finish();
 	}
@@ -105,6 +114,8 @@ namespace FusionEngine
 			catch (CL_Exception& e)
 			{
 				SendToConsole("Failed to save polygon resource '" + m_Resource->GetPath() + "': " + e.what());
+				if (m_ErrorCallback)
+					m_ErrorCallback("Failed to save polygon resource '" + m_Resource->GetPath() + "': " + e.what());
 			}
 
 			auto oldData = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());

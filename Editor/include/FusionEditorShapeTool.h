@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionPolygonResourceEditor
-#define H_FusionPolygonResourceEditor
+#ifndef H_FusionEditorShapeTool
+#define H_FusionEditorShapeTool
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,42 +34,32 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionResource.h"
+#include "FusionVectorTypes.h"
 
-#include "FusionResourceEditor.h"
-#include "FusionEditorPolygonTool.h"
+#include <ClanLib/display.h>
 
 namespace FusionEngine
 {
-
-	class PolygonResourceEditor : public ResourceEditor
+	
+	class ShapeTool
 	{
 	public:
-		PolygonResourceEditor();
-		virtual ~PolygonResourceEditor() {}
+		virtual ~ShapeTool()
+		{}
 
-		void SetPolygonToolExecutor(PolygonToolExecutor_t fn);
-		void SetErrorCallback(const std::function<void (const std::string&)>& fn);
+		virtual void Finish() = 0;
+		virtual void Reset() = 0;
+		virtual void Cancel() = 0;
 
-		void SetResource(const ResourceDataPtr& resource, const Vector2& offset = Vector2());
+		virtual bool IsActive() const = 0;
 
-		void Finish();
+		virtual void KeyChange(bool shift, bool ctrl, bool alt) = 0;
+		virtual void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		virtual void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		virtual void MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
 
-		void CancelEditing();
+		virtual void Draw(CL_GraphicContext& gc) = 0;
 
-		bool IsDoneEditing() const;
-
-		void OnPolygonToolDone(const std::vector<Vector2>& verts);
-
-		bool m_DoneEditing;
-
-		PolygonToolExecutor_t m_PolygonEditorCb;
-		ResourceDataPtr m_Resource;
-		std::unique_ptr<b2PolygonShape> m_EditedShape;
-
-		Vector2 m_Offset;
-
-		std::function<void (const std::string&)> m_ErrorCallback;
 	};
 
 }

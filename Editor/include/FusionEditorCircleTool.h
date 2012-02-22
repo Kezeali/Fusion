@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEditorPolygonTool
-#define H_FusionEditorPolygonTool
+#ifndef H_FusionEditorCircleTool
+#define H_FusionEditorCircleTool
 
 #if _MSC_VER > 1000
 #pragma once
@@ -47,17 +47,15 @@
 namespace FusionEngine
 {
 
-	typedef std::function<void (const std::vector<Vector2>&)> PolygonToolCallback_t;
-	typedef std::function<void (const std::vector<Vector2>&, const PolygonToolCallback_t&)> PolygonToolExecutor_t;
+	typedef std::function<void (const Vector2&, float)> CircleToolCallback_t;
+	typedef std::function<void (const Vector2&, float, const CircleToolCallback_t&)> CircleToolExecutor_t;
 
-	class EditorPolygonTool : public ShapeTool
+	class EditorCircleTool : public ShapeTool
 	{
 	public:
-		EditorPolygonTool();
-		
-		enum Mode { Freeform, Convex, Line };
+		EditorCircleTool();
 
-		void Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, Mode mode);
+		void Start(const Vector2& c, float r, const CircleToolCallback_t& done_callback);
 		void Finish();
 		void Reset();
 		void Cancel();
@@ -72,39 +70,26 @@ namespace FusionEngine
 		void Draw(CL_GraphicContext& gc);
 
 	private:
-		Mode m_Mode;
-		std::vector<Vector2> m_Verts;
-		PolygonToolCallback_t m_DoneCallback;
+		Vector2 m_Center;
+		float m_Radius;
+		CircleToolCallback_t m_DoneCallback;
 
-		std::vector<Vector2> m_InitialVerts;
+		Vector2 m_InitialCenter;
+		float m_InitialRadius;
 
 		bool m_Active;
 
-		enum Tool { AddVert, SelectVert } m_PrimaryAction; // What clicking without any modifiers does
-
 		Vector2 m_FeedbackPoint;
-		enum FeedbackType { Add, Move, Remove } m_FeedbackType;
-		std::array<Vector2, 3> m_FeedbackTri;
-		bool m_DrawFeedbackTri;
+
+		Vector2 m_FeedbackCenter;
+		float m_FeedbackRadius;
 
 		Vector2 m_LastMousePos;
 
-		bool m_Moving;
-		Vector2 m_MoveFrom;
+		enum Action { None, Resize, ResizeRelative, Move } m_Action;
+		bool m_MouseDown;
+		Vector2 m_DragFrom;
 
-		std::set<size_t> m_GrabbedVerts;
-		size_t m_TempGrabbedVert;
-
-		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
-
-		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
-		void RemoveNearestVert(const Vector2& pos);
-
-		void GrabNearestVert(const Vector2& pos, bool hold = true);
-		void UngrabNearestVert(const Vector2& pos);
-		size_t GetNearestVert(const Vector2& pos, const float max_distance = std::numeric_limits<float>::max());
-
-		void MoveGrabbedVerts(const Vector2& to);
 	};
 
 }

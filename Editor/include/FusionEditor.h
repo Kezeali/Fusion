@@ -39,6 +39,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
+#include <array>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -81,9 +82,10 @@ namespace FusionEngine
 
 	class ResourceEditor;
 
+	class ShapeTool;
 	class EditorPolygonTool;
-	class RectanglePolygonTool;
-	class CirclePolygonTool;
+	class EditorRectangleTool;
+	class EditorCircleTool;
 
 	namespace Inspectors {
 		class ComponentInspector;
@@ -142,7 +144,8 @@ namespace FusionEngine
 			Polygon,
 			Line,
 			Rectangle,
-			Elipse
+			Elipse,
+			NumTools
 		};
 
 	private:
@@ -231,8 +234,10 @@ namespace FusionEngine
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
 
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
-		std::shared_ptr<RectanglePolygonTool> m_RectangleTool;
-		std::shared_ptr<CirclePolygonTool> m_CircleTool;
+		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
+		std::shared_ptr<EditorCircleTool> m_CircleTool;
+
+		std::array<std::shared_ptr<ShapeTool>, Tool::NumTools> m_ShapeTools;
 
 		std::list<EntityPtr> m_ToDelete;
 
