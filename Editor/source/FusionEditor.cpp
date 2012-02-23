@@ -365,6 +365,7 @@ namespace FusionEngine
 		float m_CamRange;
 
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
+		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
 		std::shared_ptr<EditorCircleTool> m_CircleTool;
 	};
 
@@ -397,6 +398,8 @@ namespace FusionEngine
 
 		if (m_PolygonTool && m_PolygonTool->IsActive())
 			m_PolygonTool->Draw(gc);
+		//if (m_RectangleTool && m_RectangleTool->IsActive())
+		//	m_RectangleTool->Draw(gc);
 		if (m_CircleTool && m_CircleTool->IsActive())
 			m_CircleTool->Draw(gc);
 	}
@@ -928,6 +931,23 @@ namespace FusionEngine
 					else
 						m_CamVelocity.x = 0.f;
 				}
+			}
+		}
+
+		if (m_PolygonTool->IsActive())
+		{
+			if (!m_ToolUiDoc)
+			{
+				m_ToolUiDoc = m_GUIContext->CreateDocument();
+				m_ToolUiDoc->RemoveReference();
+			}
+			if (m_ToolUiDoc && m_ToolUiDoc->GetElementById("polygon") == nullptr)
+			{
+				m_ToolUiDoc->RemoveChild(m_ToolUiDoc->GetChild(0));
+				auto span = Rocket::Core::Factory::InstanceElement(m_ToolUiDoc.get(), "span", "span", Rocket::Core::XMLAttributes());
+				span->SetId("polygon");
+				Rocket::Core::Factory::InstanceElementText(span, "Polygon Tool");
+				m_ToolUiDoc->AppendChild(span);
 			}
 		}
 

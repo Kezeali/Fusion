@@ -232,6 +232,8 @@ namespace FusionEngine
 
 		std::shared_ptr<EditorOverlay> m_EditorOverlay;
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
+		
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ToolUiDoc;
 
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
 		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
