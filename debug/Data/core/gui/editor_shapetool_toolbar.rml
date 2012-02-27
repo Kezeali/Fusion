@@ -1,0 +1,27 @@
+<rml>
+	<head>
+		<title>Shape Tool</title>
+		<link type="text/template" href="fusion_window_static.rml" />
+		<style>
+			body.window
+			{
+				min-width: 0px;
+				min-height: 0px;
+			}
+			body
+			{
+				width: 150px;
+				height: 0px;
+				top: 0px;
+				left: 0px;
+			}
+
+			div#title_bar div#hide_button
+			{
+				display: none;
+			}
+		</style>
+	</head>
+	<body template="window_static">
+	</body>
+</rml>

@@ -36,6 +36,7 @@
 
 #include "FusionVectorTypes.h"
 #include <array>
+#include <boost/intrusive_ptr.hpp>
 #include <functional>
 #include <set>
 #include <vector>
@@ -43,6 +44,10 @@
 #include <ClanLib/display.h>
 
 #include "FusionEditorShapeTool.h"
+
+namespace Rocket { namespace Core {
+	class ElementDocument;
+} }
 
 namespace FusionEngine
 {
@@ -89,6 +94,10 @@ namespace FusionEngine
 		enum Action { None, Resize, ResizeRelative, Move } m_Action;
 		bool m_MouseDown;
 		Vector2 m_DragFrom;
+
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
+
+		void CreateGui();
 
 	};
 

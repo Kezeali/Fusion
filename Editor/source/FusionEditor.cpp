@@ -934,23 +934,6 @@ namespace FusionEngine
 			}
 		}
 
-		if (m_PolygonTool->IsActive())
-		{
-			if (!m_ToolUiDoc)
-			{
-				m_ToolUiDoc = m_GUIContext->CreateDocument();
-				m_ToolUiDoc->RemoveReference();
-			}
-			if (m_ToolUiDoc && m_ToolUiDoc->GetElementById("polygon") == nullptr)
-			{
-				m_ToolUiDoc->RemoveChild(m_ToolUiDoc->GetChild(0));
-				auto span = Rocket::Core::Factory::InstanceElement(m_ToolUiDoc.get(), "span", "span", Rocket::Core::XMLAttributes());
-				span->SetId("polygon");
-				Rocket::Core::Factory::InstanceElementText(span, "Polygon Tool");
-				m_ToolUiDoc->AppendChild(span);
-			}
-		}
-
 		for (auto it = m_ToDelete.begin(), end = m_ToDelete.end(); it != end; ++it)
 			DeleteEntity(*it);
 		m_ToDelete.clear();
@@ -2338,32 +2321,34 @@ namespace FusionEngine
 		void Generate()
 		{
 			// Generate title
-			std::string title;
-			if (entities.size() > 1)
 			{
-				title = boost::lexical_cast<std::string>(entities.size()) + " entities";
+				std::string title;
+				if (entities.size() > 1)
+				{
+					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
 
-				entity_inspector->SetPseudoClass("unavailable", true);
-			}
-			else if (!entities.empty())
-			{
-				auto front = entities.front();
-				if (front->GetName().empty())
-					title = "Unnamed";
-				else
-					title = front->GetName();
-				if (front->IsPseudoEntity())
-					title += " Pseudo-Entity";
-				else
-					title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
+					entity_inspector->SetPseudoClass("unavailable", true);
+				}
+				else if (!entities.empty())
+				{
+					auto front = entities.front();
+					if (front->GetName().empty())
+						title = "Unnamed";
+					else
+						title = front->GetName();
+					if (front->IsPseudoEntity())
+						title += " Pseudo-Entity";
+					else
+						title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
 
-				entity_inspector->SetPseudoClass("unavailable", false);
-				entity_inspector->SetEntity(front);
+					entity_inspector->SetPseudoClass("unavailable", false);
+					entity_inspector->SetEntity(front);
+				}
+				if (!title.empty())
+					doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
 			}
-			if (!title.empty())
-				doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
-			if (auto title = doc->GetElementById("title"))
-				title->SetInnerRML(doc->GetTitle());
+			if (auto titleElem = doc->GetElementById("title"))
+				titleElem->SetInnerRML(doc->GetTitle());
 
 			inspector_group->AddFooter();
 

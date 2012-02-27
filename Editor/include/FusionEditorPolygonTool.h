@@ -36,6 +36,7 @@
 
 #include "FusionVectorTypes.h"
 #include <array>
+#include <boost/intrusive_ptr.hpp>
 #include <functional>
 #include <set>
 #include <vector>
@@ -43,6 +44,10 @@
 #include <ClanLib/display.h>
 
 #include "FusionEditorShapeTool.h"
+
+namespace Rocket { namespace Core {
+	class ElementDocument;
+} }
 
 namespace FusionEngine
 {
@@ -94,6 +99,8 @@ namespace FusionEngine
 
 		std::set<size_t> m_GrabbedVerts;
 		size_t m_TempGrabbedVert;
+		
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
 
 		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
 
@@ -105,6 +112,8 @@ namespace FusionEngine
 		size_t GetNearestVert(const Vector2& pos, const float max_distance = std::numeric_limits<float>::max());
 
 		void MoveGrabbedVerts(const Vector2& to);
+
+		void CreateGui();
 	};
 
 }

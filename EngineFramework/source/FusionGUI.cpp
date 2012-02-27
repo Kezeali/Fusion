@@ -528,9 +528,9 @@ namespace FusionEngine
 		return m_Contexts[name] = std::make_shared<GUIContext>(name, m_Display.get_ic(), size);
 	}
 
-	Rocket::Core::Context *GUI::GetContext() const
+	Rocket::Core::Context *GUI::GetContext(const std::string& name) const
 	{
-		return m_Contexts.at("screen")->m_Context;
+		return m_Contexts.at(name)->m_Context;
 	}
 
 	Rocket::Core::ElementDocument *GUI::GetConsoleWindow() const

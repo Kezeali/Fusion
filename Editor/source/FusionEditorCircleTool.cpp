@@ -29,6 +29,7 @@
 
 #include "FusionEditorCircleTool.h"
 
+#include "FusionGUI.h"
 #include <ClanLib/core.h>
 
 namespace FusionEngine
@@ -51,6 +52,8 @@ namespace FusionEngine
 		m_InitialCenter = center;
 		m_InitialRadius = radius;
 
+		CreateGui();
+
 		m_Active = true;
 	}
 
@@ -66,6 +69,10 @@ namespace FusionEngine
 		m_InitialRadius = 0.0f;
 
 		m_Action = Action::None;
+
+		if (m_GuiDoc)
+			m_GuiDoc->Close();
+		m_GuiDoc.reset();
 
 		m_Active = false;
 	}
@@ -184,6 +191,25 @@ namespace FusionEngine
 
 		if (m_MouseDown && m_Action != Action::None)
 			CL_Draw::circle(gc, m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackRadius, modificationColour);
+	}
+
+	void EditorCircleTool::CreateGui()
+	{
+		if (!m_GuiDoc)
+		{
+			m_GuiDoc = GUI::getSingleton().GetContext("editor")->LoadDocument("/core/gui/editor_shapetool_toolbar.rml");
+			m_GuiDoc->RemoveReference();
+
+			//if (auto body = m_GuiDoc->GetElementById("content"))
+			//	Rocket::Core::Factory::InstanceElementText(body, "Circle Tool");
+
+			if (auto title = m_GuiDoc->GetElementById("title"))
+				Rocket::Core::Factory::InstanceElementText(title, "Circle Tool");
+		}
+		if (m_GuiDoc)
+		{
+			m_GuiDoc->Show();
+		}
 	}
 
 }
