@@ -32,61 +32,15 @@
 namespace FusionEngine { namespace Inspectors
 {
 
-	inline CL_Origin StringToOrigin(const std::string str)
-	{
-		if (str == "Top-Left")
-			return origin_top_left;
-		else if (str == "Top-Center")
-			return origin_top_center;
-		else if (str == "Top-Right")
-			return origin_top_right;
-
-		else if (str == "Center-Left")
-			return origin_center_left;
-		else if (str == "Center")
-			return origin_center;
-		else if (str == "Center-Right")
-			return origin_center_right;
-
-		else if (str == "Bottom-Left")
-			return origin_bottom_left;
-		else if (str == "Bottom-Center")
-			return origin_bottom_center;
-		else if (str == "Bottom-Right")
-			return origin_bottom_right;
-
-		else
-			return origin_center;
-	}
-
-	inline std::string OriginToString(const CL_Origin origin)
-	{
-		switch (origin)
-		{
-		case origin_top_left: return "Top-Left";
-		case origin_top_center: return "Top-Center";
-		case origin_top_right: return "Top-Right";
-
-		case origin_center_left: return "Center-Left";
-		case origin_center: return "Center";
-		case origin_center_right: return "Center-Right";
-
-		case origin_bottom_left: return "Bottom-Left";
-		case origin_bottom_center: return "Bottom-Center";
-		case origin_bottom_right: return "Bottom-Right";
-		default: return "Center";
-		};
-	}
-
 	void CircleShapeInspector::InitUI()
 	{
 		AddCircleInput(
-			FloatSetter_t([](float offsetx, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(offsetx, component->Position.Get().y)); }),
-			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().x; }),
-			FloatSetter_t([](float offsety, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(component->Position.Get().x, offsety)); }),
-			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().y; }),
-			FloatSetter_t([](float radius, ComponentIPtr<ICircleShape> component) { component->Radius.Set(radius); }),
-			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Radius.Get(); })
+			[](float offsetx, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(offsetx, component->Position.Get().y)); },
+			[](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().x; },
+			[](float offsety, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(component->Position.Get().x, offsety)); },
+			[](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().y; },
+			[](float radius, ComponentIPtr<ICircleShape> component) { component->Radius.Set(radius); },
+			[](ComponentIPtr<ICircleShape> component)->float { return component->Radius.Get(); }
 			);
 	}
 

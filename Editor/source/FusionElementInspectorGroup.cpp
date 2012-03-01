@@ -328,6 +328,9 @@ namespace FusionEngine { namespace Inspectors
 		{
 			inspector->SetComponents(components);
 		});*/
+
+		SetPseudoClass("single_entity", m_Entities.size() == 1);
+		SetPseudoClass("multi_entity", m_Entities.size() > 1);
 	}
 
 	void ElementGroup::ProcessComponent(const ComponentPtr& component, bool removable)
@@ -365,6 +368,10 @@ namespace FusionEngine { namespace Inspectors
 					name += " (" + inspector_type + " interface)";
 				if (!component->GetIdentifier().empty())
 					name += " - " + component->GetIdentifier();
+
+				// Pass the tool executors onward
+				FSN_ASSERT(m_CircleToolExecutor);
+				inspector->SetCircleToolExecutor(m_CircleToolExecutor);
 
 				AddSubsection(key, name, inspector, component, removable);
 			}

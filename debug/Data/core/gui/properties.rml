@@ -101,6 +101,18 @@
 				width: auto;
 			}
 			
+			inspector input.submit
+			{
+				width: 30px;
+				height: 20px;
+				padding: 0px;
+			}
+			
+			inspector_group:multi_entity #circle_editor
+			{
+				display: none;
+			}
+			
 			inspector:unavailable
 			{
 				display: none;

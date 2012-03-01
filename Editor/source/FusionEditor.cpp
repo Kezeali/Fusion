@@ -58,12 +58,6 @@
 
 #include "FusionBox2DComponent.h"
 
-// TYPES (will be removed when createEntity is replaced with a script)
-#include "FusionPhysicalComponent.h"
-#include "FusionRender2DComponent.h"
-#include "FusionScriptComponent.h"
-#include "FusionTransformComponent.h"
-
 #include "FusionElementInspectorGroup.h"
 
 #include "FusionTransformInspector.h"
@@ -2377,9 +2371,17 @@ namespace FusionEngine
 		//}
 
 		InspectorGenerator generator(doc);
+		
+		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
+		{
+			this->m_CircleTool->Start(c, r, done_cb);
+			this->m_Tool = Editor::Tool::Elipse;
+		});
+
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
 		generator.Generate();
+
 		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
 		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
 		{
@@ -2389,7 +2391,7 @@ namespace FusionEngine
 		{
 			this->m_EntityInstantiator->RemoveComponent(entity, component);
 		});
-		
+
 		doc->Show();
 		doc->RemoveReference();
 	}
@@ -2405,8 +2407,16 @@ namespace FusionEngine
 		//}
 
 		InspectorGenerator generator(doc);
+		
+		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
+		{
+			this->m_CircleTool->Start(c, r, done_cb);
+			this->m_Tool = Editor::Tool::Elipse;
+		});
+
 		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });
 		generator.Generate();
+
 		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
 		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
 		{

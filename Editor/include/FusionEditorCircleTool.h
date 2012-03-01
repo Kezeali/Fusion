@@ -55,6 +55,7 @@ namespace FusionEngine
 	typedef std::function<void (const Vector2&, float)> CircleToolCallback_t;
 	typedef std::function<void (const Vector2&, float, const CircleToolCallback_t&)> CircleToolExecutor_t;
 
+	//! Circle tool (creates circles, is a tool)
 	class EditorCircleTool : public ShapeTool
 	{
 	public:

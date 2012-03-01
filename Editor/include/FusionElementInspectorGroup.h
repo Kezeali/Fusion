@@ -47,6 +47,7 @@
 #include <boost/intrusive_ptr.hpp>
 
 #include "FusionRocketReferenceCountable.h"
+#include "FusionEditorCircleTool.h"
 
 namespace FusionEngine { namespace Inspectors
 {
@@ -75,6 +76,8 @@ namespace FusionEngine { namespace Inspectors
 
 		void SetAddCallback(AddCallback_t fn) { m_AddCallback = fn; }
 		void SetRemoveCallback(RemoveCallback_t fn) { m_RemoveCallback = fn; }
+
+		void SetCircleToolExecutor(const CircleToolExecutor_t& executor) { m_CircleToolExecutor = executor; }
 
 		bool AddInspector(const ComponentPtr& component, const std::string& inspector_type, bool removable);
 
@@ -109,6 +112,8 @@ namespace FusionEngine { namespace Inspectors
 		
 		AddCallback_t m_AddCallback;
 		RemoveCallback_t m_RemoveCallback;
+
+		CircleToolExecutor_t m_CircleToolExecutor;
 
 		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 

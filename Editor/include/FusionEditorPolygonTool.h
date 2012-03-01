@@ -55,13 +55,16 @@ namespace FusionEngine
 	typedef std::function<void (const std::vector<Vector2>&)> PolygonToolCallback_t;
 	typedef std::function<void (const std::vector<Vector2>&, const PolygonToolCallback_t&)> PolygonToolExecutor_t;
 
+	//! Polig'n'al tool
 	class EditorPolygonTool : public ShapeTool
 	{
 	public:
 		EditorPolygonTool();
 		
+		//! Tool mode
 		enum Mode { Freeform, Convex, Line };
 
+		//! Start the tool
 		void Start(const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_callback, Mode mode);
 		void Finish();
 		void Reset();
@@ -104,13 +107,22 @@ namespace FusionEngine
 
 		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
 
+		//! Adds the given point as a vert
 		void AddFreeformPoint(const Vector2& pos, bool to_nearest_edge);
+		//! Removes the nearest vert to the given point
 		void RemoveNearestVert(const Vector2& pos);
 
+		//! "Grab"s the nearest vert
+		/*!
+		* ... adding it to the group of verts that will be moved if MoveGrabbedVerts() is called
+		*/
 		void GrabNearestVert(const Vector2& pos, bool hold = true);
+		//! Ungrabs the given vert
 		void UngrabNearestVert(const Vector2& pos);
+		//! Returns the vert nearest to the given pos, returns m_Verts.size() if there are no verts <max_distance away
 		size_t GetNearestVert(const Vector2& pos, const float max_distance = std::numeric_limits<float>::max());
-
+		
+		//! Moves verts which have been grabbed by GrabNearestVert()
 		void MoveGrabbedVerts(const Vector2& to);
 
 		void CreateGui();

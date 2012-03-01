@@ -41,23 +41,33 @@
 namespace FusionEngine
 {
 	
+	//! Shape tool interface
 	class ShapeTool
 	{
 	public:
 		virtual ~ShapeTool()
 		{}
 
+		//! Fin.
 		virtual void Finish() = 0;
+		//! Tool should reset to initial state
 		virtual void Reset() = 0;
+		//! Tool should reset and finish
 		virtual void Cancel() = 0;
-
+		
+		//! Should return true if the tool is expecting input
 		virtual bool IsActive() const = 0;
 
+		//! Should handle key press / release inputs
 		virtual void KeyChange(bool shift, bool ctrl, bool alt) = 0;
+		//! Should handle mouse move inputs
 		virtual void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		//! Should handle mouse press inputs
 		virtual void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		//! Should handle mouse release inputs
 		virtual void MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
 
+		//! Should draw something useful
 		virtual void Draw(CL_GraphicContext& gc) = 0;
 
 	};

@@ -48,40 +48,59 @@
 #include <string>
 #include <type_traits>
 
+// TEMP: for hacky circle editor setup
+#include "FusionEntity.h"
+
 namespace FusionEngine { namespace Inspectors
 {
 
+	//! Generic inspector implementation for a given component type
 	template <class ComponentT>
 	class GenericInspector : public ComponentInspector
 	{
 	public:
+		//! Constructor
 		GenericInspector(const Rocket::Core::String& tag);
 
+		//! Derived class should call AddXInput methods here
 		virtual void InitUI() = 0;
 
 	protected:
 
+		/*! \defgroup GenericInspectorSetters Setters
+		* Setter functor types
+		* \{
+		*/
 		typedef std::function<void (bool, ComponentIPtr<ComponentT>)> BoolSetter_t;
 		typedef std::function<void (int, ComponentIPtr<ComponentT>)> IntSetter_t;
 		typedef std::function<void (float, ComponentIPtr<ComponentT>)> FloatSetter_t;
 		typedef std::function<void (std::string, ComponentIPtr<ComponentT>)> StringSetter_t;
+		/*! \} */
 
+		/*! \defgroup GenericInspectorSetters Getters
+		* Getter functor types
+		* \{
+		*/
 		typedef std::function<bool (ComponentIPtr<ComponentT>)> BoolGetter_t;
 		typedef std::function<int (ComponentIPtr<ComponentT>)> IntGetter_t;
 		typedef std::function<float (ComponentIPtr<ComponentT>)> FloatGetter_t;
 		typedef std::function<std::string (ComponentIPtr<ComponentT>)> StringGetter_t;
+		/*! \} */
 
+		//! Variant caller for all setter types
 		typedef boost::variant<BoolSetter_t, IntSetter_t, FloatSetter_t, StringSetter_t> SetterCallbackVariant_t;
+		//! Variant caller for all getter types
 		typedef boost::variant<BoolGetter_t, IntGetter_t, FloatGetter_t, StringGetter_t> GetterCallbackVariant_t;
 
+		//! Adds a text input
 		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size = 0);
-
+		//! Adds a toggle (checkbox) input
 		void AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
-
+		//! Adds a range (slider) input
 		void AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
-
+		//! Adds a select (popup) input
 		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
-
+		//! Adds a circle input
 		void AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
 
 	private:
@@ -101,10 +120,54 @@ namespace FusionEngine { namespace Inspectors
 
 		std::vector<ComponentIPtr<ComponentT>> m_Components;
 
+		CircleToolExecutor_t m_CircleToolExecutor;
+		PolygonToolExecutor_t m_PolygonToolExecutor;
+
 		void SetComponents(const std::vector<ComponentPtr>& components);
 		void ReleaseComponents();
 
+		void SetCircleToolExecutor(const CircleToolExecutor_t& executor) { m_CircleToolExecutor = executor; }
+		void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) { m_PolygonToolExecutor = executor; }
+
 		void ResetUIValues();
+
+		//! 'Input' callback for the Edit Circle button
+		class EditCircleButtonFunctor
+		{
+		public:
+			EditCircleButtonFunctor(GenericInspector<ComponentT>* executor_, FloatSetter_t x_setter_, FloatGetter_t x_getter_, FloatSetter_t y_setter_, FloatGetter_t y_getter_, FloatSetter_t radius_setter_, FloatGetter_t radius_getter_)
+				: executor(executor_),
+				x_setter(x_setter_), x_getter(x_getter_), y_setter(y_setter_), y_getter(y_getter_), radius_setter(radius_setter_), radius_getter(radius_getter_)
+			{
+			}
+
+			//EditCircleButtonFunctor(CircleToolExecutor_t executor_, FloatSetter_t x_setter_, FloatGetter_t x_getter_, FloatSetter_t y_setter_, FloatGetter_t y_getter_, FloatSetter_t radius_setter_, FloatGetter_t radius_getter_)
+			//	: executor(executor_),
+			//	x_setter(x_setter_), x_getter(x_getter_), y_setter(y_setter_), y_getter(y_getter_), radius_setter(radius_setter_), radius_getter(radius_getter_)
+			//{
+			//}
+
+			void operator() (bool, ComponentIPtr<ComponentT> component)
+			{
+				auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+
+				const Vector2 c(ToRenderUnits(x_getter(component) + offset.x), ToRenderUnits(y_getter(component) + offset.y));
+				const float r = ToRenderUnits(radius_getter(component));
+				executor->m_CircleToolExecutor(c, r, [this, component](const Vector2& c, float r)
+				{
+					auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+					x_setter(ToSimUnits(c.x) - offset.x, component);
+					y_setter(ToSimUnits(c.y) - offset.y, component);
+					radius_setter(ToSimUnits(r), component);
+				});
+			}
+
+			GenericInspector<ComponentT>* executor;
+			//CircleToolExecutor_t executor;
+			FloatSetter_t x_setter, y_setter, radius_setter;
+			FloatGetter_t x_getter, y_getter, radius_getter;
+			Vector2 offset;
+		};
 
 		class SetUIValueVisitor : public boost::static_visitor<bool>
 		{
@@ -170,27 +233,32 @@ namespace FusionEngine { namespace Inspectors
 
 			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringGetter_t& getter) const
 			{
-				auto type = input->GetAttribute("type", Rocket::Core::String(""));
-				std::string currentUIValue;
-				std::string value = getter(component);
-				if (type == "text")
+				if (getter)
 				{
-					currentUIValue = input->GetValue().CString();
-				}
-				else if (type == "checkbox")
-				{
-					currentUIValue = input->HasAttribute("checked") ? "true" : "false";
-				}
-				else
-				{
-					return false;
-				}
+					auto type = input->GetAttribute("type", Rocket::Core::String(""));
+					std::string currentUIValue;
+					std::string value = getter(component);
+					if (type == "text")
+					{
+						currentUIValue = input->GetValue().CString();
+					}
+					else if (type == "checkbox")
+					{
+						currentUIValue = input->HasAttribute("checked") ? "true" : "false";
+					}
+					else
+					{
+						return false;
+					}
 
-				if (!first && value != currentUIValue)
-					input->SetValue("");
+					if (!first && value != currentUIValue)
+						input->SetValue("");
+					else
+						input->SetValue(value.c_str());
+					return true;
+				}
 				else
-					input->SetValue(value.c_str());
-				return true;
+					return false;
 			}
 
 			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect>& input, StringGetter_t& getter) const
@@ -229,6 +297,11 @@ namespace FusionEngine { namespace Inspectors
 					callback(input->HasAttribute("checked"), component);
 					return true;
 				}
+				else if (type == "submit")
+				{
+					callback(true, component);
+					return true;
+				}
 				else
 				{
 					return false;
@@ -265,7 +338,7 @@ namespace FusionEngine { namespace Inspectors
 			bool operator()(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, StringSetter_t& callback) const
 			{
 				auto type = input->GetAttribute("type", Rocket::Core::String(""));
-				if (type == "text")
+				if (type == "text" || type == "submit")
 				{
 					auto uiValue = input->GetValue();
 					callback(std::string(uiValue.CString()), component);
@@ -453,21 +526,24 @@ namespace FusionEngine { namespace Inspectors
 			m_Inputs[select_element] = inputData;
 		}
 	}
-	
+
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter)
 	{
-		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		using namespace Rocket::Core;
+		using namespace Rocket::Controls;
+
+		auto line = Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
 
-		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+		boost::intrusive_ptr<ElementFormControlInput> input_element;
 
-		Rocket::Core::Factory::InstanceElementText(line, "circle");
+		Factory::InstanceElementText(line, "circle");
 
 		auto addComponentInput = [&](const FloatSetter_t& setter, const FloatGetter_t& getter)
 		{
 			Rocket::Core::XMLAttributes attributes;
-			attributes.Set("class", "circle_input");
+			//attributes.Set("class", "circle_input");
 			attributes.Set("type", "text");
 			attributes.Set("size", 10);
 			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
@@ -490,6 +566,28 @@ namespace FusionEngine { namespace Inspectors
 		addComponentInput(y_setter, y_getter);
 		addComponentInput(radius_setter, radius_getter);
 
+		{
+			XMLAttributes attributes;
+			//attributes.Set("class", "circle_input");
+			attributes.Set("type", "submit");
+			Element* element = Factory::InstanceElement(line,
+				"input",
+				"input",
+				attributes);
+			element->SetId("circle_editor");
+			Factory::InstanceElementText(element, "E");
+
+			addControl(line, input_element, element);
+
+			if (input_element)
+			{
+				Input inputData;
+				inputData.ui_element = input_element;
+				inputData.callback = BoolSetter_t(EditCircleButtonFunctor(this, x_setter, x_getter, y_setter, y_getter, radius_setter, radius_getter));
+				m_Inputs[input_element] = inputData;
+			}
+		}
+
 		line->RemoveReference();
 	}
 
@@ -504,7 +602,8 @@ namespace FusionEngine { namespace Inspectors
 				dynamic_cast<Rocket::Controls::ElementFormControlDataSelect*>(ev.GetTargetElement());
 			auto inputElem = dynamic_cast<Rocket::Controls::ElementFormControlInput*>(ev.GetTargetElement());
 			const bool isCheckboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "checkbox";
-			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change"))
+			const bool isButton = ev.GetTargetElement()->GetTagName() == "button" || (inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "submit");
+			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change") || (isButton && ev == "click"))
 			{
 				auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(ev.GetTargetElement()));
 				if (entry != m_Inputs.end())

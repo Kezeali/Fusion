@@ -40,10 +40,13 @@
 #include <Rocket/Core/Element.h>
 
 #include "FusionRocketReferenceCountable.h"
+#include "FusionEditorCircleTool.h"
+#include "FusionEditorPolygonTool.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
+	//! Component inspector interface
 	class ComponentInspector : public Rocket::Core::Element
 	{
 	public:
@@ -55,7 +58,8 @@ namespace FusionEngine { namespace Inspectors
 		virtual void SetComponents(const std::vector<ComponentPtr>& components) = 0;
 		virtual void ReleaseComponents() = 0;
 
-		virtual void ReceiveCircleInput(const std::string& name, const Vector2& position, float radius) {}
+		virtual void SetCircleToolExecutor(const CircleToolExecutor_t& executor) {}
+		virtual void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) {}
 
 	};
 
