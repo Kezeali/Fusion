@@ -60,6 +60,9 @@
     <ClInclude Include="include\FusionEditorShapeTool.h">
       <Filter>ShapeTools</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionEditorRectangleTool.h">
+      <Filter>ShapeTools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -118,6 +121,9 @@
       <Filter>ShapeTools</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionEditorPolygonTool.cpp">
+      <Filter>ShapeTools</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionEditorRectangleTool.cpp">
       <Filter>ShapeTools</Filter>
     </ClCompile>
   </ItemGroup>

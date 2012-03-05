@@ -87,10 +87,10 @@ namespace FusionEngine
 
 	void EditorPolygonTool::KeyChange(bool shift, bool ctrl, bool alt)
 	{
-		MouseMove(m_LastMousePos, 0, shift, ctrl, alt);
+		MouseMove(m_LastMousePos, shift, ctrl, alt);
 	}
 
-	void EditorPolygonTool::MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	void EditorPolygonTool::MouseMove(const Vector2& pos, bool shift, bool ctrl, bool alt)
 	{
 		m_LastMousePos = pos;
 
@@ -130,53 +130,66 @@ namespace FusionEngine
 		}
 	}
 
-	void EditorPolygonTool::MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	bool EditorPolygonTool::MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt)
 	{
-		if (shift)
+		if (key == LeftButton)
 		{
-			if (alt)
-				GrabNearestVert(pos);
+			if (shift)
+			{
+				if (alt)
+					GrabNearestVert(pos);
+				else if (ctrl)
+				{
+					UngrabNearestVert(pos);
+				}
+				else
+				{
+					GrabNearestVert(pos, false);
+					m_Moving = true;
+					m_MoveFrom = pos;
+				}
+			}
 			else if (ctrl)
 			{
-				UngrabNearestVert(pos);
+				RemoveNearestVert(pos);
 			}
 			else
 			{
-				GrabNearestVert(pos, false);
-				m_Moving = true;
-				m_MoveFrom = pos;
+				switch (m_Mode)
+				{
+				case Freeform:
+					AddFreeformPoint(pos, !alt);
+					break;
+				case Line:
+					AddFreeformPoint(pos, alt);
+					break;
+				case Convex:
+					break;
+				};
 			}
-		}
-		else if (ctrl)
-		{
-			RemoveNearestVert(pos);
+			return true;
 		}
 		else
-		{
-			switch (m_Mode)
-			{
-			case Freeform:
-				AddFreeformPoint(pos, !alt);
-				break;
-			case Line:
-				AddFreeformPoint(pos, alt);
-				break;
-			case Convex:
-				break;
-			};
-		}
+			return false;
 	}
 
-	void EditorPolygonTool::MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	bool EditorPolygonTool::MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt)
 	{
-		if (m_Moving && !m_GrabbedVerts.empty())
+		if (key == LeftButton)
 		{
-			MoveGrabbedVerts(pos);
-			m_GrabbedVerts.erase(m_TempGrabbedVert);
+			if (m_Moving && !m_GrabbedVerts.empty())
+			{
+				MoveGrabbedVerts(pos);
+				m_GrabbedVerts.erase(m_TempGrabbedVert);
+			}
+			m_TempGrabbedVert = std::numeric_limits<size_t>::max();
+			m_Moving = false;
+			m_MoveFrom = Vector2();
+
+			return true;
 		}
-		m_TempGrabbedVert = std::numeric_limits<size_t>::max();
-		m_Moving = false;
-		m_MoveFrom = Vector2();
+		else
+			return false;
 	}
 
 	void EditorPolygonTool::Draw(CL_GraphicContext& gc)

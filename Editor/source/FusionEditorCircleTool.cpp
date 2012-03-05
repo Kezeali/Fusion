@@ -102,10 +102,13 @@ namespace FusionEngine
 				m_Action = Action::Resize;
 		}
 
-		MouseMove(m_LastMousePos, 0, shift, ctrl, alt);
+		MouseMove(m_LastMousePos, shift, ctrl, alt);
+		
+		// Block input if this key-press was used to set an action
+		//return m_Action != Action::None;
 	}
 
-	void EditorCircleTool::MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	void EditorCircleTool::MouseMove(const Vector2& pos, bool shift, bool ctrl, bool alt)
 	{
 		m_LastMousePos = pos;
 
@@ -132,53 +135,67 @@ namespace FusionEngine
 		}
 	}
 
-	void EditorCircleTool::MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	bool EditorCircleTool::MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt)
 	{
 		m_LastMousePos = pos;
 
-		m_MouseDown = true;
+		if (key == MouseInput::LeftButton)
+		{
+			m_MouseDown = true;
 
-		m_Action = Action::None;
-		if (ctrl)
-			m_Action = Action::Move;
-		else if (shift)
-			m_Action = Action::ResizeRelative;
+			m_Action = Action::None;
+			if (ctrl)
+				m_Action = Action::Move;
+			else if (shift)
+				m_Action = Action::ResizeRelative;
+			else
+				m_Action = Action::Resize;
+			m_DragFrom = pos;
+
+			MouseMove(pos, shift, ctrl, alt);
+
+			return true;
+		}
 		else
-			m_Action = Action::Resize;
-		m_DragFrom = pos;
-
-		MouseMove(pos, 0, shift, ctrl, alt);
+			return false;
 	}
 
-	void EditorCircleTool::MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt)
+	bool EditorCircleTool::MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt)
 	{
-		const bool isScroll = key == CL_MOUSE_WHEEL_DOWN || key == CL_MOUSE_WHEEL_UP;
-		if (!isScroll)
+		if (m_Action != Action::None)
 		{
-			if (m_Action == Action::Resize)
+			const bool isScroll = key == MouseInput::ScrollDown || key == MouseInput::ScrollUp;
+			if (!isScroll)
 			{
-				m_Radius = (pos - m_Center).length();
+				if (m_Action == Action::Resize)
+				{
+					m_Radius = (pos - m_Center).length();
+				}
+				else
+				{
+					const auto delta = pos - m_DragFrom;
+					if (m_Action == Action::ResizeRelative)
+					{
+						m_Radius += delta.y;
+					}
+					else if (m_Action == Action::Move)
+					{
+						m_Center += delta;
+					}
+				}
 			}
-			else
+			else if (m_Action == Action::ResizeRelative)
 			{
-				const auto delta = pos - m_DragFrom;
-				if (m_Action == Action::ResizeRelative)
-				{
-					m_Radius += delta.y;
-				}
-				else if (m_Action == Action::Move)
-				{
-					m_Center += delta;
-				}
+				const int scrollAmount = key == MouseInput::ScrollDown ? 10 : -10;
+				m_Radius += scrollAmount;
 			}
-		}
-		else if (m_Action == Action::ResizeRelative)
-		{
-			const int scrollAmount = key == CL_MOUSE_WHEEL_DOWN ? 10 : -10;
-			m_Radius += scrollAmount;
-		}
 
-		m_Action = Action::None;
+			m_Action = Action::None;
+
+			return true;
+		}
+		else
+			return false;
 	}
 
 	void EditorCircleTool::Draw(CL_GraphicContext& gc)
@@ -186,6 +203,8 @@ namespace FusionEngine
 		CL_Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
 		CL_Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
 
+		CL_Draw::line(gc, m_Center.x - 1.f, m_Center.y, m_Center.x + 1.f, m_Center.y, CL_Colorf(1.f, 0.f, 0.f));
+		CL_Draw::line(gc, m_Center.x, m_Center.y - 1.f, m_Center.x, m_Center.y + 1.f, CL_Colorf(0.f, 1.f, 0.f));
 		if (m_Radius > 0.f)
 			CL_Draw::circle(gc, m_Center.x, m_Center.y, m_Radius, currentShapeColour);
 

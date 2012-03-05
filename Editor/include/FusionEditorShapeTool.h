@@ -58,14 +58,16 @@ namespace FusionEngine
 		//! Should return true if the tool is expecting input
 		virtual bool IsActive() const = 0;
 
+		enum MouseInput { None, LeftButton, ScrollUp, ScrollDown };
+
 		//! Should handle key press / release inputs
 		virtual void KeyChange(bool shift, bool ctrl, bool alt) = 0;
 		//! Should handle mouse move inputs
-		virtual void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		virtual void MouseMove(const Vector2& pos, bool shift, bool ctrl, bool alt) = 0;
 		//! Should handle mouse press inputs
-		virtual void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		virtual bool MousePress(const Vector2& pos, MouseInput input, bool shift, bool ctrl, bool alt) = 0;
 		//! Should handle mouse release inputs
-		virtual void MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt) = 0;
+		virtual bool MouseRelease(const Vector2& pos, MouseInput input, bool shift, bool ctrl, bool alt) = 0;
 
 		//! Should draw something useful
 		virtual void Draw(CL_GraphicContext& gc) = 0;

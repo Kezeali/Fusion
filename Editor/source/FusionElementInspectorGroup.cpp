@@ -371,7 +371,13 @@ namespace FusionEngine { namespace Inspectors
 
 				// Pass the tool executors onward
 				FSN_ASSERT(m_CircleToolExecutor);
+				FSN_ASSERT(m_RectangleToolExecutor);
+				FSN_ASSERT(m_PolygonToolExecutor);
 				inspector->SetCircleToolExecutor(m_CircleToolExecutor);
+				inspector->SetRectangleToolExecutor(m_RectangleToolExecutor);
+				inspector->SetPolygonToolExecutor(m_PolygonToolExecutor);
+
+				//inspector->InitUI();
 
 				AddSubsection(key, name, inspector, component, removable);
 			}

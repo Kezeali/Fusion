@@ -42,6 +42,7 @@
 #include "FusionRocketReferenceCountable.h"
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
+#include "FusionEditorRectangleTool.h"
 
 namespace FusionEngine { namespace Inspectors
 {
@@ -59,6 +60,7 @@ namespace FusionEngine { namespace Inspectors
 		virtual void ReleaseComponents() = 0;
 
 		virtual void SetCircleToolExecutor(const CircleToolExecutor_t& executor) {}
+		virtual void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) {}
 		virtual void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) {}
 
 	};

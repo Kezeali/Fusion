@@ -92,6 +92,10 @@ namespace FusionEngine { namespace Inspectors
 		//! Variant caller for all getter types
 		typedef boost::variant<BoolGetter_t, IntGetter_t, FloatGetter_t, StringGetter_t> GetterCallbackVariant_t;
 
+		CircleToolExecutor_t m_CircleToolExecutor;
+		RectangleToolExecutor_t m_RectangleToolExecutor;
+		PolygonToolExecutor_t m_PolygonToolExecutor;
+
 		//! Adds a text input
 		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size = 0);
 		//! Adds a toggle (checkbox) input
@@ -100,8 +104,15 @@ namespace FusionEngine { namespace Inspectors
 		void AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
 		//! Adds a select (popup) input
 		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
+		//! Adds a button input
+		void AddButtonInput(const std::string& name, StringSetter_t setter);
 		//! Adds a circle input
 		void AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
+		//! Adds a rectangle input
+		void AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter);
+		
+		//! Updates the UI values from the components
+		void ResetUIValues();
 
 	private:
 		typedef boost::variant<
@@ -120,16 +131,13 @@ namespace FusionEngine { namespace Inspectors
 
 		std::vector<ComponentIPtr<ComponentT>> m_Components;
 
-		CircleToolExecutor_t m_CircleToolExecutor;
-		PolygonToolExecutor_t m_PolygonToolExecutor;
-
 		void SetComponents(const std::vector<ComponentPtr>& components);
 		void ReleaseComponents();
 
 		void SetCircleToolExecutor(const CircleToolExecutor_t& executor) { m_CircleToolExecutor = executor; }
+		void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) { m_RectangleToolExecutor = executor; }
 		void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) { m_PolygonToolExecutor = executor; }
-
-		void ResetUIValues();
+		
 
 		//! 'Input' callback for the Edit Circle button
 		class EditCircleButtonFunctor
@@ -528,6 +536,40 @@ namespace FusionEngine { namespace Inspectors
 	}
 
 	template <class ComponentT>
+	void GenericInspector<ComponentT>::AddButtonInput(const std::string& name, StringSetter_t setter)
+	{
+		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+
+		auto lowerName = fe_newlower(name);
+
+		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+
+		Rocket::Core::XMLAttributes attributes;
+		attributes.Set("type", "submit");
+		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		attributes.Set("value", Rocket::Core::String(name.c_str()));
+		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+			"input",
+			"input",
+			attributes);
+
+		addControl(line, input_element, element);
+
+		line->RemoveReference();
+
+		if (input_element)
+		{
+			Input inputData;
+			inputData.ui_element = input_element;
+			inputData.callback = setter;
+			m_Inputs[input_element] = inputData;
+		}
+	}
+
+	template <class ComponentT>
 	void GenericInspector<ComponentT>::AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter)
 	{
 		using namespace Rocket::Core;
@@ -575,6 +617,72 @@ namespace FusionEngine { namespace Inspectors
 				"input",
 				attributes);
 			element->SetId("circle_editor");
+			Factory::InstanceElementText(element, "E");
+
+			addControl(line, input_element, element);
+
+			if (input_element)
+			{
+				Input inputData;
+				inputData.ui_element = input_element;
+				inputData.callback = BoolSetter_t(EditCircleButtonFunctor(this, x_setter, x_getter, y_setter, y_getter, radius_setter, radius_getter));
+				m_Inputs[input_element] = inputData;
+			}
+		}
+
+		line->RemoveReference();
+	}
+
+	template <class ComponentT>
+	void GenericInspector<ComponentT>::AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter)
+	{
+		using namespace Rocket::Core;
+		using namespace Rocket::Controls;
+
+		auto line = Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<ElementFormControlInput> input_element;
+
+		Factory::InstanceElementText(line, "rectangle");
+
+		auto addComponentInput = [&](const FloatSetter_t& setter, const FloatGetter_t& getter)
+		{
+			Rocket::Core::XMLAttributes attributes;
+			//attributes.Set("class", "circle_input");
+			attributes.Set("type", "text");
+			attributes.Set("size", 10);
+			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+				"input",
+				"input",
+				attributes);
+
+			addControl(line, input_element, element);
+
+			if (input_element)
+			{
+				Input inputData;
+				inputData.ui_element = input_element;
+				inputData.callback = setter;
+				inputData.get_callback = getter;
+				m_Inputs[input_element] = inputData;
+			}
+		};
+		addComponentInput(x_setter, x_getter);
+		addComponentInput(y_setter, y_getter);
+		addComponentInput(hw_setter, hw_getter);
+		addComponentInput(hh_setter, hh_getter);
+		addComponentInput(angle_setter, angle_getter);
+
+		{
+			XMLAttributes attributes;
+			//attributes.Set("class", "circle_input");
+			attributes.Set("type", "submit");
+			Element* element = Factory::InstanceElement(line,
+				"input",
+				"input",
+				attributes);
+			element->SetId("rectangle_editor");
 			Factory::InstanceElementText(element, "E");
 
 			addControl(line, input_element, element);

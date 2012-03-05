@@ -305,7 +305,7 @@ namespace FusionEngine
 		 * Returns the angle <i>from</i> the given vector; i.e. if the given
 		 * other vector is ahead of this, the angle returned will be negative.
 		 */
-		float angleFrom(const Vector2T& other)
+		float angleFrom(const Vector2T& other) const
 		{
 			float cosine = this->x * other.x + this->y * other.y / (this->length() * other.length());
 			// rounding errors might make dotproduct out of range for cosine

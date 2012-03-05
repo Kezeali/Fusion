@@ -69,9 +69,9 @@ namespace FusionEngine
 		bool IsActive() const { return m_Active; }
 
 		void KeyChange(bool shift, bool ctrl, bool alt);
-		void MouseMove(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
-		void MousePress(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
-		void MouseRelease(const Vector2& pos, int key, bool shift, bool ctrl, bool alt);
+		void MouseMove(const Vector2& pos, bool shift, bool ctrl, bool alt);
+		bool MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
+		bool MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 
 		void Draw(CL_GraphicContext& gc);
 

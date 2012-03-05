@@ -76,6 +76,7 @@
     <ClInclude Include="include\FusionEditor.h" />
     <ClInclude Include="include\FusionEditorCircleTool.h" />
     <ClInclude Include="include\FusionEditorPolygonTool.h" />
+    <ClInclude Include="include\FusionEditorRectangleTool.h" />
     <ClInclude Include="include\FusionEditorShapeTool.h" />
     <ClInclude Include="include\FusionElementInspectorGroup.h" />
     <ClInclude Include="include\FusionElementPropertyConnection.h" />
@@ -102,6 +103,7 @@
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionEditorCircleTool.cpp" />
     <ClCompile Include="source\FusionEditorPolygonTool.cpp" />
+    <ClCompile Include="source\FusionEditorRectangleTool.cpp" />
     <ClCompile Include="source\FusionElementInspectorGroup.cpp" />
     <ClCompile Include="source\FusionEntityInspector.cpp" />
     <ClCompile Include="source\FusionFixtureInspector.cpp" />

@@ -48,6 +48,8 @@
 
 #include "FusionRocketReferenceCountable.h"
 #include "FusionEditorCircleTool.h"
+#include "FusionEditorPolygonTool.h"
+#include "FusionEditorRectangleTool.h"
 
 namespace FusionEngine { namespace Inspectors
 {
@@ -78,6 +80,8 @@ namespace FusionEngine { namespace Inspectors
 		void SetRemoveCallback(RemoveCallback_t fn) { m_RemoveCallback = fn; }
 
 		void SetCircleToolExecutor(const CircleToolExecutor_t& executor) { m_CircleToolExecutor = executor; }
+		void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) { m_RectangleToolExecutor = executor; }
+		void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) { m_PolygonToolExecutor = executor; }
 
 		bool AddInspector(const ComponentPtr& component, const std::string& inspector_type, bool removable);
 
@@ -114,6 +118,8 @@ namespace FusionEngine { namespace Inspectors
 		RemoveCallback_t m_RemoveCallback;
 
 		CircleToolExecutor_t m_CircleToolExecutor;
+		RectangleToolExecutor_t m_RectangleToolExecutor;
+		PolygonToolExecutor_t m_PolygonToolExecutor;
 
 		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 

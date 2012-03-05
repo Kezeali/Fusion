@@ -34,6 +34,7 @@
 #include "FusionComponentFactory.h"
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
+#include "FusionEditorRectangleTool.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
 #include "FusionFilesystemDataSource.h"
@@ -318,8 +319,9 @@ namespace FusionEngine
 	class EditorOverlay : public CLRenderExtension
 	{
 	public:
-		EditorOverlay(const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
+		EditorOverlay(const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorRectangleTool>& rect_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
 			: m_PolygonTool(poly_tool),
+			m_RectangleTool(rect_tool),
 			m_CircleTool(circle_tool)
 		{
 		}
@@ -392,8 +394,8 @@ namespace FusionEngine
 
 		if (m_PolygonTool && m_PolygonTool->IsActive())
 			m_PolygonTool->Draw(gc);
-		//if (m_RectangleTool && m_RectangleTool->IsActive())
-		//	m_RectangleTool->Draw(gc);
+		if (m_RectangleTool && m_RectangleTool->IsActive())
+			m_RectangleTool->Draw(gc);
 		if (m_CircleTool && m_CircleTool->IsActive())
 			m_CircleTool->Draw(gc);
 	}
@@ -641,9 +643,10 @@ namespace FusionEngine
 		}
 
 		m_ShapeTools[Tool::Polygon] = m_ShapeTools[Tool::Line] = m_PolygonTool = std::make_shared<EditorPolygonTool>();
+		m_ShapeTools[Tool::Rectangle] = m_RectangleTool = std::make_shared<EditorRectangleTool>();
 		m_ShapeTools[Tool::Elipse] = m_CircleTool = std::make_shared<EditorCircleTool>();
 
-		m_EditorOverlay = std::make_shared<EditorOverlay>(m_PolygonTool, m_CircleTool);
+		m_EditorOverlay = std::make_shared<EditorOverlay>(m_PolygonTool, m_RectangleTool, m_CircleTool);
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
 		m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
@@ -1453,10 +1456,6 @@ namespace FusionEngine
 			if (auto& tool = m_ShapeTools[m_Tool])
 				tool->KeyChange(ev.shift, ev.ctrl, ev.alt);
 		}
-		//if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-		//{
-		//	m_PolygonTool->KeyChange(ev.shift, ev.ctrl, ev.alt);
-		//}
 
 		// Ctrl + Keys
 		if (ev.ctrl && ev.repeat_count == 0)
@@ -1538,6 +1537,18 @@ namespace FusionEngine
 					m_Tool = Tool::Elipse;
 				}
 				break;
+			case CL_KEY_M:
+				{
+					Vector2 hsize(1.f, 1.f);
+					Vector2 center;
+					m_RectangleTool->Start(hsize, center, 0.0f, [](const Vector2& hs, const Vector2& c, float r) {
+						SendToConsole("Rect: " + boost::lexical_cast<std::string>(c.x) + "," + boost::lexical_cast<std::string>(c.x) +
+							" size:" + boost::lexical_cast<std::string>(hs.x) + "," + boost::lexical_cast<std::string>(hs.x) +
+							" r:" + boost::lexical_cast<std::string>(r));
+					});
+					m_Tool = Tool::Rectangle;
+				}
+				break;
 			case CL_KEY_RETURN:
 				if (m_Tool != Tool::None)
 				{
@@ -1581,6 +1592,12 @@ namespace FusionEngine
 
 		if (MouseOverUI(m_GUIContext))
 			return;
+
+		if (m_Tool != Tool::None)
+		{
+			if (auto& tool = m_ShapeTools[m_Tool])
+				tool->KeyChange(ev.shift, ev.ctrl, ev.alt);
+		}
 
 		// Ctrl + Keys
 		if (ev.ctrl)
@@ -1657,6 +1674,17 @@ namespace FusionEngine
 		}
 	}
 
+	inline ShapeTool::MouseInput GetMouseInputType(const int id)
+	{
+		switch (id)
+		{
+		case CL_MOUSE_LEFT: return ShapeTool::MouseInput::LeftButton;
+		case CL_MOUSE_WHEEL_UP: return ShapeTool::MouseInput::ScrollUp;
+		case CL_MOUSE_WHEEL_DOWN: return ShapeTool::MouseInput::ScrollDown;
+		default: return ShapeTool::MouseInput::None;
+		}
+	}
+
 	void Editor::OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state)
 	{
 		if (m_Active)
@@ -1679,23 +1707,15 @@ namespace FusionEngine
 
 				OnMouseDown_Selection(ev);
 			}
-			else if (ev.id == CL_MOUSE_LEFT) // Tools only get lmouse
+			else
 			{
-				if (m_Tool != Tool::None)
+				if (auto& tool = m_ShapeTools[m_Tool])
 				{
-					if (auto& tool = m_ShapeTools[m_Tool])
-					{
-						Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-						tool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-					}
+					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+					const auto mouseInputType = GetMouseInputType(ev.id);
+					if (mouseInputType != ShapeTool::MouseInput::None)
+						tool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), mouseInputType, ev.shift, ev.ctrl, ev.alt);
 				}
-				//if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-				//{
-				//	Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-				//	// MousePress & MouseRelease could return a bool indicating wheter they handled the input, thus blocking the GUI from using it
-				//	//  (might be better than explicitly deciding what the tools handle here)
-				//	m_PolygonTool->MousePress(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-				//}
 			}
 		}
 	}
@@ -1730,21 +1750,16 @@ namespace FusionEngine
 						};
 					}
 				}
-				else if (ev.id == CL_MOUSE_LEFT)
+				else
 				{
-					if (m_Tool != Tool::None)
+					if (auto& tool = m_ShapeTools[m_Tool])
 					{
-						if (auto& tool = m_ShapeTools[m_Tool])
-						{
-							Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-							tool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-						}
+						Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
+						const auto mouseInputType = GetMouseInputType(ev.id);
+						if (mouseInputType != ShapeTool::MouseInput::None)
+							if (tool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), mouseInputType, ev.shift, ev.ctrl, ev.alt))
+								return;
 					}
-					//if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-					//{
-					//	Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-					//	m_PolygonTool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-					//}
 				}
 				switch (ev.id)
 				{
@@ -1794,14 +1809,9 @@ namespace FusionEngine
 				if (auto& tool = m_ShapeTools[m_Tool])
 				{
 					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-					tool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
+					tool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.shift, ev.ctrl, ev.alt);
 				}
 			}
-			//if (m_Tool == Tool::Polygon || m_Tool == Tool::Line)
-			//{
-			//	Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
-			//	m_PolygonTool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.id, ev.shift, ev.ctrl, ev.alt);
-			//}
 			else if (m_ReceivedMouseDown)
 			{
 				if (m_Dragging)
