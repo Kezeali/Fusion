@@ -6,7 +6,7 @@ Build instructions for Windows with VC2010:
 2.  Get **Fusion**, **[RAS][2]** and **[ScriptUtils][3]**
 3.  Install the dependencies: 
     1.  Create a new folder called **FusionDependencies**
-    2.  Download and extract [Fusion Dependencies][4] (headers and binaries compiled for VC2010) into the folder you just created 
+    2.  Download and extract [FusionDependencies.7z][4] (headers and binaries compiled for VC2010) into the folder you just created 
 4.  Open and build *ScriptUtils\ScriptUtils.sln*
 5.  Open and build *RAS\libRocket_AngelScript.sln*
 6.  You can now open and build *Fusion\Fusion.sln*
