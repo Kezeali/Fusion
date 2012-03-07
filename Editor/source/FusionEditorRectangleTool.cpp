@@ -124,17 +124,11 @@ namespace FusionEngine
 			{
 				m_FeedbackCenter = m_DragFrom;
 				m_FeedbackHalfSize = pos - m_DragFrom;
-				if (pos != m_Center)
-				{
-					m_FeedbackAngle = (pos - m_Center).angleFrom(Vector2::unit_x());
-					if (m_FeedbackAngle == std::numeric_limits<float>::infinity())
-						m_FeedbackAngle = 0;
-				}
 			}
 			else if (m_Action == Action::Aim)
 			{
 				auto aimVec = pos - m_Center;
-				m_FeedbackAngle = cosf(aimVec.x);
+				m_FeedbackAngle = atan2f(aimVec.y, aimVec.x);
 			}
 			else
 			{
@@ -189,15 +183,11 @@ namespace FusionEngine
 				{
 					m_Center = m_DragFrom;
 					m_HalfSize = pos - m_Center;
-					if (pos != m_DragFrom)
-					{
-						m_Angle = (pos - m_Center).angleFrom(Vector2::unit_x());
-						if (m_Angle == std::numeric_limits<float>::infinity())
-							m_Angle = 0;
-					}
 				}
 				else if (m_Action == Action::Aim)
 				{
+					auto aimVec = pos - m_Center;
+					m_Angle = atan2f(aimVec.y, aimVec.x);
 				}
 				else
 				{
@@ -232,6 +222,7 @@ namespace FusionEngine
 	{
 		const CL_Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
 		const CL_Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
+		const CL_Colorf lineColour(0.98f, 0.98f, 0.6f, 0.6f);
 
 		{
 			const Vector2 topLeft = m_Center - m_HalfSize;
@@ -241,6 +232,7 @@ namespace FusionEngine
 
 			CL_Draw::triangle(gc, quad.p, quad.q, quad.s, currentShapeColour);
 			CL_Draw::triangle(gc, quad.q, quad.r, quad.s, currentShapeColour);
+			CL_Draw::line(gc, m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
 		}
 
 		if (m_MouseDown && m_Action != Action::None)
@@ -252,6 +244,7 @@ namespace FusionEngine
 
 			CL_Draw::triangle(gc, quad.p, quad.q, quad.s, modificationColour);
 			CL_Draw::triangle(gc, quad.q, quad.r, quad.s, modificationColour);
+			CL_Draw::line(gc, m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
 		}
 	}
 
