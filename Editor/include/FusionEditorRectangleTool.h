@@ -95,7 +95,7 @@ namespace FusionEngine
 
 		Vector2 m_LastMousePos;
 
-		enum Action { None, Resize, ResizeRelative, Move } m_Action;
+		enum Action { None, Resize, ResizeRelative, Aim, Move } m_Action;
 		bool m_MouseDown;
 		Vector2 m_DragFrom;
 

@@ -459,6 +459,7 @@ namespace FusionEngine
 		FSN_LIST_INTERFACES((IFixture)(IPolygonShape))
 
 		Box2DPolygonFixture();
+		~Box2DPolygonFixture();
 
 		void Update();
 
@@ -474,8 +475,12 @@ namespace FusionEngine
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
+		void RefreshResource();
+
 		bool m_ReconstructFixture;
 		ResourcePointer<b2PolygonShape> m_PolygonResource;
+
+		mutable std::vector<Vector2> m_Verts;
 		b2PolygonShape m_PolyShape;
 
 		std::string m_PolygonFile;
@@ -485,9 +490,60 @@ namespace FusionEngine
 
 		// IPolygonShape
 		const std::string& GetPolygonFile() const;
-		void SetPolygonFile(const std::string& center);
+		void SetPolygonFile(const std::string& path);
 
-		float GetRadius() const;
+		const std::vector<Vector2>& GetVerts() const;
+		void SetVerts(const std::vector<Vector2>& verts);
+
+		float GetSkinThickness() const;
+
+	};
+
+	class Box2DEdgeChainFixture : public Box2DFixture, public IEdgeShape
+	{
+		friend class Box2DWorld;
+	public:
+		FSN_LIST_INTERFACES((IFixture)(IEdgeShape))
+
+		Box2DEdgeChainFixture();
+		~Box2DEdgeChainFixture();
+
+		void Update();
+
+	private:
+		b2Shape* GetShape() { return m_PolygonResource.IsLoaded() ? m_PolygonResource.Get() : &m_ChainShape; }
+
+		// IComponent
+		std::string GetType() const { return "b2EdgeChain"; }
+
+		// Box2DFixture overides
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+
+		void RefreshResource();
+
+		bool m_ReconstructFixture;
+		ResourcePointer<b2ChainShape> m_PolygonResource;
+		b2ChainShape m_ChainShape;
+
+		std::string m_PolygonFile;
+		bool m_ReloadPolygonResource;
+
+		boost::signals2::connection m_PolygonLoadConnection;
+
+		// IPolygonShape
+		const std::string& GetPolygonFile() const;
+		void SetPolygonFile(const std::string& path);
+
+		const std::vector<Vector2>& GetVerts() const;
+		void SetVerts(const std::vector<Vector2>& verts);
+
+		bool IsLoop() const;
+		void SetLoop(bool value);
+
+		float GetSkinThickness() const;
 
 	};
 

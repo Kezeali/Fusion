@@ -689,38 +689,40 @@ namespace FusionEngine
 	{
 	}
 
+	Box2DPolygonFixture::~Box2DPolygonFixture()
+	{
+		m_PolygonLoadConnection.disconnect();
+	}
+
+	void Box2DPolygonFixture::RefreshResource()
+	{
+		if (!m_PolygonFile.empty())
+		{
+			m_PolygonLoadConnection.disconnect();
+			m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource("POLYGON", m_PolygonFile, [this](ResourceDataPtr data)
+			{
+				m_PolygonResource.SetTarget(data); m_ReconstructFixture = true;
+			});
+		}
+		else
+		{
+			m_PolygonResource.Release();
+		}
+	}
+
 	void Box2DPolygonFixture::Update()
 	{
 		if (m_ReloadPolygonResource)
 		{
-			Radius.MarkChanged();
-
-			if (!m_PolygonFile.empty())
-			{
-				m_PolygonLoadConnection.disconnect();
-				m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource("POLYGON", m_PolygonFile, [this](ResourceDataPtr data)
-				{
-					m_PolygonResource.SetTarget(data); m_ReconstructFixture = true;
-					// TEMP (until update can be called automatically)
-					if (m_Body)
-					{
-						ConstructFixture(m_Body);
-						m_Body->OnFixtureMassChanged();
-					}
-				});
-			}
-			else
-			{
-				m_PolygonResource.Release();
-			}
+			RefreshResource();
 
 			m_ReloadPolygonResource = false;
 		}
 
-		if (m_ReconstructFixture && m_PolygonResource.IsLoaded() && m_Body)
+		if (m_ReconstructFixture && m_Body)
 		{
 			m_ReconstructFixture = false;
-			Radius.MarkChanged();
+			SkinThickness.MarkChanged();
 			ConstructFixture(m_Body);
 			m_Body->OnFixtureMassChanged();
 		}
@@ -737,19 +739,20 @@ namespace FusionEngine
 
 	bool Box2DPolygonFixture::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
-		bool changesWritten;
-
-		changesWritten = Box2DFixture::SerialiseOccasional(stream, mode);
+		Box2DFixture::SerialiseOccasional(stream, mode);
 
 		SerialisationUtils::write(stream, m_PolygonFile);
 		
-		//stream.Write(m_PolygonResource.GetVertexCount());
-		//for (int i = 0; i < m_PolygonResource.GetVertexCount(); ++i)
-		//{
-		//	const b2Vec2& vert = m_PolygonResource.GetVertex(i);
-		//	stream.Write(vert.x);
-		//	stream.Write(vert.y);
-		//}
+		if (m_PolygonFile.empty())
+		{
+			stream.Write(m_PolyShape.GetVertexCount());
+			for (int i = 0; i < m_PolyShape.GetVertexCount(); ++i)
+			{
+				const b2Vec2& vert = m_PolyShape.GetVertex(i);
+				stream.Write(vert.x);
+				stream.Write(vert.y);
+			}
+		}
 
 		return true;
 	}
@@ -759,37 +762,40 @@ namespace FusionEngine
 		Box2DFixture::DeserialiseOccasional(stream, mode);
 
 		SerialisationUtils::read(stream, m_PolygonFile);
-		m_ReloadPolygonResource = true;
 		if (m_PolygonFile != PolygonFile.Get())
+		{
+			m_ReloadPolygonResource = true;
 			PolygonFile.MarkChanged();
-
-		Update();
-
-		/*
-		int32 vertexCount;
-		stream.Read(vertexCount);
-		std::vector<b2Vec2> verts;
-		verts.resize(vertexCount);
-		bool newShape = vertexCount != m_PolygonResource.GetVertexCount();
-		for (int i = 0; i < vertexCount; ++i)
-		{
-			auto& vert = verts[i];
-			stream.Read(vert.x);
-			stream.Read(vert.y);
-
-			if (!newShape && !(vert == m_PolygonResource.GetVertex(i)))
-				newShape = true;
 		}
 
-		if (newShape)
+		if (m_PolygonFile.empty())
 		{
-			m_PolygonResource.Set(verts.data(), verts.size());
+			int32 vertexCount;
+			stream.Read(vertexCount);
+			std::vector<b2Vec2> verts;
+			verts.resize(vertexCount);
+			bool newShape = vertexCount != m_PolyShape.GetVertexCount();
+			for (int i = 0; i < vertexCount; ++i)
+			{
+				auto& vert = verts[i];
+				stream.Read(vert.x);
+				stream.Read(vert.y);
 
-			ConstructFixture(m_Body);
+				if (!newShape && !(vert == m_PolyShape.GetVertex(i)))
+					newShape = true;
+			}
+
+			if (newShape)
+			{
+				m_PolyShape.Set(verts.data(), verts.size());
+
+				RefreshResource();
+				m_ReconstructFixture = true;
+			}
+
+			if (m_Body)
+				m_Body->OnFixtureMassChanged();
 		}
-
-		if (m_Body)
-			m_Body->OnFixtureMassChanged();*/
 	}
 
 	const std::string& Box2DPolygonFixture::GetPolygonFile() const
@@ -801,17 +807,40 @@ namespace FusionEngine
 	{
 		m_PolygonFile = filename;
 		m_ReloadPolygonResource = true;
-		Update();
 	}
 
-	float Box2DPolygonFixture::GetRadius() const
+	const std::vector<Vector2>& Box2DPolygonFixture::GetVerts() const
+	{
+		//std::vector<Vector2> verts;
+		m_Verts.reserve(m_PolyShape.GetVertexCount());
+		for (int i = 0; i < m_PolyShape.GetVertexCount(); ++i)
+		{
+			const b2Vec2& vert = m_PolyShape.GetVertex(i);
+			m_Verts.push_back(Vector2(vert.x, vert.y));
+		}
+		return m_Verts;
+	}
+
+	void Box2DPolygonFixture::SetVerts(const std::vector<Vector2>& verts)
+	{
+		m_Verts = verts;
+
+		std::vector<b2Vec2> b2Verts(verts.size());
+		std::transform(verts.begin(), verts.end(), b2Verts.begin(), [](const Vector2& v)->b2Vec2 { return b2Vec2(v.x, v.y); });
+		m_PolyShape.Set(b2Verts.data(), b2Verts.size());
+
+		RefreshResource();
+		m_ReconstructFixture = true;
+	}
+
+	float Box2DPolygonFixture::GetSkinThickness() const
 	{
 		if (m_Fixture)
 			return m_Fixture->GetShape()->m_radius;
 		else if (m_PolygonResource.IsLoaded())
 			return m_PolygonResource->m_radius;
 		else
-			return Radius.Get();
+			return SkinThickness.Get();
 	}
 
 }

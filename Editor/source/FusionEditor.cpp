@@ -1726,6 +1726,7 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
+				bool inputBlockedByTool = false;
 				if (m_Tool == Tool::None)
 				{
 					if (m_Dragging/*m_Tool == Tool::Move*/)
@@ -1757,40 +1758,42 @@ namespace FusionEngine
 						Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 						const auto mouseInputType = GetMouseInputType(ev.id);
 						if (mouseInputType != ShapeTool::MouseInput::None)
-							if (tool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), mouseInputType, ev.shift, ev.ctrl, ev.alt))
-								return;
+							inputBlockedByTool = tool->MouseRelease(ReturnScreenToWorld(mpos.x, mpos.y), mouseInputType, ev.shift, ev.ctrl, ev.alt);
 					}
 				}
-				switch (ev.id)
+				if (!inputBlockedByTool)
 				{
-				case CL_MOUSE_RIGHT:
-					if (m_EditorOverlay->m_Selected.empty())
-						OnMouseUp_Selection(ev);
-					ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
-					break;
-				case CL_MOUSE_WHEEL_UP:
-					if (ev.ctrl)
+					switch (ev.id)
 					{
-						if (ev.alt)
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+					case CL_MOUSE_RIGHT:
+						if (m_EditorOverlay->m_Selected.empty())
+							OnMouseUp_Selection(ev);
+						ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
+						break;
+					case CL_MOUSE_WHEEL_UP:
+						if (ev.ctrl)
+						{
+							if (ev.alt)
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+							else
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
+						}
 						else
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
-					}
-					else
-						m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
-					break;
-				case CL_MOUSE_WHEEL_DOWN:
-					if (ev.ctrl)
-					{
-						if (ev.alt)
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+							m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
+						break;
+					case CL_MOUSE_WHEEL_DOWN:
+						if (ev.ctrl)
+						{
+							if (ev.alt)
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+							else
+								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
+						}
 						else
-							ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
-					}
-					else
-						m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
-					break;
-				};
+							m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
+						break;
+					};
+				}
 			}
 
 			GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");
@@ -2363,6 +2366,35 @@ namespace FusionEngine
 		}
 	};
 
+	void Editor::InitInspectorGenerator(InspectorGenerator& generator)
+	{
+		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
+		{
+			this->m_CircleTool->Start(c, r, done_cb);
+			this->m_Tool = Editor::Tool::Elipse;
+		});
+		generator.inspector_group->SetRectangleToolExecutor([this](const Vector2& size, const Vector2& c, float r, const RectangleToolCallback_t& done_cb)
+		{
+			this->m_RectangleTool->Start(size, c, r, done_cb);
+			this->m_Tool = Editor::Tool::Rectangle;
+		});
+		generator.inspector_group->SetPolygonToolExecutor([this](const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_cb)
+		{
+			this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Convex);
+			this->m_Tool = Editor::Tool::Polygon;
+		});
+		
+		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
+		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
+		{
+			return this->m_EntityInstantiator->AddComponent(entity, type, id);
+		});
+		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
+		{
+			this->m_EntityInstantiator->RemoveComponent(entity, component);
+		});
+	}
+
 	void Editor::CreatePropertiesWindow(const EntityPtr& entity)
 	{
 		std::vector<EntityPtr> e;
@@ -2381,26 +2413,11 @@ namespace FusionEngine
 		//}
 
 		InspectorGenerator generator(doc);
-		
-		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
-		{
-			this->m_CircleTool->Start(c, r, done_cb);
-			this->m_Tool = Editor::Tool::Elipse;
-		});
+		InitInspectorGenerator(generator);
 
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
 		generator.Generate();
-
-		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
-		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
-		{
-			return this->m_EntityInstantiator->AddComponent(entity, type, id);
-		});
-		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
-		{
-			this->m_EntityInstantiator->RemoveComponent(entity, component);
-		});
 
 		doc->Show();
 		doc->RemoveReference();
@@ -2417,25 +2434,10 @@ namespace FusionEngine
 		//}
 
 		InspectorGenerator generator(doc);
-		
-		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
-		{
-			this->m_CircleTool->Start(c, r, done_cb);
-			this->m_Tool = Editor::Tool::Elipse;
-		});
+		InitInspectorGenerator(generator);
 
 		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });
 		generator.Generate();
-
-		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
-		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
-		{
-			return this->m_EntityInstantiator->AddComponent(entity, type, id);
-		});
-		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
-		{
-			this->m_EntityInstantiator->RemoveComponent(entity, component);
-		});
 		
 		doc->Show();
 		doc->RemoveReference();

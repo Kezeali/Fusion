@@ -44,6 +44,7 @@ namespace FusionEngine
 
 	class Box2DBody;
 	class Box2DFixture;
+	class Box2DPolygonFixture;
 
 	class Box2DWorld;
 	class Box2DTask;
@@ -109,6 +110,8 @@ namespace FusionEngine
 
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
+
+		std::vector<boost::intrusive_ptr<Box2DPolygonFixture>> m_PolygonFixtures;
 
 		AuthorityContactManager* m_AuthorityContactManager;
 		std::shared_ptr<TransformPinner> m_TransformPinner;

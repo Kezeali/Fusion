@@ -437,21 +437,24 @@ namespace FusionEngine
 
 	void Box2DWorld::OnActivation(const ComponentPtr& component)
 	{
-		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
-		if (b2Component)
+		if (auto bodyComponent = boost::dynamic_pointer_cast<Box2DBody>(component))
 		{
-			if (b2Component->m_Body != nullptr)
-				m_ActiveBodies.push_back(b2Component);
+			if (bodyComponent->m_Body != nullptr)
+				m_ActiveBodies.push_back(bodyComponent);
 			else
-				m_BodiesToCreate.push_back(b2Component); // make sure to create the b2Body before trying to update it!
+				m_BodiesToCreate.push_back(bodyComponent); // make sure to create the b2Body before trying to update it!
 			//b2Component->SetActive(true);
+		}
+		else if (auto polygonComponent = boost::dynamic_pointer_cast<Box2DPolygonFixture>(component))
+		{
+			// TODO: maybe do this instead? polygonComponent->SetVertsChangedCallback(bind(onvertschanged, this, _1)); onvertschanged: enqueue to re-create the fixture
+			m_PolygonFixtures.push_back(polygonComponent);
 		}
 	}
 
 	void Box2DWorld::OnDeactivation(const ComponentPtr& component)
 	{
-		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
-		if (b2Component)
+		if (auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component))
 		{
 			b2Component->DestructBody(m_World);
 			// Deactivate the body in the simulation
@@ -475,6 +478,12 @@ namespace FusionEngine
 					m_BodiesToCreate.erase(_where);
 				}
 			}
+		}
+		else if (auto polygonComponent = boost::dynamic_pointer_cast<Box2DPolygonFixture>(component))
+		{
+			auto _where = std::find(m_PolygonFixtures.begin(), m_PolygonFixtures.end(), polygonComponent);
+			if (_where != m_PolygonFixtures.end())
+				m_PolygonFixtures.erase(_where);
 		}
 	}
 
@@ -516,29 +525,27 @@ namespace FusionEngine
 	{
 		for (auto it = m_BodiesToCreate.begin(), end = m_BodiesToCreate.end(); it != end; ++it)
 		{
-			auto body = *it;
+			auto& body = *it;
 			body->ConstructBody(m_World, this->shared_from_this());
 		}
 
 		// Copy the newly-created bodies into the active list:
 		m_ActiveBodies.insert(m_ActiveBodies.end(), m_BodiesToCreate.begin(), m_BodiesToCreate.end());
 		m_BodiesToCreate.clear();
+
+		for (auto it = m_PolygonFixtures.begin(), end = m_PolygonFixtures.end(); it != end; ++it)
+		{
+			auto& fixture = *it;
+			fixture->Update();
+		}
 	}
 
 	void Box2DTask::Update(const float delta)
 	{
 		// Late initialisation
-		auto& toCreate = m_B2DSysWorld->m_BodiesToCreate;
-		for (auto it = toCreate.begin(), end = toCreate.end(); it != end; ++it)
-		{
-			auto body = *it;
-			body->ConstructBody(m_World, this->m_B2DSysWorld->shared_from_this());
-		}
+		m_B2DSysWorld->InitialiseActiveComponents();
 
-		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
-		// Copy the newly-created bodies into the active list:
-		activeBodies.insert(activeBodies.end(), toCreate.begin(), toCreate.end());
-		toCreate.clear();
+		const auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
 
 		// Update interpolation and mass data
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)

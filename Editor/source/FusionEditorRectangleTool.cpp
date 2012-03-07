@@ -103,6 +103,8 @@ namespace FusionEngine
 				m_Action = Action::Move;
 			else if (shift)
 				m_Action = Action::ResizeRelative;
+			else if (alt)
+				m_Action = Action::Aim;
 			else
 				m_Action = Action::Resize;
 		}
@@ -122,19 +124,24 @@ namespace FusionEngine
 			{
 				m_FeedbackCenter = m_DragFrom;
 				m_FeedbackHalfSize = pos - m_DragFrom;
-				if (pos != m_DragFrom)
+				if (pos != m_Center)
 				{
-					m_FeedbackAngle = (pos - m_DragFrom).angleFrom(Vector2::unit_x());
+					m_FeedbackAngle = (pos - m_Center).angleFrom(Vector2::unit_x());
 					if (m_FeedbackAngle == std::numeric_limits<float>::infinity())
 						m_FeedbackAngle = 0;
 				}
+			}
+			else if (m_Action == Action::Aim)
+			{
+				auto aimVec = pos - m_Center;
+				m_FeedbackAngle = cosf(aimVec.x);
 			}
 			else
 			{
 				const auto delta = pos - m_DragFrom;
 				if (m_Action == Action::ResizeRelative)
 				{
-					m_FeedbackAngle = m_Angle + delta.y * 0.1f;
+					m_FeedbackHalfSize = m_HalfSize + delta;
 				}
 				else if (m_Action == Action::Move)
 				{
@@ -157,6 +164,8 @@ namespace FusionEngine
 				m_Action = Action::Move;
 			else if (shift)
 				m_Action = Action::ResizeRelative;
+			else if (alt)
+				m_Action = Action::Aim;
 			else
 				m_Action = Action::Resize;
 			m_DragFrom = pos;
@@ -187,12 +196,15 @@ namespace FusionEngine
 							m_Angle = 0;
 					}
 				}
+				else if (m_Action == Action::Aim)
+				{
+				}
 				else
 				{
 					const auto delta = pos - m_DragFrom;
 					if (m_Action == Action::ResizeRelative)
 					{
-						m_Angle += delta.y;
+						m_HalfSize += delta;
 					}
 					else if (m_Action == Action::Move)
 					{
@@ -206,7 +218,7 @@ namespace FusionEngine
 			}
 			else if (m_Action == Action::ResizeRelative)
 			{
-				const float scrollAmount = key == CL_MOUSE_WHEEL_DOWN ? 0.1f : 0.1f;
+				const float scrollAmount = key == MouseInput::ScrollUp ? 0.1f : -0.1f;
 				m_Angle += scrollAmount;
 			}
 

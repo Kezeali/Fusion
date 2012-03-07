@@ -279,16 +279,21 @@ namespace FusionEngine
 
 		FSN_COIFACE_CTOR(IPolygonShape,
 			((FSN_GET_SET)(PolygonFile))
-			((FSN_GET)(Radius)) )
+			((FSN_GET_SET)(Verts))
+			((FSN_GET)(SkinThickness)) )
 
 		ThreadSafeProperty<std::string> PolygonFile;
-		ThreadSafeProperty<float, NullWriter<float>> Radius;
+		ThreadSafeProperty<std::vector<Vector2>> Verts;
+		ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
 
 	protected:
 		virtual const std::string& GetPolygonFile() const = 0;
-		virtual void SetPolygonFile(const std::string& center) = 0;
+		virtual void SetPolygonFile(const std::string& path) = 0;
 
-		virtual float GetRadius() const = 0;
+		virtual const std::vector<Vector2>& GetVerts() const = 0;
+		virtual void SetVerts(const std::vector<Vector2>& verts) = 0;
+
+		virtual float GetSkinThickness() const = 0;
 	};
 
 	class IBoxShape
@@ -299,17 +304,22 @@ namespace FusionEngine
 
 		FSN_COIFACE_CTOR(IBoxShape,
 			((FSN_GET_SET)(Center))
-			((FSN_GET_SET)(Extents)) )
+			((FSN_GET_SET)(Extents))
+			((FSN_GET_SET)(Angle)) )
 
 		ThreadSafeProperty<Vector2> Center;
 		ThreadSafeProperty<Vector2> Extents;
+		ThreadSafeProperty<float> Angle;
 
 	protected:
 		virtual Vector2 GetCenter() const = 0;
 		virtual void SetCenter(const Vector2& center) = 0;
 
 		virtual Vector2 GetExtents() const = 0;
-		virtual void SetExtents(const Vector2& center) = 0;
+		virtual void SetExtents(const Vector2& extents) = 0;
+
+		virtual float GetAngle() const = 0;
+		virtual void SetAngle(float center) = 0;
 	};
 
 	class IEdgeShape
@@ -319,14 +329,24 @@ namespace FusionEngine
 		virtual ~IEdgeShape() {}
 
 		FSN_COIFACE_CTOR(IEdgeShape,
-			((FSN_GET_SET)(EdgeFile)) )
+			((FSN_GET_SET)(PolygonFile))
+			((FSN_GET_SET)(Verts))
+			((FSN_IS_SET)(Loop)) )
 
-		ThreadSafeProperty<std::string> EdgeFile;
-		ThreadSafeProperty<float, NullWriter<float>> Radius;
+		ThreadSafeProperty<std::string> PolygonFile;
+		ThreadSafeProperty<std::vector<Vector2>> Verts;
+		ThreadSafeProperty<bool> Loop;
+		//ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
 
 	protected:
-		virtual const std::string& GetEdgeFile() const = 0;
-		virtual void SetEdgeFile(const std::string& center) = 0;
+		virtual const std::string& GetPolygonFile() const = 0;
+		virtual void SetPolygonFile(const std::string& path) = 0;
+
+		virtual const std::vector<Vector2>& GetVerts() const = 0;
+		virtual void SetVerts(const std::vector<Vector2>& verts) = 0;
+
+		virtual bool IsLoop() const = 0;
+		virtual void SetLoop(bool value) = 0;
 	};
 
 }

@@ -77,9 +77,22 @@ namespace FusionEngine { namespace Inspectors
 			StringGetter_t([](ComponentIPtr<IPolygonShape> component)->std::string { return component->PolygonFile.Get(); })
 			);
 		Rocket::Core::Factory::InstanceElementText(this, "Edit polygon");
-		//AddButtonInput("Edit",
-		//	StringSetter_t([](std::string value, ComponentIPtr<IPolygonShape> component) { component->PolygonVerts.Set(value); }),
-		//	);
+		AddButtonInput("Edit",
+			StringSetter_t([this](std::string value, ComponentIPtr<IPolygonShape> component)
+		{
+			auto verts = component->Verts.Get();
+			auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+			for (auto it = verts.begin(), end = verts.end(); it != end; ++it)
+				*it += offset;
+			this->m_PolygonToolExecutor(verts, [component](const std::vector<Vector2>& verts)
+			{
+				auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+				auto offsetVerts = verts;
+				for (auto it = offsetVerts.begin(), end = offsetVerts.end(); it != end; ++it)
+					*it - offset;
+				component->Verts.Set(verts);
+			});
+		}));
 		Rocket::Core::Factory::InstanceElementText(this, "Edit as rectangle");
 		AddButtonInput("EditRect",
 			StringSetter_t([this](std::string value, ComponentIPtr<IPolygonShape> component)
@@ -97,7 +110,7 @@ namespace FusionEngine { namespace Inspectors
 					const auto& v = shape.GetVertex(i);
 					verts.push_back(Vector2(v.x, v.y));
 				}
-				//component->PolygonVerts.Set(verts);
+				component->Verts.Set(verts);
 			});
 		}));
 	}

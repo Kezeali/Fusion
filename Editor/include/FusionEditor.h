@@ -91,6 +91,8 @@ namespace FusionEngine
 		class ComponentInspector;
 	}
 
+	class InspectorGenerator;
+
 	class Editor : public EngineExtension
 	{
 	public:
@@ -291,6 +293,8 @@ namespace FusionEngine
 		CL_Rectf GetBBOfSelected();
 
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
+
+		void InitInspectorGenerator(InspectorGenerator& generator);
 
 		void CreatePropertiesWindow(const EntityPtr& entity);
 		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities);
