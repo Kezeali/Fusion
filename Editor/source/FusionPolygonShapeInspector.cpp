@@ -38,29 +38,36 @@ namespace FusionEngine { namespace Inspectors
 			StringSetter_t([](std::string value, ComponentIPtr<IPolygonShape> component) { component->PolygonFile.Set(value); }),
 			StringGetter_t([](ComponentIPtr<IPolygonShape> component)->std::string { return component->PolygonFile.Get(); })
 			);
-		Rocket::Core::Factory::InstanceElementText(this, "Edit polygon");
 		AddButtonInput("Edit polygon", "Edit",
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
 			auto verts = component->Verts.Get();
 			auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
 			for (auto it = verts.begin(), end = verts.end(); it != end; ++it)
+			{
 				*it += offset;
+				it->x = ToRenderUnits(it->x);
+				it->y = ToRenderUnits(it->y);
+			}
 			this->m_PolygonToolExecutor(verts, [component](const std::vector<Vector2>& verts)
 			{
 				auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
-				auto offsetVerts = verts;
-				for (auto it = offsetVerts.begin(), end = offsetVerts.end(); it != end; ++it)
-					*it - offset;
-				component->Verts.Set(verts);
+				auto localVerts = verts;
+				for (auto it = localVerts.begin(), end = localVerts.end(); it != end; ++it)
+				{
+					it->x = ToSimUnits(it->x);
+					it->y = ToSimUnits(it->y);
+					*it -= offset;
+				}
+				component->Verts.Set(localVerts);
 			});
 		}));
-		Rocket::Core::Factory::InstanceElementText(this, "Edit as rectangle");
 		AddButtonInput("Edit Polygon as Rectangle", "EditRect",
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
-			Vector2 hsize(1.f, 1.f);
-			Vector2 center;
+			Vector2 hsize(10.f, 10.f);
+			Vector2 center = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+			center.x = ToRenderUnits(center.x); center.y = ToRenderUnits(center.y);
 			float angle = 0.0f;
 			this->m_RectangleToolExecutor(hsize, center, angle, [component](const Vector2& hs, const Vector2& c, float a)
 			{

@@ -52,6 +52,9 @@ namespace FusionEngine
 		m_InitialCenter = center;
 		m_InitialRadius = radius;
 
+		m_FeedbackCenter = m_Center;
+		m_FeedbackRadius = m_Radius;
+
 		CreateGui();
 
 		m_Active = true;
@@ -81,6 +84,9 @@ namespace FusionEngine
 	{
 		m_Center = m_InitialCenter;
 		m_Radius = m_InitialRadius;
+
+		m_FeedbackCenter = m_Center;
+		m_FeedbackRadius = m_Radius;
 	}
 
 	void EditorCircleTool::Cancel()
@@ -200,11 +206,11 @@ namespace FusionEngine
 
 	void EditorCircleTool::Draw(CL_GraphicContext& gc)
 	{
-		CL_Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
-		CL_Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
+		const CL_Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
+		const CL_Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
 
-		CL_Draw::line(gc, m_Center.x - 1.f, m_Center.y, m_Center.x + 1.f, m_Center.y, CL_Colorf(1.f, 0.f, 0.f));
-		CL_Draw::line(gc, m_Center.x, m_Center.y - 1.f, m_Center.x, m_Center.y + 1.f, CL_Colorf(0.f, 1.f, 0.f));
+		CL_Draw::line(gc, m_Center.x - 4.f, m_Center.y, m_Center.x + 4.f, m_Center.y, CL_Colorf(1.f, 0.f, 0.f));
+		CL_Draw::line(gc, m_Center.x, m_Center.y - 4.f, m_Center.x, m_Center.y + 4.f, CL_Colorf(0.f, 1.f, 0.f));
 		if (m_Radius > 0.f)
 			CL_Draw::circle(gc, m_Center.x, m_Center.y, m_Radius, currentShapeColour);
 

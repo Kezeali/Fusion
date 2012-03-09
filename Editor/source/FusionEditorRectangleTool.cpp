@@ -43,16 +43,20 @@ namespace FusionEngine
 		m_Action(Action::None)
 	{}
 
-	void EditorRectangleTool::Start(const Vector2& half_size, const Vector2& center, float radius, const RectangleToolCallback_t& done_callback)
+	void EditorRectangleTool::Start(const Vector2& half_size, const Vector2& center, float angle, const RectangleToolCallback_t& done_callback)
 	{
 		m_HalfSize = half_size;
 		m_Center = center;
-		m_Angle = radius;
+		m_Angle = angle;
 		m_DoneCallback = done_callback;
 
 		m_InitialHalfSize = half_size;
 		m_InitialCenter = center;
-		m_InitialAngle = radius;
+		m_InitialAngle = angle;
+
+		m_FeedbackHalfSize = m_HalfSize;
+		m_FeedbackCenter = m_Center;
+		m_FeedbackAngle = m_Angle;
 
 		CreateGui();
 
@@ -86,6 +90,10 @@ namespace FusionEngine
 		m_HalfSize = m_InitialHalfSize;
 		m_Center = m_InitialCenter;
 		m_Angle = m_InitialAngle;
+
+		m_FeedbackHalfSize = m_HalfSize;
+		m_FeedbackCenter = m_Center;
+		m_FeedbackAngle = m_Angle;
 	}
 
 	void EditorRectangleTool::Cancel()

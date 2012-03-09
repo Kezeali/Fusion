@@ -545,8 +545,6 @@ namespace FusionEngine { namespace Inspectors
 
 		auto lowerText = fe_newlower(text);
 
-		Rocket::Core::Factory::InstanceElementText(line, text.c_str());
-
 		Rocket::Core::XMLAttributes attributes;
 		attributes.Set("type", "submit");
 		attributes.Set("name", Rocket::Core::String(lowerText.c_str()));
@@ -555,6 +553,8 @@ namespace FusionEngine { namespace Inspectors
 			"input",
 			"input",
 			attributes);
+		
+		Rocket::Core::Factory::InstanceElementText(element, text.c_str());
 
 		addControl(line, input_element, element);
 

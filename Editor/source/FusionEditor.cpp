@@ -2380,7 +2380,7 @@ namespace FusionEngine
 		});
 		generator.inspector_group->SetPolygonToolExecutor([this](const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_cb)
 		{
-			this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Convex);
+			this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Freeform);
 			this->m_Tool = Editor::Tool::Polygon;
 		});
 		

@@ -74,31 +74,7 @@ namespace FusionEngine { namespace Inspectors
 				return inspector_type == other.inspector_type && component_id == other.component_id;
 			}
 			else
-				return component == other.component;
-		}
-		bool operator< (const EquivalentInspectorKey& other) const
-		{
-			FSN_ASSERT_FAIL("not impl");
-			std::less<std::string> lstr;
-			if (entity != other.entity)
-			{
-				if (inspector_type == other.inspector_type)
-					return lstr(component_id, other.component_id);
-				else
-					return lstr(inspector_type, other.inspector_type);
-			}
-			else
-			{
-				if (component == other.component)
-				{
-					if (inspector_type == other.inspector_type)
-						return lstr(component_id, other.component_id);
-					else
-						return lstr(inspector_type, other.inspector_type);
-				}
-				else
-					return component < other.component;
-			}
+				return inspector_type == other.inspector_type && component == other.component;
 		}
 		EquivalentInspectorKey& operator= (const EquivalentInspectorKey& other)
 		{
@@ -156,6 +132,7 @@ namespace FusionEngine { namespace Inspectors
 			copy.component = component;
 			auto r = m_Subsections.insert(copy);
 
+#ifdef _DEBUG
 			if (!r.second)
 			{
 				auto range = m_Subsections.get<tags::button_code>().equal_range(copy.button_code);
@@ -164,6 +141,7 @@ namespace FusionEngine { namespace Inspectors
 					auto t = *range.first;
 				}
 			}
+#endif
 			FSN_ASSERT(r.second);
 
 			auto& inspectorComponents = m_Inspectors[copy.inspector];

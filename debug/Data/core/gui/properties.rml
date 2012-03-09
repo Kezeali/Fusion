@@ -103,9 +103,11 @@
 			
 			inspector input.submit
 			{
-				width: 80px;
+				width: 150px;
 				height: 20px;
 				padding: 0px;
+				
+				font-size: 12;
 			}
 			
 			inspector_group:multi_entity #circle_editor
