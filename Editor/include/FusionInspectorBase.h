@@ -105,7 +105,7 @@ namespace FusionEngine { namespace Inspectors
 		//! Adds a select (popup) input
 		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
 		//! Adds a button input
-		void AddButtonInput(const std::string& name, StringSetter_t setter);
+		void AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter);
 		//! Adds a circle input
 		void AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
 		//! Adds a rectangle input
@@ -536,21 +536,21 @@ namespace FusionEngine { namespace Inspectors
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddButtonInput(const std::string& name, StringSetter_t setter)
+	void GenericInspector<ComponentT>::AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
 
 		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
 
-		auto lowerName = fe_newlower(name);
+		auto lowerText = fe_newlower(text);
 
-		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+		Rocket::Core::Factory::InstanceElementText(line, text.c_str());
 
 		Rocket::Core::XMLAttributes attributes;
 		attributes.Set("type", "submit");
-		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
-		attributes.Set("value", Rocket::Core::String(name.c_str()));
+		attributes.Set("name", Rocket::Core::String(lowerText.c_str()));
+		attributes.Set("value", Rocket::Core::String(value.c_str()));
 		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
 			"input",
 			"input",
