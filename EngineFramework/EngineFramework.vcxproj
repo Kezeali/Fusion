@@ -74,6 +74,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">PrecompiledHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="source\FusionArchetypeFactory.cpp" />
     <ClCompile Include="source\FusionComponentScriptTypeRegistration.cpp" />
     <ClCompile Include="source\FusionComponentUniverse.cpp" />
     <ClCompile Include="source\FusionContextMenu.cpp" />
@@ -98,6 +99,7 @@
     <ClCompile Include="source\FusionTaskScheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionArchetypeFactory.h" />
     <ClInclude Include="include\FusionCellCache.h" />
     <ClInclude Include="include\FusionCellDataSource.h" />
     <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />

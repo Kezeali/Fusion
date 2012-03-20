@@ -73,6 +73,7 @@
     <ClCompile Include="source\FusionFilesystemDataSource.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionArchetypeFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -142,5 +143,6 @@
     <ClInclude Include="include\FusionFilesystemDataSource.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionArchetypeFactory.h" />
   </ItemGroup>
 </Project>
