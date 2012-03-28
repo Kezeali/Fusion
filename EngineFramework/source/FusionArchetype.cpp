@@ -25,41 +25,26 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionArchetypeFactory
-#define H_FusionArchetypeFactory
+#include "PrecompiledHeaders.h"
 
-#include "FusionPrerequisites.h"
-
-#include "FusionVectorTypes.h"
-#include "FusionTypes.h"
-
-#include <string>
-#include <map>
-#include <memory>
+#include "FusionArchetype.h"
 
 namespace FusionEngine
 {
 
-	class Archetype;
-
-	class ArchetypeFactory
+	Archetype::Archetype()
 	{
-	public:
-		ArchetypeFactory();
-		virtual ~ArchetypeFactory();
-
-		std::shared_ptr<Archetype> GetArchetype(const std::string& type_id) const;
-
-		void MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle);
-
-		void DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity);
-
-	private:
-		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
-	};
-
 	}
 
-}
+	Archetype::~Archetype()
+	{
+	}
 
-#endif
+	void Archetype::LoadArchetype(const std::istream& data)
+	{
+	}
+
+	void Archetype::SaveArchetype(const std::ostream& data)
+	{}
+
+}

@@ -29,7 +29,7 @@
 
 #include "FusionEntityComponent.h"
 
-#include "FusionThreadSafeProperty.h"
+#include "FusionComponentProperty.h"
 
 namespace FusionEngine
 {

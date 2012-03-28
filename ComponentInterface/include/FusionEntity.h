@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2007-2011 Fusion Project Team
+*  Copyright (c) 2007-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -132,9 +132,10 @@ namespace FusionEngine
 		virtual void ReleaseAllReferences(asIScriptEngine *engine)
 		{}
 
-		void SetType(const std::string& type);
-		//! Returns the typename of this entity
-		std::string GetType() const;
+		//! Sets the archetype id of this entity
+		void SetArchetype(const std::string& id);
+		//! Returns the archetype of this entity
+		const std::string& GetArchetype() const;
 
 		ComponentPtr GetTransform() const;
 

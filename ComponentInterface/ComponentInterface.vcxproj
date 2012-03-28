@@ -80,6 +80,7 @@
   <ItemGroup>
     <ClInclude Include="include\FusionCommandQueue.h" />
     <ClInclude Include="include\FusionComponentFactory.h" />
+    <ClInclude Include="include\FusionComponentProperty.h" />
     <ClInclude Include="include\FusionComponentSystem.h" />
     <ClInclude Include="include\FusionDeltaTime.h" />
     <ClInclude Include="include\FusionEntity.h" />

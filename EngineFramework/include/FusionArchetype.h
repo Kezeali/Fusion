@@ -30,35 +30,31 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionVectorTypes.h"
-#include "FusionTypes.h"
+//#include "FusionArchetypeInterface.h"
 
-#include <string>
-#include <map>
-#include <memory>
+#include <iostream>
 
 namespace FusionEngine
 {
 
-	class Archetype;
-
-	class ArchetypeFactory
+	class IArchetype
 	{
 	public:
-		ArchetypeFactory();
-		virtual ~ArchetypeFactory();
-
-		std::shared_ptr<Archetype> GetArchetype(const std::string& type_id) const;
-
-		void MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle);
-
-		void DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity);
-
-	private:
-		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
+		virtual ~IArchetype();
 	};
 
-	}
+	//! Data defining an entity archetype
+	class Archetype
+	{
+	public:
+		Archetype();
+		~Archetype();
+
+		void LoadArchetype(const std::istream& data);
+		void SaveArchetype(const std::ostream& data);
+
+	private:
+	};
 
 }
 

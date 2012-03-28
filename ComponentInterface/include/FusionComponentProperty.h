@@ -25,40 +25,41 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionArchetypeFactory
-#define H_FusionArchetypeFactory
+#ifndef H_FusionComponentProperty
+#define H_FusionComponentProperty
+
+#if _MSC_VER > 1000
+#pragma once
+#endif
 
 #include "FusionPrerequisites.h"
 
-#include "FusionVectorTypes.h"
-#include "FusionTypes.h"
-
-#include <string>
-#include <map>
-#include <memory>
+#include <BitStream.h>
 
 namespace FusionEngine
 {
-
-	class Archetype;
-
-	class ArchetypeFactory
+	
+	//! Entity Component Property interface
+	class IComponentProperty
 	{
 	public:
-		ArchetypeFactory();
-		virtual ~ArchetypeFactory();
+		virtual void FireSignal() = 0;
+		virtual void Synchronise() = 0;
 
-		std::shared_ptr<Archetype> GetArchetype(const std::string& type_id) const;
+		virtual void Serialise(RakNet::BitStream* stream) = 0;
+		virtual bool IsContinuous() const = 0;
 
-		void MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle);
+		virtual bool IsEqual(IComponentProperty*) const = 0;
 
-		void DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity);
-
-	private:
-		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
+		bool operator==(IComponentProperty* other) const
+		{
+			return this->IsEqual(other);
+		}
+		bool operator!=(IComponentProperty* other) const
+		{
+			return !this->IsEqual(other);
+		}
 	};
-
-	}
 
 }
 

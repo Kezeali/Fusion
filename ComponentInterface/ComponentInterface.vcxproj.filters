@@ -52,5 +52,8 @@
     </ClInclude>
     <ClInclude Include="include\FusionComponentFactory.h" />
     <ClInclude Include="include\FusionEntityInstantiator.h" />
+    <ClInclude Include="include\FusionComponentProperty.h">
+      <Filter>Entity</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

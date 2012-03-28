@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2007-2011 Fusion Project Team
+*  Copyright (c) 2007-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -144,12 +144,12 @@ namespace FusionEngine
 		return !IsSyncedEntity();
 	}
 
-	void Entity::SetType(const std::string& type)
+	void Entity::SetArchetype(const std::string& type)
 	{
 		m_Type = type;
 	}
 
-	std::string Entity::GetType() const
+	const std::string& Entity::GetArchetype() const
 	{
 		return m_Type;
 	}

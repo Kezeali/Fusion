@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -56,6 +56,7 @@
 
 #include <tbb/enumerable_thread_specific.h>
 
+#include "FusionComponentProperty.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionScriptedSlots.h"
 
@@ -107,44 +108,6 @@
 
 namespace FusionEngine
 {
-	class IComponentProperty
-	{
-	public:
-		virtual void FireSignal() = 0;
-		virtual void Synchronise() = 0;
-	};
-
-	template <typename T>
-	struct RefReader
-	{
-		RefReader(const T& ref_)
-			: ref(ref_)
-		{}
-
-		const T& Read() { return ref; }
-
-		const T& ref;
-	};
-
-	template <typename T>
-	struct ValueReader
-	{
-		const T& Read() { return value; }
-
-		T value;
-	};
-
-	template <typename T>
-	struct FunctionReader
-	{
-		FunctionReader(const std::function<const T& (void)>& fn)
-			: readFunction(fn)
-		{}
-
-		const T& Read() { return readFunction(); }
-
-		std::function<const T& (void)> readFunction;
-	};
 
 	template <typename T>
 	struct DefaultStaticWriter
@@ -288,9 +251,6 @@ namespace FusionEngine
 		template <class C>
 		void SetCallbacks(C* obj, value_type_for_get (C::*get_fn)(void) const, void (C::*set_fn)(value_type_for_set))
 		{
-			typedef void (C::*set_fn_t)(value_type_for_set);
-			typedef value_type_for_get (C::*get_fn_t)(void) const;
-
 			m_GetSetCallbacks = new GetSetCallback<C, value_type_for_get, value_type_for_set>(obj, get_fn, set_fn);
 
 			GetOwner();

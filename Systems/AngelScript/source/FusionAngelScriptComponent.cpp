@@ -31,6 +31,7 @@
 
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
+#include "FusionComponentProperty.h"
 
 #include "FusionB2ContactListenerASScript.h"
 
@@ -46,7 +47,7 @@ namespace FusionEngine
 
 	int ASScript::s_ASScriptTypeId = -1;
 
-	// Since these aren't built-in a static type-id (for use when serialising) has to be defined for them
+	// Since these aren't built-in, a static type-id (for use when serialising) has to be defined for them
 	namespace ASScriptSerialisaiton
 	{
 		static const int s_EntityTypeID = -1;

@@ -277,9 +277,9 @@ namespace FusionEngine
 
 		enum SerialiseMode { Changes, All, Editable };
 
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
+		virtual void SerialiseContinuous(RakNet::BitStream& stream) {}
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) { return false; }
+		virtual void SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) {}
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) {}
 
 	protected:

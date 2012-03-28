@@ -40,11 +40,7 @@ namespace FusionEngine
 	{
 	}
 
-	void ArchetypeFactory::LoadArchetype(const std::istream& data)
-	{
-	}
-
-	void ArchetypeFactory::SaveArchetype(const std::string& type_id, const std::ostream& data)
+	std::shared_ptr<Archetype> ArchetypeFactory::GetArchetype(const std::string& type_id) const
 	{}
 
 	void ArchetypeFactory::MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle)
