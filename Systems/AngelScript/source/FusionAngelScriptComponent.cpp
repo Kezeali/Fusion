@@ -286,6 +286,19 @@ namespace FusionEngine
 		{
 		}
 
+		void Serialise(RakNet::BitStream& stream)
+		{
+			FSN_ASSERT_FAIL("Not Implemented");
+		}
+		void Deserialise(RakNet::BitStream& stream)
+		{
+			FSN_ASSERT_FAIL("Not Implemented");
+		}
+		bool IsContinuous() const
+		{
+			return false;
+		}
+
 		CScriptAny* Get() const
 		{
 			return m_Value.get();
@@ -1154,9 +1167,8 @@ namespace FusionEngine
 	{
 	}
 
-	bool ASScript::SerialiseContinuous(RakNet::BitStream& stream)
+	void ASScript::SerialiseContinuous(RakNet::BitStream& stream)
 	{
-		return false;
 	}
 
 	void ASScript::DeserialiseContinuous(RakNet::BitStream& stream)
@@ -1287,9 +1299,11 @@ namespace FusionEngine
 	//	}
 	//}
 
-	bool ASScript::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void ASScript::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		bool changeWritten = m_DeltaSerialisationHelper.writeChanges(mode != Changes, stream,
+		const SerialiseMode mode = SerialiseMode::All;
+
+		m_DeltaSerialisationHelper.writeChanges(true, stream,
 			GetScriptPath(), std::string());
 
 		if (m_ScriptObject)
@@ -1299,18 +1313,13 @@ namespace FusionEngine
 			{
 				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
 
-				if (mode == Changes)
-					stream.Write(scriptprop->HasChangedSinceSerialised());
-
 				if (mode == Editable)
 				{
 					std::string name = scriptprop->GetName();
 					stream.Write(name.length());
 					stream.Write(name.data(), name.length());
 				}
-				if (mode != Changes || scriptprop->HasChangedSinceSerialised())
 				{
-					changeWritten = true;
 					SerialiseProp(stream, scriptprop->Get());
 					// Changes have been written
 					scriptprop->Unmark();
@@ -1341,18 +1350,18 @@ namespace FusionEngine
 				}
 			}
 		}
-
-		return changeWritten;
 	}
 
-	void ASScript::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void ASScript::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
+		const SerialiseMode mode = SerialiseMode::All;
+
 		m_LastDeserMode = mode;
 
 		std::bitset<DeltaSerialiser_t::NumParams> changes;
 		std::string unused;
 		std::string newPath;
-		m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes,
+		m_DeltaSerialisationHelper.readChanges(stream, true, changes,
 			newPath, unused);
 
 		if (newPath != m_Path)

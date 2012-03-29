@@ -44,13 +44,10 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IScript)
 	public:
-		ThreadSafeProperty<std::string> ScriptPath;
-		//ThreadSafeProperty<std::string> Script;
+		//ThreadSafeProperty<std::string> ScriptPath;
 
-		FSN_COIFACE_CTOR(IScript,
-			((FSN_GET_SET)(ScriptPath)) )
-
-		static bool IsThreadSafe() { return true; }
+		FSN_COIFACE_PROPS(IScript,
+			((FSN_GET_SET)(ScriptPath)(std::string)) )
 
 	public:
 		virtual const std::string& GetScriptPath() const = 0;

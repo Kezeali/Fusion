@@ -47,20 +47,21 @@ namespace FusionEngine
 	
 	FSN_BEGIN_COIFACE(ITransform)
 	public:
-		void InitProperties()
-		{
-			Position.SetCallbacks(this, &ITransform::GetPosition, &ITransform::SetPosition);
-			Angle.SetCallbacks(this, &ITransform::GetAngle, &ITransform::SetAngle);
-			Depth.SetCallbacks(this, &ITransform::GetDepth, &ITransform::SetDepth);
-		}
+		//FSN_COIFACE_CTOR(ITransform,
+		//	((FSN_GET_SET)(Position))
+		//	((FSN_GET_SET)(Angle))
+		//	((FSN_GET_SET)(Depth)) )
 
-		ThreadSafeProperty<Vector2> Position;
-		ThreadSafeProperty<float> Angle;
-		ThreadSafeProperty<int> Depth;
+		//ThreadSafeProperty<Vector2> Position;
+		//ThreadSafeProperty<float> Angle;
+		//ThreadSafeProperty<int> Depth;
+
+		FSN_COIFACE_PROPS(ITransform,
+			((FSN_GET_SET)(Position)(Vector2))
+			((FSN_GET_SET)(Angle)(float))
+			((FSN_GET_SET)(Depth)(int)) )
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
-
-		static bool IsThreadSafe() { return true; }
 
 		virtual bool HasContinuousPosition() const = 0;
 

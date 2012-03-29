@@ -46,19 +46,20 @@ namespace FusionEngine
 		virtual void FireSignal() = 0;
 		virtual void Synchronise() = 0;
 
-		virtual void Serialise(RakNet::BitStream* stream) = 0;
+		virtual void Serialise(RakNet::BitStream& stream) = 0;
+		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 		virtual bool IsContinuous() const = 0;
 
-		virtual bool IsEqual(IComponentProperty*) const = 0;
+		//virtual bool IsEqual(IComponentProperty*) const = 0;
 
-		bool operator==(IComponentProperty* other) const
-		{
-			return this->IsEqual(other);
-		}
-		bool operator!=(IComponentProperty* other) const
-		{
-			return !this->IsEqual(other);
-		}
+		//bool operator==(IComponentProperty* other) const
+		//{
+		//	return this->IsEqual(other);
+		//}
+		//bool operator!=(IComponentProperty* other) const
+		//{
+		//	return !this->IsEqual(other);
+		//}
 	};
 
 }

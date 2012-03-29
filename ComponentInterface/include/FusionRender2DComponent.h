@@ -45,13 +45,13 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		ThreadSafeProperty<Vector2> Offset;
-		ThreadSafeProperty<int> LocalDepth;
+		//ThreadSafeProperty<Vector2> Offset;
+		//ThreadSafeProperty<int> LocalDepth;
 		//ThreadSafeProperty<bool> Interpolate;
 
-		FSN_COIFACE_CTOR(IRenderCom,
-			((FSN_GET_SET)(Offset))
-			((FSN_GET_SET)(LocalDepth)) )
+		FSN_COIFACE_PROPS(IRenderCom,
+			((FSN_GET_SET)(Offset)(Vector2))
+			((FSN_GET_SET)(LocalDepth)(int)) )
 
 	private:
 		virtual void SetOffset(const Vector2& value) = 0;
@@ -70,7 +70,27 @@ namespace FusionEngine
 		virtual ~ISprite()
 		{}
 
-		FSN_COIFACE_CTOR(ISprite,
+		FSN_COIFACE_PROPS(ISprite,
+			((FSN_GET_SET)(ImagePath)(std::string))
+			((FSN_GET_SET)(AnimationPath)(std::string))
+
+			((FSN_GET_SET)(AlignmentOrigin)(CL_Origin))
+			((FSN_GET_SET)(AlignmentOffset)(Vector2i))
+			((FSN_GET_SET)(RotationOrigin)(CL_Origin))
+			((FSN_GET_SET)(RotationOffset)(Vector2i))
+
+			((FSN_GET_SET)(Colour)(CL_Colorf))
+			((FSN_GET_SET)(Alpha)(float))
+			((FSN_GET_SET)(Scale)(Vector2))
+			((FSN_GET_SET)(BaseAngle)(float))
+
+			((FSN_IS)(AnimationFinished)(bool))
+			
+			((FSN_GET_SET)(AnimationFrame)(int))
+			((FSN_IS_SET)(Playing)(bool))
+			((FSN_IS_SET)(Looping)(bool)) )
+
+		/*FSN_COIFACE_CTOR(ISprite,
 			((FSN_GET_SET)(ImagePath))
 			((FSN_GET_SET)(AnimationPath))
 
@@ -107,7 +127,7 @@ namespace FusionEngine
 		ThreadSafeProperty<int> AnimationFrame;
 
 		ThreadSafeProperty<bool> Playing;
-		ThreadSafeProperty<bool> Looping;
+		ThreadSafeProperty<bool> Looping;*/
 
 		virtual void Finish() = 0;
 
@@ -159,13 +179,7 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "ICamera"; }
 		virtual ~ICamera()
 		{}
-
-		FSN_COIFACE_CTOR(ICamera,
-			((FSN_GET_SET)(SyncType))
-			((FSN_IS_SET)(ViewportEnabled))
-			((FSN_GET_SET)(ViewportRect))
-			((FSN_IS_SET)(AngleEnabled)) )
-
+		
 		enum SyncTypes : uint8_t
 		{
 			NoSync = 0x00,
@@ -173,12 +187,18 @@ namespace FusionEngine
 			Shared
 		};
 
-		ThreadSafeProperty<SyncTypes> SyncType;
+		FSN_COIFACE_PROPS(ICamera,
+			((FSN_GET_SET)(SyncType)(SyncTypes))
+			((FSN_IS_SET)(ViewportEnabled)(bool))
+			((FSN_GET_SET)(ViewportRect)(CL_Rectf))
+			((FSN_IS_SET)(AngleEnabled)(bool)) )
 
-		ThreadSafeProperty<bool> ViewportEnabled;
-		ThreadSafeProperty<CL_Rectf> ViewportRect;
+		//ThreadSafeProperty<SyncTypes> SyncType;
 
-		ThreadSafeProperty<bool> AngleEnabled;
+		//ThreadSafeProperty<bool> ViewportEnabled;
+		//ThreadSafeProperty<CL_Rectf> ViewportRect;
+
+		//ThreadSafeProperty<bool> AngleEnabled;
 
 	private:
 		virtual void SetSyncType(SyncTypes value) = 0;

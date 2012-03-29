@@ -221,7 +221,7 @@ namespace FusionEngine
 		SetPosition(position);
 	}
 
-	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
+	void Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		if (GetBodyType() == Dynamic)
 		{
@@ -249,11 +249,7 @@ namespace FusionEngine
 				stream.Write(GetAngularVelocity());
 #endif
 			}
-
-			return true;
 		}
-		else
-			return false;
 	}
 
 	void Box2DBody::DeserialiseContinuous(RakNet::BitStream& stream)
@@ -310,9 +306,9 @@ namespace FusionEngine
 		//AngularVelocity.MarkChanged();
 	}
 
-	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void Box2DBody::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		bool dataWritten = m_DeltaSerialisationHelper.writeChanges(mode != Changes, stream,
+		m_DeltaSerialisationHelper.writeChanges(true, stream,
 			IsActive(), IsSleepingAllowed(), IsBullet(), IsFixedRotation(),
 			GetLinearDamping(), GetAngularDamping(), GetGravityScale());
 
@@ -321,19 +317,17 @@ namespace FusionEngine
 		if (GetBodyType() != Dynamic)
 		{
 			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> transformChanges;
-			dataWritten |= m_NonDynamicDeltaSerialisationHelper.writeChanges(mode != Changes, stream, IsAwake(), GetPosition(), GetAngle(), GetVelocity(), GetAngularVelocity());
+			m_NonDynamicDeltaSerialisationHelper.writeChanges(true, stream, IsAwake(), GetPosition(), GetAngle(), GetVelocity(), GetAngularVelocity());
 		}
-
-		return dataWritten;
 	}
 
-	void Box2DBody::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void Box2DBody::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
 		{
 			std::bitset<DeltaSerialiser_t::NumParams> changes;
 			bool active, sleepingAllowed, bullet, fixedrotation;
 			float linearDamping, angularDamping, gravityScale;
-			m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes,
+			m_DeltaSerialisationHelper.readChanges(stream, true, changes,
 				active, sleepingAllowed, bullet,
 				fixedrotation, linearDamping, angularDamping,
 				gravityScale);
@@ -373,7 +367,7 @@ namespace FusionEngine
 		{
 			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> changes;
 			Vector2 position, linearVelocity;
-			m_NonDynamicDeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, m_Def.awake, position, m_Def.angle, linearVelocity, m_Def.angularVelocity);
+			m_NonDynamicDeltaSerialisationHelper.readChanges(stream, true, changes, m_Def.awake, position, m_Def.angle, linearVelocity, m_Def.angularVelocity);
 
 			if (changes[NonDynamicPropsIdx::Awake])
 			{
@@ -479,24 +473,15 @@ namespace FusionEngine
 		//}
 	}
 
-	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)
+	void Box2DFixture::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		return false;
+		m_DeltaSerialisationHelper.writeChanges(true, stream , IsSensor(), GetDensity(), GetFriction(), GetRestitution());
 	}
 
-	void Box2DFixture::DeserialiseContinuous(RakNet::BitStream& stream)
-	{
-	}
-
-	bool Box2DFixture::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
-	{
-		return m_DeltaSerialisationHelper.writeChanges(mode != Changes, stream , IsSensor(), GetDensity(), GetFriction(), GetRestitution());
-	}
-
-	void Box2DFixture::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void Box2DFixture::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
 		std::bitset<DeltaSerialiser_t::NumParams> changes;
-		m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, m_Def.isSensor, m_Def.density, m_Def.friction, m_Def.restitution);
+		m_DeltaSerialisationHelper.readChanges(stream, true, changes, m_Def.isSensor, m_Def.density, m_Def.friction, m_Def.restitution);
 
 		if (m_Fixture)
 		{
@@ -585,39 +570,21 @@ namespace FusionEngine
 	{
 	}
 
-	void Box2DCircleFixture::CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
+	void Box2DCircleFixture::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, delta);
-
-		ShapeDeltaSerialiser_t::copyChanges(result, current_data, delta);
+		Box2DFixture::SerialiseOccasional(stream);
+		m_CircleDeltaSerialisationHelper.writeChanges(true, stream , GetRadius(), GetPosition());
 	}
 
-	bool Box2DCircleFixture::SerialiseContinuous(RakNet::BitStream& stream)
+	void Box2DCircleFixture::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
-		return false;
-	}
-
-	void Box2DCircleFixture::DeserialiseContinuous(RakNet::BitStream& stream)
-	{
-	}
-
-	bool Box2DCircleFixture::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
-	{
-		bool changesWritten;
-		changesWritten = Box2DFixture::SerialiseOccasional(stream, mode);
-		changesWritten |= m_CircleDeltaSerialisationHelper.writeChanges(mode != Changes, stream , GetRadius(), GetPosition());
-		return changesWritten;
-	}
-
-	void Box2DCircleFixture::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
-	{
-		Box2DFixture::DeserialiseOccasional(stream, mode);
+		Box2DFixture::DeserialiseOccasional(stream);
 
 		//float radius;
 		Vector2 position;
 		
 		std::bitset<ShapeDeltaSerialiser_t::NumParams> changes;
-		m_CircleDeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, m_CircleShape.m_radius, position);
+		m_CircleDeltaSerialisationHelper.readChanges(stream, true, changes, m_CircleShape.m_radius, position);
 
 		m_CircleShape.m_p.Set(position.x, position.y);
 
@@ -728,18 +695,9 @@ namespace FusionEngine
 		}
 	}
 
-	bool Box2DPolygonFixture::SerialiseContinuous(RakNet::BitStream& stream)
+	void Box2DPolygonFixture::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		return false;
-	}
-
-	void Box2DPolygonFixture::DeserialiseContinuous(RakNet::BitStream& stream)
-	{
-	}
-
-	bool Box2DPolygonFixture::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
-	{
-		Box2DFixture::SerialiseOccasional(stream, mode);
+		Box2DFixture::SerialiseOccasional(stream);
 
 		SerialisationUtils::write(stream, m_PolygonFile);
 		
@@ -753,13 +711,11 @@ namespace FusionEngine
 				stream.Write(vert.y);
 			}
 		}
-
-		return true;
 	}
 
-	void Box2DPolygonFixture::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void Box2DPolygonFixture::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
-		Box2DFixture::DeserialiseOccasional(stream, mode);
+		Box2DFixture::DeserialiseOccasional(stream);
 
 		SerialisationUtils::read(stream, m_PolygonFile);
 		if (m_PolygonFile != PolygonFile.Get())

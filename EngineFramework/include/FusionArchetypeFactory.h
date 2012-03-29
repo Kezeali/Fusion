@@ -58,8 +58,6 @@ namespace FusionEngine
 		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
 	};
 
-	}
-
 }
 
 #endif

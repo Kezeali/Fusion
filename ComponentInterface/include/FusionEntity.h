@@ -359,9 +359,6 @@ namespace FusionEngine
 		bool InputIsActive(const std::string &input);
 		float GetInputPosition(const std::string &input);
 
-		//! Returns a human-readable string
-		virtual std::string ToString() const;
-
 		//! Registers the script Entity type
 		static void Register(asIScriptEngine *engine);
 

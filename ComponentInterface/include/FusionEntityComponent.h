@@ -36,6 +36,7 @@
 
 #include "FusionRefCounted.h"
 
+#include <bitset>
 #include <vector>
 #include <functional>
 
@@ -47,9 +48,6 @@
 #include <tbb/enumerable_thread_specific.h>
 #include <tbb/concurrent_queue.h>
 
-#define FSN_SYNCH_PROPERTY(name) \
-	m_##name.Synchronise();
-
 #define FSN_BEGIN_COIFACE(interface_name) \
 	class interface_name\
 	{\
@@ -57,22 +55,16 @@
 	static std::string GetTypeName() { return #interface_name; }\
 	virtual ~interface_name() {}
 
-#define FSN_COIFACE_CTOR(iface_name, properties) \
-	void InitProperties()\
-	{\
-	typedef iface_name iface;\
-	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
-	}
-
-#define FSN_COIFACE(interface_name, properties)\
-	FSN_BEGIN_COIFACE(interface_name)\
-	FSN_COIFACE_CTOR(interface_name, properties)
+#define FSN_END_COIFACE()\
+	};
 
 namespace FusionEngine
 {
 
 	class IComponentProperty;
 	class IComponent;
+
+	class ComponentImpl;
 
 	typedef boost::intrusive_ptr<IComponent> ComponentPtr;
 
@@ -202,6 +194,10 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~IComponent()
 		{
+			if (m_LastContinuousProperty)
+				delete m_LastContinuousProperty;
+			if (m_LastOccasionalProperty)
+				delete m_LastOccasionalProperty;
 		}
 
 		void OnNoReferences()
@@ -277,10 +273,13 @@ namespace FusionEngine
 
 		enum SerialiseMode { Changes, All, Editable };
 
-		virtual void SerialiseContinuous(RakNet::BitStream& stream) {}
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
-		virtual void SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) {}
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) {}
+		virtual void SerialiseContinuous(RakNet::BitStream& stream);
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
+		virtual void SerialiseOccasional(RakNet::BitStream& stream);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
+
+		virtual void SerialiseEditable(RakNet::BitStream& stream);
+		virtual void DeserialiseEditable(RakNet::BitStream& stream);
 
 	protected:
 		std::set<std::string> m_Interfaces;
@@ -295,6 +294,20 @@ namespace FusionEngine
 		PropChangedQueue *m_ChangedProperties;
 
 		tbb::atomic<ReadyState> m_Ready;
+
+		//! Used to create singly linked lists of continuous / occasional properties (for purposes of serialisation)
+		class PropertyListNode
+		{
+		public:
+			PropertyListNode(IComponentProperty* prop_) : prop(prop_), previous(nullptr) {}
+			~PropertyListNode() { if (previous) delete previous; }
+			IComponentProperty* prop;
+			PropertyListNode* previous;
+		};
+		PropertyListNode* m_LastContinuousProperty;
+		PropertyListNode* m_LastOccasionalProperty;
+
+		//std::shared_ptr<ComponentImpl> m_Impl;
 
 	};
 

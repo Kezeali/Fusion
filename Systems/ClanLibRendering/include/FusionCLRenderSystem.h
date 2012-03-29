@@ -114,8 +114,6 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
-
 		ComponentPtr InstantiateComponent(const std::string& type);
 		void OnActivation(const ComponentPtr& component);
 		void OnDeactivation(const ComponentPtr& component);

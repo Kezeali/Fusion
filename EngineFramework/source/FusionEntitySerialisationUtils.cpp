@@ -152,16 +152,16 @@ namespace FusionEngine
 				compressor->EncodeString(type.c_str(), type.length() + 1, &out);
 				
 				RakNet::BitStream tempStream;
-				bool conData = transform->SerialiseContinuous(tempStream);
+				transform->SerialiseContinuous(tempStream);
+				bool conData = tempStream.GetNumberOfBitsUsed() > 0;
 				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
 				if (!conData)
 					tempStream.Reset();
 
 				const auto bitsUsedBeforeWriting = tempStream.GetNumberOfBitsUsed();
-				bool occData = transform->SerialiseOccasional(tempStream, mode);
+				transform->SerialiseOccasional(tempStream);
+				bool occData = tempStream.GetNumberOfBitsUsed() > bitsUsedBeforeWriting;
 				//FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
-				if (!occData)
-					tempStream.SetWriteOffset(bitsUsedBeforeWriting);
 
 				out.Write(conData);
 				out.Write(occData);
@@ -198,16 +198,15 @@ namespace FusionEngine
 					FSN_ASSERT(component.get() != transform);
 
 					RakNet::BitStream tempStream;
-					bool conData = component->SerialiseContinuous(tempStream);
+					component->SerialiseContinuous(tempStream);
+					bool conData = tempStream.GetNumberOfBitsUsed() > 0;
 					FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
 					if (!conData)
 						tempStream.Reset();
 
 					const auto bitsUsedBeforeWriting = tempStream.GetNumberOfBitsUsed();
-					bool occData = component->SerialiseOccasional(tempStream, mode);
-					FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
-					if (!occData)
-						tempStream.SetWriteOffset(bitsUsedBeforeWriting);
+					component->SerialiseOccasional(tempStream);
+					bool occData = tempStream.GetNumberOfBitsUsed() > bitsUsedBeforeWriting;
 
 					out.Write(conData);
 					out.Write(occData);
@@ -246,7 +245,7 @@ namespace FusionEngine
 				if (conData)
 					transform->DeserialiseContinuous(in);
 				if (occData)
-					transform->DeserialiseOccasional(in, mode);
+					transform->DeserialiseOccasional(in);
 			}
 
 			transform->SynchronisePropertiesNow();
@@ -306,7 +305,7 @@ namespace FusionEngine
 					if (conData)
 						component->DeserialiseContinuous(in);
 					if (occData)
-						component->DeserialiseOccasional(in, mode);
+						component->DeserialiseOccasional(in);
 				}
 			}
 
@@ -451,7 +450,7 @@ namespace FusionEngine
 		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
-			component->SerialiseOccasional(tempStream, IComponent::All);
+			component->SerialiseOccasional(tempStream);
 
 			bool conData = tempStream.GetNumberOfBitsUsed() > 0;
 
@@ -538,7 +537,7 @@ namespace FusionEngine
 			//if (stateLength)
 			{
 				auto start = in.GetReadOffset();
-				component->DeserialiseOccasional(in, IComponent::All);
+				component->DeserialiseOccasional(in);
 
 				const auto dataEnd = in.GetReadOffset();
 				const auto dataBits = dataEnd - start;
@@ -812,7 +811,7 @@ namespace FusionEngine
 				out.WriteAs<RakNet::BitSize_t>(0);
 			stream.Reset();
 
-			component->SerialiseOccasional(stream, IComponent::All);
+			component->SerialiseOccasional(stream);
 			if (stream.GetWriteOffset() > 0)
 			{
 				out.Write(stream.GetNumberOfBytesUsed());
@@ -850,7 +849,7 @@ namespace FusionEngine
 
 				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
 
-				component->DeserialiseOccasional(stream, IComponent::All);
+				component->DeserialiseOccasional(stream);
 
 				if (stream.GetNumberOfUnreadBits() >= 8)
 					SendToConsole("Not all serialised data was used when reading a " + component->GetType());

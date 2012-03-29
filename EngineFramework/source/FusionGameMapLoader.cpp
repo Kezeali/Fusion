@@ -495,12 +495,6 @@ namespace FusionEngine
 
 	void GameMapLoader::onEntityInstanced(EntityPtr &entity)
 	{
-		if (entity)
-		{
-			std::pair<TypeIndex::left_iterator, bool> r = m_TypeIndex.left.insert( TypeIndex::left_value_type(entity->GetType(), m_NextTypeIndex) );
-			if (r.second)
-				++m_NextTypeIndex;
-		}
 	}
 
 }

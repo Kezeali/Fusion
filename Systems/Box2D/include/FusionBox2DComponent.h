@@ -156,10 +156,10 @@ namespace FusionEngine
 		void SerialiseTransform(RakNet::BitStream& out, const Vector2& origin, float radius);
 		void DeserialiseTransform(RakNet::BitStream& in, const Vector2& position);
 
-		bool SerialiseContinuous(RakNet::BitStream& stream);
+		void SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void SerialiseOccasional(RakNet::BitStream& stream);
+		void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 		NonDynamicDeltaSerialiser_t m_NonDynamicDeltaSerialisationHelper;
@@ -357,10 +357,8 @@ namespace FusionEngine
 		void OnSiblingRemoved(const ComponentPtr& com);
 
 	protected:
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void SerialiseOccasional(RakNet::BitStream& stream);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
@@ -426,8 +424,6 @@ namespace FusionEngine
 		Box2DCircleFixture();
 		virtual ~Box2DCircleFixture() {}
 
-		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
-
 	private:
 		b2Shape* GetShape() { return &m_CircleShape; }
 
@@ -435,10 +431,8 @@ namespace FusionEngine
 		std::string GetType() const { return "b2Circle"; }
 
 		// Box2DFixture overides
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void SerialiseOccasional(RakNet::BitStream& stream);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
 
@@ -470,10 +464,8 @@ namespace FusionEngine
 		std::string GetType() const { return "b2Polygon"; }
 
 		// Box2DFixture overides
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void SerialiseOccasional(RakNet::BitStream& stream);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		void RefreshResource();
 
@@ -517,10 +509,8 @@ namespace FusionEngine
 		std::string GetType() const { return "b2EdgeChain"; }
 
 		// Box2DFixture overides
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void SerialiseOccasional(RakNet::BitStream& stream);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		void RefreshResource();
 

@@ -296,14 +296,6 @@ namespace FusionEngine
 		}
 	}
 
-	void CLRenderWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
-	{
-		if (type == "CLSprite")
-		{
-			CLSprite::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
-		}
-	}
-
 	std::vector<ISystemTask*> CLRenderWorld::GetTasks()
 	{
 		std::vector<ISystemTask*> tasks;

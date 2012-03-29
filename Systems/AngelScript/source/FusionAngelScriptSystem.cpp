@@ -918,7 +918,8 @@ namespace FusionEngine
 					rebuiltScript_t rebuiltScript;
 					rebuiltScript.component = scriptComponent;
 
-					scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData, IComponent::Editable);
+					// TODO: SerialiseEditable(rebuiltScript.serialisedData);
+					scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData);
 					scriptComponent->SerialiseContinuous(*rebuiltScript.continiousData);
 
 					if (rebuiltScript.occasionalData->GetNumberOfBitsUsed() == 0)
@@ -992,7 +993,7 @@ namespace FusionEngine
 			if (instantiateScript(rebuiltScript.component))
 			{
 				if (rebuiltScript.occasionalData)
-					rebuiltScript.component->DeserialiseOccasional(*rebuiltScript.occasionalData, IComponent::Editable);
+					rebuiltScript.component->DeserialiseOccasional(*rebuiltScript.occasionalData);
 				if (rebuiltScript.continiousData)
 					rebuiltScript.component->DeserialiseContinuous(*rebuiltScript.continiousData);
 			}
@@ -1115,14 +1116,6 @@ namespace FusionEngine
 		tasks.push_back(m_ASTask);
 		tasks.push_back(m_ASTaskB);
 		return tasks;
-	}
-
-	void AngelScriptWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
-	{
-		if (type == "ASScript")
-		{
-			ASScript::DeltaSerialiser_t::copyChanges(result, current_data, delta);
-		}
 	}
 
 	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo()

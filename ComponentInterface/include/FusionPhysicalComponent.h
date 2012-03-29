@@ -56,47 +56,68 @@ namespace FusionEngine
 		virtual ~IRigidBody()
 		{}
 
-		FSN_COIFACE_CTOR(IRigidBody,
-			((FSN_GET_SET)(Interpolate))
-			((FSN_GET)(Mass))
-			((FSN_GET)(Inertia))
-			((FSN_GET)(CenterOfMass))
+		FSN_COIFACE_PROPS(IRigidBody,
+			((FSN_GET_SET)(Interpolate)(bool))
+			((FSN_GET)(Mass)(float))
+			((FSN_GET)(Inertia)(float))
+			((FSN_GET)(CenterOfMass)(Vector2))
 
-			((FSN_GET_SET)(Velocity))
-			((FSN_GET_SET)(AngularVelocity))
+			((FSN_GET_SET)(Velocity)(Vector2))
+			((FSN_GET_SET)(AngularVelocity)(float))
 
-			((FSN_GET_SET)(LinearDamping))
-			((FSN_GET_SET)(AngularDamping))
+			((FSN_GET_SET)(LinearDamping)(float))
+			((FSN_GET_SET)(AngularDamping)(float))
 
-			((FSN_GET_SET)(GravityScale))
+			((FSN_GET_SET)(GravityScale)(float))
 
-			((FSN_IS_SET)(Active))
-			((FSN_IS_SET)(SleepingAllowed))
-			((FSN_IS)(Awake))
+			((FSN_IS_SET)(Active)(bool))
+			((FSN_IS_SET)(SleepingAllowed)(bool))
+			((FSN_IS)(Awake)(bool))
 
-			((FSN_IS_SET)(Bullet))
-			((FSN_IS_SET)(FixedRotation)) )
+			((FSN_IS_SET)(Bullet)(bool))
+			((FSN_IS_SET)(FixedRotation)(bool)) )
 
-		ThreadSafeProperty<bool> Interpolate;
+		//FSN_COIFACE_CTOR(IRigidBody,
+		//	((FSN_GET_SET)(Interpolate))
+		//	((FSN_GET)(Mass))
+		//	((FSN_GET)(Inertia))
+		//	((FSN_GET)(CenterOfMass))
 
-		ThreadSafeProperty<float, NullWriter<float>> Mass;
-		ThreadSafeProperty<float, NullWriter<float>> Inertia;
-		ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
+		//	((FSN_GET_SET)(Velocity))
+		//	((FSN_GET_SET)(AngularVelocity))
 
-		ThreadSafeProperty<Vector2> Velocity;
-		ThreadSafeProperty<float> AngularVelocity;
+		//	((FSN_GET_SET)(LinearDamping))
+		//	((FSN_GET_SET)(AngularDamping))
 
-		ThreadSafeProperty<float> LinearDamping;
-		ThreadSafeProperty<float> AngularDamping;
+		//	((FSN_GET_SET)(GravityScale))
 
-		ThreadSafeProperty<float> GravityScale;
+		//	((FSN_IS_SET)(Active))
+		//	((FSN_IS_SET)(SleepingAllowed))
+		//	((FSN_IS)(Awake))
 
-		ThreadSafeProperty<bool> Active;
-		ThreadSafeProperty<bool> SleepingAllowed;
-		ThreadSafeProperty<bool, NullWriter<bool>> Awake;
+		//	((FSN_IS_SET)(Bullet))
+		//	((FSN_IS_SET)(FixedRotation)) )
 
-		ThreadSafeProperty<bool> Bullet;
-		ThreadSafeProperty<bool> FixedRotation;
+		//ThreadSafeProperty<bool> Interpolate;
+
+		//ThreadSafeProperty<float, NullWriter<float>> Mass;
+		//ThreadSafeProperty<float, NullWriter<float>> Inertia;
+		//ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
+
+		//ThreadSafeProperty<Vector2> Velocity;
+		//ThreadSafeProperty<float> AngularVelocity;
+
+		//ThreadSafeProperty<float> LinearDamping;
+		//ThreadSafeProperty<float> AngularDamping;
+
+		//ThreadSafeProperty<float> GravityScale;
+
+		//ThreadSafeProperty<bool> Active;
+		//ThreadSafeProperty<bool> SleepingAllowed;
+		//ThreadSafeProperty<bool, NullWriter<bool>> Awake;
+
+		//ThreadSafeProperty<bool> Bullet;
+		//ThreadSafeProperty<bool> FixedRotation;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -133,9 +154,6 @@ namespace FusionEngine
 			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyAngularImpulseImpl(force);
 		}
-
-		//! Returns true
-		static bool IsThreadSafe() { return true; }
 
 	protected:
 		virtual bool GetInterpolate() const = 0;
@@ -195,25 +213,27 @@ namespace FusionEngine
 	FSN_BEGIN_COIFACE(IFixture)
 	public:
 
-		FSN_COIFACE_CTOR(IFixture,
-			((FSN_IS_SET)(Sensor))
-			((FSN_GET_SET)(Density))
-			((FSN_GET_SET)(Friction))
-			((FSN_GET_SET)(Restitution))
-			((FSN_GET)(AABB)) )
+		FSN_COIFACE_PROPS(IFixture,
+			((FSN_IS_SET)(Sensor)(bool))
+			((FSN_GET_SET)(Density)(float))
+			((FSN_GET_SET)(Friction)(float))
+			((FSN_GET_SET)(Restitution)(float))
+			((FSN_GET)(AABB)(b2AABB)) )
 
-		ThreadSafeProperty<bool> Sensor;
-		ThreadSafeProperty<float> Density;
-		ThreadSafeProperty<float> Friction;
-		ThreadSafeProperty<float> Restitution;
-		ThreadSafeProperty<b2AABB, NullWriter<b2AABB>> AABB;
+		//FSN_COIFACE_CTOR(IFixture,
+		//	((FSN_IS_SET)(Sensor))
+		//	((FSN_GET_SET)(Density))
+		//	((FSN_GET_SET)(Friction))
+		//	((FSN_GET_SET)(Restitution))
+		//	((FSN_GET)(AABB)) )
 
-		//ThreadSafeProperty<b2MassData> MassData;
+		//ThreadSafeProperty<bool> Sensor;
+		//ThreadSafeProperty<float> Density;
+		//ThreadSafeProperty<float> Friction;
+		//ThreadSafeProperty<float> Restitution;
+		//ThreadSafeProperty<b2AABB, NullWriter<b2AABB>> AABB;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
-
-		//! Returns true
-		static bool IsThreadSafe() { return true; }
 
 	protected:
 		//! Set if this fixture is a sensor.
@@ -253,12 +273,12 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "ICircleShape"; }
 		virtual ~ICircleShape() {}
 
-		FSN_COIFACE_CTOR(ICircleShape,
-			((FSN_GET_SET)(Position))
-			((FSN_GET_SET)(Radius)) )
+		FSN_COIFACE_PROPS(ICircleShape,
+			((FSN_GET_SET)(Position)(Vector2))
+			((FSN_GET_SET)(Radius)(float)) )
 
-		ThreadSafeProperty<Vector2> Position;
-		ThreadSafeProperty<float> Radius;
+		//ThreadSafeProperty<Vector2> Position;
+		//ThreadSafeProperty<float> Radius;
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
@@ -277,14 +297,14 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IPolygonShape"; }
 		virtual ~IPolygonShape() {}
 
-		FSN_COIFACE_CTOR(IPolygonShape,
-			((FSN_GET_SET)(PolygonFile))
-			((FSN_GET_SET)(Verts))
-			((FSN_GET)(SkinThickness)) )
+		FSN_COIFACE_PROPS(IPolygonShape,
+			((FSN_GET_SET)(PolygonFile)(std::string))
+			((FSN_GET_SET)(Verts)(std::vector<Vector2>))
+			((FSN_GET)(SkinThickness)(float)) )
 
-		ThreadSafeProperty<std::string> PolygonFile;
-		ThreadSafeProperty<std::vector<Vector2>> Verts;
-		ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
+		//ThreadSafeProperty<std::string> PolygonFile;
+		//ThreadSafeProperty<std::vector<Vector2>> Verts;
+		//ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
 
 	protected:
 		virtual const std::string& GetPolygonFile() const = 0;
@@ -302,14 +322,14 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IBoxShape"; }
 		virtual ~IBoxShape() {}
 
-		FSN_COIFACE_CTOR(IBoxShape,
-			((FSN_GET_SET)(Center))
-			((FSN_GET_SET)(Extents))
-			((FSN_GET_SET)(Angle)) )
+		FSN_COIFACE_PROPS(IBoxShape,
+			((FSN_GET_SET)(Center)(Vector2))
+			((FSN_GET_SET)(Extents)(Vector2))
+			((FSN_GET_SET)(Angle)(float)) )
 
-		ThreadSafeProperty<Vector2> Center;
-		ThreadSafeProperty<Vector2> Extents;
-		ThreadSafeProperty<float> Angle;
+		//ThreadSafeProperty<Vector2> Center;
+		//ThreadSafeProperty<Vector2> Extents;
+		//ThreadSafeProperty<float> Angle;
 
 	protected:
 		virtual Vector2 GetCenter() const = 0;
@@ -328,15 +348,14 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IEdgeShape"; }
 		virtual ~IEdgeShape() {}
 
-		FSN_COIFACE_CTOR(IEdgeShape,
-			((FSN_GET_SET)(PolygonFile))
-			((FSN_GET_SET)(Verts))
-			((FSN_IS_SET)(Loop)) )
+		FSN_COIFACE_PROPS(IEdgeShape,
+			((FSN_GET_SET)(PolygonFile)(std::string))
+			((FSN_GET_SET)(Verts)(std::vector<Vector2>))
+			((FSN_IS_SET)(Loop)(bool)) )
 
-		ThreadSafeProperty<std::string> PolygonFile;
-		ThreadSafeProperty<std::vector<Vector2>> Verts;
-		ThreadSafeProperty<bool> Loop;
-		//ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
+		//ThreadSafeProperty<std::string> PolygonFile;
+		//ThreadSafeProperty<std::vector<Vector2>> Verts;
+		//ThreadSafeProperty<bool> Loop;
 
 	protected:
 		virtual const std::string& GetPolygonFile() const = 0;

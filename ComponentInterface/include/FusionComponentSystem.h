@@ -113,8 +113,6 @@ namespace FusionEngine
 			return InstantiateComponent(type);
 		}
 
-		virtual void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data) = 0;
-
 		//! Allows a system to prevent an entity from activating until all required resources are loaded
 		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
 		//! Cancel preperation & drop any references to the given component

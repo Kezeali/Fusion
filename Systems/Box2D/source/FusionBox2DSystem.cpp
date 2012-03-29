@@ -495,21 +495,6 @@ namespace FusionEngine
 		return tasks;
 	}
 
-	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
-	{
-		if (type == "b2RigidBody" 
-			|| type == "b2Dynamic"
-			|| type == "b2Kinematic"
-			|| type == "b2Static")
-		{
-			Box2DBody::DeltaSerialiser_t::copyChanges(result, current_data, delta);
-		}
-		else if (type == "b2Circle")
-		{
-			Box2DCircleFixture::CopyChanges(result, current_data, delta);
-		}
-	}
-
 	Box2DTask::Box2DTask(Box2DWorld* sysworld, b2World* const world)
 		: ISystemTask(sysworld),
 		m_B2DSysWorld(sysworld),

@@ -41,7 +41,9 @@ namespace FusionEngine
 	}
 
 	std::shared_ptr<Archetype> ArchetypeFactory::GetArchetype(const std::string& type_id) const
-	{}
+	{
+		return std::shared_ptr<Archetype>();
+	}
 
 	void ArchetypeFactory::MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle)
 	{}

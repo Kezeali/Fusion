@@ -859,9 +859,4 @@ namespace FusionEngine
 			return false;
 	}
 
-	std::string Entity::ToString() const
-	{
-		return GetType() + " - " + m_Name;
-	}
-
 }

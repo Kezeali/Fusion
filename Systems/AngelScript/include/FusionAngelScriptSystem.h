@@ -105,8 +105,6 @@ namespace FusionEngine
 		ComponentPtr InstantiateComponent(const std::string& type);
 		ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
 
-		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
-
 		void Prepare(const ComponentPtr& component);
 		void CancelPreparation(const ComponentPtr& component);
 		void OnActivation(const ComponentPtr& component);

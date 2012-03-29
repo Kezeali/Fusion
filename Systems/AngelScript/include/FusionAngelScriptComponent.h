@@ -239,10 +239,10 @@ namespace FusionEngine
 		void OnSiblingAdded(const ComponentPtr& com);
 		void OnSiblingRemoved(const ComponentPtr& com);
 
-		bool SerialiseContinuous(RakNet::BitStream& stream);
+		void SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void SerialiseOccasional(RakNet::BitStream& stream);
+		void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		bool SerialiseProp(RakNet::BitStream& stream, CScriptAny* any);
 		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any, size_t prop_index, const std::string& prop_name = std::string());

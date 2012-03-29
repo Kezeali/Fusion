@@ -98,13 +98,39 @@
 #define FSN_INIT_PROP_W(prop) \
 	prop.SetCallbacks<iface>(this, nullptr, &iface::Set ## prop)
 
-#define FSN_GET_SET(prop) FSN_INIT_PROP(prop)
-#define FSN_GET(prop) FSN_INIT_PROP_R(prop)
-#define FSN_SET(prop) FSN_INIT_PROP_W(prop)
-#define FSN_IS_SET(prop) FSN_INIT_PROP_BOOL(prop)
-#define FSN_IS(prop) FSN_INIT_PROP_BOOL_R(prop)
+#define FSN_GET_SET (1, 1, FSN_INIT_PROP)
+#define FSN_GET     (1, 0, FSN_INIT_PROP_R)
+#define FSN_SET     (0, 1, FSN_INIT_PROP_W)
+#define FSN_IS_SET  (1, 1, FSN_INIT_PROP_BOOL)
+#define FSN_IS      (1, 0, FSN_INIT_PROP_BOOL_R)
 
-#define FSN_INIT_PROPS(r, data, v) BOOST_PP_SEQ_ELEM(0, v)( BOOST_PP_SEQ_ELEM(1, v) );
+// Accessors for the above tuples
+#define FSN_PROP_IS_GETABLE(v) BOOST_PP_TUPLE_ELEM(3, 0, BOOST_PP_SEQ_ELEM(0, v))
+#define FSN_PROP_IS_SETABLE(v) BOOST_PP_TUPLE_ELEM(3, 1, BOOST_PP_SEQ_ELEM(0, v))
+#define FSN_PROP_EXEC_INIT_MACRO(v, p) BOOST_PP_TUPLE_ELEM(3, 2, BOOST_PP_SEQ_ELEM(0, v))(p)
+#define FSN_PROP_IS_READONLY(v) BOOST_PP_NOT(FSN_PROP_IS_SETABLE(v))
+
+#define FSN_PROP_GET_NAME(v) BOOST_PP_SEQ_ELEM(1, v)
+#define FSN_PROP_GET_TYPE(v) BOOST_PP_SEQ_ELEM(2, v)
+
+#define FSN_INIT_PROPS(r, data, v) FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v));
+#define FSN_DEFINE_PROPS(r, data, v) \
+	ThreadSafeProperty< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA_IF(FSN_PROP_IS_READONLY(v)) BOOST_PP_IF(FSN_PROP_IS_READONLY(v), NullWriter< ## FSN_PROP_GET_TYPE(v) ## >, ) > ## FSN_PROP_GET_NAME(v);
+
+#define FSN_COIFACE_PROPS(iface_name, properties) \
+	void InitProperties()\
+	{\
+	typedef iface_name iface;\
+	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
+	}\
+	BOOST_PP_SEQ_FOR_EACH(FSN_DEFINE_PROPS, _, properties)
+
+#define FSN_COIFACE_CTOR FSN_COIFACE_PROPS
+
+#define FSN_COIFACE(interface_name, properties)\
+	FSN_BEGIN_COIFACE(interface_name)\
+	FSN_COIFACE_PROPS(interface_name, properties)\
+	FSN_END_COIFACE()
 
 namespace FusionEngine
 {
@@ -159,6 +185,21 @@ namespace FusionEngine
 	{
 		void Write(const T&) { FSN_ASSERT_FAIL("Can't set this property"); }
 		bool DumpWrittenValue(T&) { return false; }
+	};
+
+	//! Generic serialiser
+	template <typename T, bool Continuous = false>
+	struct GenericPropertySerialiser
+	{
+		static bool IsContinuous() { return Continuous; }
+		static void Serialise(RakNet::BitStream& stream, const T& value)
+		{
+			stream.Write(value);
+		}
+		static void Deserialise(RakNet::BitStream& stream, T& value)
+		{
+			stream.Read(value);
+		}
 	};
 
 #ifdef FSN_TSP_SIGNALS2
@@ -220,7 +261,7 @@ namespace FusionEngine
 	};
 
 	//! Threadsafe property wrapper
-	template <class T, class Writer = DefaultStaticWriter<T>>
+	template <class T, class Writer = DefaultStaticWriter<T>, class Serialiser = GenericPropertySerialiser<T>>
 	class ThreadSafeProperty : public IComponentProperty
 	{
 	private:
@@ -362,6 +403,27 @@ namespace FusionEngine
 				m_Changed = false;
 			}
 		}
+
+		void Serialise(RakNet::BitStream& stream)
+		{
+			Serialiser::Serialise(stream, m_Value);
+		}
+		void Deserialise(RakNet::BitStream& stream)
+		{
+			Serialiser::Deserialise(stream, m_Value);
+		}
+		bool IsContinuous() const
+		{
+			return Serialiser::IsContinuous();
+		}
+
+		//bool IsEqual(IComponentProperty* other) const
+		//{
+		//	if (auto sametype = dynamic_cast<ThreadSafeProperty*>(other))
+		//		return sametype->m_Value == this->m_Value;
+		//	else
+		//		return false;
+		//}
 
 		//! Mark changed
 		void MarkChanged()
@@ -535,8 +597,8 @@ namespace FusionEngine
 		Writer m_Writer;
 	};
 
-	template <class T, class Writer>
-	bool ThreadSafeProperty<T, Writer>::registered = false;
+	template <class T, class Writer, class Serialiser>
+	bool ThreadSafeProperty<T, Writer, Serialiser>::registered = false;
 
 }
 
