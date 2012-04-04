@@ -22,6 +22,9 @@
     <ClCompile Include="PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionArchetypalEntityManager.cpp">
+      <Filter>Entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">
@@ -53,6 +56,9 @@
     <ClInclude Include="include\FusionComponentFactory.h" />
     <ClInclude Include="include\FusionEntityInstantiator.h" />
     <ClInclude Include="include\FusionComponentProperty.h">
+      <Filter>Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionArchetypalEntityManager.h">
       <Filter>Entity</Filter>
     </ClInclude>
   </ItemGroup>

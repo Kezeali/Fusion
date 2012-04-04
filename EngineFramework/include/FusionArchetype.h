@@ -25,35 +25,61 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionArchetypeFactory
-#define H_FusionArchetypeFactory
+#ifndef H_FusionArchetype
+#define H_FusionArchetype
 
 #include "FusionPrerequisites.h"
 
-//#include "FusionArchetypeInterface.h"
+#include "FusionTypes.h"
+
+#include "FusionArchetypalEntityManager.h"
 
 #include <iostream>
+#include <set>
+#include <string>
+#include <vector>
+
+#include <boost/signals2/signal.hpp>
 
 namespace FusionEngine
 {
 
-	class IArchetype
+	namespace Archetypes
 	{
-	public:
-		virtual ~IArchetype();
-	};
+		extern const int s_ArchetypeFileVersion;
+	}
 
 	//! Data defining an entity archetype
 	class Archetype
 	{
 	public:
-		Archetype();
+		Archetype(const std::string& name);
 		~Archetype();
 
-		void LoadArchetype(const std::istream& data);
-		void SaveArchetype(const std::ostream& data);
+		void Load(std::istream& data);
+		void Save(std::ostream& data);
+
+		void Define(const EntityPtr& definition);
+
+		boost::signals2::signal<void (Archetypes::PropertyID_t)> ChangeSignal;
 
 	private:
+		struct ComponentData
+		{
+			struct PropertyData
+			{
+				Archetypes::PropertyID_t id;
+				std::vector<char> data;
+			};
+
+			std::string type;
+			std::string identifier;
+			std::vector<PropertyData> properties;
+		};
+
+		std::string m_Name;
+
+		std::vector<ComponentData> m_Components;
 	};
 
 }

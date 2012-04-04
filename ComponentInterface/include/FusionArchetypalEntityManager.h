@@ -25,44 +25,46 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionArchetypeFactory
-#define H_FusionArchetypeFactory
+#ifndef H_FusionArchetypalEntityManager
+#define H_FusionArchetypalEntityManager
 
 #include "FusionPrerequisites.h"
 
-#include "FusionVectorTypes.h"
 #include "FusionTypes.h"
 
-#include <string>
-#include <map>
+#include <cstdint>
+#include <functional>
 #include <memory>
+#include <set>
+
+#include <boost/signals2/connection.hpp>
 
 namespace FusionEngine
 {
+	
+	namespace Archetypes
+	{
+		typedef std::uint64_t PropertyID_t;
+	}
 
-	class Archetype;
-
-	//! Used to define archetypes
-	class ArchetypeFactory
+	//! Transfers archetype changes to an entity
+	class ArchetypalEntityManager
 	{
 	public:
-		ArchetypeFactory();
-		virtual ~ArchetypeFactory();
+		~ArchetypalEntityManager();
 
-		//! Returns an existing archetype
-		std::shared_ptr<Archetype> GetArchetype(const std::string& type_id) const;
+		void MarkOverriddenProperty(Archetypes::PropertyID_t id);
 
-		//! Creates a new archetype
-		std::shared_ptr<Archetype> CreateArchetype(const std::string& type_id);
-
-		//! Makes the given entity an instance of the given archetype
-		void MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle);
-
-		//! Defines the given archetype using the given entity
-		void DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity);
+		void OnArchetypeChange();
 
 	private:
-		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
+		//std::map<Archetypes::PropertyID_t, RakNet::BitStream> m_Properties;
+		std::set<Archetypes::PropertyID_t> m_ModifiedProperties;
+
+		std::function<void (Archetypes::PropertyID_t)> m_PropertyOverrideCallback;
+
+		std::weak_ptr<Entity> m_ManagedEntity;
+		boost::signals2::connection m_ChangeConnection;
 	};
 
 }

@@ -229,6 +229,8 @@ namespace FusionEngine
 		void AddProperty(IComponentProperty* prop);
 		void OnPropertyChanged(IComponentProperty* prop);
 
+		const std::vector<IComponentProperty*>& GetProperties() const { return m_Properties; }
+
 		void SynchronisePropertiesNow();
 
 		void SetPropChangedQueue(PropChangedQueue* q)

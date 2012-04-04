@@ -3,6 +3,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionArchetypeFactory.h"
+#include "FusionArchetype.h"
 #include "FusionEngineManager.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionEntity.h"
@@ -38,7 +39,8 @@ struct archetype_f : public testing::Test
 TEST_F(archetype_f, createInstance)
 {
 	IO::PhysFSStream input("test.archetype", IO::Read);
-	factory->LoadArchetype(input);
+	auto archetype = factory->GetArchetype("test");
+	archetype->Load(input);
 
 	EntityPtr entity;
 	// TODO instantiate an empty entity
@@ -54,7 +56,8 @@ TEST_F(archetype_f, saveArchetype)
 	factory->DefineArchetypeFromEntity("test", entity);
 
 	IO::PhysFSStream output("saved.archetype", IO::Write);
-	factory->SaveArchetype("test", output);
+	auto archetype = factory->GetArchetype("test");
+	archetype->Save(output);
 }
 
 TEST_F(archetype_f, defineArchetype)

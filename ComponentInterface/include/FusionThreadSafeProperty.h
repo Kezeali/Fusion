@@ -104,7 +104,7 @@
 #define FSN_IS_SET  (1, 1, FSN_INIT_PROP_BOOL)
 #define FSN_IS      (1, 0, FSN_INIT_PROP_BOOL_R)
 
-// Accessors for the above tuples
+// Accessors for the above tuple macros
 #define FSN_PROP_IS_GETABLE(v) BOOST_PP_TUPLE_ELEM(3, 0, BOOST_PP_SEQ_ELEM(0, v))
 #define FSN_PROP_IS_SETABLE(v) BOOST_PP_TUPLE_ELEM(3, 1, BOOST_PP_SEQ_ELEM(0, v))
 #define FSN_PROP_EXEC_INIT_MACRO(v, p) BOOST_PP_TUPLE_ELEM(3, 2, BOOST_PP_SEQ_ELEM(0, v))(p)

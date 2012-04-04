@@ -73,11 +73,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="source\FusionArchetypalEntityManager.cpp" />
     <ClCompile Include="source\FusionDeltaTime.cpp" />
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionArchetypalEntityManager.h" />
     <ClInclude Include="include\FusionCommandQueue.h" />
     <ClInclude Include="include\FusionComponentFactory.h" />
     <ClInclude Include="include\FusionComponentProperty.h" />

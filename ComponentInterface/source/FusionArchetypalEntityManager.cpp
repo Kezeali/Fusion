@@ -25,46 +25,23 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionArchetypeFactory
-#define H_FusionArchetypeFactory
+#include "PrecompiledHeaders.h"
 
-#include "FusionPrerequisites.h"
-
-#include "FusionVectorTypes.h"
-#include "FusionTypes.h"
-
-#include <string>
-#include <map>
-#include <memory>
+#include "FusionArchetypalEntityManager.h"
 
 namespace FusionEngine
 {
 
-	class Archetype;
-
-	//! Used to define archetypes
-	class ArchetypeFactory
+	ArchetypalEntityManager::~ArchetypalEntityManager()
 	{
-	public:
-		ArchetypeFactory();
-		virtual ~ArchetypeFactory();
+	}
 
-		//! Returns an existing archetype
-		std::shared_ptr<Archetype> GetArchetype(const std::string& type_id) const;
+	void ArchetypalEntityManager::MarkOverriddenProperty(Archetypes::PropertyID_t id)
+	{
+	}
 
-		//! Creates a new archetype
-		std::shared_ptr<Archetype> CreateArchetype(const std::string& type_id);
-
-		//! Makes the given entity an instance of the given archetype
-		void MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle);
-
-		//! Defines the given archetype using the given entity
-		void DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity);
-
-	private:
-		std::map<std::string, std::shared_ptr<Archetype>> m_Archetypes;
-	};
+	void ArchetypalEntityManager::OnArchetypeChange()
+	{
+	}
 
 }
-
-#endif
