@@ -185,7 +185,7 @@ namespace FusionEngine
 			numPseudoEnts = reader.ReadValue<size_t>();
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(inflateStream, false, 0, factory, entityManager, instantiator);
+				auto entity = LoadEntity(inflateStream, false, 0, false, factory, entityManager, instantiator);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
 			}
@@ -195,7 +195,7 @@ namespace FusionEngine
 				numSynchedEnts = reader.ReadValue<size_t>();
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntity(inflateStream, true, 0, factory, entityManager, instantiator);
+					auto entity = LoadEntity(inflateStream, true, 0, false, factory, entityManager, instantiator);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}
@@ -325,7 +325,7 @@ namespace FusionEngine
 			{
 				auto& entity = *it;
 
-				SaveEntity(compressingStream, entity, false);
+				SaveEntity(compressingStream, entity, false, false);
 			}
 			numEnts = nonStreamingEntitiesSynched.size();
 			nonsWriter.Write(numEnts);
@@ -333,8 +333,9 @@ namespace FusionEngine
 			{
 				auto& entity = *it;
 
-				SaveEntity(compressingStream, entity, true);
+				SaveEntity(compressingStream, entity, true, false);
 			}
+
 			instantiator->SaveState(compressingStream);
 		}
 		uint32_t nonStreamingEntitiesDataLength = (uint32_t)(std::streamoff(fileStream.tellp()) - nonStreamingDataBegin);

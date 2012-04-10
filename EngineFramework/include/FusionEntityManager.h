@@ -111,8 +111,8 @@ namespace FusionEngine
 		void SaveActiveEntities(std::ostream& stream);
 		void LoadActiveEntities(std::istream& stream);
 
-		void SaveNonStreamingEntities(std::ostream& stream);
-		void LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator);
+		void SaveNonStreamingEntities(std::ostream& stream, bool editable = false);
+		void LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator, bool editable = false);
 		//! Saves data used to restore pointers between entities
 		void SaveCurrentReferenceData();
 

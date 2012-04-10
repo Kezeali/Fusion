@@ -42,6 +42,8 @@
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 
+#include "FusionTypes.h"
+
 #include <tbb/concurrent_queue.h>
 #include <physfs.h>
 
@@ -101,6 +103,7 @@ namespace FusionEngine
 			timeout_time = other.timeout_time;
 			return *this;
 		}
+		//! Generally, this shouldn't be used
 		ConditionalCoroutine(const ConditionalCoroutine& other) :
 			new_ctx(other.new_ctx), condition(other.condition), timeout_time(other.timeout_time)
 		{
@@ -108,6 +111,7 @@ namespace FusionEngine
 #warning copying ConditionalCoroutine;
 #endif
 		}
+		//! Generally, this shouldn't be used
 		ConditionalCoroutine& operator= (const ConditionalCoroutine& other)
 		{
 #ifndef _WIN32
@@ -142,6 +146,7 @@ namespace FusionEngine
 		}
 	};
 
+	//! Angelscript component
 	class ASScript : public IComponent, public IScript
 	{
 		friend class AngelScriptWorld;
@@ -160,7 +165,9 @@ namespace FusionEngine
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
+		//! CTOR
 		ASScript();
+		//! DTOR
 		virtual ~ASScript();
 
 		std::shared_ptr<Box2DContactListener> GetContactListener();
@@ -174,6 +181,11 @@ namespace FusionEngine
 		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, int id);
 
 		int GetMethodId(const std::string& decl);
+
+		//! Enable/disable auto-yield
+		void SetAllowAutoYield(const bool value) { m_AllowAutoYield = value; }
+		//! Returns true if the script runner is allowed to force this script to yield at will
+		bool AllowsAutoYield() const { return m_AllowAutoYield; }
 
 		void Yield();
 		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
@@ -280,6 +292,8 @@ namespace FusionEngine
 		
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;
+
+		bool m_AllowAutoYield;
 
 		static int s_ASScriptTypeId;
 	};

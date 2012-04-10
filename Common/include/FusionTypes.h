@@ -53,6 +53,8 @@ namespace FusionEngine
 
 	typedef std::shared_ptr<Entity> EntityPtr;
 
+	typedef boost::intrusive_ptr<IComponent> ComponentPtr;
+
 	//! Log pointer
 	typedef std::shared_ptr<Log> LogPtr;
 	typedef std::shared_ptr<Module> ModulePtr;

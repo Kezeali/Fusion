@@ -152,6 +152,8 @@ namespace FusionEngine
 			std::set<UsedComponent_t> UsedComponents;
 
 			std::set<std::string> IncludedScripts;
+
+			bool AutoYield;
 		};
 
 		typedef boost::multi_index_container<

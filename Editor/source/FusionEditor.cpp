@@ -1064,6 +1064,16 @@ namespace FusionEngine
 		{
 			try
 			{
+				if (auto editor_metadata = m_MapLoader->CreateDataFile("editor_metadata"))
+				{
+					IO::Streams::CellStreamWriter writer(editor_metadata.get());
+					// Write the map bounds
+					CL_Rectf bounds = m_MapLoader->GetCellCache()->GetUsedBounds();
+					writer.Write(bounds.top);
+					writer.Write(bounds.left);
+					writer.Write(bounds.right);
+					writer.Write(bounds.bottom);
+				}
 				m_Saver->Save(m_SaveName, false);
 			}
 			catch (std::exception& e)
@@ -1080,6 +1090,17 @@ namespace FusionEngine
 			try
 			{
 				m_Saver->Load(m_SaveName);
+				if (auto editor_metadata = m_MapLoader->LoadDataFile("editor_metadata"))
+				{
+					IO::Streams::CellStreamReader reader(editor_metadata.get());
+					// Read the map bounds
+					CL_Rectf bounds;
+					reader.Read(bounds.top);
+					reader.Read(bounds.left);
+					reader.Read(bounds.right);
+					reader.Read(bounds.bottom);
+					m_MapLoader->GetCellCache()->SetupEditMode(true, bounds);
+				}
 				m_NonStreamedEntities = m_EntityManager->GetLastLoadedNonStreamedEntities();
 				m_StreamingManager->AddCamera(m_EditCam, m_EditCamRange);
 			}
@@ -2217,7 +2238,7 @@ namespace FusionEngine
 					writer.Write(pos.y);
 					writer.Write(transform->Angle.Get());
 				}
-				EntitySerialisationUtils::SaveEntity(*file, entity, true);
+				EntitySerialisationUtils::SaveEntity(*file, entity, true, true);
 				return true;
 			});
 		}
@@ -2243,7 +2264,7 @@ namespace FusionEngine
 					reader.Read(entityAngle);
 				}
 
-				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, true, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
 
 				if (entity->GetID())
 					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());

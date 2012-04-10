@@ -426,6 +426,27 @@ namespace FusionEngine
 							FSN_EXCEPT(PreprocessorException, "Invalid #uses directive: '" + script.substr(start, directiveLength) + "'");
 						}
 					}
+					if (preprocessorDirective[0] == "autoyield")
+					{
+						if (preprocessorDirective.size() >= 2)
+						{
+							if (preprocessorDirective[1] == "enabled")
+								scriptInfo.AutoYield = true;
+							if (preprocessorDirective[1] == "disabled")
+								scriptInfo.AutoYield = false;
+							else
+							{
+								FSN_EXCEPT(PreprocessorException, "Invalid #autoyield setting: '" + preprocessorDirective[1] + "'");
+							}
+						}
+						else
+						{
+							size_t directiveLength = pos - start;
+							if (directiveLength > 1 && (script[pos-1] == '\r' || script[pos-1] == '\n'))
+								--directiveLength;
+							FSN_EXCEPT(PreprocessorException, "Invalid #autoyield directive: '" + script.substr(start, directiveLength) + "'");
+						}
+					}
 				}
 				else
 					FSN_EXCEPT(PreprocessorException, "Invalid (empty) preprocessor directive");
@@ -1119,6 +1140,7 @@ namespace FusionEngine
 	}
 
 	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo()
+		: AutoYield(true)
 	{
 	}
 
@@ -1126,7 +1148,8 @@ namespace FusionEngine
 		: ClassName(other.ClassName),
 		Module(other.Module),
 		Properties(other.Properties),
-		UsedComponents(other.UsedComponents)
+		UsedComponents(other.UsedComponents),
+		AutoYield(other.AutoYield)
 	{
 	}
 
@@ -1134,7 +1157,8 @@ namespace FusionEngine
 		: ClassName(std::move(other.ClassName)),
 		Module(std::move(other.Module)),
 		Properties(std::move(other.Properties)),
-		UsedComponents(std::move(other.UsedComponents))
+		UsedComponents(std::move(other.UsedComponents)),
+		AutoYield(other.AutoYield)
 	{}
 
 	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (const ComponentScriptInfo &other)
@@ -1143,6 +1167,7 @@ namespace FusionEngine
 		Module = other.Module;
 		Properties = other.Properties;
 		UsedComponents = other.UsedComponents;
+		AutoYield = other.AutoYield;
 		return *this;
 	}
 
@@ -1152,6 +1177,7 @@ namespace FusionEngine
 		Module = std::move(other.Module);
 		Properties = std::move(other.Properties);
 		UsedComponents = std::move(other.UsedComponents);
+		AutoYield = other.AutoYield;
 		return *this;
 	}
 
@@ -1239,7 +1265,10 @@ namespace FusionEngine
 					{
 						auto scriptInfoForThis = m_ScriptInfo.find(objectType->GetName());
 						if (scriptInfoForThis != m_ScriptInfo.end())
+						{
+							script->SetAllowAutoYield(scriptInfoForThis->second.AutoYield);
 							script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
+						}
 						else
 							return false;
 					}

@@ -75,7 +75,7 @@ namespace FusionEngine
 		* The map provides a static entity source, whilst the CellArchiver (cache) provides methods for 
 		* storing and retrieving entity states.
 		*/
-		RegionMapLoader(bool edit_mod, const std::string& cache_path = "/cache");
+		RegionMapLoader(bool edit_mode, const std::string& cache_path = "/cache");
 		~RegionMapLoader();
 
 		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager);
@@ -159,11 +159,13 @@ namespace FusionEngine
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
-		EntityPtr LoadEntity(ICellStream& file, bool includes_id, ObjectID id);
+		EntityPtr LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable);
 
-		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids);
+		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids, const bool editable = false);
 
-		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched);
+		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable = false);
+
+		void WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable);
 
 		void Run();
 
@@ -187,6 +189,8 @@ namespace FusionEngine
 
 		std::string m_CachePath;
 		RegionCellCache* m_Cache;
+
+		RegionCellCache* m_EditableCache;
 
 		std::string m_FullBasePath;
 		std::unique_ptr<kyotocabinet::HashDB> m_EntityLocationDB;

@@ -113,6 +113,8 @@ namespace FusionEngine
 
 	void Archetype::Define(const EntityPtr& definition)
 	{
+		Archetypes::PropertyID_t nextPropId = 0;
+
 		const auto& components = definition->GetComponents();
 		for (auto it = components.begin(); it != components.end(); ++it)
 		{
@@ -138,6 +140,7 @@ namespace FusionEngine
 
 				if (comdaPropEntry != comda.properties.end())
 				{
+					comdaPropEntry->id = nextPropId++;
 					comdaPropEntry->data.assign(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed());
 					++comdaPropEntry;
 				}

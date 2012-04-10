@@ -1073,7 +1073,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::SaveNonStreamingEntities(std::ostream& stream)
+	void EntityManager::SaveNonStreamingEntities(std::ostream& stream, bool editable)
 	{
 		std::vector<EntityPtr> nonStreamingEntities;
 		for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
@@ -1088,11 +1088,11 @@ namespace FusionEngine
 		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
 		{
 			const auto& entity = *it;
-			SaveEntity(stream, entity, true);
+			SaveEntity(stream, entity, true, editable);
 		}
 	}
 
-	void EntityManager::LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator)
+	void EntityManager::LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator, bool editable)
 	{
 		IO::Streams::CellStreamReader reader(&stream);
 
@@ -1102,7 +1102,7 @@ namespace FusionEngine
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
 		{
-			auto entity = LoadEntity(stream, true, 0, m_Universe, this, instantiator);
+			auto entity = LoadEntity(stream, true, 0, editable, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 			m_LoadedNonStreamedEntities.push_back(entity);

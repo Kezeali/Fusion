@@ -70,8 +70,8 @@ namespace FusionEngine
 		//! Deserialises and returns the position data from the given state, if it contains such data
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);
 
-		void WriteComponent(OCellStream& out, IComponent* component);
-		void ReadComponent(ICellStream& in, IComponent* component);
+		void WriteComponent(OCellStream& out, IComponent* component, bool editable);
+		void ReadComponent(ICellStream& in, IComponent* component, bool editable);
 
 		//! Merge inactive entity data
 		std::streamsize MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
@@ -80,9 +80,9 @@ namespace FusionEngine
 		void CopyEntityData(ICellStream& in, OCellStream& out);
 
 		//! Save an active entity
-		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included);
+		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
 		//! Load an entity
-		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 	}
 
 }

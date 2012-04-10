@@ -1,6 +1,7 @@
 #uses ITransform
 #uses IRigidBody
 #uses ISprite
+#autoyield disable
 
 class TestB : ScriptComponent
 {

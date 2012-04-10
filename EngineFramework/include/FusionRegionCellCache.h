@@ -223,13 +223,16 @@ namespace FusionEngine
 		//! Returns a RegionFile for the given coord
 		RegionFile* GetRegionFile(const CellCoord_t& coord, bool create);
 
+		//! Returns the given cell data
 		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
+		//! Returns the compressed cell data
 		std::unique_ptr<ArchiveIStream> GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y);
 
-		void SetupEditMode(bool enable, CL_Rect bounds = CL_Rect());
-
+		//! In edit mode, the cell cache records the maximum and minimum cell coordinates
+		void SetupEditMode(bool record_bounds, CL_Rect initial_bounds = CL_Rect());
+		//! Gets the recorded bounds of the cache (max/min coords of cells accessed this session)
 		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
 	private:

@@ -790,7 +790,7 @@ namespace FusionEngine
 		}
 
 		// see if the object needs to be activated or deactivated
-		if (move)
+		if (move && !entity->IsTerrain())
 		{
 			activateInView(newCellLocation, currentCell, cellEntry, entity, warp);
 		}
@@ -1201,8 +1201,10 @@ namespace FusionEngine
 					CellEntry &cellEntry = cell_it->second;
 					Vector2 entityPosition(cellEntry.x, cellEntry.y);
 
-					// Check if the entry is in range of any cameras
-					if (std::any_of(cams.begin(), cams.end(),
+					// Check if the entry is in range of any cameras, or if it is terrain
+					//  Note that this means terrain will only be deactivated when deactivateCells
+					//  is called on this cell (a range that includes this cell, to be precise)
+					if (cell_it->first->IsTerrain() || std::any_of(cams.begin(), cams.end(),
 						[&](const std::pair<Vector2, float>& cam) { return (entityPosition - cam.first).length() <= cam.second; }))
 					{
 						if (cellEntry.active != CellEntry::Active)

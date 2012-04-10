@@ -29,6 +29,7 @@
 
 #include "FusionEntitySerialisationUtils.h"
 
+#include "FusionArchetypalEntityManager.h"
 #include "FusionEntity.h"
 #include "FusionEntityComponent.h"
 #include "FusionComponentFactory.h"
@@ -794,65 +795,99 @@ namespace FusionEngine
 			}
 		}
 
-		void WriteComponent(OCellStream& outstr, IComponent* component)
+		void WriteComponent(OCellStream& outstr, IComponent* component, bool editable)
 		{
 			FSN_ASSERT(component);
 
 			CellStreamWriter out(&outstr);
 
-			RakNet::BitStream stream;
-			component->SerialiseContinuous(stream);
-			if (stream.GetWriteOffset() > 0)
+			if (!editable)
 			{
-				out.Write(stream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
-			}
-			else
-				out.WriteAs<RakNet::BitSize_t>(0);
-			stream.Reset();
+				RakNet::BitStream stream;
+				component->SerialiseContinuous(stream);
+				if (stream.GetWriteOffset() > 0)
+				{
+					out.Write(stream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+				}
+				else
+					out.WriteAs<RakNet::BitSize_t>(0);
+				stream.Reset();
 
-			component->SerialiseOccasional(stream);
-			if (stream.GetWriteOffset() > 0)
-			{
-				out.Write(stream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+				component->SerialiseOccasional(stream);
+				if (stream.GetWriteOffset() > 0)
+				{
+					out.Write(stream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+				}
+				else
+					out.WriteAs<RakNet::BitSize_t>(0);
 			}
 			else
-				out.WriteAs<RakNet::BitSize_t>(0);
+			{
+				RakNet::BitStream stream;
+				component->SerialiseEditable(stream);
+				if (stream.GetWriteOffset() > 0)
+				{
+					out.Write(stream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+				}
+				else
+					out.WriteAs<RakNet::BitSize_t>(0);
+			}
 		}
 
-		void ReadComponent(ICellStream& instr, IComponent* component)
+		void ReadComponent(ICellStream& instr, IComponent* component, bool editable)
 		{
 			FSN_ASSERT(component);
 
 			CellStreamReader in(&instr);
 
-			const auto conDataLen = in.ReadValue<RakNet::BitSize_t>();
-			std::vector<char> data(conDataLen);
-			if (conDataLen > 0)
+			if (!editable)
 			{
-				instr.read(data.data(), conDataLen);
+				const auto conDataLen = in.ReadValue<RakNet::BitSize_t>();
+				std::vector<char> data(conDataLen);
+				if (conDataLen > 0)
+				{
+					instr.read(data.data(), conDataLen);
 
-				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
+					RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
 
-				component->DeserialiseContinuous(stream);
+					component->DeserialiseContinuous(stream);
 
-				if (stream.GetNumberOfUnreadBits() >= 8)
-					SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+					if (stream.GetNumberOfUnreadBits() >= 8)
+						SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+				}
+
+				const auto occDataLen = in.ReadValue<RakNet::BitSize_t>();
+				if (occDataLen > 0)
+				{
+					data.resize(occDataLen);
+					instr.read(data.data(), occDataLen);
+
+					RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
+
+					component->DeserialiseOccasional(stream);
+
+					if (stream.GetNumberOfUnreadBits() >= 8)
+						SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+				}
 			}
-
-			const auto occDataLen = in.ReadValue<RakNet::BitSize_t>();
-			if (occDataLen > 0)
+			else
 			{
-				data.resize(occDataLen);
-				instr.read(data.data(), occDataLen);
+				const auto dataLen = in.ReadValue<RakNet::BitSize_t>();
+				std::vector<char> data(dataLen);
+				if (dataLen > 0)
+				{
+					instr.read(data.data(), dataLen);
 
-				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
+					RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
 
-				component->DeserialiseOccasional(stream);
+					component->DeserialiseEditable(stream);
 
-				if (stream.GetNumberOfUnreadBits() >= 8)
-					SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+					if (stream.GetNumberOfUnreadBits() >= 8)
+						SendToConsole("Not all serialised data was used when reading a " + component->GetType() + " (editable mode)");
+				}
 			}
 		}
 
@@ -864,7 +899,7 @@ namespace FusionEngine
 		//	out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 		//}
 
-		void SaveEntity(OCellStream& outstr, EntityPtr entity, bool id_included)
+		void SaveEntity(OCellStream& outstr, EntityPtr entity, bool id_included, bool editable)
 		{
 			CellStreamWriter out(&outstr);
 
@@ -881,6 +916,22 @@ namespace FusionEngine
 			else
 				out.WriteString("");
 
+			out.Write(entity->IsTerrain());
+
+			if (entity->IsArchetypal())
+			{
+				// Write the identifier
+				out.WriteString(entity->GetArchetype());
+				// Write the agent data
+				auto agent = entity->GetArchetypeAgent();
+				RakNet::BitStream tempStream;
+				agent->Serialise(tempStream);
+				out.Write(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+			}
+			else
+				out.WriteString("");
+
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
 
@@ -894,7 +945,7 @@ namespace FusionEngine
 				out.Write(tempStream.GetNumberOfBytesUsed());
 				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 			}
-			WriteComponent(outstr, tfComponent);
+			WriteComponent(outstr, tfComponent, editable);
 
 			out.Write(numComponents);
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
@@ -911,12 +962,12 @@ namespace FusionEngine
 				auto& component = *it;
 				if (component.get() != tfComponent)
 				{
-					WriteComponent(outstr, component.get());
+					WriteComponent(outstr, component.get(), editable);
 				}
 			}
 		}
 
-		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 
@@ -936,6 +987,16 @@ namespace FusionEngine
 			in.Read(owner);
 
 			auto name = in.ReadString();
+
+			bool terrain = false;
+			in.Read(terrain);
+
+			auto archetype = in.ReadString();
+
+			if (!archetype.empty())
+			{
+
+			}
 
 			//const auto dataLen = in.read_uint32();
 			//std::vector<unsigned char> referencedEntitiesData(dataLen);
@@ -962,7 +1023,7 @@ namespace FusionEngine
 					tf->SetPosition(result);
 				}
 
-				ReadComponent(instr, transform.get());
+				ReadComponent(instr, transform.get(), editable);
 			}
 
 			auto entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
@@ -971,6 +1032,8 @@ namespace FusionEngine
 
 			if (!name.empty())
 				entity->SetName(name);
+
+			entity->SetTerrain(terrain);
 
 			transform->SynchronisePropertiesNow();
 
@@ -997,7 +1060,7 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					ReadComponent(instr, component.get());
+					ReadComponent(instr, component.get(), editable);
 				}
 			}
 

@@ -186,6 +186,15 @@ namespace FusionEngine
 			m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
 
 			m_Cache->SetupEditMode(true);
+
+			// Generate the path and cache object for the editable data cache (used to store data from entities serialised in "Editable"
+			//  mode - which includes metadata that allows them to be deserialised even if scripts / class definitions change)
+			std::string editorCachePath_physfs = m_CachePath + "/editable";
+			if (PHYSFS_mkdir(editorCachePath_physfs.c_str()) == 0)
+			{
+				FSN_EXCEPT(FileSystemException, "Failed to create path (" + editorCachePath_physfs + "): " + std::string(PHYSFS_getLastError()));
+			}
+			m_EditableCache = new RegionCellCache(editorCachePath_physfs);
 		}
 	}
 
@@ -491,12 +500,12 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_istream>();
 	}
 
-	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id)
+	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable)
 	{
-		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, m_Factory, m_EntityManager, m_Instantiator);
+		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_EntityManager, m_Instantiator);
 	}
 
-	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids)
+	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids, const bool editable)
 	{
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
@@ -525,7 +534,7 @@ namespace FusionEngine
 		for (size_t n = 0; n < numEntries; ++n)
 		{
 			//auto& archivedEntity = *it;
-			auto archivedEntity = LoadEntity(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0);
+			auto archivedEntity = LoadEntity(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0, editable);
 
 			Vector2 pos = archivedEntity->GetPosition();
 			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
@@ -540,7 +549,7 @@ namespace FusionEngine
 	}
 
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void RegionMapLoader::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched)
+	void RegionMapLoader::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable)
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -582,7 +591,7 @@ namespace FusionEngine
 					beginPos = counter.count();
 				}
 
-				SaveEntity(file, it->first, false);
+				SaveEntity(file, it->first, false, editable);
 
 				if (entSynched)
 				{
@@ -607,6 +616,31 @@ namespace FusionEngine
 				storeEntityLocation(*m_EntityLocationDB, std::get<0>(*it), loc, std::get<1>(*it), std::get<2>(*it));
 			}
 		}
+	}
+
+	void RegionMapLoader::WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable)
+	{
+		if (filePtr && *filePtr)
+		{
+			auto& file = *filePtr;
+
+			// Need a seekable stream, so write to a temp. one
+			std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+			std::streampos start = tempStream.tellp();
+			// Write un-synched entity data (written to cache since this is edit mode)
+			WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false);
+			std::streamsize dataLength = tempStream.tellp() - start;
+
+			WriteCell(tempStream, cell_coord, cell.get(), numSynched, true);
+
+			// Write to the file-stream
+			IO::Streams::CellStreamWriter writer(&file);
+			writer.Write(dataLength);
+
+			file << tempStream.rdbuf();
+		}
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
 	}
 
 	void RegionMapLoader::Run()
@@ -669,30 +703,15 @@ namespace FusionEngine
 
 										if (m_EditMode)
 										{
-											//if (numSynched > 0 || numPseudo > 0)
+											// The editable cache is used when saving / loading map data in the editor
+											//  (it contains additional information to make it more robust when dealing
+											//  with component script changes, etc.)
 											{
-												auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
-												if (filePtr && *filePtr)
-												{
-													auto& file = *filePtr;
-
-													// Need a seekable stream, so write to a temp. one
-													std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-													std::streampos start = tempStream.tellp();
-													// Write un-synched entity data (written to cache since this is edit mode)
-													WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false);
-													std::streamsize dataLength = tempStream.tellp() - start;
-
-													WriteCell(tempStream, cell_coord, cell.get(), numSynched, true);
-
-													// Write to the file-stream
-													IO::Streams::CellStreamWriter writer(&file);
-													writer.Write(dataLength);
-
-													file << tempStream.rdbuf();
-												}
-												else
-													FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
+												WriteEditModeData(m_EditableCache->GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, true);
+											}
+											// The normal cache is saved also so that this data can be used when compiling the map
+											{
+												WriteEditModeData(GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, false);
 											}
 										}
 										else // Not EditMode
@@ -762,7 +781,11 @@ namespace FusionEngine
 									try
 									{
 										// Get the cached cell data (if available)
-										auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
+										std::unique_ptr<std::istream> filePtr;
+										if (!m_EditMode)
+											filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
+										else // Use the editable data cache in edit mode (the other cache is informally write-only to in this mode)
+											filePtr = m_EditableCache->GetCellStreamForReading(cell_coord.x, cell_coord.y);
 
 										// Last param makes the method load synched entities from the map if the cache file isn't available:
 										if (m_Map)
@@ -789,7 +812,7 @@ namespace FusionEngine
 											}
 										}
 
-										
+										// Load normal data
 										if (filePtr && *filePtr && !filePtr->eof())
 										{
 											auto& file = *filePtr;
@@ -806,14 +829,14 @@ namespace FusionEngine
 												reader.ReadValue<std::streamsize>();
 												//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
 #endif
-												LoadEntitiesFromCellData(cell_coord, cell.get(), file, false); // In edit-mode unsynched entities are also written to the cache
+												LoadEntitiesFromCellData(cell_coord, cell.get(), file, false, m_EditMode); // In edit-mode unsynched entities are also written to the cache
 #ifdef _DEBUG
 												// Make sure all the data was read
 												// TODO: in Release builds: skip to the end if it wasn't all read?
 												//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
 #endif
 											}
-											size_t num = LoadEntitiesFromCellData(cell_coord, cell.get(), file, true);
+											size_t num = LoadEntitiesFromCellData(cell_coord, cell.get(), file, true, m_EditMode);
 
 											//std::stringstream str; str << i;
 											//SendToConsole("Cell " + str.str() + " streamed in");
