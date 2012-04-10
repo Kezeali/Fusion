@@ -29,6 +29,9 @@
 
 #include "FusionArchetypalEntityManager.h"
 
+#include "FusionComponentFactory.h"
+#include "FusionEntity.h"
+
 namespace FusionEngine
 {
 
@@ -36,12 +39,64 @@ namespace FusionEngine
 	{
 	}
 
-	void ArchetypalEntityManager::MarkOverriddenProperty(Archetypes::PropertyID_t id)
+	void ArchetypalEntityManager::OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& str)
 	{
+		m_ModifiedProperties[id].reset(new RakNet::BitStream(str.GetData(), str.GetNumberOfBytesUsed(), true));
 	}
 
-	void ArchetypalEntityManager::OnArchetypeChange()
+	void ArchetypalEntityManager::OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier)
 	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+			auto com = m_ComponentFactory->InstantiateComponent(type);
+			entity->AddComponent(com, identifier);
+			m_Components[arch_id] = com.get();
+		}
+	}
+
+	void ArchetypalEntityManager::OnComponentRemoved(Archetypes::ComponentID_t arch_id)
+	{
+		auto entry = m_Components.find(arch_id);
+		if (entry != m_Components.end())
+		{
+			if (auto entity = m_ManagedEntity.lock())
+			{
+				entity->RemoveComponent(entry->second);
+			}
+			m_Components.erase(entry);
+		}
+	}
+
+	void ArchetypalEntityManager::OnPropertyChanged(Archetypes::PropertyID_t id, RakNet::BitStream& data)
+	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+		}
+	}
+
+	void ArchetypalEntityManager::Serialise(RakNet::BitStream& stream)
+	{
+		stream.Write(m_ModifiedProperties.size());
+		for (auto it = m_ModifiedProperties.begin(); it != m_ModifiedProperties.end(); ++it)
+		{
+			stream.Write(it->first);
+			stream.Write(*it->second);
+		}
+	}
+
+	void ArchetypalEntityManager::Deserialise(RakNet::BitStream& stream)
+	{
+		auto numModifiedProps = m_ModifiedProperties.size();
+		stream.Read(numModifiedProps);
+		for (size_t i = numModifiedProps; i < numModifiedProps; ++i)
+		{
+			ModifiedProperties_t::value_type value;
+
+			stream.Read(value.first);
+			stream.Read(*value.second);
+
+			m_ModifiedProperties.insert(std::move(value));
+		}
 	}
 
 }

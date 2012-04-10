@@ -4,6 +4,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PrecompiledHeaders.cpp" />
     <ClCompile Include="FusionArchetypeFactoryTests.cpp" />
+    <ClCompile Include="FusionSynchronisedSignalSystemTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PrecompiledHeaders.h" />

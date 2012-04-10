@@ -61,5 +61,6 @@
     <ClInclude Include="include\FusionArchetypalEntityManager.h">
       <Filter>Entity</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionSynchronisedSignalingSystem.h" />
   </ItemGroup>
 </Project>

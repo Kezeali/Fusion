@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionRefCounted.h"
+#include "FusionTypes.h"
 
 #include <bitset>
 #include <vector>
@@ -63,10 +64,6 @@ namespace FusionEngine
 
 	class IComponentProperty;
 	class IComponent;
-
-	class ComponentImpl;
-
-	typedef boost::intrusive_ptr<IComponent> ComponentPtr;
 
 	//! Serialisation exception
 	class SerialisationError : public Exception

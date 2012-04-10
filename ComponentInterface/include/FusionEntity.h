@@ -39,7 +39,7 @@
 #include "FusionTypes.h"
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
-#include "FusionCommandQueue.h"
+//#include "FusionCommandQueue.h"
 #include "FusionTransformComponent.h"
 //#include "FusionPlayerInput.h"
 #include "FusionResourcePointer.h"
@@ -62,6 +62,8 @@ namespace FusionEngine
 	typedef std::shared_ptr<PlayerInput> PlayerInputPtr;
 
 	class StreamedResourceUser;
+
+	class ArchetypalEntityManager;
 
 	/*!
 	 * \brief
@@ -108,8 +110,15 @@ namespace FusionEngine
 		//! Returns the owner ID of this entity
 		PlayerID GetOwnerID() const;
 
+		//! Sets the current authority for this entity
 		void SetAuthority(PlayerID authority);
+		//! Gets the current authority for this entity
 		PlayerID GetAuthority() const;
+
+		//! Marks this entity as terrain (in first, out last when it's cell is activated)
+		void SetTerrain(bool is_terrain);
+		//! Returns true if this is a terrain entity
+		bool IsTerrain() const;
 
 		unsigned int m_SkippedPackets;
 		void PacketSkipped() { ++m_SkippedPackets; }
@@ -182,6 +191,13 @@ namespace FusionEngine
 		tbb::atomic<bool> m_GCFlag;
 		void SetGCFlag(bool value) { m_GCFlag = value; }
 		bool GetGCFlag() const { return m_GCFlag; }
+
+		//! Sets the archetype agent
+		void SetArchetypeAgent(const std::shared_ptr<ArchetypalEntityManager>& agent) { m_ArchetypeAgent = agent; }
+		//! Returns this entity's archetype agent
+		std::shared_ptr<ArchetypalEntityManager> GetArchetypeAgent() const { return m_ArchetypeAgent; } 
+		//! Returns true if this entity is archetypal (based on an archetype)
+		bool IsArchetypal() const { return (bool)m_ArchetypeAgent; }
 
 		//! Adds the given component
 		void AddComponent(const ComponentPtr& component, std::string identifier = std::string());
@@ -378,6 +394,8 @@ namespace FusionEngine
 		//!  authority is always the owner.
 		tbb::atomic<PlayerID> m_Authority;
 
+		bool m_Terrain;
+
 		tbb::spin_rw_mutex m_ComponentsMutex;
 
 		ComponentIPtr<ITransform> m_Transform;
@@ -386,6 +404,8 @@ namespace FusionEngine
 		ComInterfaceMap m_ComponentInterfaces;
 
 		PropChangedQueue *m_PropChangedQueue;
+
+		std::shared_ptr<ArchetypalEntityManager> m_ArchetypeAgent;
 
 		EntityRepo* m_Manager;
 

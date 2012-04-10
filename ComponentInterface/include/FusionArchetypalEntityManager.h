@@ -32,10 +32,12 @@
 
 #include "FusionTypes.h"
 
+#include <BitStream.h>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <set>
+#include <map>
 
 #include <boost/signals2/connection.hpp>
 
@@ -44,7 +46,8 @@ namespace FusionEngine
 	
 	namespace Archetypes
 	{
-		typedef std::uint64_t PropertyID_t;
+		typedef std::uint32_t PropertyID_t;
+		typedef std::uint16_t ComponentID_t;
 	}
 
 	//! Transfers archetype changes to an entity
@@ -53,18 +56,27 @@ namespace FusionEngine
 	public:
 		~ArchetypalEntityManager();
 
-		void MarkOverriddenProperty(Archetypes::PropertyID_t id);
+		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data);
 
-		void OnArchetypeChange();
+		void OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier);
+		void OnComponentRemoved(Archetypes::ComponentID_t arch_id);
+
+		void OnPropertyChanged(Archetypes::PropertyID_t id, RakNet::BitStream& data);
+		void OnSerialisedDataChanged(RakNet::BitStream& data);
+
+		void Serialise(RakNet::BitStream& stream);
+		void Deserialise(RakNet::BitStream& stream);
 
 	private:
-		//std::map<Archetypes::PropertyID_t, RakNet::BitStream> m_Properties;
-		std::set<Archetypes::PropertyID_t> m_ModifiedProperties;
-
-		std::function<void (Archetypes::PropertyID_t)> m_PropertyOverrideCallback;
+		typedef std::map<Archetypes::PropertyID_t, std::unique_ptr<RakNet::BitStream>> ModifiedProperties_t;
+		ModifiedProperties_t m_ModifiedProperties;
+		std::map<Archetypes::ComponentID_t, IComponent*> m_Components;
 
 		std::weak_ptr<Entity> m_ManagedEntity;
+
 		boost::signals2::connection m_ChangeConnection;
+
+		ComponentFactory* m_ComponentFactory;
 	};
 
 }

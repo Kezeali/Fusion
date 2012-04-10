@@ -134,6 +134,16 @@ namespace FusionEngine
 		return m_Authority;
 	}
 
+	void Entity::SetTerrain(bool v)
+	{
+		m_Terrain = v;
+	}
+
+	bool Entity::IsTerrain() const
+	{
+		return m_Terrain;
+	}
+
 	bool Entity::IsSyncedEntity() const
 	{
 		return m_Id > 0;

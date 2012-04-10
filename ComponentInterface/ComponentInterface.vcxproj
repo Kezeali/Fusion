@@ -92,6 +92,7 @@
     <ClInclude Include="include\FusionPhysicalComponent.h" />
     <ClInclude Include="include\FusionRender2DComponent.h" />
     <ClInclude Include="include\FusionScriptComponent.h" />
+    <ClInclude Include="include\FusionSynchronisedSignalingSystem.h" />
     <ClInclude Include="include\FusionThreadSafeProperty.h" />
     <ClInclude Include="include\FusionTransformComponent.h" />
     <ClInclude Include="PrecompiledHeaders.h" />

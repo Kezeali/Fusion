@@ -67,6 +67,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FusionArchetypeFactoryTests.cpp" />
+    <ClCompile Include="FusionSynchronisedSignalSystemTests.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PrecompiledHeaders.cpp" />
   </ItemGroup>
