@@ -46,14 +46,19 @@ namespace FusionEngine
 	{
 	public:
 		~SynchronisedSignalingSystem()
-		{}
+		{
+			for (auto it = m_Generators.begin(); it != m_Generators.end(); ++it)
+			{
+				it->second->trigger_fn = std::function<void ()>();
+			}
+		}
 
 		// Throws if the generator fn isn't convertable to Fn
 		template <class T>
 		boost::signals2::connection AddHandler(KeyT key, std::function<void (T)> handler_fn)
 		{
-			auto entry = generators.find(key);
-			if (entry != generators.end())
+			auto entry = m_Generators.find(key);
+			if (entry != m_Generators.end())
 			{
 				if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 				{
@@ -71,24 +76,45 @@ namespace FusionEngine
 		}
 
 		template <class T>
+		struct SignalSerialiser
+		{
+			std::function<void (T)> serialise;
+		};
+
+		template <class T>
 		std::function<void (T)> MakeGenerator(KeyT key)
 		{
-			FSN_ASSERT(generators.find(key) == generators.end());
+			FSN_ASSERT(m_Generators.find(key) == m_Generators.end());
 
 			auto generator = std::make_shared<Generator<T>>();
-
-			auto generator_callback = [generator](T value) { generator->queued_events.push(value); };
-
-			generators[key] = std::move(generator);
-
+			generator->trigger_fn = [this, key, generator]() { this->m_TriggeredGenerators.push(std::make_pair(key, generator)); };
+			auto generator_callback = [generator](T value) { generator->Store(value); };
+			m_Generators[key] = std::move(generator);
 			return generator_callback;
+		}
+
+		void RemoveGenerator(KeyT key)
+		{
+			FSN_ASSERT(m_Generators.find(key) != m_Generators.end());
+			auto entry = m_Generators.find(key);
+			if (entry != m_Generators.end())
+			{
+				entry->second->trigger_fn = std::function<void ()>();
+				m_Generators.erase(entry);
+			}
 		}
 
 		void Run()
 		{
-			for (auto it = generators.begin(); it != generators.end(); ++it)
+			RakNet::BitStream packet;
+
+			std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>> triggeredGenerator;
+			while (m_TriggeredGenerators.try_pop(triggeredGenerator))
 			{
-				it->second->Fire();
+				packet.Write(triggeredGenerator.first);
+				RakNet::BitStream generatorData;
+				triggeredGenerator.second->Fire(generatorData);
+				packet.Write(generatorData);
 			}
 		}
 
@@ -99,31 +125,49 @@ namespace FusionEngine
 		public:
 			virtual ~GeneratorPlaceholder() {}
 
-			virtual void Fire() = 0;
+			virtual void Fire(RakNet::BitStream&) = 0;
+
+			std::function<void ()> trigger_fn;
 		};
 
 		template <typename T>
+		class NullSerialiser
+		{
+		public:
+			static void Write(RakNet::BitStream&, T) {}
+			static void Read(RakNet::BitStream&, T&) {}
+		};
+
+		template <typename T, class SerialiserT = NullSerialiser<T>>
 		class Generator : public GeneratorPlaceholder
 		{
 		public:
-			std::function<void (T)> generator_fn;
 			boost::signals2::signal<void (T)> signal;
 
 			typedef tbb::concurrent_queue<T> EventQueue_t;
 
 			EventQueue_t queued_events;
 
-			void Fire()
+			void Store(T value)
+			{
+				queued_events.push(value);
+				trigger_fn();
+			}
+
+			void Fire(RakNet::BitStream& stream)
 			{
 				T v;
 				while (queued_events.try_pop(v))
 				{
+					SerialiserT::Write(stream, v);
 					signal(v);
 				}
 			}
 		};
 
-		std::map<KeyT, std::shared_ptr<GeneratorPlaceholder>> generators;
+		std::map<KeyT, std::shared_ptr<GeneratorPlaceholder>> m_Generators;
+
+		tbb::concurrent_queue<std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
 	};
 
 }
