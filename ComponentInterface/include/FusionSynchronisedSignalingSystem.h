@@ -40,8 +40,26 @@
 namespace FusionEngine
 {
 
-	//! Transfers archetype changes to an entity
 	template <class KeyT>
+	class NullMechanism
+	{
+	public:
+		NullMechanism()
+		{}
+
+		void BeginGenerator(KeyT)
+		{}
+
+		void EndGenerator()
+		{}
+
+		template <class T>
+		void WriteEvent(T)
+		{}
+	};
+
+	//! Transfers archetype changes to an entity
+	template <class KeyT, class SerialisationMechanism = NullMechanism<KeyT>>
 	class SynchronisedSignalingSystem
 	{
 	public:
@@ -104,18 +122,19 @@ namespace FusionEngine
 			}
 		}
 
-		void Run()
+		SerialisationMechanism Run()
 		{
-			RakNet::BitStream packet;
+			SerialisationMechanism serialiser;
 
 			std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>> triggeredGenerator;
 			while (m_TriggeredGenerators.try_pop(triggeredGenerator))
 			{
-				packet.Write(triggeredGenerator.first);
-				RakNet::BitStream generatorData;
-				triggeredGenerator.second->Fire(generatorData);
-				packet.Write(generatorData);
+				serialiser.BeginGenerator(triggeredGenerator.first);
+				triggeredGenerator.second->Fire(serialiser);
+				serialiser.EndGenerator();
 			}
+
+			return serialiser;
 		}
 
 	private:
@@ -125,20 +144,12 @@ namespace FusionEngine
 		public:
 			virtual ~GeneratorPlaceholder() {}
 
-			virtual void Fire(RakNet::BitStream&) = 0;
+			virtual void Fire(SerialisationMechanism&) = 0;
 
 			std::function<void ()> trigger_fn;
 		};
 
 		template <typename T>
-		class NullSerialiser
-		{
-		public:
-			static void Write(RakNet::BitStream&, T) {}
-			static void Read(RakNet::BitStream&, T&) {}
-		};
-
-		template <typename T, class SerialiserT = NullSerialiser<T>>
 		class Generator : public GeneratorPlaceholder
 		{
 		public:
@@ -154,12 +165,12 @@ namespace FusionEngine
 				trigger_fn();
 			}
 
-			void Fire(RakNet::BitStream& stream)
+			void Fire(SerialisationMechanism& serialiser)
 			{
 				T v;
 				while (queued_events.try_pop(v))
 				{
-					SerialiserT::Write(stream, v);
+					serialiser.WriteEvent(v);
 					signal(v);
 				}
 			}
