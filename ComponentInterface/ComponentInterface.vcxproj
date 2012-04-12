@@ -90,6 +90,7 @@
     <ClInclude Include="include\FusionEntityInstantiator.h" />
     <ClInclude Include="include\FusionEntityRepo.h" />
     <ClInclude Include="include\FusionPhysicalComponent.h" />
+    <ClInclude Include="include\FusionPropertySyncSigDetail.h" />
     <ClInclude Include="include\FusionRender2DComponent.h" />
     <ClInclude Include="include\FusionScriptComponent.h" />
     <ClInclude Include="include\FusionSynchronisedSignalingSystem.h" />
