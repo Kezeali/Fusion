@@ -35,7 +35,7 @@
 #include <boost/signals2/signal.hpp>
 
 #include <tbb/concurrent_queue.h>
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_hash_map.h>
 
 #include <functional>
 
@@ -44,24 +44,6 @@ namespace FusionEngine
 
 	namespace SyncSig
 	{
-
-		template <class KeyT>
-		class NullMechanism
-		{
-		public:
-			NullMechanism()
-			{}
-
-			void BeginGenerator(KeyT)
-			{}
-
-			void EndGenerator()
-			{}
-
-			template <class T>
-			void WriteEvent(T)
-			{}
-		};
 
 		class GeneratorQueue
 		{
@@ -83,9 +65,9 @@ namespace FusionEngine
 					return next;
 				}
 
-				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger)
+				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback)
 				{
-					return [this, trigger](T value) { this->OnGenerate(value); trigger(); };
+					return [this, trigger_callback](T value) { this->OnGenerate(value); trigger_callback(); };
 				}
 
 				typedef tbb::concurrent_queue<T> EventQueue_t;
@@ -95,13 +77,32 @@ namespace FusionEngine
 			};
 		};
 
-		//! Transfers archetype changes to an entity
-		template <class KeyT, class GeneratorDetail = GeneratorQueue, class SerialisationMechanism = NullMechanism<KeyT>>
+		template <class KeyT>
+		class NullSerialiser
+		{
+		public:
+			NullSerialiser()
+			{}
+
+			void BeginGenerator(KeyT)
+			{}
+
+			void EndGenerator()
+			{}
+
+			template <class T>
+			void WriteEvent(T)
+			{}
+		};
+
+		//! Thread-safe, serialisable, savable "signaling" (observer pattern) system
+		template <class KeyT, class GeneratorDetail = GeneratorQueue, class SerialisationMechanism = NullSerialiser<KeyT>>
 		class SynchronisedSignalingSystem
 		{
 		public:
 			//! Generator function type provided by GeneratorDetail template param.
 			typedef GeneratorDetail GeneratorDetail_t;
+			typedef SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> My_t;
 
 			//! Dtor
 			~SynchronisedSignalingSystem()
@@ -112,13 +113,17 @@ namespace FusionEngine
 				}
 			}
 
-			// Throws if the generator fn isn't convertable to Fn
+			//! Adds a hander for the given generator key
+			/*!
+			* \Throws if the generator's return type isn't equivilent to the given handler's argument type
+			*/
 			template <class T>
 			boost::signals2::connection AddHandler(KeyT key, std::function<void (T)> handler_fn)
 			{
-				auto entry = m_Generators.find(key);
-				if (entry != m_Generators.end())
+				auto range = m_Generators.equal_range(key);
+				if (range.first != range.second)
 				{
+					const auto& entry = range.first;
 					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 					{
 						//auto& generator = boost::any_cast<Generator<T>>(entry->second);
@@ -134,24 +139,32 @@ namespace FusionEngine
 					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given event type");
 			}
 
+			//! Returns a new generator functor
 			template <class T>
 			typename GeneratorDetail::Impl<T>::GeneratorFn_t MakeGenerator(KeyT key);
-
+			//! Returns a new generator functor; for generators that require 1 argument
 			template <class T, class Arg0T>
 			typename GeneratorDetail::Impl<T>::GeneratorFn_t MakeGenerator(KeyT key, Arg0T arg0);
 
+			//! Don't call this manually
+			/*!
+			* Don't call this manually... unless you know what you are doing: this
+			* should be called automatically when the functor returned by
+			* MakeGenerator goes out of scope.
+			*/
 			void RemoveGenerator(KeyT key)
 			{
-				FSN_ASSERT(m_Generators.find(key) != m_Generators.end());
-				auto entry = m_Generators.find(key);
-				if (entry != m_Generators.end())
+				FSN_ASSERT(m_Generators.count(key) > 0);
+				auto range = m_Generators.equal_range(key);
+				if (range.first != range.second)
 				{
-					entry->second->trigger_fn = std::function<void ()>();
-					m_Generators.erase(entry);
+					range.first->second->trigger_fn = std::function<void ()>();
+					m_Generators.erase(key);
 				}
 			}
 
-			SerialisationMechanism Run()
+			//! Fires queued events
+			SerialisationMechanism Fire()
 			{
 				SerialisationMechanism serialiser;
 
@@ -200,16 +213,35 @@ namespace FusionEngine
 				}
 			};
 
-			std::map<KeyT, std::shared_ptr<GeneratorPlaceholder>> m_Generators;
+			class GeneratorAutoRemover
+			{
+			public:
+				GeneratorAutoRemover(My_t* parent_, KeyT key_)
+					: parent(parent_), key(key_)
+				{}
+				~GeneratorAutoRemover()
+				{
+					parent->RemoveGenerator(key);
+				}
+
+				My_t* parent;
+				KeyT key;
+			};
+
+			typedef std::shared_ptr<GeneratorAutoRemover> AutoRemoverPtr;
+
+			typedef tbb::concurrent_hash_map<KeyT, std::shared_ptr<GeneratorPlaceholder>> GeneratorMap_t;
+			GeneratorMap_t m_Generators;
 			tbb::concurrent_queue<std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
 
 			template <class T>
 			std::shared_ptr<Generator<T>> MakeGeneratorObj(KeyT key)
 			{
-				FSN_ASSERT(m_Generators.find(key) == m_Generators.end());
+				FSN_ASSERT(m_Generators.count(key) == 0);
 
 				auto generator = std::make_shared<Generator<T>>();
 				generator->trigger_fn = [this, key, generator]() { this->m_TriggeredGenerators.push(std::make_pair(key, generator)); };
+				m_Generators.insert(std::make_pair(key, generator));
 				return std::move(generator);
 			}
 		};
@@ -218,20 +250,30 @@ namespace FusionEngine
 		template <class T>
 		typename GeneratorDetail::Impl<T>::GeneratorFn_t SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key)
 		{
+			// This will remove the generator whey the trigger callback goes out of scope
+			AutoRemoverPtr autoRemover(new GeneratorAutoRemover(this, key));
+
 			auto generator = MakeGeneratorObj<T>(key);
-			auto generator_trigger = generator->MakeGenerator([generator]() { generator->Trigger(); });
-			m_Generators[key] = std::move(generator);
-			return generator_trigger;
+
+			auto generator_trigger = generator->MakeGenerator([generator, autoRemover]() { generator->Trigger(); });
+			FSN_ASSERT_MSG(autoRemover.use_count() >= 2, "The GeneratorDetail provided seems to have failed to make a copy of the trigger callback passed");
+
+			return std::move(generator_trigger);
 		}
 
 		template <class KeyT, class GeneratorDetail, class SerialisationMechanism>
 		template <class T, class Arg0T>
 		typename GeneratorDetail::Impl<T>::GeneratorFn_t SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key, Arg0T arg0)
 		{
+			// This will remove the generator whey the trigger callback goes out of scope
+			AutoRemoverPtr autoRemover(new GeneratorAutoRemover(this, key));
+
 			auto generator = MakeGeneratorObj<T>(key);
-			auto generator_trigger = generator->MakeGenerator([generator]() { generator->Trigger(); }, arg0);
-			m_Generators[key] = std::move(generator);
-			return generator_trigger;
+
+			auto generator_trigger = generator->MakeGenerator([generator, autoRemover]() { generator->Trigger(); }, arg0);
+			FSN_ASSERT_MSG(autoRemover.use_count() >= 2, "The GeneratorDetail provided seems to have failed to make a copy of the trigger callback passed");
+
+			return std::move(generator_trigger);
 		}
 
 	}

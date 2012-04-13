@@ -65,13 +65,11 @@ namespace FusionEngine
 					return callback();
 				}
 
-				//void operator() { hasEvent = true; trigger(); }
-
-				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger, CallbackFn_t event_callback)
+				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback, CallbackFn_t event_callback)
 				{
 					FSN_ASSERT(event_callback);
 					callback = event_callback;
-					return [this, trigger]() { this->hasEvent = true; trigger(); };
+					return [this, trigger_callback]() { this->hasEvent = true; trigger_callback(); };
 				}
 			};
 		};
