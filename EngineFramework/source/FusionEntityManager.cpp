@@ -1155,8 +1155,6 @@ namespace FusionEngine
 		{
 			m_NewEntitiesToActivate.push(entity);
 		}
-
-		//entity->SetPropChangedQueue(&m_PropChangedQueue);
 	}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
@@ -1413,8 +1411,6 @@ namespace FusionEngine
 			m_StoredReferences.clear();
 		}
 		m_LoadedReferenceRange.first = m_LoadedReferenceRange.second = 0;
-
-		m_PropChangedQueue.clear();
 
 		m_ActiveEntities.clear();
 

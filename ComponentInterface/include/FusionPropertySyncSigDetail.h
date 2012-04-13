@@ -45,8 +45,8 @@ namespace FusionEngine
 			class Impl
 			{
 			public:
-				typedef std::function<T (void)> CallbackFn_t;
-				typedef std::function<void (void)> GeneratorFn_t;
+				typedef typename std::function<T (void)> CallbackFn_t;
+				typedef typename std::function<void (void)> GeneratorFn_t;
 
 				CallbackFn_t callback;
 				bool hasEvent;

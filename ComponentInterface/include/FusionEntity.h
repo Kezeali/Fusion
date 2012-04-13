@@ -73,7 +73,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Entity(EntityRepo* manager, PropChangedQueue *q, const ComponentPtr& transform_component);
+		Entity(EntityRepo* manager, const ComponentPtr& transform_component);
 		//! Destructor
 		virtual ~Entity();
 
@@ -249,8 +249,6 @@ namespace FusionEngine
 
 		void SynchroniseParallelEdits();
 
-		void SetPropChangedQueue(PropChangedQueue *q);
-
 		//std::map<std::string, std::string> GetComponentNames() const;
 
 		//! Sets the dictionary used by the EntityManager
@@ -403,7 +401,7 @@ namespace FusionEngine
 		std::vector<ComponentPtr> m_Components;
 		ComInterfaceMap m_ComponentInterfaces;
 
-		PropChangedQueue *m_PropChangedQueue;
+		PropertySignalingSystem_t *m_PropChangedQueue;
 
 		std::shared_ptr<ArchetypalEntityManager> m_ArchetypeAgent;
 

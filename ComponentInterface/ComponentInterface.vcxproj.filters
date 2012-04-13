@@ -65,5 +65,9 @@
     <ClInclude Include="include\FusionPropertySyncSigDetail.h">
       <Filter>Entity</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionPropertySignalingSystem.h">
+      <Filter>Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionSyncSigScriptInterface.h" />
   </ItemGroup>
 </Project>

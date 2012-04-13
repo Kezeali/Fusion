@@ -45,6 +45,8 @@ namespace FusionEngine
 	namespace SyncSig
 	{
 
+		typedef std::shared_ptr<boost::signals2::scoped_connection> HandlerConnection_t;
+
 		class GeneratorQueue
 		{
 		public:
@@ -102,7 +104,9 @@ namespace FusionEngine
 		public:
 			//! Generator function type provided by GeneratorDetail template param.
 			typedef GeneratorDetail GeneratorDetail_t;
-			typedef SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> My_t;
+			typedef KeyT Key_t;
+			typedef SerialisationMechanism SerialisationMechanism_t;
+			typedef typename SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> This_t;
 
 			//! Dtor
 			~SynchronisedSignalingSystem()
@@ -118,7 +122,7 @@ namespace FusionEngine
 			* \Throws if the generator's return type isn't equivilent to the given handler's argument type
 			*/
 			template <class T>
-			boost::signals2::connection AddHandler(KeyT key, std::function<void (T)> handler_fn)
+			HandlerConnection_t AddHandler(KeyT key, std::function<void (T)> handler_fn)
 			{
 				auto range = m_Generators.equal_range(key);
 				if (range.first != range.second)
@@ -127,7 +131,7 @@ namespace FusionEngine
 					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 					{
 						//auto& generator = boost::any_cast<Generator<T>>(entry->second);
-						return generator->signal.connect(handler_fn);
+						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
 					}
 					else
 						//catch (boost::bad_any_cast&)
@@ -216,7 +220,7 @@ namespace FusionEngine
 			class GeneratorAutoRemover
 			{
 			public:
-				GeneratorAutoRemover(My_t* parent_, KeyT key_)
+				GeneratorAutoRemover(This_t* parent_, KeyT key_)
 					: parent(parent_), key(key_)
 				{}
 				~GeneratorAutoRemover()
@@ -224,7 +228,7 @@ namespace FusionEngine
 					parent->RemoveGenerator(key);
 				}
 
-				My_t* parent;
+				This_t* parent;
 				KeyT key;
 			};
 

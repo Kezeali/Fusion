@@ -291,7 +291,7 @@ namespace FusionEngine
 				FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
 
 			// TODO: make m_PropChangedQueue a member of this class?
-			EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
+			EntityPtr entity = std::make_shared<Entity>(m_EntityManager, transform);
 
 			if (entity)
 			{
@@ -442,7 +442,7 @@ namespace FusionEngine
 				if (!tfAsTf)
 					FSN_EXCEPT(InstanceSyncException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
 
-				EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
+				EntityPtr entity = std::make_shared<Entity>(m_EntityManager, transform);
 				if (!entity)
 					FSN_EXCEPT(InstanceSyncException, "Failed to create entity");
 

@@ -63,7 +63,6 @@ namespace FusionEngine
 {
 
 	class IComponentProperty;
-	class IComponent;
 
 	//! Serialisation exception
 	class SerialisationError : public Exception
@@ -169,12 +168,7 @@ namespace FusionEngine
 		ComponentPtr p;
 	};
 
-	struct PropLock
-	{
-		PropLock() {}
-	};
-
-	typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
+	//typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
 	
 	class IComponent : public RefCounted
 	{
@@ -182,11 +176,9 @@ namespace FusionEngine
 		//! Cotr
 		IComponent()
 			: RefCounted(0),
-			m_ChangedProperties(nullptr),
 			m_InterfacesInitialised(false)
 		{
 			m_Ready = NotReady;
-			m_PropLock = std::make_shared<PropLock>();
 		}
 		//! Destructor
 		virtual ~IComponent()
@@ -197,11 +189,10 @@ namespace FusionEngine
 				delete m_LastOccasionalProperty;
 		}
 
-		void OnNoReferences()
-		{
-			m_PropLock.reset();
-			delete this;
-		}
+		//void OnNoReferences()
+		//{
+		//	delete this;
+		//}
 
 		void SetParent(Entity* parent) { m_Parent = parent; }
 		Entity* GetParent() const { return m_Parent; }
@@ -230,13 +221,10 @@ namespace FusionEngine
 
 		void SynchronisePropertiesNow();
 
-		void SetPropChangedQueue(PropChangedQueue* q)
-		{
-			m_ChangedProperties = q;
-			InitInterfaces();
-		}
-
-		std::shared_ptr<PropLock> m_PropLock;
+		//void SetPropChangedQueue(PropertySignalingSystem_t& sys)
+		//{
+		//	InitInterfaces(sys);
+		//}
 
 		//! Possible ready states
 		enum ReadyState /*: uint32_t*/ { NotReady, Preparing, Ready, Active };
@@ -289,8 +277,6 @@ namespace FusionEngine
 	private:
 		Entity* m_Parent;
 		std::string m_Identifier; // How this component is identified within the entity
-		
-		PropChangedQueue *m_ChangedProperties;
 
 		tbb::atomic<ReadyState> m_Ready;
 

@@ -251,7 +251,7 @@ namespace FusionEngine
 
 			transform->SynchronisePropertiesNow();
 
-			entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
+			entity = std::make_shared<Entity>(manager, transform);
 
 			std::vector<ComponentPtr> localComponents;
 
@@ -1026,7 +1026,7 @@ namespace FusionEngine
 				ReadComponent(instr, transform.get(), editable);
 			}
 
-			auto entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
+			auto entity = std::make_shared<Entity>(manager, transform);
 			entity->SetID(id);
 			entity->SetOwnerID(owner);
 

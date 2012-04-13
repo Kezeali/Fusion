@@ -30,6 +30,7 @@
 #include "FusionEntityComponent.h"
 
 #include "FusionComponentProperty.h"
+#include "FusionPropertySignalingSystem.h"
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -38,18 +39,6 @@
 
 namespace FusionEngine
 {
-
-	class ComponentImpl
-	{
-	public:
-		void AddProperty(IComponentProperty* prop);
-
-	private:
-	};
-
-	void ComponentImpl::AddProperty(IComponentProperty* prop)
-	{
-	}
 
 	void IComponent::AddProperty(IComponentProperty* prop)
 	{
@@ -63,13 +52,11 @@ namespace FusionEngine
 		propListTail = new PropertyListNode(prop);
 		propListTail->previous = previousNewestProperty;
 
-		m_ChangedProperties->push(std::make_pair(m_PropLock, prop));
+		prop->AquireSignalGenerator(EvesdroppingManager::getSingleton().GetSignalingSystem());
 	}
 
 	void IComponent::OnPropertyChanged(IComponentProperty* prop)
 	{
-		FSN_ASSERT(m_ChangedProperties);
-		m_ChangedProperties->push(std::make_pair(m_PropLock, prop));
 	}
 
 	void IComponent::SynchronisePropertiesNow()

@@ -45,6 +45,7 @@
 #include "FusionPacketHandler.h"
 #include "FusionPlayerInput.h"
 #include "FusionStreamingManager.h"
+#include "FusionTypes.h"
 #include "FusionViewport.h"
 
 #include <tbb/spin_rw_mutex.h>
@@ -243,8 +244,6 @@ namespace FusionEngine
 
 		// Will notify entities that the given player was added next time Update is called 
 		void OnPlayerAdded(unsigned int local_index, PlayerID net_id);
-
-		PropChangedQueue m_PropChangedQueue;
 
 	protected:
 		//! Saves the currently loaded reference range

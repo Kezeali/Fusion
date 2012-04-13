@@ -67,21 +67,8 @@
 #define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
 
-#define FSN_PROPA(type, prop) \
-	FSN_PROP_X(ThreadSafeProperty<type>, prop)
-
-//! Prop
-#define FSN_PROP_X(propType, member) \
-	std::pair<std::string, propType> &get_ ## member() const { return std::make_pair(#member, member); }
-
-#define FSN_PROP(type, prop) ;
-	//ThreadSafeProperty<type> prop; \
-	//std::pair<std::string, ThreadSafeProperty<type>*> &get_ ## prop() const { return std::make_pair(#prop, &prop); }
-
-//! Readonly prop
-#define FSN_PROP_R(type, prop) \
-	ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop() { return prop; }
-
+#define FSN_PROP_ADDPROPERTY(prop) \
+	component->AddProperty(&prop);
 
 #define FSN_INIT_PROP(prop) \
 	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)
@@ -113,7 +100,9 @@
 #define FSN_PROP_GET_NAME(v) BOOST_PP_SEQ_ELEM(1, v)
 #define FSN_PROP_GET_TYPE(v) BOOST_PP_SEQ_ELEM(2, v)
 
-#define FSN_INIT_PROPS(r, data, v) FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v));
+#define FSN_INIT_PROPS(r, data, v) \
+	FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v)); \
+	FSN_PROP_ADDPROPERTY(BOOST_PP_SEQ_ELEM(1, v));
 #define FSN_DEFINE_PROPS(r, data, v) \
 	ThreadSafeProperty< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA_IF(FSN_PROP_IS_READONLY(v)) BOOST_PP_IF(FSN_PROP_IS_READONLY(v), NullWriter< ## FSN_PROP_GET_TYPE(v) ## >, ) > ## FSN_PROP_GET_NAME(v);
 
@@ -121,6 +110,8 @@
 	void InitProperties()\
 	{\
 	typedef iface_name iface;\
+	auto component = dynamic_cast<IComponent*>(this);\
+	FSN_ASSERT(component);\
 	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
 	}\
 	BOOST_PP_SEQ_FOR_EACH(FSN_DEFINE_PROPS, _, properties)
@@ -273,9 +264,10 @@ namespace FusionEngine
 		tbb::mutex m_Mutex;
 #endif
 
+		typedef ThreadSafeProperty<T, Writer, Serialiser> This_t;
+
 		ThreadSafeProperty()
 			: m_Changed(true),
-			m_Owner(nullptr),
 			m_GetSetCallbacks(nullptr),
 			m_Refs(1)
 		{}
@@ -294,12 +286,8 @@ namespace FusionEngine
 		{
 			m_GetSetCallbacks = new GetSetCallback<C, value_type_for_get, value_type_for_set>(obj, get_fn, set_fn);
 
-			GetOwner();
-
-			//m_Object = obj;
-
-			//m_Get = get_fn;
-			//m_Set = set_fn;
+			FSN_ASSERT(m_GetSetCallbacks);
+			m_GetSetCallbacks->GetObjectAsComponent()->AddProperty(this);
 		}
 
 		explicit ThreadSafeProperty(const T& value)
@@ -312,7 +300,6 @@ namespace FusionEngine
 		~ThreadSafeProperty()
 		{
 			FSN_ASSERT(m_Refs <= 1);
-			m_Connection.disconnect();
 		}
 		
 		ThreadSafeProperty& operator= (const ThreadSafeProperty& copy)
@@ -327,25 +314,14 @@ namespace FusionEngine
 			return *this;
 		}
 
-		//! Connect an observer to this property
-		ThreadSafePropertyConnection Connect(const std::function<void (const T&)>& callback)
+		void AquireSignalGenerator(PropertySignalingSystem_t& system)
 		{
-#ifndef FSN_TSP_SIGNALS2
-			tbb::mutex::scoped_lock lock(m_Mutex);
-#endif
-			return m_Signal.connect(callback);
+			m_ChangedCallback = system.MakeGenerator<const T&>(IComponentProperty::GetID(), std::bind(&This_t::Get, this));
 		}
 
-		//! Bind this property's value to another property
-		void BindProperty(ThreadSafeProperty& other)
+		void Follow(PropertySignalingSystem_t& system, PropertyID id)
 		{
-#ifndef FSN_TSP_SIGNALS2
-			tbb::mutex::scoped_lock lock(m_Mutex);
-#endif
-			//using namespace std::placeholders;
-			if (m_Connection.connected())
-				m_Connection.disconnect();
-			m_Connection = other.m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
+			m_FollowConnection = system.AddHandler<const T&>(id, std::bind(&This_t::Set, this, std::placeholders::_1));
 		}
 
 		//! Synchronise parallel (thread) writes
@@ -428,7 +404,7 @@ namespace FusionEngine
 		//! Mark changed
 		void MarkChanged()
 		{
-			GetOwner()->OnPropertyChanged(this);
+			m_ChangedCallback();
 			m_Changed = true;
 		}
 
@@ -437,7 +413,7 @@ namespace FusionEngine
 		{
 			m_Writer.Write(value);
 
-			GetOwner()->OnPropertyChanged(this);
+			m_ChangedCallback();
 		}
 
 	private:
@@ -505,9 +481,6 @@ namespace FusionEngine
 					r = engine->RegisterObjectBehaviour(type.c_str(), asBEHAVE_FACTORY, (type + " @f(const " + cname + " &in)").c_str(), asFUNCTION(this_type::TeaFactory), asCALL_CDECL); FSN_ASSERT(r >= 0);
 				}
 			}
-
-			r = engine->RegisterObjectMethod(cname.c_str(), "SignalConnection @connect(const string &in)", asMETHOD(this_type, connect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod(cname.c_str(), ("void bindProperty(" + cname + " @)").c_str(), asMETHOD(this_type, BindProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		}
 
 		void AddRef()
@@ -538,56 +511,14 @@ namespace FusionEngine
 			return new T(prop.Get());
 		}
 
-		ScriptedSlotWrapper* connect(const std::string& script_fn)
-		{
-			using namespace std::placeholders;
-			auto wrapper = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), script_fn);
-#ifdef FSN_TSP_SIGNALS2
-			wrapper->HoldConnection(Connect(std::bind(&ScriptedSlotWrapper::CallbackRef<T>, wrapper, _1)));
-#endif
-			return wrapper;
-		};
-
-		void bindProperty(ThreadSafeProperty<T, Writer>* other)
-		{
-#ifndef FSN_TSP_SIGNALS2
-			tbb::mutex::scoped_lock lock(m_Mutex);
-#endif
-			//using namespace std::placeholders;
-			if (m_Connection.connected())
-				m_Connection.disconnect();
-			m_Connection = other->m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
-		}
-
 	private:
 		unsigned int m_Refs;
 
-		IComponent* GetOwner()
-		{
-			// The unusual ordering is to (hopefully) avoid branch misprediction:
-			if (m_Owner)
-				return m_Owner;
-			else
-			{
-				FSN_ASSERT(m_GetSetCallbacks);
-				m_Owner = m_GetSetCallbacks->GetObjectAsComponent();
-				m_Owner->AddProperty(this);
-				return m_Owner;
-			}
-		}
+		typename PropertySignalingSystem_t::GeneratorDetail_t::Impl<const T&>::GeneratorFn_t m_ChangedCallback;
 
-		IComponent* m_Owner;
+		SyncSig::HandlerConnection_t m_FollowConnection;
+
 		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
-
-		//std::function<void (value_type_for_set)> m_SetFn;
-		//std::function<value_type_for_get (void) const> m_GetFn;
-
-#ifdef FSN_TSP_SIGNALS2
-		boost::signals2::signal<void (const T&)> m_Signal;
-#else
-		boost::signal<void (const T&)> m_Signal;
-#endif
-		ThreadSafePropertyConnection m_Connection; // Properties can bind directly to other properties
 
 		bool m_Changed;
 	public:

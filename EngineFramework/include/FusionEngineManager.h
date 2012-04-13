@@ -54,6 +54,7 @@ namespace FusionEngine
 	class ConsoleStdOutWriter;
 	class EngineExtension;
 	class EntitySynchroniser;
+	class EvesdroppingManager;
 	class GameMap;
 	class GUI;
 	class InputManager;
@@ -107,6 +108,8 @@ namespace FusionEngine
 		std::unique_ptr<Console> m_Console;
 		std::shared_ptr<Profiling> m_Profiling;
 		std::shared_ptr<ConsoleStdOutWriter> m_CoutWriter;
+
+		std::unique_ptr<EvesdroppingManager> m_EvesdroppingManager;
 
 		LogPtr m_Log;
 

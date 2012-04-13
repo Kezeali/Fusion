@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionComponentProperty
-#define H_FusionComponentProperty
+#ifndef H_FusionPropertySignalingSystem
+#define H_FusionPropertySignalingSystem
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,42 +34,26 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionPropertySignalingSystem.h"
+#include "FusionSingleton.h"
 
-#include <BitStream.h>
+#include "FusionSynchronisedSignalingSystem.h"
+#include "FusionPropertySyncSigDetail.h"
 
 namespace FusionEngine
 {
 
-	typedef int PropertyID;
-	
-	//! Entity Component Property interface
-	class IComponentProperty
+	typedef SyncSig::SynchronisedSignalingSystem<int, SyncSig::PropertyCallback> PropertySignalingSystem_t;
+
+	class EvesdroppingManager : public Singleton<EvesdroppingManager>
 	{
 	public:
-		virtual void AquireSignalGenerator(PropertySignalingSystem_t& system) = 0;
+		PropertySignalingSystem_t& GetSignalingSystem()
+		{
+			return m_SignalingSystem;
+		}
 
-		virtual void Follow(PropertySignalingSystem_t& system, PropertyID id) = 0;
-
-		//virtual void FireSignal() = 0;
-		virtual void Synchronise() = 0;
-
-		virtual void Serialise(RakNet::BitStream& stream) = 0;
-		virtual void Deserialise(RakNet::BitStream& stream) = 0;
-		virtual bool IsContinuous() const = 0;
-
-		PropertyID GetID() const { return (int)this; }
-
-		//virtual bool IsEqual(IComponentProperty*) const = 0;
-
-		//bool operator==(IComponentProperty* other) const
-		//{
-		//	return this->IsEqual(other);
-		//}
-		//bool operator!=(IComponentProperty* other) const
-		//{
-		//	return !this->IsEqual(other);
-		//}
+	protected:
+		PropertySignalingSystem_t m_SignalingSystem;
 	};
 
 }

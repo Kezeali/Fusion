@@ -1330,7 +1330,7 @@ namespace FusionEngine
 			transformCom = factory->InstantiateComponent("b2RigidBody");
 		}
 
-		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transformCom);
+		auto entity = std::make_shared<Entity>(entityManager, transformCom);
 
 		if (i == 2 || i == 3)
 		{
@@ -2175,7 +2175,7 @@ namespace FusionEngine
 	{
 		ComponentPtr transformCom = m_ComponentFactory->InstantiateComponent(transform_type);
 
-		auto entity = std::make_shared<Entity>(m_EntityManager.get(), &m_EntityManager->m_PropChangedQueue, transformCom);
+		auto entity = std::make_shared<Entity>(m_EntityManager.get(), transformCom);
 
 		ObjectID id = 0;
 		if (synced)

@@ -193,8 +193,8 @@ namespace FusionEngine
 	public:
 		ScriptAnyTSP(boost::intrusive_ptr<asIScriptObject> obj, size_t index)
 			: m_Object(obj.get()),
-			m_Index(index),
-			m_Owner(nullptr)
+			m_Index(index)/*,
+			m_Owner(nullptr)*/
 		{
 			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
 			m_Name = m_Object->GetPropertyName(m_Index);
@@ -207,10 +207,10 @@ namespace FusionEngine
 			//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
 		}
 
-		void SetOwner(IComponent* com)
-		{
-			m_Owner = com;
-		}
+		//void SetOwner(IComponent* com)
+		//{
+		//	m_Owner = com;
+		//}
 
 		~ScriptAnyTSP()
 		{
@@ -219,6 +219,47 @@ namespace FusionEngine
 
 		int GetTypeId() const { return m_TypeId; }
 		const std::string& GetName() const { return m_Name; }
+
+		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		{
+			if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
+			{
+				switch (m_TypeId)
+				{
+				case asTYPEID_BOOL:
+					m_ChangedCallback = system.MakeGenerator<bool>(IComponentProperty::GetID(),
+						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					break;
+				case asTYPEID_INT8:
+					m_ChangedCallback = system.MakeGenerator<std::int8_t>(IComponentProperty::GetID(),
+						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					break;
+				case asTYPEID_INT16:
+					m_ChangedCallback = system.MakeGenerator<std::int16_t>(IComponentProperty::GetID(),
+						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					break;
+				case asTYPEID_INT32:
+					m_ChangedCallback = system.MakeGenerator<std::int32_t>(IComponentProperty::GetID(),
+						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					break;
+				case asTYPEID_INT64:
+					m_ChangedCallback = system.MakeGenerator<std::int64_t>(IComponentProperty::GetID(),
+						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					break;
+				}
+			}
+			// TODO: Vector2, etc.
+			else
+			{
+				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(IComponentProperty::GetID(),
+					[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			}
+		}
+
+		void Follow(PropertySignalingSystem_t& system, PropertyID id)
+		{
+			m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, std::placeholders::_1));
+		}
 
 		bool IsDirty()
 		{
@@ -314,8 +355,9 @@ namespace FusionEngine
 				m_Writer.Write(any);
 				any->Release();
 
-				if (m_Owner)
-					m_Owner->OnPropertyChanged(this);
+				//if (m_Owner)
+				//	m_Owner->OnPropertyChanged(this);
+				m_ChangedCallback();
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
@@ -327,8 +369,9 @@ namespace FusionEngine
 			{
 				m_Writer.Write(any);
 
-				if (m_Owner)
-					m_Owner->OnPropertyChanged(this);
+				//if (m_Owner)
+				//	m_Owner->OnPropertyChanged(this);
+				m_ChangedCallback();
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
@@ -341,7 +384,10 @@ namespace FusionEngine
 
 		int m_TypeId;
 
-		IComponent* m_Owner;
+		//IComponent* m_Owner;
+		PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
+
+		SyncSig::HandlerConnection_t m_FollowConnection;
 
 		boost::intrusive_ptr<CScriptAny> m_Value;
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
@@ -1023,7 +1069,7 @@ namespace FusionEngine
 					m_ScriptProperties[interfaceIndex].reset(comProp);
 
 					AddProperty(comProp);
-					comProp->SetOwner(this);
+					//comProp->SetOwner(this);
 				}
 			}
 

@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	Entity::Entity(EntityRepo* manager, PropChangedQueue *q, const ComponentPtr& transform_component)
+	Entity::Entity(EntityRepo* manager, const ComponentPtr& transform_component)
 		: m_Name(""),
 		m_HasDefaultName(false),
 		m_Id(0),
@@ -63,8 +63,8 @@ namespace FusionEngine
 
 		m_MarkedToDeactivate = false;
 
-		FSN_ASSERT(q);
-		m_PropChangedQueue = q;
+		//FSN_ASSERT(sys);
+		//m_PropChangedQueue = sys;
 
 		m_LockingReferences = 0;
 		m_GCFlag = false;
@@ -246,7 +246,7 @@ namespace FusionEngine
 
 		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
-		component->SetPropChangedQueue(m_PropChangedQueue);
+		//component->SetPropChangedQueue(*m_PropChangedQueue);
 
 		// Add the new component to the component-by-interface map
 		const auto& interfaceNames = component->GetInterfaces();
@@ -288,7 +288,7 @@ namespace FusionEngine
 		{
 			if (*it == component)
 			{
-				component->SetPropChangedQueue(nullptr);
+				//component->SetPropChangedQueue(nullptr);
 				component->SetParent(nullptr);
 				it = m_Components.erase(it);
 			}
@@ -369,12 +369,6 @@ namespace FusionEngine
 		{
 			(*it)->SynchronisePropertiesNow();
 		}
-	}
-
-	void Entity::SetPropChangedQueue(PropChangedQueue *q)
-	{
-		FSN_ASSERT_MSG(m_Components.empty(), "Can't change the prop queue after components have been added");
-		m_PropChangedQueue = q;
 	}
 
 	void Entity::AddTag(const std::string &tag)

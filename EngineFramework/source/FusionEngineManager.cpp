@@ -174,6 +174,7 @@ namespace FusionEngine
 			m_CameraSynchroniser = std::make_shared<CameraSynchroniser>(m_StreamingManager.get());
 
 			// Init component / entity management
+			m_EvesdroppingManager.reset(new EvesdroppingManager());
 			m_ComponentUniverse.reset(new ComponentUniverse());
 			m_EntitySynchroniser.reset(new EntitySynchroniser(m_InputManager.get(), m_CameraSynchroniser.get(), m_StreamingManager.get()));
 
@@ -542,8 +543,6 @@ namespace FusionEngine
 			unsigned short listenPort = 11122;
 			m_Network->Startup(listenPort);
 
-			PropChangedQueue &propChangedQueue = m_EntityManager->m_PropChangedQueue;
-
 			// Load the map
 			if (!m_EditMode/* && varMap.count("connect") == 0*/)
 			{
@@ -621,16 +620,17 @@ namespace FusionEngine
 
 				// Propagate property changes
 				// TODO: throw if properties are changed during Rendering step?
-				PropChangedQueue::value_type changed;
-				while (propChangedQueue.try_pop(changed))
-				{
-					auto com = changed.first.lock();
-					if (com)
-					{
-						changed.second->Synchronise();
-						changed.second->FireSignal();
-					}
-				}
+				//PropChangedQueue::value_type changed;
+				//while (propChangedQueue.try_pop(changed))
+				//{
+				//	auto com = changed.first.lock();
+				//	if (com)
+				//	{
+				//		changed.second->Synchronise();
+				//		changed.second->FireSignal();
+				//	}
+				//}
+				m_EvesdroppingManager->GetSignalingSystem().Fire();
 
 				if (executed & SystemType::Simulation)
 				{
@@ -664,7 +664,7 @@ namespace FusionEngine
 			// Shutdown
 			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
 				(*it)->CleanUp();
-			propChangedQueue.clear();
+			//propChangedQueue.clear();
 			m_CameraSynchroniser.reset();
 			m_EntityManager->Clear();
 			m_StreamingManager.reset();
