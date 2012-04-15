@@ -70,6 +70,12 @@ namespace FusionEngine
 		//{
 		//	return !this->IsEqual(other);
 		//}
+
+		//void Register(asIScriptEngine* engine)
+		//{
+		//	int r;
+		//	r = engine->RegisterObjectMethod("Prop", "SignalConnection @follow(const string &in)", asMETHOD(this_type, connect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//}
 	};
 
 }

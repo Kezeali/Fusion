@@ -46,7 +46,7 @@ namespace FusionEngine
 
 		static void RegisterHandlerConnection(asIScriptEngine* engine)
 		{
-			RegisterSharedPtrType<HandlerConnection_t>("SignalHandlerConnection", engine);
+			//RegisterSharedPtrType<HandlerConnection_t>("SignalHandlerConnection", engine);
 		}
 
 		template <class SystemT>

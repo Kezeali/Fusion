@@ -39,6 +39,8 @@
 #include "FusionSynchronisedSignalingSystem.h"
 #include "FusionPropertySyncSigDetail.h"
 
+#include "FusionScriptTypeRegistrationUtils.h"
+
 namespace FusionEngine
 {
 
@@ -47,14 +49,40 @@ namespace FusionEngine
 	class EvesdroppingManager : public Singleton<EvesdroppingManager>
 	{
 	public:
+		EvesdroppingManager();
+
 		PropertySignalingSystem_t& GetSignalingSystem()
 		{
 			return m_SignalingSystem;
 		}
 
+		static void RegisterScriptInterface(asIScriptEngine* engine);
+
 	protected:
 		PropertySignalingSystem_t m_SignalingSystem;
 	};
+
+	EvesdroppingManager::EvesdroppingManager()
+	{
+		ScriptManager::getSingleton().RegisterGlobalObject("EvesdroppingManager evesdropping", this);
+	}
+
+	SyncSig::HandlerConnection_t EvesdroppingManager_Connect(IComponentProperty* prop, const std::string& fn_decl, EvesdroppingManager* obj)
+	{
+		const auto engine = asGetActiveContext()->GetEngine();
+		const auto module = engine->GetModule(asGetActiveContext()->GetFunction()->GetModuleName());
+		ScriptUtils::Calling::Caller fn(module, fn_decl.c_str());
+
+		return obj->GetSignalingSystem().AddHandler<int>(prop->GetID(), fn);
+	}
+
+	void EvesdroppingManager::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		RegisterSharedPtrType<boost::signals2::scoped_connection>("EvesdroppingConnection", engine);
+		RegisterSingletonType<EvesdroppingManager>("EvesdroppingManager", engine);
+		int r = engine->RegisterObjectMethod("EvesdroppingManager", "EvesdroppingConnection connect(Property@, const string &in)", asFUNCTION(EvesdroppingManager_Connect), asCALL_CDECL_OBJLAST);
+		FSN_ASSERT(r >= 0);
+	}
 
 }
 

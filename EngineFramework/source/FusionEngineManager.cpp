@@ -406,6 +406,8 @@ namespace FusionEngine
 		};
 		engine->RegisterObjectBehaviour("Rect", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(ScriptRect::CTOR1), asCALL_CDECL_OBJLAST);
 
+		EvesdroppingManager::RegisterScriptInterface(engine);
+
 		// Component types
 		IComponent::RegisterType<IComponent>(engine, "IComponent");
 		engine->RegisterObjectMethod("IComponent", "string getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL);
