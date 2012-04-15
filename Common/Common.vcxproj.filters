@@ -170,6 +170,9 @@
     <ClCompile Include="source\FusionPolygonLoader.cpp">
       <Filter>Resources\Loaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionCommonAppTypes.cpp">
+      <Filter>AngelScript</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptConsoleCallback.h">
@@ -338,6 +341,12 @@
     </ClInclude>
     <ClInclude Include="include\FusionCLStream.h">
       <Filter>IO\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionAppType.h">
+      <Filter>AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCommonAppTypes.h">
+      <Filter>AngelScript</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

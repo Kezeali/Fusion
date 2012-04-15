@@ -42,6 +42,8 @@
 
 #include <StringCompressor.h>
 
+#include "FusionCommonAppTypes.h"
+
 namespace FusionEngine
 {
 
@@ -220,36 +222,65 @@ namespace FusionEngine
 		int GetTypeId() const { return m_TypeId; }
 		const std::string& GetName() const { return m_Name; }
 
-		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		struct SignalGeneratorAquisitionAgent
 		{
-			if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
+			SignalGeneratorAquisitionAgent(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_)
+				: system(sys),
+				this_prop(this_prop_)
+			{}
+			template <typename T>
+			void operator() (T)
 			{
-				switch (m_TypeId)
+				if (Scripting::AppType<T>::type_id == this_prop->GetTypeId())
 				{
-				case asTYPEID_BOOL:
-					m_ChangedCallback = system.MakeGenerator<bool>(IComponentProperty::GetID(),
-						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-					break;
-				case asTYPEID_INT8:
-					m_ChangedCallback = system.MakeGenerator<std::int8_t>(IComponentProperty::GetID(),
-						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-					break;
-				case asTYPEID_INT16:
-					m_ChangedCallback = system.MakeGenerator<std::int16_t>(IComponentProperty::GetID(),
-						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-					break;
-				case asTYPEID_INT32:
-					m_ChangedCallback = system.MakeGenerator<std::int32_t>(IComponentProperty::GetID(),
-						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-					break;
-				case asTYPEID_INT64:
-					m_ChangedCallback = system.MakeGenerator<std::int64_t>(IComponentProperty::GetID(),
-						[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-					break;
+					auto propVar = this_prop; // Because lamdas can't capture member vars (bah)
+					auto getter = [propVar]()->T
+					{
+						auto scriptAny = propVar->Get();
+						T value;
+						scriptAny->Retrieve(&value, propVar->GetTypeId());
+						return value;
+					};
+					this_prop->m_ChangedCallback = system.MakeGenerator<T>(this_prop->IComponentProperty::GetID(), getter);
 				}
 			}
+			PropertySignalingSystem_t& system;
+			ScriptAnyTSP* this_prop;
+		};
+
+		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		{
+			//if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
+			//{
+			//	switch (m_TypeId)
+			//	{
+			//	case asTYPEID_BOOL:
+			//		m_ChangedCallback = system.MakeGenerator<bool>(IComponentProperty::GetID(),
+			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			//		break;
+			//	case asTYPEID_INT8:
+			//		m_ChangedCallback = system.MakeGenerator<std::int8_t>(IComponentProperty::GetID(),
+			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			//		break;
+			//	case asTYPEID_INT16:
+			//		m_ChangedCallback = system.MakeGenerator<std::int16_t>(IComponentProperty::GetID(),
+			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			//		break;
+			//	case asTYPEID_INT32:
+			//		m_ChangedCallback = system.MakeGenerator<std::int32_t>(IComponentProperty::GetID(),
+			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			//		break;
+			//	case asTYPEID_INT64:
+			//		m_ChangedCallback = system.MakeGenerator<std::int64_t>(IComponentProperty::GetID(),
+			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+			//		break;
+			//	}
+			//}
 			// TODO: Vector2, etc.
-			else
+			SignalGeneratorAquisitionAgent agent(system, this);
+			boost::mpl::for_each<Scripting::CommonAppTypes>(agent);
+			// Fall back on the any callback
+			if (!m_ChangedCallback)
 			{
 				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(IComponentProperty::GetID(),
 					[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
@@ -355,8 +386,6 @@ namespace FusionEngine
 				m_Writer.Write(any);
 				any->Release();
 
-				//if (m_Owner)
-				//	m_Owner->OnPropertyChanged(this);
 				m_ChangedCallback();
 			}
 			else
@@ -369,8 +398,6 @@ namespace FusionEngine
 			{
 				m_Writer.Write(any);
 
-				//if (m_Owner)
-				//	m_Owner->OnPropertyChanged(this);
 				m_ChangedCallback();
 			}
 			else
@@ -384,7 +411,6 @@ namespace FusionEngine
 
 		int m_TypeId;
 
-		//IComponent* m_Owner;
 		PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
 
 		SyncSig::HandlerConnection_t m_FollowConnection;

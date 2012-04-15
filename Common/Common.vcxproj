@@ -105,6 +105,7 @@
     <ClCompile Include="source\FusionBinaryStream.cpp" />
     <ClCompile Include="source\FusionClientOptions.cpp" />
     <ClCompile Include="source\FusionCmdOptions.cpp" />
+    <ClCompile Include="source\FusionCommonAppTypes.cpp" />
     <ClCompile Include="source\FusionConsole.cpp" />
     <ClCompile Include="source\FusionConsoleStdOutWriter.cpp" />
     <ClCompile Include="source\FusionException.cpp" />
@@ -151,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionAnyFS.h" />
+    <ClInclude Include="include\FusionAppType.h" />
     <ClInclude Include="include\FusionAssert.h" />
     <ClInclude Include="include\FusionAudioLoader.h" />
     <ClInclude Include="include\FusionBinaryStream.h" />
@@ -159,6 +161,7 @@
     <ClInclude Include="include\FusionCLStream.h" />
     <ClInclude Include="include\FusionCmdOptions.h" />
     <ClInclude Include="include\FusionCommon.h" />
+    <ClInclude Include="include\FusionCommonAppTypes.h" />
     <ClInclude Include="include\FusionConsole.h" />
     <ClInclude Include="include\FusionConsoleStdOutWriter.h" />
     <ClInclude Include="include\FusionException.h" />

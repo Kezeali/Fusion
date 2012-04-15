@@ -39,6 +39,7 @@
 #include <ScriptUtils/Calling/Caller.h>
 #include <boost/signals2.hpp>
 
+#include "FusionAppType.h"
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 #include "FusionScriptPreprocessor.h"
@@ -48,6 +49,8 @@
 #include <ClanLib/Core/System/system.h>
 #define SCRIPT_ARG_USE_TEMPLATE
 #endif
+
+#include <angelscript.h>
 
 namespace FusionEngine
 {
@@ -149,6 +152,15 @@ namespace FusionEngine
 
 		//! Registers a global object (type must already be registered)
 		void RegisterGlobalObject(const char *decl, void* ptr);
+
+		template <typename T>
+		int RegisterObjectType(const std::string& decl, int size, asDWORD flags)
+		{
+			int type_id = m_asEngine->RegisterObjectType(decl.c_str(), size, flags);
+			if (type_id >= 0)
+				Scripting::DefineAppType<T>(type_id, decl);
+			return type_id;
+		}
 
 		//! Runs preprocessors on the given script
 		void Preprocess(std::string &script, const char *module_name);

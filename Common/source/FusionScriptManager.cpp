@@ -54,6 +54,8 @@
 #include "scriptstdvector.h"
 #include "scriptmath.h"
 
+#include "FusionCommonAppTypes.h"
+
 using namespace std::placeholders;
 
 namespace FusionEngine
@@ -902,6 +904,12 @@ namespace FusionEngine
 		RegisterScriptAny(m_asEngine);
 
 		ScriptedSlotWrapper::Register(m_asEngine);
+
+		// Register fundimental-type & application-type IDs and names
+		Scripting::RegisterCommonAppTypes(m_asEngine);
+		Scripting::DefineAppType<std::string>(m_StringTypeId, "string");
+		Scripting::DefineAppType<Vector2>(m_VectorTypeId, "Vector");
+		Scripting::DefineAppType<CL_Colorf>(m_asEngine->GetTypeIdByDecl("Colour"), "Colour");
 
 		//RefCounted::RegisterType<DebugEvent>(m_asEngine, "DebugEvent");
 

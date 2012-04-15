@@ -113,14 +113,14 @@ namespace FusionEngine
 
 		bool m_Interpolate;
 
-		ThreadSafePropertyConnection m_PositionChangeConnection;
+		SyncSig::HandlerConnection_t m_PositionChangeConnection;
 		Vector2 m_IncommingPosition; // Set by SetPosition
 
 		Vector2 m_Position; // NewPosition is copied here when Update is called
 		Vector2 m_InterpPosition;
 		Vector2 m_LastPosition;
 
-		ThreadSafePropertyConnection m_AngleChangeConnection;
+		SyncSig::HandlerConnection_t m_AngleChangeConnection;
 		float m_IncommingAngle;
 
 		float m_Angle;

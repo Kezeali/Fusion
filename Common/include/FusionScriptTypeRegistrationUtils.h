@@ -34,12 +34,13 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
+#include "FusionAppType.h"
 
 #ifdef _DEBUG
 #include "FusionConsole.h"
 #endif
 
+#include <memory>
 
 namespace FusionEngine
 {
@@ -90,7 +91,7 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine, asDWORD type_flags)
+	int RegisterValueType(const std::string& type_name, asIScriptEngine* engine, asDWORD type_flags)
 	{
 		FSN_ASSERT(engine && "Need a valid engine pointer");
 
@@ -100,8 +101,11 @@ namespace FusionEngine
 
 		int error_code;
 
-		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | type_flags);
+		int typeId = error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | type_flags);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
+
+		// Associate this type with the script type-id and name
+		Scripting::DefineAppType<T>(typeId, type_name);
 
 		//if (type_flags & asOBJ_APP_CLASS_CONSTRUCTOR)
 		{
@@ -141,6 +145,8 @@ namespace FusionEngine
 				asCALL_CDECL_OBJLAST);
 			FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
 		}
+
+		return typeId;
 	}
 	
 	template <class T>
@@ -151,6 +157,9 @@ namespace FusionEngine
 
 		int r;
 		r = engine->RegisterObjectType(name.c_str(), sizeof(std::shared_ptr<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); FSN_ASSERT(r >= 0);
+		// Associate this type with the script type-id and name
+		Scripting::DefineAppType<std::shared_ptr<T>>(r, name);
+
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(helper_type::Construct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod(name.c_str(), (name + "& opAssign(const " + name + " &in other)").c_str(),

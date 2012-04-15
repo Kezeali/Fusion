@@ -128,19 +128,32 @@ namespace FusionEngine
 				if (range.first != range.second)
 				{
 					const auto& entry = range.first;
+
+					typedef typename std::remove_reference<T>::type value_type;
+					typedef typename std::remove_const<value_type>::type naked_type;
+
+					// Try exact match
 					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 					{
-						//auto& generator = boost::any_cast<Generator<T>>(entry->second);
+						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+					}
+					// Try non-reference type match (match handler(const T& value) to signal->T or const T)
+					else if (auto generator = std::dynamic_pointer_cast<Generator<value_type>>(entry->second))
+					{
+						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+					}
+					// Try non-const type match (match handler(const T& value) to signal->T)
+					else if (auto generator = std::dynamic_pointer_cast<Generator<naked_type>>(entry->second))
+					{
 						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
 					}
 					else
-						//catch (boost::bad_any_cast&)
 					{
-						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not equivilent to the event type");
+						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not compatible to the signal type");
 					}
 				}
 				else
-					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given event type");
+					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
 			}
 
 			//! Returns a new generator functor
@@ -184,7 +197,7 @@ namespace FusionEngine
 			}
 
 		private:
-			//! Interface for any generator
+			//! Interface for any generator (type-erasure, blah blah)
 			class GeneratorPlaceholder
 			{
 			public:
