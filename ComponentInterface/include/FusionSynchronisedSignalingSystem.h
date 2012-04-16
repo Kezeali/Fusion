@@ -169,6 +169,35 @@ namespace FusionEngine
 				}
 			}
 
+			//! Adds the given handler without trying simmilar types
+			/*!
+			* Useful when adding handlers for non-copyable types (where the handler takes a ref)
+			*/
+			template <class T>
+			HandlerConnection_t AddExactHandler(KeyT key, std::function<void (T)> handler_fn)
+			{
+				auto range = m_Generators.equal_range(key);
+				if (range.first != range.second)
+				{
+					const auto& entry = range.first;
+
+					// Try exact match
+					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
+					{
+						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+					}
+					else
+					{
+						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not exactly equal to the signal type");
+					}
+				}
+				else
+				{
+					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
+				}
+			}
+
+			//! Adds a handler that is a script function. No static type check (obviously)
 			HandlerConnection_t AddScriptHandler(KeyT key, ScriptUtils::Calling::Caller handler_fn)
 			{
 				auto range = m_Generators.equal_range(key);
@@ -266,9 +295,21 @@ namespace FusionEngine
 					trigger_fn();
 				}
 
-				boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller)
+				boost::signals2::connection ConnectCallerImpl(const ScriptUtils::Calling::Caller& caller, const std::false_type&)
 				{
 					return signal.connect(caller);
+				}
+
+				boost::signals2::connection ConnectCallerImpl(const ScriptUtils::Calling::Caller&, const std::true_type&)
+				{
+					return boost::signals2::connection();
+				}
+
+				boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller)
+				{
+					// TODO: this should be chosen based on wheter the type is non-copyable
+					//  OR I could fix Caller so that it doesn't copy params passed as references
+					return ConnectCallerImpl(caller, std::is_same<T, const T&>());
 				}
 
 				void Fire(SerialisationMechanism& serialiser)

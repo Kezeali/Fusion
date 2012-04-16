@@ -34,7 +34,7 @@ TEST_F(synchsig_f, addRemoveGenerator)
 {
 	const std::string handlerKey = "test_signal";
 
-	boost::signals2::connection connection;
+	HandlerConnection_t connection;
 	auto handlerFn = [&](int v){ ASSERT_EQ(2409, v); };
 
 	{
@@ -42,11 +42,11 @@ TEST_F(synchsig_f, addRemoveGenerator)
 		ASSERT_TRUE( generatorCallback );
 
 		ASSERT_NO_THROW( connection = sigsys->AddHandler<int>(handlerKey, handlerFn) );
-		ASSERT_TRUE( connection.connected() );
+		ASSERT_TRUE( connection->connected() );
 	} // generatorCallback should be destroyed here, which should result in the generator being removed
 
 	ASSERT_THROW( connection = sigsys->AddHandler<int>(handlerKey, handlerFn), InvalidArgumentException );
-	ASSERT_FALSE( connection.connected() );
+	ASSERT_FALSE( connection->connected() );
 }
 
 TEST_F(synchsig_f, basicHandlers)
@@ -58,9 +58,9 @@ TEST_F(synchsig_f, basicHandlers)
 	int testoutput = 0;
 
 	// This will throw if the handler type is not compatible with the generator type...
-	boost::signals2::connection connection;
+	HandlerConnection_t connection;
 	connection = sigsys->AddHandler<int>(handlerKey, [&](int v){ ASSERT_EQ(2409, v); testoutput = v; });
-	ASSERT_TRUE( connection.connected() );
+	ASSERT_TRUE( connection->connected() );
 	// ... like this:
 	auto invalid_handler = [&](float v){};
 	ASSERT_THROW( sigsys->AddHandler<float>(handlerKey, invalid_handler), InvalidArgumentException );
@@ -69,7 +69,7 @@ TEST_F(synchsig_f, basicHandlers)
 	sigsys->Fire();
 	ASSERT_EQ(2409, testoutput);
 
-	connection.disconnect();
+	connection.reset();
 
 	generatorCallback(1189);
 	sigsys->Fire();
@@ -77,7 +77,7 @@ TEST_F(synchsig_f, basicHandlers)
 }
 
 // This has to be done in a function call because macro parsing sucks.
-boost::signals2::connection InvalidAdd(std::unique_ptr<SynchronisedSignalingSystem<std::string>>& sigsys, std::string handlerKey)
+HandlerConnection_t InvalidAdd(std::unique_ptr<SynchronisedSignalingSystem<std::string>>& sigsys, std::string handlerKey)
 {
 	return sigsys->AddHandler< std::tuple<int, float> >(handlerKey, [&](std::tuple<int, float> v){});
 }
@@ -90,9 +90,9 @@ TEST_F(synchsig_f, multiArgEvents)
 
 	std::tuple<int, double> testoutput(0, 0.0);
 
-	boost::signals2::connection connection;
+	HandlerConnection_t connection;
 	connection = sigsys->AddHandler<std::tuple<int, double>>(handlerKey, [&](std::tuple<int, double> v){ testoutput = v; });
-	ASSERT_TRUE( connection.connected() );
+	ASSERT_TRUE( connection->connected() );
 
 	// See above for implementation of InvalidAdd
 	ASSERT_THROW(connection = InvalidAdd(sigsys, handlerKey), InvalidArgumentException);
@@ -164,15 +164,13 @@ TEST(synchsig, callbackGenerator)
 
 	int testoutput = 0;
 
-	boost::signals2::connection connection;
-	connection = propsigsys.AddHandler<const NoCopy&>(s.prop1.id, [&](const NoCopy& v){ testoutput = v.value; });
-	ASSERT_TRUE( connection.connected() );
+	HandlerConnection_t connection;
+	connection = propsigsys.AddExactHandler<const NoCopy&>(s.prop1.id, [&](const NoCopy& v){ testoutput = v.value; });
+	ASSERT_TRUE( connection->connected() );
 
 	s.prop1.Set(NoCopy(2409));
 	propsigsys.Fire();
 	ASSERT_EQ(2409, testoutput);
-
-	connection.disconnect();
 }
 
 //TEST(synchsig, propKeys)
@@ -187,14 +185,12 @@ TEST(synchsig, callbackGenerator)
 //
 //	int testoutput = 0;
 //
-//	boost::signals2::connection connection;
+//	HandlerConnection_t connection;
 //	connection = propsigsys.AddHandler<int>(&s.prop1, [&](int v){ ASSERT_EQ(2409, v); testoutput = v; });
-//	ASSERT_TRUE( connection.connected() );
+//	ASSERT_TRUE( connection );
 //
 //	s.prop1.Set(2409);
 //	propsigsys.Fire();
 //	ASSERT_EQ(2409, testoutput);
-//
-//	connection.disconnect();
 //}
 
