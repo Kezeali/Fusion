@@ -46,6 +46,72 @@ namespace FusionEngine
 
 	typedef SyncSig::SynchronisedSignalingSystem<int, SyncSig::PropertyCallback> PropertySignalingSystem_t;
 
+	template <class T>
+	class PersistentConnectionAgent
+	{
+	public:
+		PersistentConnectionAgent()
+			: m_PropertyID(-1)
+		{}
+		PersistentConnectionAgent(const std::function<void (T)>& handler)
+			: m_PropertyID(-1),
+			m_HandlerFn(handler)
+		{}
+
+		void SetHandlerFn(const std::function<void (T)>& handler)
+		{
+			m_HandlerFn = handler;
+		}
+
+		void Subscribe(PropertySignalingSystem_t& system, int property_id)
+		{
+			m_PropertyID = property_id;
+			ActivateSubscription(system);
+		}
+
+		void SaveSubscription(std::ostream& out) { out.write((char*)&m_PropertyID, sizeof(m_PropertyID)); }
+		void LoadSubscription(std::istream& in, PropertySignalingSystem_t& system);
+
+	private:
+		SyncSig::HandlerConnection_t m_ActiveConnection;
+		int m_PropertyID;
+		std::function<void (T)> m_HandlerFn;
+
+		void ActivateSubscription(PropertySignalingSystem_t& system);
+
+		void AddHandler(PropertySignalingSystem_t& system);
+	};
+
+	template <class T>
+	void PersistentConnectionAgent<T>::ActivateSubscription(PropertySignalingSystem_t& system)
+	{
+		if (system.HasGenerator(m_PropertyID))
+			AddHandler(system);
+		else
+		{
+			// Using the same connection holder here means that the NewGenerators
+			//  subscription will be broken as soon as a handler is successfully added
+			m_ActiveConnection = system.SubscribeNewGenerators([this](int key, PropertySignalingSystem_t& system)
+			{
+				if (key == this->m_PropertyID)
+					AddHandler(system);
+			});
+		}
+	}
+
+	template <class T>
+	void PersistentConnectionAgent<T>::AddHandler(PropertySignalingSystem_t& system)
+	{
+		m_ActiveConnection = system.AddHandler<T>(m_PropertyID, m_HandlerFn);
+	}
+
+	template <class T>
+	void PersistentConnectionAgent<T>::LoadSubscription(std::istream& in, PropertySignalingSystem_t& system)
+	{
+		in.read((char*)&m_PropertyID, sizeof(m_PropertyID));
+		ActivateSubscription(system);
+	}
+
 	class EvesdroppingManager : public Singleton<EvesdroppingManager>
 	{
 	public:
@@ -61,28 +127,6 @@ namespace FusionEngine
 	protected:
 		PropertySignalingSystem_t m_SignalingSystem;
 	};
-
-	EvesdroppingManager::EvesdroppingManager()
-	{
-		ScriptManager::getSingleton().RegisterGlobalObject("EvesdroppingManager evesdropping", this);
-	}
-
-	SyncSig::HandlerConnection_t EvesdroppingManager_Connect(IComponentProperty* prop, const std::string& fn_decl, EvesdroppingManager* obj)
-	{
-		const auto engine = asGetActiveContext()->GetEngine();
-		const auto module = engine->GetModule(asGetActiveContext()->GetFunction()->GetModuleName());
-		ScriptUtils::Calling::Caller fn(module, fn_decl.c_str());
-
-		return obj->GetSignalingSystem().AddHandler<int>(prop->GetID(), fn);
-	}
-
-	void EvesdroppingManager::RegisterScriptInterface(asIScriptEngine* engine)
-	{
-		RegisterSharedPtrType<boost::signals2::scoped_connection>("EvesdroppingConnection", engine);
-		RegisterSingletonType<EvesdroppingManager>("EvesdroppingManager", engine);
-		int r = engine->RegisterObjectMethod("EvesdroppingManager", "EvesdroppingConnection connect(Property@, const string &in)", asFUNCTION(EvesdroppingManager_Connect), asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(r >= 0);
-	}
 
 }
 

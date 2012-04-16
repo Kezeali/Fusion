@@ -234,14 +234,40 @@ namespace FusionEngine
 				if (Scripting::AppType<T>::type_id == this_prop->GetTypeId())
 				{
 					auto propVar = this_prop; // Because lamdas can't capture member vars (bah)
-					auto getter = [propVar]()->T
+					int typeId = Scripting::AppType<T>::type_id;
+					auto getter = [propVar, typeId]()->T
 					{
+						FSN_ASSERT(propVar->GetTypeId() == typeId); // Type ID shouldn't have changed
 						auto scriptAny = propVar->Get();
 						T value;
-						scriptAny->Retrieve(&value, propVar->GetTypeId());
+						scriptAny->Retrieve(&value, typeId);
 						return value;
 					};
 					this_prop->m_ChangedCallback = system.MakeGenerator<T>(this_prop->IComponentProperty::GetID(), getter);
+				}
+			}
+			PropertySignalingSystem_t& system;
+			ScriptAnyTSP* this_prop;
+		};
+
+		struct PropertyFollowingAgent
+		{
+			PropertyFollowingAgent(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_)
+				: system(sys),
+				this_prop(this_prop_)
+			{}
+			template <typename T>
+			void operator() (T)
+			{
+				if (Scripting::AppType<T>::type_id == this_prop->GetTypeId())
+				{
+					auto propVar = this_prop; // Because lamdas can't capture member vars (bah)
+					int typeId = Scripting::AppType<T>::type_id;
+					auto setter = [propVar, typeId](T value)
+					{
+						propVar.Set(static_cast<void*>(&value), typeId);
+					};
+					this_prop->m_FollowConnection = system.AddHandler<T>
 				}
 			}
 			PropertySignalingSystem_t& system;
@@ -289,7 +315,9 @@ namespace FusionEngine
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID id)
 		{
-			m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, std::placeholders::_1));
+			using namespace std::placeholders;
+
+			m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, _1));
 		}
 
 		bool IsDirty()

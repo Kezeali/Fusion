@@ -267,10 +267,22 @@ namespace FusionEngine
 		typedef ThreadSafeProperty<T, Writer, Serialiser> This_t;
 
 		ThreadSafeProperty()
-			: m_Changed(true),
+			: m_Refs(1),
 			m_GetSetCallbacks(nullptr),
-			m_Refs(1)
-		{}
+			//m_SubscriptionAgent(std::bind(&This_t::Set, this, std::placeholders::_1)),
+			m_Changed(true)
+		{
+			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
+		}
+		
+		explicit ThreadSafeProperty(const T& value)
+			: m_Refs(1),
+			m_GetSetCallbacks(nullptr),
+			m_Changed(true),
+			m_Value(value)
+		{
+			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
+		}
 
 		// Fundimental and enum types are passed to "Set" by value
 		typedef typename std::conditional<
@@ -289,13 +301,6 @@ namespace FusionEngine
 			FSN_ASSERT(m_GetSetCallbacks);
 			m_GetSetCallbacks->GetObjectAsComponent()->AddProperty(this);
 		}
-
-		explicit ThreadSafeProperty(const T& value)
-			: m_Changed(true),
-			m_Owner(nullptr),
-			m_Value(value),
-			m_Refs(1)
-		{}
 
 		~ThreadSafeProperty()
 		{
@@ -517,6 +522,7 @@ namespace FusionEngine
 		typename PropertySignalingSystem_t::GeneratorDetail_t::Impl<const T&>::GeneratorFn_t m_ChangedCallback;
 
 		SyncSig::HandlerConnection_t m_FollowConnection;
+		PersistentConnectionAgent<const T&> m_SubscriptionAgent;
 
 		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
 

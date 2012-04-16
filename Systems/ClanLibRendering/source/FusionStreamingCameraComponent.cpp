@@ -107,7 +107,7 @@ namespace FusionEngine
 		if (auto transform = dynamic_cast<ITransform*>(component.get()))
 		{
 			using namespace std::placeholders;
-			auto system = EvesdroppingManager::getSingleton().GetSignalingSystem();
+			auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
 			m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&StreamingCamera::SetPosition, this, _1));
 			m_AngleChangeConnection = system.AddHandler<float>(transform->Position.GetID(), std::bind(&StreamingCamera::SetAngle, this, _1));
 			//m_PositionChangeConnection = transform->Position.Connect(std::bind(&StreamingCamera::SetPosition, this, std::placeholders::_1));

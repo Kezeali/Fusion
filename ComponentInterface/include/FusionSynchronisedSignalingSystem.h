@@ -39,6 +39,8 @@
 
 #include <functional>
 
+#include <ScriptUtils/Calling/Caller.h>
+
 namespace FusionEngine
 {
 
@@ -101,12 +103,21 @@ namespace FusionEngine
 		template <class KeyT, class GeneratorDetail = GeneratorQueue, class SerialisationMechanism = NullSerialiser<KeyT>>
 		class SynchronisedSignalingSystem
 		{
+		private:
+			// Non-copyable
+			SynchronisedSignalingSystem(const SynchronisedSignalingSystem& other)
+			{
+			}
 		public:
 			//! Generator function type provided by GeneratorDetail template param.
 			typedef GeneratorDetail GeneratorDetail_t;
 			typedef KeyT Key_t;
 			typedef SerialisationMechanism SerialisationMechanism_t;
 			typedef typename SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> This_t;
+
+			SynchronisedSignalingSystem()
+			{
+			}
 
 			//! Dtor
 			~SynchronisedSignalingSystem()
@@ -153,7 +164,24 @@ namespace FusionEngine
 					}
 				}
 				else
+				{
 					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
+				}
+			}
+
+			HandlerConnection_t AddScriptHandler(KeyT key, ScriptUtils::Calling::Caller handler_fn)
+			{
+				auto range = m_Generators.equal_range(key);
+				if (range.first != range.second)
+				{
+					const auto& entry = range.first;
+
+					return std::make_shared<boost::signals2::scoped_connection>(entry->second->ConnectCaller(handler_fn));
+				}
+				else
+				{
+					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
+				}
 			}
 
 			//! Returns a new generator functor
@@ -196,6 +224,18 @@ namespace FusionEngine
 				return serialiser;
 			}
 
+			bool HasGenerator(KeyT key) const
+			{
+				return m_Generators.count(key) > 0;
+			}
+
+			HandlerConnection_t SubscribeNewGenerators(const std::function<void (KeyT, This_t&)>& callback)
+			{
+				return std::make_shared<boost::signals2::scoped_connection>(SigGeneratorDefined.connect(callback));
+			}
+
+			boost::signals2::signal<void (KeyT, This_t&)> SigGeneratorDefined;
+
 		private:
 			//! Interface for any generator (type-erasure, blah blah)
 			class GeneratorPlaceholder
@@ -205,18 +245,30 @@ namespace FusionEngine
 
 				virtual void Fire(SerialisationMechanism&) = 0;
 
+				virtual boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller) = 0;
+
 				std::function<void ()> trigger_fn;
 			};
 
 			template <typename T>
 			class Generator : public GeneratorPlaceholder, public GeneratorDetail::Impl<T>
 			{
+			private:
+				Generator(const Generator& other) {}
 			public:
 				boost::signals2::signal<void (T)> signal;
+
+				Generator()
+				{}
 
 				void Trigger()
 				{
 					trigger_fn();
+				}
+
+				boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller)
+				{
+					return signal.connect(caller);
 				}
 
 				void Fire(SerialisationMechanism& serialiser)
@@ -259,6 +311,9 @@ namespace FusionEngine
 				auto generator = std::make_shared<Generator<T>>();
 				generator->trigger_fn = [this, key, generator]() { this->m_TriggeredGenerators.push(std::make_pair(key, generator)); };
 				m_Generators.insert(std::make_pair(key, generator));
+
+				SigGeneratorDefined(key, *this);
+
 				return std::move(generator);
 			}
 		};

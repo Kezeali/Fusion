@@ -310,7 +310,7 @@ namespace FusionEngine
 
 			using namespace std::placeholders;
 
-			auto system = EvesdroppingManager::getSingleton().GetSignalingSystem();
+			auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
 			m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&CLSprite::SetPosition, this, _1));
 			m_AngleChangeConnection = system.AddHandler<float>(transform->Position.GetID(), std::bind(&CLSprite::SetAngle, this, _1));
 			m_DepthChangeConnection = system.AddHandler<int>(transform->Position.GetID(), [this](int depth) { m_EntityDepth = depth; });

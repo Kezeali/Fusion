@@ -77,6 +77,7 @@
     <ClCompile Include="source\FusionDeltaTime.cpp" />
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />
+    <ClCompile Include="source\FusionPropertySignalingSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionArchetypalEntityManager.h" />
