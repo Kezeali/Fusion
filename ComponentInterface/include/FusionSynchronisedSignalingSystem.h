@@ -295,21 +295,9 @@ namespace FusionEngine
 					trigger_fn();
 				}
 
-				boost::signals2::connection ConnectCallerImpl(const ScriptUtils::Calling::Caller& caller, const std::false_type&)
-				{
-					return signal.connect(caller);
-				}
-
-				boost::signals2::connection ConnectCallerImpl(const ScriptUtils::Calling::Caller&, const std::true_type&)
-				{
-					return boost::signals2::connection();
-				}
-
 				boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller)
 				{
-					// TODO: this should be chosen based on wheter the type is non-copyable
-					//  OR I could fix Caller so that it doesn't copy params passed as references
-					return ConnectCallerImpl(caller, std::is_same<T, const T&>());
+					return signal.connect(caller);
 				}
 
 				void Fire(SerialisationMechanism& serialiser)

@@ -140,8 +140,9 @@ public:
 	NoCopy(NoCopy&& other) : value(other.value) {}
 	NoCopy& operator= (NoCopy&& other) { value = other.value; return *this; }
 	int value;
-private:
-	NoCopy(const NoCopy&) {}
+	// TODO: make non-copyables work (ScriptUtils::Calling::Caller is incompatible with non-copyables)
+//private:
+	NoCopy(const NoCopy& other) : value(other.value) {}
 };
 
 struct S
