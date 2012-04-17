@@ -687,12 +687,12 @@ namespace FusionEngine
 		str << "+ " << sig << " called at (" << line << "," << column << ")\n";
 	}
 
-	void ScriptManager::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, int current_func, std::string &to)
+	void ScriptManager::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, const asIScriptFunction* current_func, std::string &to)
 	{
 		std::stringstream str;
 
 		// Print the current function
-		asIScriptFunction *func = engine->GetFunctionById(current_func);
+		const asIScriptFunction *func = current_func;
 		if (func != NULL)
 		{
 			const char *sig = func->GetDeclaration(true);
@@ -753,8 +753,7 @@ namespace FusionEngine
 		std::string desc =
 			CL_StringHelp::text_to_local8( cl_format("Script Exception:\n %1\n", ctx->GetExceptionString()) );
 
-		int funcId = ctx->GetExceptionFunction();
-		const asIScriptFunction *function = engine->GetFunctionById(funcId);
+		const asIScriptFunction *function = ctx->GetExceptionFunction();
 		int column = 0;
 		desc += CL_StringHelp::text_to_local8(
 			cl_format(" In function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)

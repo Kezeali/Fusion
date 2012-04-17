@@ -129,6 +129,9 @@ namespace FusionEngine
 	{
 	protected:
 		static int s_TypeId;
+#ifdef FSN_REFCOUNTED_STORE_OBJTYPE
+		static asIObjectType* s_ObjectType;
+#endif
 		bool m_GCFlag;
 
 	public:
@@ -137,14 +140,25 @@ namespace FusionEngine
 			: m_GCFlag(false)
 		{
 			ScriptManager *manager = ScriptManager::getSingletonPtr();
-			if (manager != NULL && manager->GetEnginePtr() != NULL)
-				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+			if (manager != nullptr && manager->GetEnginePtr() != nullptr)
+			{
+#ifdef FSN_REFCOUNTED_STORE_OBJTYPE
+				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_ObjectType);
+#else
+				const auto engine = manager->GetEnginePtr();
+				engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeById(s_TypeId));
+#endif
+			}
 		}
 		//! Constructor
 		GarbageCollected(asIScriptEngine *engine)
 			: m_GCFlag(false)
 		{
-			engine->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+#ifdef FSN_REFCOUNTED_STORE_OBJTYPE
+			engine->NotifyGarbageCollectorOfNewObject(this, s_ObjectType);
+#else
+			engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeById(s_TypeId));
+#endif
 		}
 		virtual ~GarbageCollected()
 		{
@@ -195,7 +209,10 @@ namespace FusionEngine
 			r = engine->RegisterObjectType(name.c_str(), 0, asOBJ_REF | asOBJ_GC); FSN_ASSERT(r >= 0);
 
 			// Note that the TypeId is recorded here
-			s_TypeId = engine->GetTypeIdByDecl(name.c_str());
+			s_TypeId = r;
+#ifdef FSN_REFCOUNTED_STORE_OBJTYPE
+			s_ObjectType = engine->GetObjectTypeById(s_TypeId);
+#endif
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(GarbageCollected, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void f()", asMETHOD(GarbageCollected, release), asCALL_THISCALL);
@@ -218,6 +235,9 @@ namespace FusionEngine
 	};
 
 	template <typename T> int GarbageCollected<T>::s_TypeId = -1;
+#ifdef FSN_REFCOUNTED_STORE_OBJTYPE
+	template <typename T> asIObjectType* GarbageCollected<T>::s_ObjectType = nullptr;
+#endif
 
 	template <class _From, class _To>
 	_To * convert_ref(_From * obj)
