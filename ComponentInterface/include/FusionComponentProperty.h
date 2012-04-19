@@ -40,8 +40,6 @@
 
 namespace FusionEngine
 {
-
-	typedef int PropertyID;
 	
 	//! Entity Component Property interface
 	class IComponentProperty

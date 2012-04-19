@@ -156,37 +156,25 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	template <typename T>
-	class ScriptTSP : public IComponentProperty
+	struct PropertyFollowerFactoryForMethods
 	{
-	public:
-		ScriptTSP(boost::intrusive_ptr<asIScriptObject> obj, size_t index)
-			: m_Object(obj),
-			m_Index(index)
+		PropertyFollowerFactoryForMethods(PersistentFollowerPtr& follower_, int type_id_, const ScriptUtils::Calling::Caller& caller_)
+			: follower(follower_),
+			type_id(type_id_),
+			caller(caller_)
+		{}
+		template <typename T>
+		void operator() (T)
 		{
-		}
-
-		void Synchronise()
-		{
-			if (m_Writer.DumpWrittenValue(this->m_Value))
+			if (Scripting::AppType<T>::type_id == type_id)
 			{
-				m_Object->GetAddressOfProperty(m_Index);
-			}
-			else
-			{
-				this->m_Value = *static_cast<T*>( m_Object->GetAddressOfProperty(m_Index) );
+				ScriptUtils::Calling::Caller callerVar = caller;
+				follower = std::make_shared<PersistentConnectionAgent<T>>([callerVar](T v) { auto callerVar(v); });
 			}
 		}
-
-		void FireSignal()
-		{
-		}
-
-	protected:
-		boost::intrusive_ptr<asIScriptObject> m_Object;
-		unsigned int m_Index;
-
-		DefaultStaticWriter<T> m_Writer;
+		PersistentFollowerPtr& follower;
+		int type_id;
+		const ScriptUtils::Calling::Caller& caller;
 	};
 
 	//! Like ThreadSafeProperty
@@ -207,6 +195,8 @@ namespace FusionEngine
 			m_Value = any;
 			any->Release(); // Assigning the intrusive-ptr above increments the ref-count
 			//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
+
+			GeneratePersistentFollower();
 		}
 
 		//void SetOwner(IComponent* com)
@@ -222,9 +212,9 @@ namespace FusionEngine
 		int GetTypeId() const { return m_TypeId; }
 		const std::string& GetName() const { return m_Name; }
 
-		struct SignalGeneratorAquisitionAgent
+		struct SignalGeneratorAquisitionFactory
 		{
-			SignalGeneratorAquisitionAgent(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_)
+			SignalGeneratorAquisitionFactory(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_)
 				: system(sys),
 				this_prop(this_prop_)
 			{}
@@ -250,11 +240,10 @@ namespace FusionEngine
 			ScriptAnyTSP* this_prop;
 		};
 
-		struct PropertyFollowingAgent
+		struct PropertyFollowerFactory
 		{
-			PropertyFollowingAgent(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_)
-				: system(sys),
-				this_prop(this_prop_)
+			PropertyFollowerFactory(ScriptAnyTSP* this_prop_)
+				: this_prop(this_prop_)
 			{}
 			template <typename T>
 			void operator() (T)
@@ -265,12 +254,11 @@ namespace FusionEngine
 					int typeId = Scripting::AppType<T>::type_id;
 					auto setter = [propVar, typeId](T value)
 					{
-						propVar.Set(static_cast<void*>(&value), typeId);
+						propVar->Set(static_cast<void*>(&value), typeId);
 					};
-					this_prop->m_FollowConnection = system.AddHandler<T>
+					this_prop->m_PersistentFollower = std::make_shared<PersistentConnectionAgent<T>>(setter);
 				}
 			}
-			PropertySignalingSystem_t& system;
 			ScriptAnyTSP* this_prop;
 		};
 
@@ -303,8 +291,8 @@ namespace FusionEngine
 			//	}
 			//}
 			// TODO: Vector2, etc.
-			SignalGeneratorAquisitionAgent agent(system, this);
-			boost::mpl::for_each<Scripting::CommonAppTypes>(agent);
+			SignalGeneratorAquisitionFactory factory(system, this);
+			boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
 			// Fall back on the any callback
 			if (!m_ChangedCallback)
 			{
@@ -313,11 +301,24 @@ namespace FusionEngine
 			}
 		}
 
+		void GeneratePersistentFollower()
+		{
+			PropertyFollowerFactory factory(this);
+			boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
+
+			if (!m_PersistentFollower)
+			{
+				using namespace std::placeholders;
+				m_PersistentFollower = std::make_shared<PersistentConnectionAgent<boost::intrusive_ptr<CScriptAny>>>(std::bind(&ScriptAnyTSP::Set, this, _1));
+			}
+		}
+
 		void Follow(PropertySignalingSystem_t& system, PropertyID id)
 		{
-			using namespace std::placeholders;
+			//using namespace std::placeholders;
 
-			m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, _1));
+			m_PersistentFollower->Subscribe(system, id);
+			//m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, _1));
 		}
 
 		bool IsDirty()
@@ -389,10 +390,14 @@ namespace FusionEngine
 		void Serialise(RakNet::BitStream& stream)
 		{
 			FSN_ASSERT_FAIL("Not Implemented");
+			//stream.Write(m_PersistentFollower->GetFollowedProperty());
 		}
 		void Deserialise(RakNet::BitStream& stream)
 		{
 			FSN_ASSERT_FAIL("Not Implemented");
+			//auto prop = m_PersistentFollower->GetFollowedProperty();
+			//stream.Read(prop);
+			//m_PersistentFollower->SetFollowedProperty(prop);
 		}
 		bool IsContinuous() const
 		{
@@ -441,7 +446,8 @@ namespace FusionEngine
 
 		PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
 
-		SyncSig::HandlerConnection_t m_FollowConnection;
+		//SyncSig::HandlerConnection_t m_FollowConnection;
+		PersistentFollowerPtr m_PersistentFollower;
 
 		boost::intrusive_ptr<CScriptAny> m_Value;
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
@@ -683,7 +689,7 @@ namespace FusionEngine
 		auto _where = m_ScriptMethods.find(decl);
 		if (_where != m_ScriptMethods.end())
 		{
-			return PrepareMethod(script_manager, _where->second);
+			return PrepareMethod(script_manager, _where->second.id);
 			
 			//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
 			//m_ScriptManager->ConnectToCaller(caller);
@@ -697,7 +703,7 @@ namespace FusionEngine
 
 			if (auto ctx = PrepareMethod(script_manager, funcId))
 			{
-				m_ScriptMethods[decl] = funcId;
+				m_ScriptMethods[decl].id = funcId;
 				return ctx;
 			}
 		}
@@ -723,17 +729,56 @@ namespace FusionEngine
 		return ctx;
 	}
 
-	int ASScript::GetMethodId(const std::string& decl)
+	ASScript::ScriptMethodInfo* ASScript::GetMethod(const std::string& decl)
 	{
 		if (!m_ScriptObject)
+			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
+
+		ScriptMethodInfo* method = nullptr;
+
+		auto func = m_ScriptObject->object->GetObjectType()->GetMethodByDecl(decl.c_str());
+		if (func != nullptr)
+		{
+			method = &m_ScriptMethods[decl];
+			method->id = func->GetId();
+			method->function = func;
+		}
+		return method;
+	}
+
+	int ASScript::GetMethodId(const std::string& decl)
+	{
+		/*if (!m_ScriptObject)
 			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
 
 		int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 		if (funcId >= 0)
 		{
-			m_ScriptMethods[decl] = funcId;
+			m_ScriptMethods[decl].id = funcId;
 		}
-		return funcId;
+		return funcId;*/
+		auto method = GetMethod(decl);
+		return method ? method->id : -1;
+	}
+
+	void ASScript::MakeFollower(PropertySignalingSystem_t& system, PropertyID id, const std::string& decl)
+	{
+		auto method = GetMethod(decl);
+		auto& follower = method->persistentFollower;
+
+		int typeId = -1;
+		if (method->function->GetParamCount() > 0)
+			typeId = method->function->GetParamTypeId(0);
+
+		PropertyFollowerFactoryForMethods factory(follower, typeId, ScriptUtils::Calling::Caller(GetScriptInterface()->object.get(), decl.c_str()));
+		boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
+
+		if (!follower)
+		{
+			using namespace std::placeholders;
+			follower = std::make_shared<ScriptPersistentConnectionAgent>(ScriptUtils::Calling::Caller(GetScriptInterface()->object.get(), decl.c_str()));
+			//follower = std::make_shared<PersistentConnectionAgent<boost::intrusive_ptr<CScriptAny>>>(std::bind(&ScriptAnyTSP::Set, this, _1));
+		}
 	}
 
 	void ASScript::Yield()
@@ -857,7 +902,7 @@ namespace FusionEngine
 			auto _where = m_ScriptMethods.find(decl);
 			if (_where != m_ScriptMethods.end())
 			{
-				funcId = _where->second;
+				funcId = _where->second.id;
 				method = true;
 			}
 			else
@@ -1134,7 +1179,7 @@ namespace FusionEngine
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
 			{
 				auto method = objType->GetMethodByIndex(i);
-				m_ScriptMethods[method->GetDeclaration(false)] = method->GetId();
+				m_ScriptMethods[method->GetDeclaration(false)].id = method->GetId();
 			}
 
 			// Pass the script-interface to the script object

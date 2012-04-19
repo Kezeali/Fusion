@@ -44,24 +44,18 @@
 namespace FusionEngine
 {
 
-	typedef SyncSig::SynchronisedSignalingSystem<int, SyncSig::PropertyCallback> PropertySignalingSystem_t;
+	typedef int PropertyID;
 
-	template <class T>
-	class PersistentConnectionAgent
+	typedef SyncSig::SynchronisedSignalingSystem<PropertyID, SyncSig::PropertyCallback> PropertySignalingSystem_t;
+
+	class PersistentFollower
 	{
 	public:
-		PersistentConnectionAgent()
+		PersistentFollower()
 			: m_PropertyID(-1)
 		{}
-		PersistentConnectionAgent(const std::function<void (T)>& handler)
-			: m_PropertyID(-1),
-			m_HandlerFn(handler)
-		{}
 
-		void SetHandlerFn(const std::function<void (T)>& handler)
-		{
-			m_HandlerFn = handler;
-		}
+		virtual ~PersistentFollower() {}
 
 		void Subscribe(PropertySignalingSystem_t& system, int property_id)
 		{
@@ -69,48 +63,68 @@ namespace FusionEngine
 			ActivateSubscription(system);
 		}
 
-		void SaveSubscription(std::ostream& out) { out.write((char*)&m_PropertyID, sizeof(m_PropertyID)); }
-		void LoadSubscription(std::istream& in, PropertySignalingSystem_t& system);
+		void SetFollowedPropertyID(PropertyID value) { m_PropertyID = value; }
+		PropertyID GetFollowedPropertyID() const { return m_PropertyID; }
+
+		void SaveSubscription(std::ostream& out)
+		{
+			out.write((char*)&m_PropertyID, sizeof(m_PropertyID));
+		}
+		void LoadSubscription(std::istream& in, PropertySignalingSystem_t& system)
+		{
+			in.read((char*)&m_PropertyID, sizeof(m_PropertyID));
+			ActivateSubscription(system);
+		}
 
 	private:
 		SyncSig::HandlerConnection_t m_ActiveConnection;
-		int m_PropertyID;
-		std::function<void (T)> m_HandlerFn;
+		PropertyID m_PropertyID;
 
 		void ActivateSubscription(PropertySignalingSystem_t& system);
 
-		void AddHandler(PropertySignalingSystem_t& system);
+		virtual SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system) = 0;
 	};
 
-	template <class T>
-	void PersistentConnectionAgent<T>::ActivateSubscription(PropertySignalingSystem_t& system)
-	{
-		if (system.HasGenerator(m_PropertyID))
-			AddHandler(system);
-		else
-		{
-			// Using the same connection holder here means that the NewGenerators
-			//  subscription will be broken as soon as a handler is successfully added
-			m_ActiveConnection = system.SubscribeNewGenerators([this](int key, PropertySignalingSystem_t& system)
-			{
-				if (key == this->m_PropertyID)
-					AddHandler(system);
-			});
-		}
-	}
+	typedef std::shared_ptr<PersistentFollower> PersistentFollowerPtr;
 
 	template <class T>
-	void PersistentConnectionAgent<T>::AddHandler(PropertySignalingSystem_t& system)
+	class PersistentConnectionAgent : public PersistentFollower
 	{
-		m_ActiveConnection = system.AddHandler<T>(m_PropertyID, m_HandlerFn);
-	}
+	public:
+		PersistentConnectionAgent()
+			: PersistentFollower()
+		{}
+		PersistentConnectionAgent(const std::function<void (T)>& handler)
+			: PersistentFollower(),
+			m_HandlerFn(handler)
+		{}
 
-	template <class T>
-	void PersistentConnectionAgent<T>::LoadSubscription(std::istream& in, PropertySignalingSystem_t& system)
+		void SetHandlerFn(const std::function<void (T)>& handler) { m_HandlerFn = handler; }
+
+	private:
+		std::function<void (T)> m_HandlerFn;
+
+		SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system);
+	};
+
+	class ScriptPersistentConnectionAgent : public PersistentFollower
 	{
-		in.read((char*)&m_PropertyID, sizeof(m_PropertyID));
-		ActivateSubscription(system);
-	}
+	public:
+		ScriptPersistentConnectionAgent()
+			: PersistentFollower()
+		{}
+		ScriptPersistentConnectionAgent(const ScriptUtils::Calling::Caller& handler)
+			: PersistentFollower(),
+			m_HandlerFn(handler)
+		{}
+
+		void SetHandlerFn(const ScriptUtils::Calling::Caller& handler) { m_HandlerFn = handler; }
+
+	private:
+		ScriptUtils::Calling::Caller m_HandlerFn;
+
+		SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system);
+	};
 
 	class EvesdroppingManager : public Singleton<EvesdroppingManager>
 	{
@@ -127,6 +141,34 @@ namespace FusionEngine
 	protected:
 		PropertySignalingSystem_t m_SignalingSystem;
 	};
+
+
+	inline void PersistentFollower::ActivateSubscription(PropertySignalingSystem_t& system)
+	{
+		if (system.HasGenerator(m_PropertyID))
+			m_ActiveConnection = AddHandler(system);
+		else
+		{
+			// Using the same connection holder here means that the NewGenerators
+			//  subscription will be broken as soon as a handler is successfully added
+			m_ActiveConnection = system.SubscribeNewGenerators([this](PropertyID key, PropertySignalingSystem_t& system)
+			{
+				if (key == this->m_PropertyID)
+					m_ActiveConnection = AddHandler(system);
+			});
+		}
+	}
+
+	template <class T>
+	inline SyncSig::HandlerConnection_t PersistentConnectionAgent<T>::AddHandler(PropertySignalingSystem_t& system)
+	{
+		return system.AddHandler<T>(GetFollowedPropertyID(), m_HandlerFn);
+	}
+
+	inline SyncSig::HandlerConnection_t ScriptPersistentConnectionAgent::AddHandler(PropertySignalingSystem_t& system)
+	{
+		return system.AddScriptHandler(GetFollowedPropertyID(), m_HandlerFn);
+	}
 
 }
 

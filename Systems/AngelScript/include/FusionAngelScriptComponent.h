@@ -182,10 +182,12 @@ namespace FusionEngine
 
 		int GetMethodId(const std::string& decl);
 
+		void MakeFollower(PropertySignalingSystem_t& system, PropertyID id, const std::string& decl);
+
 		//! Enable/disable auto-yield
-		void SetAllowAutoYield(const bool value) { m_AllowAutoYield = value; }
+		void SetAutoYield(const bool value) { m_AutoYield = value; }
 		//! Returns true if the script runner is allowed to force this script to yield at will
-		bool AllowsAutoYield() const { return m_AllowAutoYield; }
+		bool AllowsAutoYield() const { return m_AutoYield; }
 
 		void Yield();
 		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
@@ -223,6 +225,15 @@ namespace FusionEngine
 		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
 		const boost::intrusive_ptr<ScriptInterface>& GetScriptInterface() const { return m_ScriptObject; }
+
+		boost::intrusive_ptr<asIScriptObject> GetScriptObject() const
+		{
+			const auto& scriptInterface = GetScriptInterface();
+			if (scriptInterface)
+				return scriptInterface->object;
+			else
+				return boost::intrusive_ptr<asIScriptObject>();
+		}
 
 		struct PropInfo
 		{
@@ -267,6 +278,15 @@ namespace FusionEngine
 		const std::string& GetScriptPath() const;
 		void SetScriptPath(const std::string& path);
 
+		struct ScriptMethodInfo
+		{
+			PersistentFollowerPtr persistentFollower; // Used to bind this method as a callback to a component property
+			asIScriptFunction* function;
+			int id;
+		};
+
+		ScriptMethodInfo* GetMethod(const std::string& decl);
+
 		std::string m_Path;
 		bool m_ReloadScript;
 
@@ -275,7 +295,7 @@ namespace FusionEngine
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		int m_EntityWrapperTypeId;
-		std::map<std::string, int> m_ScriptMethods;
+		std::map<std::string, ScriptMethodInfo> m_ScriptMethods;
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		std::vector<PropInfo> m_ScriptPropertyInfo;
@@ -293,7 +313,7 @@ namespace FusionEngine
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;
 
-		bool m_AllowAutoYield;
+		bool m_AutoYield;
 
 		static int s_ASScriptTypeId;
 	};

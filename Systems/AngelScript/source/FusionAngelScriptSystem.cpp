@@ -1266,7 +1266,7 @@ namespace FusionEngine
 						auto scriptInfoForThis = m_ScriptInfo.find(objectType->GetName());
 						if (scriptInfoForThis != m_ScriptInfo.end())
 						{
-							script->SetAllowAutoYield(scriptInfoForThis->second.AutoYield);
+							script->SetAutoYield(scriptInfoForThis->second.AutoYield);
 							script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
 						}
 						else
@@ -1490,7 +1490,7 @@ namespace FusionEngine
 						{
 							for (auto it = playerAddedEvents.begin(); it != playerAddedEvents.end(); ++it)
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
 								{
 									int r = ctx->SetArgDWord(0, it->first); FSN_ASSERT(r >=0);
 									r = ctx->SetArgByte(1, it->second); FSN_ASSERT(r >=0);
@@ -1519,7 +1519,7 @@ namespace FusionEngine
 						{
 							for (auto it = playerRemovedEvents.begin(); it != playerRemovedEvents.end(); ++it)
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
 								{
 									ctx->SetArgDWord(0, it->first);
 									ctx->SetArgWord(1, it->second);
@@ -1557,7 +1557,7 @@ namespace FusionEngine
 									for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
 									{
 										auto &queuedEvent = *it;//eventQueue.front();
-										if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+										if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
 										{
 											auto inputEvent = new ScriptInputEvent(queuedEvent);
 											ctx->SetArgObject(0, inputEvent);
@@ -1580,7 +1580,7 @@ namespace FusionEngine
 						// Update method
 						else if (mit->first == "void update()")
 						{
-							if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second))
+							if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
 							{
 								int r = ctx->Execute();
 								if (r == asEXECUTION_SUSPENDED)
