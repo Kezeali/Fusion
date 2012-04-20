@@ -29,7 +29,7 @@ class PseudoI : ScriptComponent
 		{			
 			//entity.irigidbody.AngularVelocity = 0.9f;
 			entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
-			@velchange_con = evesdropping.connect(entity.irigidbody.Velocity, "void onVelocityChanged(const Vector &in)");
+			bindMethod("void onVelocityChanged(const Vector &in)", entity.irigidbody.Velocity);
 		}
 		//if (frames % 2 == 0)
 		//	entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
@@ -80,7 +80,7 @@ class PseudoI : ScriptComponent
 	
 	private float target_angle;
 	
-	private SignalConnection@ velchange_con;
+	//private SignalConnection@ velchange_con;
 	void onVelocityChanged(const Vector &in pos)
 	{
 		Vector myVel = entity.irigidbody.Velocity;

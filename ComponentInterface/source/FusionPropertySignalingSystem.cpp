@@ -37,24 +37,24 @@ namespace FusionEngine
 
 	EvesdroppingManager::EvesdroppingManager()
 	{
-		ScriptManager::getSingleton().RegisterGlobalObject("EvesdroppingManager evesdropping", this);
+		//ScriptManager::getSingleton().RegisterGlobalObject("EvesdroppingManager evesdropping", this);
 	}
 
-	SyncSig::HandlerConnection_t EvesdroppingManager_Connect(IComponentProperty* prop, const std::string& fn_decl, EvesdroppingManager* obj)
-	{
-		const auto engine = asGetActiveContext()->GetEngine();
-		const auto module = engine->GetModule(asGetActiveContext()->GetFunction()->GetModuleName());
-		ScriptUtils::Calling::Caller fn(module, fn_decl.c_str());
+	//SyncSig::HandlerConnection_t EvesdroppingManager_Connect(ComponentProperty* prop, const std::string& fn_decl, EvesdroppingManager* obj)
+	//{
+	//	const auto engine = asGetActiveContext()->GetEngine();
+	//	const auto module = engine->GetModule(asGetActiveContext()->GetFunction()->GetModuleName());
+	//	ScriptUtils::Calling::Caller fn(module, fn_decl.c_str());
 
-		return obj->GetSignalingSystem().AddScriptHandler(prop->GetID(), fn);
-	}
+	//	return obj->GetSignalingSystem().AddScriptHandler(prop->GetID(), fn);
+	//}
 
 	void EvesdroppingManager::RegisterScriptInterface(asIScriptEngine* engine)
 	{
-		RegisterSharedPtrType<boost::signals2::scoped_connection>("EvesdroppingConnection", engine);
-		RegisterSingletonType<EvesdroppingManager>("EvesdroppingManager", engine);
-		int r = engine->RegisterObjectMethod("EvesdroppingManager", "EvesdroppingConnection connect(Property@, const string &in)", asFUNCTION(EvesdroppingManager_Connect), asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(r >= 0);
+		//RegisterSharedPtrType<boost::signals2::scoped_connection>("EvesdroppingConnection", engine);
+		//RegisterSingletonType<EvesdroppingManager>("EvesdroppingManager", engine);
+		//int r = engine->RegisterObjectMethod("EvesdroppingManager", "EvesdroppingConnection connect(Property@, const string &in)", asFUNCTION(EvesdroppingManager_Connect), asCALL_CDECL_OBJLAST);
+		//FSN_ASSERT(r >= 0);
 	}
 
 }

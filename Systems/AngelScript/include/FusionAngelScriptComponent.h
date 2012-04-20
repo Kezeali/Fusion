@@ -182,7 +182,7 @@ namespace FusionEngine
 
 		int GetMethodId(const std::string& decl);
 
-		void MakeFollower(PropertySignalingSystem_t& system, PropertyID id, const std::string& decl);
+		void BindMethod(PropertySignalingSystem_t& system, const std::string& decl, PropertyID id);
 
 		//! Enable/disable auto-yield
 		void SetAutoYield(const bool value) { m_AutoYield = value; }

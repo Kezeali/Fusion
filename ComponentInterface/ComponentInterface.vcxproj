@@ -74,6 +74,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\FusionArchetypalEntityManager.cpp" />
+    <ClCompile Include="source\FusionComponentProperty.cpp" />
     <ClCompile Include="source\FusionDeltaTime.cpp" />
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />

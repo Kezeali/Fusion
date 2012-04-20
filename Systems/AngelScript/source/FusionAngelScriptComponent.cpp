@@ -262,7 +262,7 @@ namespace FusionEngine
 			ScriptAnyTSP* this_prop;
 		};
 
-		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
 			//if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
 			//{
@@ -296,7 +296,7 @@ namespace FusionEngine
 			// Fall back on the any callback
 			if (!m_ChangedCallback)
 			{
-				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(IComponentProperty::GetID(),
+				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(own_id,
 					[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
 			}
 		}
@@ -313,7 +313,7 @@ namespace FusionEngine
 			}
 		}
 
-		void Follow(PropertySignalingSystem_t& system, PropertyID id)
+		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
 		{
 			//using namespace std::placeholders;
 
@@ -402,6 +402,16 @@ namespace FusionEngine
 		bool IsContinuous() const
 		{
 			return false;
+		}
+
+		void Get(void* ref, int typeId)
+		{
+			if (typeId == m_TypeId)
+			{
+				m_Value->Retrieve(ref, typeId);
+			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
 		}
 
 		CScriptAny* Get() const
@@ -575,6 +585,11 @@ namespace FusionEngine
 		return nullptr;
 	}
 
+	static void ASScript_ScriptInterface_bindMethodToProperty(const std::string& decl, ComponentProperty* prop, ASScript::ScriptInterface* obj)
+	{
+		obj->component->BindMethod(EvesdroppingManager::getSingleton().GetSignalingSystem(), decl, prop->GetID());
+	}
+
 	void ASScript::ScriptInterface::Register(asIScriptEngine* engine)
 	{
 		{
@@ -589,6 +604,8 @@ namespace FusionEngine
 			FSN_ASSERT(s_ASScriptTypeId >= 0);
 
 			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, Property@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript::ScriptInterface, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -761,7 +778,7 @@ namespace FusionEngine
 		return method ? method->id : -1;
 	}
 
-	void ASScript::MakeFollower(PropertySignalingSystem_t& system, PropertyID id, const std::string& decl)
+	void ASScript::BindMethod(PropertySignalingSystem_t& system, const std::string& decl, PropertyID id)
 	{
 		auto method = GetMethod(decl);
 		auto& follower = method->persistentFollower;

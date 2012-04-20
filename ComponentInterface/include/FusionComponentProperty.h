@@ -35,45 +35,96 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionPropertySignalingSystem.h"
+#include "FusionRefCounted.h"
 
 #include <BitStream.h>
 
 namespace FusionEngine
 {
-	
-	//! Entity Component Property interface
+	class ComponentProperty;
+
+	//! Entity Component Property implementation interface
 	class IComponentProperty
 	{
 	public:
-		virtual void AquireSignalGenerator(PropertySignalingSystem_t& system) = 0;
+		virtual ~IComponentProperty() {}
 
-		virtual void Follow(PropertySignalingSystem_t& system, PropertyID id) = 0;
+		virtual void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id) = 0;
 
-		//virtual void FireSignal() = 0;
+		virtual void Follow(PropertySignalingSystem_t& system, PropertyID own_id, PropertyID id) = 0;
+
 		virtual void Synchronise() = 0;
 
 		virtual void Serialise(RakNet::BitStream& stream) = 0;
 		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 		virtual bool IsContinuous() const = 0;
 
-		PropertyID GetID() const { return (int)this; }
+		virtual void Set(void* value, int type_id) = 0;
+		virtual void Get(void* value, int type_id) = 0;
 
-		//virtual bool IsEqual(IComponentProperty*) const = 0;
+		virtual bool IsEqual(IComponentProperty*) const { return false; }
+	};
 
-		//bool operator==(IComponentProperty* other) const
-		//{
-		//	return this->IsEqual(other);
-		//}
-		//bool operator!=(IComponentProperty* other) const
-		//{
-		//	return !this->IsEqual(other);
-		//}
+	//! Component Property front-end
+	/*!
+	* \see IComponentProperty
+	*/
+	class ComponentProperty : public RefCounted
+	{
+		friend class IComponent;
+	public:
+		//! CTOR
+		ComponentProperty()
+			: m_Impl(nullptr),
+			m_ID(-1)
+		{}
 
-		//void Register(asIScriptEngine* engine)
-		//{
-		//	int r;
-		//	r = engine->RegisterObjectMethod("Prop", "SignalConnection @follow(const string &in)", asMETHOD(this_type, connect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		//}
+		ComponentProperty(IComponentProperty* impl, PropertyID id)
+			: m_Impl(impl),
+			m_ID(id)
+		{}
+
+		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		{
+			m_Impl->AquireSignalGenerator(system, GetID());
+		}
+
+		//! Make this property follow the property with the given ID
+		void Follow(PropertySignalingSystem_t& system, PropertyID id)
+		{
+			m_Impl->Follow(system, GetID(), id);
+		}
+
+		//! Call when it is safe to synchronise thread-local data
+		void Synchronise() { m_Impl->Synchronise(); }
+
+		//! Save this property's state
+		void Serialise(RakNet::BitStream& stream) { m_Impl->Serialise(stream); }
+		//! Deserialise this property's state
+		void Deserialise(RakNet::BitStream& stream) { m_Impl->Deserialise(stream); }
+		//! Returns true if this property should be written to the continuous stream
+		bool IsContinuous() const { return m_Impl->IsContinuous(); }
+
+		//! Returns this property's globally unique ID
+		PropertyID GetID() const { return m_ID; }
+
+		//! Operator equal
+		bool operator==(IComponentProperty* other) const
+		{
+			return m_Impl->IsEqual(other);
+		}
+		//! Operator not equal
+		bool operator!=(IComponentProperty* other) const
+		{
+			return !m_Impl->IsEqual(other);
+		}
+
+		//! Register this script type
+		static void Register(asIScriptEngine* engine);
+
+	private:
+		IComponentProperty* m_Impl;
+		PropertyID m_ID;
 	};
 
 }

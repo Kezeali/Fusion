@@ -28,6 +28,9 @@
     <ClCompile Include="source\FusionPropertySignalingSystem.cpp">
       <Filter>Entity</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionComponentProperty.cpp">
+      <Filter>Entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">

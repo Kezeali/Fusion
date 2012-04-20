@@ -319,12 +319,12 @@ namespace FusionEngine
 			return *this;
 		}
 
-		void AquireSignalGenerator(PropertySignalingSystem_t& system)
+		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
-			m_ChangedCallback = system.MakeGenerator<const T&>(IComponentProperty::GetID(), std::bind(&This_t::Get, this));
+			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
 		}
 
-		void Follow(PropertySignalingSystem_t& system, PropertyID id)
+		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
 		{
 			m_FollowConnection = system.AddHandler<const T&>(id, std::bind(&This_t::Set, this, std::placeholders::_1));
 		}
@@ -371,20 +371,6 @@ namespace FusionEngine
 			}
 		}
 
-		//! Fire signal
-		void FireSignal()
-		{
-			if (m_Changed)
-			{
-				m_Signal(m_Value);
-				m_Changed = false;
-			}
-			else
-			{
-				m_Changed = false;
-			}
-		}
-
 		void Serialise(RakNet::BitStream& stream)
 		{
 			Serialiser::Serialise(stream, m_Value);
@@ -396,6 +382,21 @@ namespace FusionEngine
 		bool IsContinuous() const
 		{
 			return Serialiser::IsContinuous();
+		}
+
+		void Get(void* value, int type_id)
+		{
+			if (Scripting::AppType<T>::type_id == type_id)
+				value = &m_Value;
+		}
+		void Set(void* value, int type_id)
+		{
+			if (Scripting::AppType<T>::type_id == type_id)
+			{
+				m_Writer.Write(static_cast<T>(*value));
+
+				m_ChangedCallback();
+			}
 		}
 
 		//bool IsEqual(IComponentProperty* other) const

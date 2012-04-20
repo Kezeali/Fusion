@@ -62,6 +62,7 @@
 namespace FusionEngine
 {
 
+	class ComponentProperty;
 	class IComponentProperty;
 
 	//! Serialisation exception
@@ -217,7 +218,7 @@ namespace FusionEngine
 		void AddProperty(IComponentProperty* prop);
 		void OnPropertyChanged(IComponentProperty* prop);
 
-		const std::vector<IComponentProperty*>& GetProperties() const { return m_Properties; }
+		const std::vector<boost::intrusive_ptr<ComponentProperty>>& GetProperties() const { return m_Properties; }
 
 		void SynchronisePropertiesNow();
 
@@ -272,7 +273,7 @@ namespace FusionEngine
 		std::set<std::string> m_Interfaces;
 		bool m_InterfacesInitialised;
 		
-		std::vector<IComponentProperty*> m_Properties;
+		std::vector<boost::intrusive_ptr<ComponentProperty>> m_Properties;
 
 	private:
 		Entity* m_Parent;
@@ -284,9 +285,9 @@ namespace FusionEngine
 		class PropertyListNode
 		{
 		public:
-			PropertyListNode(IComponentProperty* prop_) : prop(prop_), previous(nullptr) {}
+			PropertyListNode(ComponentProperty* prop_) : prop(prop_), previous(nullptr) {}
 			~PropertyListNode() { if (previous) delete previous; }
-			IComponentProperty* prop;
+			ComponentProperty* prop;
 			PropertyListNode* previous;
 		};
 		PropertyListNode* m_LastContinuousProperty;

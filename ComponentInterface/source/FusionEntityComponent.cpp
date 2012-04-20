@@ -40,16 +40,20 @@
 namespace FusionEngine
 {
 
-	void IComponent::AddProperty(IComponentProperty* prop)
+	void IComponent::AddProperty(IComponentProperty* impl)
 	{
-		FSN_ASSERT(std::find(m_Properties.begin(), m_Properties.end(), prop) == m_Properties.end());
+		FSN_ASSERT(
+			std::find_if(m_Properties.begin(), m_Properties.end(), [impl](boost::intrusive_ptr<ComponentProperty>& other)->bool { return other->m_Impl == impl; }) == m_Properties.end()
+			);
+
+		boost::intrusive_ptr<ComponentProperty> prop(new ComponentProperty(impl, reinterpret_cast<int>(this) ^ reinterpret_cast<int>(impl)));
 
 		m_Properties.push_back(prop);
 
 		// Add the property to the appropriate serialisation list
 		PropertyListNode*& propListTail = prop->IsContinuous() ? m_LastContinuousProperty : m_LastOccasionalProperty;
 		PropertyListNode* previousNewestProperty = propListTail;
-		propListTail = new PropertyListNode(prop);
+		propListTail = new PropertyListNode(prop.get());
 		propListTail->previous = previousNewestProperty;
 
 		prop->AquireSignalGenerator(EvesdroppingManager::getSingleton().GetSignalingSystem());
