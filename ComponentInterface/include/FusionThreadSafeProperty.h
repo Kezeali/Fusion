@@ -56,6 +56,7 @@
 
 #include <tbb/enumerable_thread_specific.h>
 
+#include "FusionAppType.h"
 #include "FusionComponentProperty.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionScriptedSlots.h"
@@ -68,7 +69,7 @@
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
 
 #define FSN_PROP_ADDPROPERTY(prop) \
-	component->AddProperty(&prop);
+	component->AddProperty(#prop, &prop);
 
 #define FSN_INIT_PROP(prop) \
 	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)
@@ -256,18 +257,15 @@ namespace FusionEngine
 	class ThreadSafeProperty : public IComponentProperty
 	{
 	private:
+		// Non-copyable
 		ThreadSafeProperty(const ThreadSafeProperty& other)
 		{}
 
 	public:
-#ifndef FSN_TSP_SIGNALS2
-		tbb::mutex m_Mutex;
-#endif
-
 		typedef ThreadSafeProperty<T, Writer, Serialiser> This_t;
 
 		ThreadSafeProperty()
-			: m_Refs(1),
+			: m_PropertyID(-1),
 			m_GetSetCallbacks(nullptr),
 			//m_SubscriptionAgent(std::bind(&This_t::Set, this, std::placeholders::_1)),
 			m_Changed(true)
@@ -276,7 +274,7 @@ namespace FusionEngine
 		}
 		
 		explicit ThreadSafeProperty(const T& value)
-			: m_Refs(1),
+			: m_PropertyID(-1),
 			m_GetSetCallbacks(nullptr),
 			m_Changed(true),
 			m_Value(value)
@@ -297,14 +295,10 @@ namespace FusionEngine
 		void SetCallbacks(C* obj, value_type_for_get (C::*get_fn)(void) const, void (C::*set_fn)(value_type_for_set))
 		{
 			m_GetSetCallbacks = new GetSetCallback<C, value_type_for_get, value_type_for_set>(obj, get_fn, set_fn);
-
-			FSN_ASSERT(m_GetSetCallbacks);
-			m_GetSetCallbacks->GetObjectAsComponent()->AddProperty(this);
 		}
 
 		~ThreadSafeProperty()
 		{
-			FSN_ASSERT(m_Refs <= 1);
 		}
 		
 		ThreadSafeProperty& operator= (const ThreadSafeProperty& copy)
@@ -319,14 +313,17 @@ namespace FusionEngine
 			return *this;
 		}
 
+		PropertyID GetID() const { return m_PropertyID; }
+
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
 			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
+			m_PropertyID = own_id;
 		}
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
 		{
-			m_FollowConnection = system.AddHandler<const T&>(id, std::bind(&This_t::Set, this, std::placeholders::_1));
+			m_SubscriptionAgent.Subscribe(system, id);
 		}
 
 		//! Synchronise parallel (thread) writes
@@ -384,19 +381,23 @@ namespace FusionEngine
 			return Serialiser::IsContinuous();
 		}
 
-		void Get(void* value, int type_id)
+		void* GetRef()
 		{
-			if (Scripting::AppType<T>::type_id == type_id)
-				value = &m_Value;
+			return &m_Value;
 		}
 		void Set(void* value, int type_id)
 		{
 			if (Scripting::AppType<T>::type_id == type_id)
 			{
-				m_Writer.Write(static_cast<T>(*value));
+				m_Writer.Write(*static_cast<T*>(value));
 
 				m_ChangedCallback();
 			}
+		}
+
+		int GetTypeId() const
+		{
+			return Scripting::AppType<T>::type_id;
 		}
 
 		//bool IsEqual(IComponentProperty* other) const
@@ -423,107 +424,11 @@ namespace FusionEngine
 		}
 
 	private:
-		static bool registered; // Gets to true when this type has been registered as a script type
-	public:
-		static void RegisterProp(asIScriptEngine* engine, const std::string& type)
-		{
-			if (registered)
-				return;
-			registered = true;
-
-			std::string cname = "Property_" + type + "_";
-			if (std::is_same<Writer, NullWriter<T>>::value)
-				cname = "ReadonlyProperty_" + type + "_";
-
-			typedef ThreadSafeProperty<T, Writer> this_type;
-			typedef Scripting::Registation::ValueTypeHelper<this_type> helper_type;
-
-			int r;
-			//r = engine->RegisterObjectType(cname.c_str(), sizeof(ThreadSafeProperty<T, Writer>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); FSN_ASSERT(r >= 0);
-			//r = engine->RegisterObjectBehaviour(cname.c_str(), 
-			//	asBEHAVE_CONSTRUCT, 
-			//	"void f()", 
-			//	asFUNCTION(helper_type::Construct), 
-			//	asCALL_CDECL_OBJLAST);
-			//FSN_ASSERT(r >= 0);
-			////r = engine->RegisterObjectBehaviour(cname.c_str(), 
-			////	asBEHAVE_CONSTRUCT, 
-			////	("void f(const " + type + " &in)").c_str(), 
-			////	asFUNCTIONPR(helper_type::ConstructWithArgs, (const T&, this_type*), void),
-			////	asCALL_CDECL_OBJLAST);
-			////FSN_ASSERT(r >= 0);
-			//r = engine->RegisterObjectBehaviour(cname.c_str(),
-			//	asBEHAVE_DESTRUCT,
-			//	"void f()",
-			//	asFUNCTION(helper_type::Destruct),
-			//	asCALL_CDECL_OBJLAST);
-			//FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectType(cname.c_str(), 0, asOBJ_REF); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectBehaviour(cname.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(this_type, AddRef), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectBehaviour(cname.c_str(), asBEHAVE_RELEASE, "void f()", asMETHOD(this_type, Release), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-			//int subTypeId = engine->GetTypeIdByDecl(type.c_str());
-			//bool referenceSubtype = engine->GetObjectTypeById(subTypeId)->GetFlags() & asOBJ_REF;
-			bool referenceSubtype = false;
-
-			r = engine->RegisterObjectMethod(cname.c_str(), ("void set_value(const " + type + " &in)").c_str(), asMETHOD(this_type, Set), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-			r = engine->RegisterObjectMethod(cname.c_str(), (type + " get_value() const").c_str(), asMETHOD(this_type, ImplicitCast), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-			r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opShl(const " + type + "&in)").c_str(), asMETHOD(this_type, opAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-			//r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAssign(const " + cname + " &in)").c_str(), asMETHODPR(this_type, operator=, (const ThreadSafeProperty&), ThreadSafeProperty&), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-			r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAssign(const " + type + " &in)").c_str(), asMETHOD(this_type, opAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAddAssign(const " + type + " &in)").c_str(), asMETHOD(this_type, opAddAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			if (!std::is_same<T, bool>::value)
-			{
-				if (!referenceSubtype)
-				{
-					r = engine->RegisterObjectBehaviour(cname.c_str(), asBEHAVE_IMPLICIT_VALUE_CAST, (type + " f() const").c_str(), asMETHOD(this_type, ImplicitCast), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-				}
-				else
-				{
-					r = engine->RegisterObjectBehaviour(type.c_str(), asBEHAVE_FACTORY, (type + " @f(const " + cname + " &in)").c_str(), asFUNCTION(this_type::TeaFactory), asCALL_CDECL); FSN_ASSERT(r >= 0);
-				}
-			}
-		}
-
-		void AddRef()
-		{
-			++m_Refs;
-		}
-
-		void Release()
-		{
-			--m_Refs;
-		}
-
-		ThreadSafeProperty &opAssign(const T& value) { Set(value); return *this; }
-		ThreadSafeProperty &opAddAssign(const T& value)
-		{
-			// Only arithemtic types, other than bool, can be used with the += operator
-			typedef std::integral_constant<bool,
-				!std::is_same<T, bool>::value &&
-				std::is_arithmetic<T>::value> canAssign_t;
-			return opAddAssignImpl(value, canAssign_t());
-		}
-		ThreadSafeProperty &opAddAssignImpl(const T& value, const std::true_type&) { Set(Get() + value); return *this; }
-		ThreadSafeProperty &opAddAssignImpl(const T& value, const std::false_type&) { asGetActiveContext()->SetException("opAddAssign is invalid for this type"); return *this; }
-
-		T ImplicitCast() const { return Get(); }
-		static T *TeaFactory(const ThreadSafeProperty& prop)
-		{
-			return new T(prop.Get());
-		}
-
-	private:
-		unsigned int m_Refs;
-
 		typename PropertySignalingSystem_t::GeneratorDetail_t::Impl<const T&>::GeneratorFn_t m_ChangedCallback;
 
-		SyncSig::HandlerConnection_t m_FollowConnection;
 		PersistentConnectionAgent<const T&> m_SubscriptionAgent;
+
+		PropertyID m_PropertyID;
 
 		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
 
@@ -534,9 +439,6 @@ namespace FusionEngine
 
 		Writer m_Writer;
 	};
-
-	template <class T, class Writer, class Serialiser>
-	bool ThreadSafeProperty<T, Writer, Serialiser>::registered = false;
 
 }
 

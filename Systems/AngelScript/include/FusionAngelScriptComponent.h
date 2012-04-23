@@ -193,8 +193,11 @@ namespace FusionEngine
 		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
 		void CreateCoroutine(const std::string& functionName, float delay = 0.f);
 		void CreateCoroutine(asIScriptFunction* function);
-		CScriptAny* GetProperty(unsigned int index);
-		bool SetProperty(unsigned int index, void* ref, int typeId);
+
+		CScriptAny* GetPropertyRaw(unsigned int index);
+		bool SetPropertyRaw(unsigned int index, void* ref, int typeId);
+
+		ComponentProperty* GetProperty(unsigned int index);
 
 		std::uint32_t CreateEntityWrapperId(const EntityPtr& entityReferenced);
 
@@ -209,8 +212,11 @@ namespace FusionEngine
 			void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
 			void CreateCoroutine(const std::string& functionName, float delay = 0.f);
 			void CreateCoroutine(asIScriptFunction* function);
-			CScriptAny* GetProperty(unsigned int index);
-			bool SetProperty(unsigned int index, void* ref, int typeId);
+
+			CScriptAny* GetPropertyRaw(unsigned int index);
+			bool SetPropertyRaw(unsigned int index, void* ref, int typeId);
+
+			ComponentProperty* GetProperty(unsigned int index);
 
 			void EnumReferences(asIScriptEngine *engine);
 			void ReleaseAllReferences(asIScriptEngine *engine);
@@ -298,6 +304,7 @@ namespace FusionEngine
 		std::map<std::string, ScriptMethodInfo> m_ScriptMethods;
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
+		std::vector<ComponentProperty*> m_ScriptPropertyInterfaces;
 		std::vector<PropInfo> m_ScriptPropertyInfo;
 
 		std::shared_ptr<ASScriptB2ContactListener> m_ContactListener;

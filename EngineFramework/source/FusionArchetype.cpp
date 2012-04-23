@@ -136,7 +136,7 @@ namespace FusionEngine
 				const auto& prop = *pit;
 
 				RakNet::BitStream stream;
-				prop->Serialise(stream);
+				prop.second->Serialise(stream);
 
 				if (comdaPropEntry != comda.properties.end())
 				{

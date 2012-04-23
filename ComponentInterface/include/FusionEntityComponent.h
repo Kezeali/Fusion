@@ -36,6 +36,8 @@
 
 #include "FusionRefCounted.h"
 #include "FusionTypes.h"
+// TEMP (for m_Properties to compile)
+#include "FusionComponentProperty.h"
 
 #include <bitset>
 #include <vector>
@@ -215,17 +217,11 @@ namespace FusionEngine
 		virtual void InitInterfaces() = 0;
 		virtual void InitInterfaceList() = 0;
 
-		void AddProperty(IComponentProperty* prop);
-		void OnPropertyChanged(IComponentProperty* prop);
+		boost::intrusive_ptr<ComponentProperty> AddProperty(const std::string& name, IComponentProperty* prop);
 
-		const std::vector<boost::intrusive_ptr<ComponentProperty>>& GetProperties() const { return m_Properties; }
+		const std::vector<std::pair<std::string, boost::intrusive_ptr<ComponentProperty>>>& GetProperties() const { return m_Properties; }
 
 		void SynchronisePropertiesNow();
-
-		//void SetPropChangedQueue(PropertySignalingSystem_t& sys)
-		//{
-		//	InitInterfaces(sys);
-		//}
 
 		//! Possible ready states
 		enum ReadyState /*: uint32_t*/ { NotReady, Preparing, Ready, Active };
@@ -257,7 +253,6 @@ namespace FusionEngine
 		virtual void OnSiblingRemoved(const ComponentPtr& com) {}
 
 		virtual void SynchroniseParallelEdits() {}
-		virtual void FireSignals() {}
 
 		enum SerialiseMode { Changes, All, Editable };
 
@@ -269,11 +264,14 @@ namespace FusionEngine
 		virtual void SerialiseEditable(RakNet::BitStream& stream);
 		virtual void DeserialiseEditable(RakNet::BitStream& stream);
 
+		virtual void OnPostDeserialisation() {}
+
 	protected:
 		std::set<std::string> m_Interfaces;
 		bool m_InterfacesInitialised;
 		
-		std::vector<boost::intrusive_ptr<ComponentProperty>> m_Properties;
+		typedef boost::intrusive_ptr<ComponentProperty> PropertyPtr;
+		std::vector<std::pair<std::string, PropertyPtr>> m_Properties;
 
 	private:
 		Entity* m_Parent;

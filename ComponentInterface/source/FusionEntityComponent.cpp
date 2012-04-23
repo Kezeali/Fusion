@@ -40,15 +40,15 @@
 namespace FusionEngine
 {
 
-	void IComponent::AddProperty(IComponentProperty* impl)
+	boost::intrusive_ptr<ComponentProperty> IComponent::AddProperty(const std::string& name, IComponentProperty* impl)
 	{
 		FSN_ASSERT(
-			std::find_if(m_Properties.begin(), m_Properties.end(), [impl](boost::intrusive_ptr<ComponentProperty>& other)->bool { return other->m_Impl == impl; }) == m_Properties.end()
+			std::find_if(m_Properties.begin(), m_Properties.end(), [impl](const std::pair<std::string, PropertyPtr>& existing)->bool { return existing.second->GetImpl() == impl; }) == m_Properties.end()
 			);
 
 		boost::intrusive_ptr<ComponentProperty> prop(new ComponentProperty(impl, reinterpret_cast<int>(this) ^ reinterpret_cast<int>(impl)));
 
-		m_Properties.push_back(prop);
+		m_Properties.push_back(std::make_pair(name, prop));
 
 		// Add the property to the appropriate serialisation list
 		PropertyListNode*& propListTail = prop->IsContinuous() ? m_LastContinuousProperty : m_LastOccasionalProperty;
@@ -57,18 +57,15 @@ namespace FusionEngine
 		propListTail->previous = previousNewestProperty;
 
 		prop->AquireSignalGenerator(EvesdroppingManager::getSingleton().GetSignalingSystem());
-	}
 
-	void IComponent::OnPropertyChanged(IComponentProperty* prop)
-	{
+		return prop;
 	}
 
 	void IComponent::SynchronisePropertiesNow()
 	{
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
 		{
-			const auto& prop = *it;
-			prop->Synchronise();
+			it->second->Synchronise();
 		}
 	}
 
@@ -88,6 +85,8 @@ namespace FusionEngine
 			const auto& prop = it->prop;
 			prop->Deserialise(stream);
 		}
+
+		OnPostDeserialisation();
 	}
 
 	void IComponent::SerialiseOccasional(RakNet::BitStream& stream)
@@ -106,6 +105,8 @@ namespace FusionEngine
 			const auto& prop = it->prop;
 			prop->Deserialise(stream);
 		}
+
+		OnPostDeserialisation();
 	}
 
 	void IComponent::SerialiseEditable(RakNet::BitStream& stream)
@@ -113,9 +114,9 @@ namespace FusionEngine
 		stream.Write(m_Properties.size());
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
 		{
-			const auto& prop = *it;//it->second
-			//stream.Write(it->first.length());
-			//stream.Write(it->first); // Write the name
+			const auto& prop = it->second;
+			stream.Write(it->first.length());
+			stream.Write(it->first); // Write the name
 			prop->Serialise(stream);
 		}
 	}
@@ -124,8 +125,8 @@ namespace FusionEngine
 	{
 		size_t numProps = 0;
 		stream.Read(numProps);
-		std::map<std::string, IComponentProperty*> propsMap;
-		//propsMap.insert(m_Properties.begin(), m_Properties.end());
+		std::map<std::string, PropertyPtr> propsMap;
+		propsMap.insert(m_Properties.begin(), m_Properties.end());
 		for (size_t i = 0; i < numProps; ++i)
 		{
 			std::vector<char> d; size_t l;
@@ -140,6 +141,8 @@ namespace FusionEngine
 				prop->Deserialise(stream);
 			}
 		}
+
+		OnPostDeserialisation();
 	}
 
 }

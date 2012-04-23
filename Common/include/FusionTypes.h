@@ -37,6 +37,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <boost/intrusive_ptr.hpp>
 
 #include "FusionPrerequisites.h"
 

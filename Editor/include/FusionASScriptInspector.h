@@ -74,7 +74,7 @@ namespace FusionEngine { namespace Inspectors
 		void setValue(unsigned int index, T& value, int typeId)
 		{
 			for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-				(*it)->SetProperty(index, &value, typeId);
+				(*it)->SetPropertyRaw(index, &value, typeId);
 		}
 
 		void AddPropertyControl(Rocket::Core::Element* parent, unsigned int index, const std::string& name, unsigned int type_id);

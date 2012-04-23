@@ -597,27 +597,18 @@ namespace FusionEngine
 			if (type != "EntityWrapper@")
 			{
 				scriptComponentInterface +=
-					type + " get_" + identifier + "() const { "
-					+ type + " value; "
-					"any propAny = app_obj.getProperty(" + propIndex + "); "
-					"propAny.retrieve(" + std::string(isHandleType ? "@" : "") + "value); "
-					"return value; }\n"
-
-					"void set_" + identifier + "(" + type + " value) { "
-					"app_obj.setProperty(" + propIndex + ", value);"
+					"Property<" + type + ">@ get_" + identifier + "() const { "
+					"return app_obj.getProperty(" + propIndex + ");"
 					"}\n";
 			}
 			else
 			{
 				scriptComponentInterface +=
-					type + " get_" + identifier + "() const { "
+					"Property<" + type + "> get_" + identifier + "() const { "
 					+ "EntityW value; "
 					"any propAny = app_obj.getProperty(" + propIndex + "); "
 					"propAny.retrieve(value); "
-					"return EntityWrapper(value.lock()); }\n"
-
-					"void set_" + identifier + "(" + type + " value) { "
-					"app_obj.setProperty(" + propIndex + ", value.getRaw());"
+					"return EntityWrapper(value.lock());"
 					"}\n";
 			}
 		}
@@ -679,7 +670,8 @@ namespace FusionEngine
 			"float getAnalog(const string &in name) { return app_obj.inputGetPosition(name); }\n"
 			"}\n"
 
-			"class EntityWrapper\n"
+			// IEntityWrapper is an application interface which allows this type to be passed to app methods
+			"class EntityWrapper : IEntityWrapper\n"
 			"{\n"
 			"EntityWrapper() {}\n"
 			"EntityWrapper(const Entity &in obj) {\n"
@@ -709,6 +701,7 @@ namespace FusionEngine
 			"\n" +
 			convenientEntityProperties +
 			"}\n"
+
 			"class ScriptComponent\n"
 			"{\n"
 			"private ASScript@ app_obj;\n"

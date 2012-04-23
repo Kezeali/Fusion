@@ -242,7 +242,7 @@ namespace FusionEngine
 	template <class _From, class _To>
 	_To * convert_ref(_From * obj)
 	{
-		if (obj == NULL)
+		if (!obj)
 			return NULL;
 
 		_To* ret = dynamic_cast<_To*>(obj);
@@ -257,11 +257,11 @@ namespace FusionEngine
 	{
 		int r;
 		r = engine->RegisterObjectBehaviour(base.c_str(), asBEHAVE_REF_CAST,
-			(derived+"@ f()").c_str(), asFUNCTION((convert_ref<_Base, _Derived>)),
+			(derived + "@ f()").c_str(), asFUNCTION((convert_ref<_Base, _Derived>)),
 			asCALL_CDECL_OBJLAST);
 
 		r = engine->RegisterObjectBehaviour(derived.c_str(), asBEHAVE_IMPLICIT_REF_CAST,
-			(base+"@ f()").c_str(), asFUNCTION((convert_ref<_Derived, _Base>)),
+			(base + "@ f()").c_str(), asFUNCTION((convert_ref<_Derived, _Base>)),
 			asCALL_CDECL_OBJLAST);
 	}
 

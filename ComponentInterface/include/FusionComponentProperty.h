@@ -60,7 +60,9 @@ namespace FusionEngine
 		virtual bool IsContinuous() const = 0;
 
 		virtual void Set(void* value, int type_id) = 0;
-		virtual void Get(void* value, int type_id) = 0;
+		virtual void* GetRef() = 0;
+
+		virtual int GetTypeId() const { return -1; }
 
 		virtual bool IsEqual(IComponentProperty*) const { return false; }
 	};
@@ -82,7 +84,9 @@ namespace FusionEngine
 		ComponentProperty(IComponentProperty* impl, PropertyID id)
 			: m_Impl(impl),
 			m_ID(id)
-		{}
+		{
+			m_ScriptType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(m_Impl->GetTypeId());
+		}
 
 		void AquireSignalGenerator(PropertySignalingSystem_t& system)
 		{
@@ -105,6 +109,17 @@ namespace FusionEngine
 		//! Returns true if this property should be written to the continuous stream
 		bool IsContinuous() const { return m_Impl->IsContinuous(); }
 
+		void Set(void* ref)
+		{
+			FSN_ASSERT(GetImpl()->GetTypeId() > 0);
+			GetImpl()->Set(ref, GetImpl()->GetTypeId());
+		}
+		void* Get()
+		{
+			FSN_ASSERT(GetImpl()->GetTypeId() > 0);
+			return GetImpl()->GetRef();
+		}
+
 		//! Returns this property's globally unique ID
 		PropertyID GetID() const { return m_ID; }
 
@@ -119,12 +134,15 @@ namespace FusionEngine
 			return !m_Impl->IsEqual(other);
 		}
 
+		IComponentProperty* GetImpl() const { return m_Impl; }
+
 		//! Register this script type
 		static void Register(asIScriptEngine* engine);
 
 	private:
 		IComponentProperty* m_Impl;
 		PropertyID m_ID;
+		asIObjectType* m_ScriptType;
 	};
 
 }

@@ -237,7 +237,7 @@ namespace FusionEngine { namespace Inspectors
 			unsigned int index = 0;
 			for (auto it = m_Inputs.get<0>().begin(), end = m_Inputs.get<0>().end(); it != end; ++it, ++index)
 			{
-				boost::intrusive_ptr<CScriptAny> prop = object->GetProperty(index);
+				boost::intrusive_ptr<CScriptAny> prop = object->GetPropertyRaw(index);
 				if (!prop)
 					continue;
 				prop->Release();
