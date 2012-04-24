@@ -42,9 +42,10 @@ namespace FusionEngine
 
 	boost::intrusive_ptr<ComponentProperty> IComponent::AddProperty(const std::string& name, IComponentProperty* impl)
 	{
-		FSN_ASSERT(
-			std::find_if(m_Properties.begin(), m_Properties.end(), [impl](const std::pair<std::string, PropertyPtr>& existing)->bool { return existing.second->GetImpl() == impl; }) == m_Properties.end()
-			);
+#ifdef _DEBUG
+		auto isContainer = [impl](const std::pair<std::string, PropertyPtr>& existing)->bool { return existing.second->GetImpl() == impl; };
+		FSN_ASSERT(std::find_if(m_Properties.begin(), m_Properties.end(), isContainer) == m_Properties.end());
+#endif
 
 		boost::intrusive_ptr<ComponentProperty> prop(new ComponentProperty(impl, reinterpret_cast<int>(this) ^ reinterpret_cast<int>(impl)));
 
