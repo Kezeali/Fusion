@@ -89,6 +89,7 @@ namespace FusionEngine
 		//r = engine->RegisterObjectMethod("IProperty", "IProperty& opAssign(IProperty@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectType("Property<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); FSN_ASSERT( r >= 0 );
+
 		r = engine->RegisterObjectMethod("Property<T>", "void follow(Property<T>@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Property<T>", "Property<T> &opAssign(Property<T>@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Property<T>", "Property<T> &opAssign(const T &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);

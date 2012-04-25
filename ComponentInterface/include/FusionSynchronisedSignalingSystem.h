@@ -39,16 +39,16 @@
 
 #include <functional>
 
-#include <ScriptUtils/Calling/Caller.h>
-
 namespace FusionEngine
 {
 
+	//! Synchronised Signaling System namespace
 	namespace SyncSig
 	{
 
 		typedef std::shared_ptr<boost::signals2::scoped_connection> HandlerConnection_t;
 
+		//! Stores generated signal events in a queue
 		class GeneratorQueue
 		{
 		public:
@@ -81,6 +81,7 @@ namespace FusionEngine
 			};
 		};
 
+		//! Doesn't serialise
 		template <class KeyT>
 		class NullSerialiser
 		{
@@ -115,6 +116,7 @@ namespace FusionEngine
 			typedef SerialisationMechanism SerialisationMechanism_t;
 			typedef typename SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> This_t;
 
+			//! CTOR
 			SynchronisedSignalingSystem()
 			{
 			}
@@ -197,22 +199,6 @@ namespace FusionEngine
 				}
 			}
 
-			//! Adds a handler that is a script function. No static type check (obviously)
-			HandlerConnection_t AddScriptHandler(KeyT key, ScriptUtils::Calling::Caller handler_fn)
-			{
-				auto range = m_Generators.equal_range(key);
-				if (range.first != range.second)
-				{
-					const auto& entry = range.first;
-
-					return std::make_shared<boost::signals2::scoped_connection>(entry->second->ConnectCaller(handler_fn));
-				}
-				else
-				{
-					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
-				}
-			}
-
 			//! Returns a new generator functor
 			template <class T>
 			typename GeneratorDetail::Impl<T>::GeneratorFn_t MakeGenerator(KeyT key);
@@ -253,11 +239,13 @@ namespace FusionEngine
 				return serialiser;
 			}
 
+			//! Returns true if the generator is defined
 			bool HasGenerator(KeyT key) const
 			{
 				return m_Generators.count(key) > 0;
 			}
 
+			//! Subscribe to receive notification when new generators are added
 			HandlerConnection_t SubscribeNewGenerators(const std::function<void (KeyT, This_t&)>& callback)
 			{
 				return std::make_shared<boost::signals2::scoped_connection>(SigGeneratorDefined.connect(callback));
@@ -273,8 +261,6 @@ namespace FusionEngine
 				virtual ~GeneratorPlaceholder() {}
 
 				virtual void Fire(SerialisationMechanism&) = 0;
-
-				virtual boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller) = 0;
 
 				std::function<void ()> trigger_fn;
 			};
@@ -293,11 +279,6 @@ namespace FusionEngine
 				void Trigger()
 				{
 					trigger_fn();
-				}
-
-				boost::signals2::connection ConnectCaller(const ScriptUtils::Calling::Caller& caller)
-				{
-					return signal.connect(caller);
 				}
 
 				void Fire(SerialisationMechanism& serialiser)

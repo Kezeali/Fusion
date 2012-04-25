@@ -41,6 +41,8 @@
 
 #include "FusionScriptTypeRegistrationUtils.h"
 
+#include <BitStream.h>
+
 namespace FusionEngine
 {
 
@@ -63,6 +65,8 @@ namespace FusionEngine
 			ActivateSubscription(system);
 		}
 
+		bool IsSubscribed() const { return m_PropertyID != -1; }
+
 		void SetFollowedPropertyID(PropertyID value) { m_PropertyID = value; }
 		PropertyID GetFollowedPropertyID() const { return m_PropertyID; }
 
@@ -70,17 +74,36 @@ namespace FusionEngine
 		{
 			out.write((char*)&m_PropertyID, sizeof(m_PropertyID));
 		}
+		void SaveSubscription(RakNet::BitStream& out)
+		{
+			if (IsSubscribed())
+			{
+				out.Write1();
+				out.Write(GetFollowedPropertyID());
+			}
+			else
+				out.Write0();
+		}
 		void LoadSubscription(std::istream& in, PropertySignalingSystem_t& system)
 		{
 			in.read((char*)&m_PropertyID, sizeof(m_PropertyID));
 			ActivateSubscription(system);
 		}
+		void LoadSubscription(RakNet::BitStream& in)
+		{
+			if (in.ReadBit())
+			{
+				auto prop_id = GetFollowedPropertyID();
+				in.Read(prop_id);
+				SetFollowedPropertyID(prop_id);
+			}
+		}
+		
+		void ActivateSubscription(PropertySignalingSystem_t& system);
 
 	private:
 		SyncSig::HandlerConnection_t m_ActiveConnection;
 		PropertyID m_PropertyID;
-
-		void ActivateSubscription(PropertySignalingSystem_t& system);
 
 		virtual SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system) = 0;
 	};
@@ -103,25 +126,6 @@ namespace FusionEngine
 
 	private:
 		std::function<void (T)> m_HandlerFn;
-
-		SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system);
-	};
-
-	class ScriptPersistentConnectionAgent : public PersistentFollower
-	{
-	public:
-		ScriptPersistentConnectionAgent()
-			: PersistentFollower()
-		{}
-		ScriptPersistentConnectionAgent(const ScriptUtils::Calling::Caller& handler)
-			: PersistentFollower(),
-			m_HandlerFn(handler)
-		{}
-
-		void SetHandlerFn(const ScriptUtils::Calling::Caller& handler) { m_HandlerFn = handler; }
-
-	private:
-		ScriptUtils::Calling::Caller m_HandlerFn;
 
 		SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system);
 	};
@@ -163,11 +167,6 @@ namespace FusionEngine
 	inline SyncSig::HandlerConnection_t PersistentConnectionAgent<T>::AddHandler(PropertySignalingSystem_t& system)
 	{
 		return system.AddHandler<T>(GetFollowedPropertyID(), m_HandlerFn);
-	}
-
-	inline SyncSig::HandlerConnection_t ScriptPersistentConnectionAgent::AddHandler(PropertySignalingSystem_t& system)
-	{
-		return system.AddScriptHandler(GetFollowedPropertyID(), m_HandlerFn);
 	}
 
 }

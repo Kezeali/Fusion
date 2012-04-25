@@ -157,25 +157,82 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	struct PropertyFollowerFactoryForMethods
+	template <typename T>
+	class PropertyFollowerCallbackForMethod : public IPropertyFollowerCallbackForMethod
 	{
-		PropertyFollowerFactoryForMethods(PersistentFollowerPtr& follower_, int type_id_, const ScriptUtils::Calling::Caller& caller_)
-			: follower(follower_),
-			type_id(type_id_),
-			caller(caller_)
+	public:
+		PropertyFollowerCallbackForMethod(asIScriptFunction* fn)
+			: function(fn)
 		{}
+		void operator() (const T& value)
+		{
+			currentValue = value;
+		}
+		void ExecuteScriptMethod(asIScriptContext* ctx)
+		{
+			FSN_ASSERT(ctx->GetState() == asEXECUTION_UNINITIALIZED);
+			ctx->Prepare(function);
+			ctx->SetArgObject(0, &currentValue);
+			auto success = ctx->Execute();
+		}
+	private:
+		T currentValue;
+		asIScriptFunction* function;
+	};
+
+	template <>
+	class PropertyFollowerCallbackForMethod<boost::intrusive_ptr<CScriptAny>> : public IPropertyFollowerCallbackForMethod
+	{
+	public:
+		PropertyFollowerCallbackForMethod(asIScriptFunction* fn)
+			: function(fn)
+		{}
+		void operator() (const boost::intrusive_ptr<CScriptAny>& value)
+		{
+			currentValue = value;
+		}
+		void ExecuteScriptMethod(asIScriptContext* ctx)
+		{
+			FSN_ASSERT(ctx->GetState() == asEXECUTION_UNINITIALIZED);
+			ctx->Prepare(function);
+			ctx->SetArgObject(0, currentValue.get());
+			auto success = ctx->Execute();
+		}
+	private:
+		boost::intrusive_ptr<CScriptAny> currentValue;
+		asIScriptFunction* function;
+	};
+
+	class PropertyFollowerFactoryForMethods
+	{
+	public:
+		PropertyFollowerFactoryForMethods(ASScript::ScriptMethodData* script_method_data)
+			: method_data(*script_method_data),
+			param0_type_id(-1)
+		{
+			FSN_ASSERT(method_data.function);
+			if (method_data.function->GetParamCount() > 0)
+				param0_type_id = method_data.function->GetParamTypeId(0);
+			else
+				FSN_EXCEPT(InvalidArgumentException, std::string() + "Method: " + method_data.function->GetDeclaration() + " has no parameters, so it can't be a property change handler!");
+		}
 		template <typename T>
 		void operator() (T)
 		{
-			if (Scripting::AppType<T>::type_id == type_id)
+			if (Scripting::AppType<T>::type_id == param0_type_id)
 			{
-				ScriptUtils::Calling::Caller callerVar = caller;
-				follower = std::make_shared<PersistentConnectionAgent<T>>([callerVar](T v) { auto callerVar(v); });
+				Generate<T>();
 			}
 		}
-		PersistentFollowerPtr& follower;
-		int type_id;
-		const ScriptUtils::Calling::Caller& caller;
+		template <typename T>
+		void Generate()
+		{
+			auto cb = std::make_shared<PropertyFollowerCallbackForMethod<T>>(method_data.function);
+			method_data.persistentFollower = std::make_shared<PersistentConnectionAgent<T>>([cb](const T& value) { (*cb)(value); } );
+			method_data.caller = cb;
+		}
+		ASScript::ScriptMethodData& method_data;
+		int param0_type_id;
 	};
 
 	//! Like ThreadSafeProperty
@@ -388,8 +445,9 @@ namespace FusionEngine
 
 		void Serialise(RakNet::BitStream& stream)
 		{
-			stream.Write(m_PersistentFollower->GetFollowedPropertyID());
+			m_PersistentFollower->SaveSubscription(stream);
 
+			// Save prop data
 			FSN_ASSERT(m_Value);
 
 			auto& val = m_Value->value;
@@ -472,10 +530,10 @@ namespace FusionEngine
 
 		void Deserialise(RakNet::BitStream& stream)
 		{
-			auto followId = m_PersistentFollower->GetFollowedPropertyID();
-			stream.Read(followId);
-			m_PersistentFollower->SetFollowedPropertyID(followId);
+			// Load subscription
+			m_PersistentFollower->LoadSubscription(stream);
 
+			// Load prop data
 			stream.Read(m_TypeId);
 
 			if (m_TypeId == ASScriptSerialisaiton::s_EntityTypeID)
@@ -872,17 +930,17 @@ namespace FusionEngine
 		return ctx;
 	}
 
-	ASScript::ScriptMethodInfo* ASScript::GetMethod(const std::string& decl)
+	ASScript::ScriptMethodData* ASScript::GetMethodData(const std::string& decl)
 	{
 		if (!m_ScriptObject)
 			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
 
-		ScriptMethodInfo* method = nullptr;
+		ScriptMethodData* method = nullptr;
 
 		auto func = m_ScriptObject->object->GetObjectType()->GetMethodByDecl(decl.c_str());
 		if (func != nullptr)
 		{
-			method = &m_ScriptMethods[decl];
+			method = &m_ScriptMethods[func->GetDeclaration(false)];
 			method->id = func->GetId();
 			method->function = func;
 		}
@@ -891,36 +949,16 @@ namespace FusionEngine
 
 	int ASScript::GetMethodId(const std::string& decl)
 	{
-		/*if (!m_ScriptObject)
-			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
-
-		int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
-		if (funcId >= 0)
-		{
-			m_ScriptMethods[decl].id = funcId;
-		}
-		return funcId;*/
-		auto method = GetMethod(decl);
+		auto method = GetMethodData(decl);
 		return method ? method->id : -1;
 	}
 
 	void ASScript::BindMethod(PropertySignalingSystem_t& system, const std::string& decl, PropertyID id)
 	{
-		auto method = GetMethod(decl);
-		auto& follower = method->persistentFollower;
-
-		int typeId = -1;
-		if (method->function->GetParamCount() > 0)
-			typeId = method->function->GetParamTypeId(0);
-
-		PropertyFollowerFactoryForMethods factory(follower, typeId, ScriptUtils::Calling::Caller(GetScriptInterface()->object.get(), decl.c_str()));
-		boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
-
-		if (!follower)
+		if (auto method = GetMethodData(decl))
 		{
-			using namespace std::placeholders;
-			follower = std::make_shared<ScriptPersistentConnectionAgent>(ScriptUtils::Calling::Caller(GetScriptInterface()->object.get(), decl.c_str()));
-			//follower = std::make_shared<PersistentConnectionAgent<boost::intrusive_ptr<CScriptAny>>>(std::bind(&ScriptAnyTSP::Set, this, _1));
+			FSN_ASSERT(method->persistentFollower);
+			method->persistentFollower->Subscribe(system, id);
 		}
 	}
 
@@ -1341,11 +1379,34 @@ namespace FusionEngine
 			m_CachedProperties.clear();
 			m_EditableCachedProperties.clear();
 
+			// Init method data
 			auto objType = obj->GetObjectType();
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
 			{
 				auto method = objType->GetMethodByIndex(i);
-				m_ScriptMethods[method->GetDeclaration(false)].id = method->GetId();
+				auto& methodInfo = m_ScriptMethods[method->GetDeclaration(false)];
+				
+				methodInfo.function = method;
+				methodInfo.id = method->GetId();
+
+				try
+				{
+					if (method->GetParamCount() == 1)
+					{
+						PropertyFollowerFactoryForMethods factory(&methodInfo);
+						boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
+
+						if (!methodInfo.persistentFollower && method->GetParamTypeId(0) == objType->GetEngine()->GetTypeIdByDecl("any"))
+						{
+							factory.Generate<boost::intrusive_ptr<CScriptAny>>();
+						}
+
+						FSN_ASSERT(methodInfo.caller);
+					}
+				}
+				catch (InvalidArgumentException&)
+				{
+				}
 			}
 
 			// Pass the script-interface to the script object
