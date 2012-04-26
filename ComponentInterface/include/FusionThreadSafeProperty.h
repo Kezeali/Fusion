@@ -58,18 +58,12 @@
 
 #include "FusionAppType.h"
 #include "FusionComponentProperty.h"
-#include "FusionScriptTypeRegistrationUtils.h"
-#include "FusionScriptedSlots.h"
-
-#define FSN_SYNCH_PROP_C(prop, get, set) \
-	if ((prop.m_Changed && prop.Synchronise( get() )) || prop.SynchroniseExternalOnly())\
-	set(prop.Get());
 
 #define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
 
 #define FSN_PROP_ADDPROPERTY(prop) \
-	component->AddProperty(#prop, &prop);
+	prop.SetInterfaceObject(component->AddProperty(#prop, &prop));
 
 #define FSN_INIT_PROP(prop) \
 	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)
@@ -267,7 +261,6 @@ namespace FusionEngine
 		ThreadSafeProperty()
 			: m_PropertyID(-1),
 			m_GetSetCallbacks(nullptr),
-			//m_SubscriptionAgent(std::bind(&This_t::Set, this, std::placeholders::_1)),
 			m_Changed(true)
 		{
 			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
@@ -313,12 +306,22 @@ namespace FusionEngine
 			return *this;
 		}
 
+		void SetInterfaceObject(const boost::intrusive_ptr<ComponentProperty>& obj) { m_InterfaceObject = obj; }
+
+		ComponentProperty* GetInterfaceObject() const
+		{
+			if (m_InterfaceObject)
+				m_InterfaceObject->addRef();
+			return m_InterfaceObject.get();
+		}
+
 		PropertyID GetID() const { return m_PropertyID; }
 
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
 			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
 			m_PropertyID = own_id;
+			m_SubscriptionAgent.ActivateSubscription(system);
 		}
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
@@ -370,10 +373,12 @@ namespace FusionEngine
 
 		void Serialise(RakNet::BitStream& stream)
 		{
+			m_SubscriptionAgent.SaveSubscription(stream);
 			Serialiser::Serialise(stream, m_Value);
 		}
 		void Deserialise(RakNet::BitStream& stream)
 		{
+			m_SubscriptionAgent.LoadSubscription(stream);
 			Serialiser::Deserialise(stream, m_Value);
 		}
 		bool IsContinuous() const
@@ -431,6 +436,8 @@ namespace FusionEngine
 		PropertyID m_PropertyID;
 
 		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
+
+		boost::intrusive_ptr<ComponentProperty> m_InterfaceObject;
 
 		bool m_Changed;
 	public:

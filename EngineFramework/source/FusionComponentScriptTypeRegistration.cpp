@@ -61,14 +61,14 @@ namespace FusionEngine
 }
 
 #define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type>* get_ ## prop(void *obj) { return &GetIface<iface>(obj)->prop; } };\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_@+ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property<" scriptType ">@ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
 	/*r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_@+)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);*/\
 	FSN_ASSERT(r >= 0);}
 
 #define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type, NullWriter<type>> *get_ ## prop(void *obj) { return &GetIface<iface>(obj)->prop; } };\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" scriptType "_@+ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const Property<" scriptType ">@ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
 	FSN_ASSERT(r >= 0);}
 
 //#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \

@@ -146,6 +146,15 @@ namespace FusionEngine
 		}
 	};
 
+	//! Callback caller interface for using script methods as property-changed-event handlers
+	class IPropertyFollowerCallbackForMethod
+	{
+	public:
+		virtual ~IPropertyFollowerCallbackForMethod() {}
+
+		virtual void ExecuteScriptMethod(asIScriptContext* ctx) = 0;
+	};
+
 	//! Angelscript component
 	class ASScript : public IComponent, public IScript
 	{
@@ -284,14 +293,16 @@ namespace FusionEngine
 		const std::string& GetScriptPath() const;
 		void SetScriptPath(const std::string& path);
 
-		struct ScriptMethodInfo
+		friend class PropertyFollowerFactoryForMethods;
+		struct ScriptMethodData
 		{
 			PersistentFollowerPtr persistentFollower; // Used to bind this method as a callback to a component property
+			std::shared_ptr<IPropertyFollowerCallbackForMethod> caller;
 			asIScriptFunction* function;
 			int id;
 		};
 
-		ScriptMethodInfo* GetMethod(const std::string& decl);
+		ScriptMethodData* GetMethodData(const std::string& decl);
 
 		std::string m_Path;
 		bool m_ReloadScript;
@@ -301,7 +312,7 @@ namespace FusionEngine
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		int m_EntityWrapperTypeId;
-		std::map<std::string, ScriptMethodInfo> m_ScriptMethods;
+		std::map<std::string, ScriptMethodData> m_ScriptMethods;
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		std::vector<ComponentProperty*> m_ScriptPropertyInterfaces;

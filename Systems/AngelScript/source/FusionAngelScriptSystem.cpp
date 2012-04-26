@@ -1476,6 +1476,15 @@ namespace FusionEngine
 						}
 					}
 
+					for (auto it = script->m_ScriptMethods.begin(); it != script->m_ScriptMethods.end(); ++it)
+					{
+						if (it->second.caller)
+						{
+							auto ctx = m_ScriptManager->CreateContext();
+							it->second.caller->ExecuteScriptMethod(ctx.get());
+						}
+					}
+
 					for (auto mit = script->m_ScriptMethods.begin(); mit != script->m_ScriptMethods.end(); ++mit)
 					{
 						// event handler
