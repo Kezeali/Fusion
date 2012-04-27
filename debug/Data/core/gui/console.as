@@ -113,6 +113,10 @@ class ConsoleElement : ScriptElement
 			}
 		}
 	}
+	
+	void OnUpdate()
+	{
+	}
 
 	void OnRender()
 	{

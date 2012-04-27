@@ -319,7 +319,8 @@ namespace FusionEngine
 
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
-			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
+			//m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
+			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, [this]()->const T& { this->Synchronise(); return this->Get(); });
 			m_PropertyID = own_id;
 			m_SubscriptionAgent.ActivateSubscription(system);
 		}
@@ -329,45 +330,18 @@ namespace FusionEngine
 			m_SubscriptionAgent.Subscribe(system, id);
 		}
 
-		//! Synchronise parallel (thread) writes
-		bool Synchronise(const T& sim_value)
-		{
-			// With NullWriter this first conditional is optimised away (in MSVC, at least)
-			if (m_Writer.DumpWrittenValue(m_Value))
-			{
-				m_Changed = true;
-				return true;
-			}
-			else if (m_Changed)
-			{
-				m_Value = sim_value;
-			}
-			return false;
-		}
-
-		bool SynchroniseExternalOnly()
-		{
-			if (m_Writer.DumpWrittenValue(m_Value))
-			{
-				m_Changed = true;
-				return true;
-			}
-			else
-				return false;
-		}
-
 		void Synchronise()
 		{
 			FSN_ASSERT(m_GetSetCallbacks);
 
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
-				m_Changed = true;
 				m_GetSetCallbacks->Set(m_Value);
 			}
 			else if (m_Changed)
 			{
 				m_Value = m_GetSetCallbacks->Get();
+				m_Changed = false;
 			}
 		}
 
@@ -396,7 +370,8 @@ namespace FusionEngine
 			{
 				m_Writer.Write(*static_cast<T*>(value));
 
-				m_ChangedCallback();
+				if (m_ChangedCallback)
+					m_ChangedCallback();
 			}
 		}
 
@@ -416,8 +391,9 @@ namespace FusionEngine
 		//! Mark changed
 		void MarkChanged()
 		{
-			m_ChangedCallback();
 			m_Changed = true;
+			if (m_ChangedCallback)
+				m_ChangedCallback();
 		}
 
 		const T& Get() const { return m_Value; }
@@ -425,7 +401,8 @@ namespace FusionEngine
 		{
 			m_Writer.Write(value);
 
-			m_ChangedCallback();
+			if (m_ChangedCallback)
+				m_ChangedCallback();
 		}
 
 	private:

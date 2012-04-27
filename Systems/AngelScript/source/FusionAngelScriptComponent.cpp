@@ -163,7 +163,9 @@ namespace FusionEngine
 	public:
 		PropertyFollowerCallbackForMethod(asIScriptFunction* fn)
 			: function(fn)
-		{}
+		{
+			FSN_ASSERT(function);
+		}
 		void operator() (const T& value)
 		{
 			currentValue = value;
@@ -287,6 +289,9 @@ namespace FusionEngine
 					auto getter = [propVar, typeId]()->T
 					{
 						FSN_ASSERT(propVar->GetTypeId() == typeId); // Type ID shouldn't have changed
+
+						propVar->Synchronise();
+
 						auto scriptAny = propVar->Get();
 						T value;
 						scriptAny->Retrieve(&value, typeId);
@@ -357,7 +362,7 @@ namespace FusionEngine
 			if (!m_ChangedCallback)
 			{
 				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(own_id,
-					[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
+					[this]()->boost::intrusive_ptr<CScriptAny> { this->Synchronise(); return boost::intrusive_ptr<CScriptAny>(this->Get()); });
 			}
 		}
 
@@ -415,6 +420,8 @@ namespace FusionEngine
 			else
 			{
 				m_ChangedSinceSerialised = true;
+				if (m_ChangedCallback)
+					m_ChangedCallback();
 				return true;
 			}
 		}
@@ -603,7 +610,8 @@ namespace FusionEngine
 				m_Writer.Write(any);
 				any->Release();
 
-				m_ChangedCallback();
+				if (m_ChangedCallback)
+					m_ChangedCallback();
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
@@ -615,7 +623,8 @@ namespace FusionEngine
 			{
 				m_Writer.Write(any);
 
-				m_ChangedCallback();
+				if (m_ChangedCallback)
+					m_ChangedCallback();
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
@@ -787,7 +796,7 @@ namespace FusionEngine
 
 			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, Property@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, IProperty@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript::ScriptInterface, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -795,7 +804,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "any@ getPropertyRaw(uint) const", asMETHOD(ASScript::ScriptInterface, GetPropertyRaw), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void setPropertyRaw(uint, ?&in)", asMETHODPR(ASScript::ScriptInterface, SetPropertyRaw, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-			r = engine->RegisterObjectMethod("ASScript", "any@ getProperty(uint) const", asMETHOD(ASScript::ScriptInterface, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "IProperty@ getProperty(uint) const", asMETHOD(ASScript::ScriptInterface, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			
 			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_ScriptInterface_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
@@ -1057,7 +1066,7 @@ namespace FusionEngine
 			}
 
 			auto coCtx = engine->CreateContext();
-			coCtx->Prepare(fn->GetId());
+			coCtx->Prepare(fn);
 			if (method)
 				coCtx->SetObject(m_ScriptObject->object.get());
 

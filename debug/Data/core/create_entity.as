@@ -10,10 +10,10 @@ void createEntity(int type, const Vector &in pos, float angle)
 	{
 		Entity e = editor.CreateEntity("StaticTransform", pos, angle, false, true);
 		//ITransform@ transform = cast<ITransform>(e.getComponent("StaticTransform", "").get());
-		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
+		//ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
 		
 		//transform.Depth = -1;
-		sprite.ImagePath << "/Entities/Dirt.png";
+		//sprite.ImagePath << "/Entities/Dirt.png";
 	}
 	if (type == 2)
 	{

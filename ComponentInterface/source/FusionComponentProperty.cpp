@@ -42,24 +42,108 @@ namespace FusionEngine
 		obj->Follow(EvesdroppingManager::getSingleton().GetSignalingSystem(), other->GetID());
 	}
 
-	static ComponentProperty& ComponentPropertyT_opAssign(ComponentProperty* other, ComponentProperty* obj)
+	static ComponentProperty* ComponentPropertyT_opAssign(ComponentProperty* other, ComponentProperty* obj)
 	{
 		if (other->GetImpl()->GetTypeId() == obj->GetImpl()->GetTypeId())
 			obj->GetImpl()->Set(other->Get(), obj->GetImpl()->GetTypeId());
 		else
 			asGetActiveContext()->SetException("Incompatible Property types for opAssign ('prop = prop')");
-		return *obj;
+		return obj;
 	}
 	
-	static ComponentProperty& ComponentPropertyT_opAssign(void* ref, ComponentProperty* obj)
+	static ComponentProperty* ComponentPropertyT_opAssign(void* ref, ComponentProperty* obj)
 	{
 		obj->GetImpl()->Set(ref, obj->GetImpl()->GetTypeId());
-		return *obj;
+		return obj;
 	}
 
-	static void* ComponentPropertyT_ImplicitCast(ComponentProperty* obj)
+	static ComponentProperty* ComponentPropertyT_opAssign_r(void* ref, ComponentProperty* obj)
 	{
-		return obj->Get();
+		*(void**)ref = obj->GetImpl()->GetRef();
+		return obj;
+	}
+
+	static void ComponentPropertyT_ImplicitCast(asIScriptGeneric* gen)
+	{
+		auto obj = *static_cast<ComponentProperty**>(gen->GetObject());
+
+		auto engine = gen->GetEngine();
+
+		auto refTypeId = gen->GetReturnTypeId();
+
+		if( obj->GetImpl()->GetTypeId() & asTYPEID_MASK_OBJECT )
+		{
+			// Is the object type compatible with the stored value?
+
+			// Copy the object into the given reference
+			if( obj->GetImpl()->GetTypeId() == refTypeId )
+			{
+				engine->CopyScriptObject(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), obj->GetImpl()->GetTypeId());
+				return;
+			}
+		}
+		else
+		{
+			// Is the primitive type compatible with the stored value?
+
+			if( obj->GetImpl()->GetTypeId() == refTypeId )
+			{
+				int size = engine->GetSizeOfPrimitiveType(refTypeId);
+				memcpy(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), size);
+				return;
+			}
+		}
+
+		asGetActiveContext()->SetException("Invalid implicit value cast for the given Property type");
+	}
+
+	ComponentProperty *ComponentPropertyT_factory(asIObjectType *type)
+	{
+		return new ComponentProperty();
+	}
+	
+	ComponentProperty *ComponentPropertyT_factory()
+	{
+		return new ComponentProperty();
+	}
+
+	void ComponentPropertyT_refcast(void* out, int type_id, ComponentProperty* obj)
+	{
+		if (obj)
+		{
+			FSN_ASSERT(type_id & asTYPEID_OBJHANDLE);
+			
+			const auto outType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(type_id);
+			if (outType && outType->GetSubTypeId() == obj->GetImpl()->GetTypeId())
+			{
+				obj->addRef();
+				*(void**)out = obj;
+			}
+		}
+	}
+
+	void ComponentPropertyT_RegisterRefCast(asIScriptEngine *engine, const std::string &base, const std::string &derived)
+	{
+		int r;
+		r = engine->RegisterObjectBehaviour(base.c_str(), asBEHAVE_REF_CAST,
+			"void f(?&out)", asFUNCTION(ComponentPropertyT_refcast),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectBehaviour(derived.c_str(), asBEHAVE_IMPLICIT_REF_CAST,
+			(base + "@ f()").c_str(), asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	}
+
+	void ComponentPropertyT_RegisterConversion(asIScriptEngine *engine, const std::string &base, const std::string &derived)
+	{
+		int r;
+		r = engine->RegisterObjectMethod(base.c_str(),
+			"void convert_into(?&out)", asFUNCTION(ComponentPropertyT_refcast),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod(derived.c_str(),
+			"IProperty@ to_placeholder()", asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 	}
 
 	static void GeneratePropertySpecialisation(asIScriptEngine* engine, const std::string& subtype)
@@ -69,8 +153,8 @@ namespace FusionEngine
 		const auto c_type = type.c_str();
 		r = engine->RegisterObjectType(c_type, 0, asOBJ_REF); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod(c_type, ("void follow(" + type + "@)").c_str(), asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod(c_type, (type + " &opAssign(" + type + "@)").c_str(), asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod(c_type, (type + " &opAssign(const " + subtype + " &in)").c_str(), asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod(c_type, (type + "@ opAssign(" + type + "@)").c_str(), asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod(c_type, (type + "@ opAssign(const " + subtype + " &in)").c_str(), asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectBehaviour(c_type, asBEHAVE_IMPLICIT_VALUE_CAST,
 			(subtype + " f() const").c_str(), asMETHOD(ComponentProperty, Get), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -86,25 +170,40 @@ namespace FusionEngine
 		RegisterType<ComponentProperty>(engine, "IProperty");
 
 		r = engine->RegisterObjectMethod("IProperty", "void follow(IProperty@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		//r = engine->RegisterObjectMethod("IProperty", "IProperty& opAssign(IProperty@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod("IProperty", "IProperty& opAssign(IProperty@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		FSN_ASSERT( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == NULL );
 
 		r = engine->RegisterObjectType("Property<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); FSN_ASSERT( r >= 0 );
+		
+		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_FACTORY, "Property<T> @f(int &in)", asFUNCTIONPR(ComponentPropertyT_factory, (asIObjectType*), ComponentProperty*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
+		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
 		r = engine->RegisterObjectMethod("Property<T>", "void follow(Property<T>@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Property<T>", "Property<T> &opAssign(Property<T>@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Property<T>", "Property<T> &opAssign(const T &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<T>", "Property<T> &opAssign(const Property<T> &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<T>", "void opAssign(const T &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<T>", "void opShl(const T &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<T>", "void opShl_r(T &out)", asFUNCTIONPR(ComponentPropertyT_opAssign_r, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_IMPLICIT_VALUE_CAST,
-			"T f() const", asMETHOD(ComponentProperty, Get), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"T f() const", asFUNCTION(ComponentPropertyT_ImplicitCast), asCALL_GENERIC); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Property<T>", "const T &get_value() const", asMETHOD(ComponentProperty, Get), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Property<T>", "void set_value(const T &in)", asMETHOD(ComponentProperty, Set), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		// Specialisation for bool (no implicit cast)
 		r = engine->RegisterObjectType("Property<bool>", 0, asOBJ_REF); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectBehaviour("Property<bool>", asBEHAVE_FACTORY, "Property<bool> @f()", asFUNCTIONPR(ComponentPropertyT_factory, (void), ComponentProperty*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Property<bool>", asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
+		r = engine->RegisterObjectBehaviour("Property<bool>", asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
+
 		r = engine->RegisterObjectMethod("Property<bool>", "void follow(Property<bool>@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Property<bool>", "Property<bool> &opAssign(Property<bool>@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Property<bool>", "Property<bool> &opAssign(bool)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty&), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<bool>", "Property<bool> &opAssign(const Property<bool> &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<bool>", "void opAssign(const bool &in)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<bool>", "void opShl(bool)", asFUNCTIONPR(ComponentPropertyT_opAssign, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Property<bool>", "void opShl_r(bool &out)", asFUNCTIONPR(ComponentPropertyT_opAssign_r, (void*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Property<bool>", "const bool& get_value() const", asMETHOD(ComponentProperty, Get), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Property<bool>", "void set_value(const bool &in)", asMETHOD(ComponentProperty, Set), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -118,8 +217,12 @@ namespace FusionEngine
 		//Gen generator; generator.engine = engine;
 		//boost::mpl::for_each<Scripting::FundimentalTypes>(generator);
 
+
+
 		// Type conversion
-		RegisterBaseOf<ComponentProperty, ComponentProperty>(engine, "IProperty", "Property<T>");
+		ComponentPropertyT_RegisterConversion(engine, "IProperty", "Property<T>");
+		//RegisterBaseOf<ComponentProperty, ComponentProperty>(engine, "IProperty", "Property<T>");
+		//RegisterBaseOf<ComponentProperty, ComponentProperty>(engine, "IProperty", "Property<bool>");
 	}
 
 }

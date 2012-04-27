@@ -179,7 +179,9 @@ namespace FusionEngine
 		//! Cotr
 		IComponent()
 			: RefCounted(0),
-			m_InterfacesInitialised(false)
+			m_InterfacesInitialised(false),
+			m_LastContinuousProperty(nullptr),
+			m_LastOccasionalProperty(nullptr)
 		{
 			m_Ready = NotReady;
 		}

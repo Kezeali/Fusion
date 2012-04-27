@@ -28,8 +28,8 @@ class PseudoI : ScriptComponent
 		if (frames == 1)
 		{			
 			//entity.irigidbody.AngularVelocity = 0.9f;
-			entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
-			bindMethod("void onVelocityChanged(const Vector &in)", entity.irigidbody.Velocity);
+			entity.irigidbody.Velocity.value = Vector(cos(itransform.Angle), sin(itransform.Angle));
+			bindMethod("void onVelocityChanged(const Vector &in)", @entity.irigidbody.Velocity.to_placeholder());
 		}
 		//if (frames % 2 == 0)
 		//	entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
@@ -38,17 +38,17 @@ class PseudoI : ScriptComponent
 		
 		if ((frames % 2) == 0 && target !is null)
 		{
-			Vector myPos = entity.itransform.Position;
-			Vector targetPos = target.itransform.Position;
+			Vector myPos = entity.itransform.Position.value;
+			Vector targetPos = target.itransform.Position.value;
 			Vector posDiff = targetPos - myPos;
 			if (posDiff.length() < 0.6f)
 				contact_frames = 10;
 			else if (contact_frames > 0)
 				--contact_frames;
 			if (contact_frames == 0)
-				entity.irigidbody.Velocity = posDiff.normalised();
+				entity.irigidbody.Velocity.value = posDiff.normalised();
 			else if (contact_frames == 10)
-				entity.irigidbody.Velocity = Vector();
+				entity.irigidbody.Velocity.value = Vector();
 			
 			//Vector myVel = entity.irigidbody.Velocity;
 			//entity.itransform.Angle = atan2(myVel.x, myVel.y);
@@ -60,14 +60,14 @@ class PseudoI : ScriptComponent
 		const float normAngle = angleDiff / 2 * 3.14f;
 		if (angleDiff < -0.01f)
 		{
-			entity.irigidbody.AngularVelocity = normAngle * 2.0f;
+			entity.irigidbody.AngularVelocity.value = normAngle * 2.0f;
 		}
 		else if (angleDiff > 0.01f)
 		{
-			entity.irigidbody.AngularVelocity = normAngle * 2.0f;
+			entity.irigidbody.AngularVelocity.value = normAngle * 2.0f;
 		}
 		else
-			entity.irigidbody.AngularVelocity = 0.0f;
+			entity.irigidbody.AngularVelocity.value = 0.0f;
 	}
 	
 	float wrap(float value, float lower, float upper)

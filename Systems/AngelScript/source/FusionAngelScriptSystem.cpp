@@ -142,7 +142,7 @@ namespace FusionEngine
 		{
 			std::string token(script.data() + pos, script.data() + pos + tokenLength);
 			fields.push_back(token);
-			if (token == "uses")
+			if (!token.empty())
 			{
 				pos += tokenLength;
 
@@ -426,13 +426,13 @@ namespace FusionEngine
 							FSN_EXCEPT(PreprocessorException, "Invalid #uses directive: '" + script.substr(start, directiveLength) + "'");
 						}
 					}
-					if (preprocessorDirective[0] == "autoyield")
+					else if (preprocessorDirective[0] == "autoyield")
 					{
 						if (preprocessorDirective.size() >= 2)
 						{
-							if (preprocessorDirective[1] == "enabled")
+							if (preprocessorDirective[1] == "enable")
 								scriptInfo.AutoYield = true;
-							if (preprocessorDirective[1] == "disabled")
+							else if (preprocessorDirective[1] == "disable")
 								scriptInfo.AutoYield = false;
 							else
 							{
@@ -530,6 +530,8 @@ namespace FusionEngine
 			FSN_ASSERT(r >= 0);
 		}
 
+		engine->RegisterInterface("IEntityWrapper");
+
 		ASScript::ScriptInterface::Register(engine);
 
 		engine->RegisterObjectMethod("EntityInstantiator", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
@@ -598,17 +600,24 @@ namespace FusionEngine
 			{
 				scriptComponentInterface +=
 					"Property<" + type + ">@ get_" + identifier + "() const { "
-					"return app_obj.getProperty(" + propIndex + ");"
+					"Property<" + type + ">@ handle;"
+					"app_obj.getProperty(" + propIndex + ").convert_into(@handle);"
+					"return handle;"
 					"}\n";
 			}
 			else
 			{
 				scriptComponentInterface +=
-					"Property<" + type + "> get_" + identifier + "() const { "
-					+ "EntityW value; "
-					"any propAny = app_obj.getProperty(" + propIndex + "); "
+					//"Property<" + type + "> get_" + identifier + "() const { "
+					type + " get_" + identifier + "() const { "
+					"EntityW value; "
+					"any propAny = app_obj.getPropertyRaw(" + propIndex + "); "
 					"propAny.retrieve(value); "
 					"return EntityWrapper(value.lock());"
+					"}\n"
+
+					"void set_" + identifier + "(EntityWrapper@ wrapper) { "
+					"app_obj.setPropertyRaw(" + propIndex + ", wrapper.getRaw()); "
 					"}\n";
 			}
 		}
@@ -717,6 +726,7 @@ namespace FusionEngine
 			"void createCoroutine(const string &in fn_name, float delay = 0.0f) { app_obj.createCoroutine(fn_name, delay); }\n"
 			"EntityWrapper@ instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id)"
 			" { return EntityWrapper(instantiator.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
+			"void bindMethod(const string &in fn_name, IProperty@ prop) { app_obj.bindMethod(fn_name, prop); }\n"
 			"\n" +
 			convenientComponentProperties +
 			"}\n"

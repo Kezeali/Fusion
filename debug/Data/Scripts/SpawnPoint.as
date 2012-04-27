@@ -54,8 +54,8 @@ class SpawnPoint : ScriptComponent
 			Vector offset = Vector(0, -18.f);
 			
 			//console.println(sprite.getType());
-			sprite.ImagePath = playerSprite;
-			sprite.AnimationPath = playerAnimationFile + ":shuffle";
+			sprite.ImagePath << playerSprite;
+			sprite.AnimationPath << playerAnimationFile + ":shuffle";
 			sprite.Offset << offset;
 			//sprite.BaseAngle = 1.57f;
 			

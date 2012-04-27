@@ -247,6 +247,7 @@ namespace FusionEngine
 		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
 		//component->SetPropChangedQueue(*m_PropChangedQueue);
+		component->InitInterfaces();
 
 		// Add the new component to the component-by-interface map
 		const auto& interfaceNames = component->GetInterfaces();
