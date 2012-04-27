@@ -300,20 +300,12 @@ namespace FusionEngine
 
 			FSN_ASSERT(transform);
 
-			//m_PositionChangeConnection.disconnect();
-			//m_AngleChangeConnection.disconnect();
-			//m_DepthChangeConnection.disconnect();
-
-			//m_PositionChangeConnection = transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
-			//m_AngleChangeConnection = transform->Angle.Connect(std::bind(&CLSprite::SetAngle, this, std::placeholders::_1));
-			//m_DepthChangeConnection = transform->Depth.Connect([this](int depth) { m_EntityDepth = depth; });
-
 			using namespace std::placeholders;
 
 			auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
 			m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&CLSprite::SetPosition, this, _1));
-			m_AngleChangeConnection = system.AddHandler<float>(transform->Position.GetID(), std::bind(&CLSprite::SetAngle, this, _1));
-			m_DepthChangeConnection = system.AddHandler<int>(transform->Position.GetID(), [this](int depth) { m_EntityDepth = depth; });
+			m_AngleChangeConnection = system.AddHandler<const float&>(transform->Angle.GetID(), std::bind(&CLSprite::SetAngle, this, _1));
+			m_DepthChangeConnection = system.AddHandler<const int&>(transform->Depth.GetID(), [this](const int& depth) { m_EntityDepth = depth; });
 
 			m_Position = transform->Position.Get();
 			m_Angle = transform->Angle.Get();

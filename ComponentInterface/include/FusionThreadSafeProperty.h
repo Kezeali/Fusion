@@ -63,7 +63,7 @@
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
 
 #define FSN_PROP_ADDPROPERTY(prop) \
-	prop.SetInterfaceObject(component->AddProperty(#prop, &prop));
+	prop.SetInterfaceObject(component->AddProperty(BOOST_PP_STRINGIZE(prop), &prop));
 
 #define FSN_INIT_PROP(prop) \
 	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)

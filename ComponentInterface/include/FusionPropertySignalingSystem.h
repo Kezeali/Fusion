@@ -42,6 +42,7 @@
 #include "FusionScriptTypeRegistrationUtils.h"
 
 #include <BitStream.h>
+#include <tbb/atomic.h>
 
 namespace FusionEngine
 {
@@ -140,10 +141,17 @@ namespace FusionEngine
 			return m_SignalingSystem;
 		}
 
+		PropertyID GenerateNextId()
+		{
+			return m_NextID++;
+		}
+
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
 	protected:
 		PropertySignalingSystem_t m_SignalingSystem;
+
+		tbb::atomic<PropertyID> m_NextID;
 	};
 
 

@@ -37,6 +37,7 @@ namespace FusionEngine
 
 	EvesdroppingManager::EvesdroppingManager()
 	{
+		m_NextID = 0;
 		//ScriptManager::getSingleton().RegisterGlobalObject("EvesdroppingManager evesdropping", this);
 	}
 

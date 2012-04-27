@@ -59,6 +59,8 @@ namespace FusionEngine { namespace Inspectors
 		virtual void SetComponents(const std::vector<ComponentPtr>& components) = 0;
 		virtual void ReleaseComponents() = 0;
 
+		virtual void ResetUIValues() = 0;
+
 		virtual void SetCircleToolExecutor(const CircleToolExecutor_t& executor) {}
 		virtual void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) {}
 		virtual void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) {}

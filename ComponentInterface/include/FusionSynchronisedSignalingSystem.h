@@ -160,9 +160,14 @@ namespace FusionEngine
 					{
 						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
 					}
+					// Type const-ref generator match
+					//else if (auto generator = std::dynamic_pointer_cast<Generator<const_ref_type>>(entry->second))
+					//{
+					//	return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+					//}
 					else
 					{
-						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not compatible to the signal type");
+						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not compatible with the signal type");
 					}
 				}
 				else
@@ -192,6 +197,24 @@ namespace FusionEngine
 					{
 						FSN_EXCEPT(InvalidArgumentException, "The given handler's argument is not exactly equal to the signal type");
 					}
+				}
+				else
+				{
+					FSN_EXCEPT(InvalidArgumentException, "There is no generator for the given signal type");
+				}
+			}
+
+			//! Adds a listener (like handler that doesn't receive the new value)
+			HandlerConnection_t AddListener(KeyT key, std::function<void ()> handler_fn)
+			{
+				auto range = m_Generators.equal_range(key);
+				if (range.first != range.second)
+				{
+					const auto& entry = range.first;
+					auto generatorPlaceholder = entry->second;
+					FSN_ASSERT(generatorPlaceholder);
+
+					return generatorPlaceholder->ConnectListener(handler_fn);
 				}
 				else
 				{
@@ -262,6 +285,8 @@ namespace FusionEngine
 
 				virtual void Fire(SerialisationMechanism&) = 0;
 
+				virtual HandlerConnection_t ConnectListener(const std::function<void ()>& listener) = 0;
+
 				std::function<void ()> trigger_fn;
 			};
 
@@ -289,6 +314,11 @@ namespace FusionEngine
 						serialiser.WriteEvent<T>(v);
 						signal(v);
 					}
+				}
+
+				HandlerConnection_t ConnectListener(const std::function<void ()>& listener)
+				{
+					return std::make_shared<boost::signals2::scoped_connection>( signal.connect([=](T){ listener(); }) );
 				}
 			};
 

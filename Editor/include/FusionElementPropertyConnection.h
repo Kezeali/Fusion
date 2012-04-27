@@ -47,7 +47,11 @@ namespace FusionEngine { namespace Inspectors
 		{
 		}
 
+		//boost::intrusive_ptr<ComponentProperty> GetComponentProperty() const { return m_ComponentProperty; }
+		PropertyID GetComponentPropertyId() const { return m_ComponentPropertyId; }
+
 	private:
+		PropertyID m_ComponentPropertyId;
 	};
 
 	template <class T>

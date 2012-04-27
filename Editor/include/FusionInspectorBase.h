@@ -36,6 +36,7 @@
 
 #include "FusionComponentInspector.h"
 #include "FusionElementPropertyConnection.h"
+#include "FusionPropertySignalingSystem.h"
 
 #include "FusionInspectorUtils.h"
 
@@ -65,6 +66,8 @@ namespace FusionEngine { namespace Inspectors
 		//! Derived class should call AddXInput methods here
 		virtual void InitUI() = 0;
 
+		typedef GenericInspector<ComponentT> This_t;
+
 	protected:
 
 		/*! \defgroup GenericInspectorSetters Setters
@@ -92,25 +95,35 @@ namespace FusionEngine { namespace Inspectors
 		//! Variant caller for all getter types
 		typedef boost::variant<BoolGetter_t, IntGetter_t, FloatGetter_t, StringGetter_t> GetterCallbackVariant_t;
 
+		//! Follow callback type
+		typedef std::function<void (PropertyID)> FollowCallback_t;
+
+		typedef typename boost::intrusive_ptr<Rocket::Core::Element> InputElementPtr;
+
 		CircleToolExecutor_t m_CircleToolExecutor;
 		RectangleToolExecutor_t m_RectangleToolExecutor;
 		PolygonToolExecutor_t m_PolygonToolExecutor;
 
+		void AddProperty(const std::string& name, InputElementPtr element = InputElementPtr());
+
 		//! Adds a text input
-		void AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size = 0);
+		InputElementPtr AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size = 0);
 		//! Adds a toggle (checkbox) input
-		void AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
+		InputElementPtr AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
 		//! Adds a range (slider) input
-		void AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
+		InputElementPtr AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter);
 		//! Adds a select (popup) input
-		void AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
+		InputElementPtr AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter);
 		//! Adds a button input
-		void AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter);
+		InputElementPtr AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter);
 		//! Adds a circle input
-		void AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
+		std::vector<InputElementPtr> AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter);
 		//! Adds a rectangle input
-		void AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter);
+		std::vector<InputElementPtr> AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter);
 		
+		//! Updates the UI elements associated with the given property name
+		void RefreshUIForProp(const std::string& name);
+
 		//! Updates the UI values from the components
 		void ResetUIValues();
 
@@ -125,11 +138,19 @@ namespace FusionEngine { namespace Inspectors
 			InputVariant_t ui_element;
 			SetterCallbackVariant_t callback;
 			GetterCallbackVariant_t get_callback;
+			FollowCallback_t follow_callback;
 		};
 
 		std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
 
 		std::vector<ComponentIPtr<ComponentT>> m_Components;
+
+		struct PropertySubscriptionData
+		{
+			std::vector<SyncSig::HandlerConnection_t> connections;
+			std::vector<InputElementPtr> elements; // the element's to be refreshed when this listener is triggered
+		};
+		std::map<std::string, PropertySubscriptionData> m_Properties;
 
 		void SetComponents(const std::vector<ComponentPtr>& components);
 		void ReleaseComponents();
@@ -384,7 +405,18 @@ namespace FusionEngine { namespace Inspectors
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size)
+	void GenericInspector<ComponentT>::AddProperty(const std::string& name, InputElementPtr element)
+	{
+		auto& data = m_Properties[name];
+		if (element)
+		{
+			FSN_ASSERT(std::find(data.elements.begin(), data.elements.end(), element) == data.elements.end());
+			data.elements.push_back(element);
+		}
+	}
+
+	template <class ComponentT>
+	typename GenericInspector<ComponentT>::InputElementPtr GenericInspector<ComponentT>::AddTextInput(const std::string& name, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter, int size)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -421,10 +453,12 @@ namespace FusionEngine { namespace Inspectors
 			inputData.get_callback = getter;
 			m_Inputs[input_element] = inputData;
 		}
+
+		return input_element;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter)
+	typename GenericInspector<ComponentT>::InputElementPtr GenericInspector<ComponentT>::AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -457,10 +491,12 @@ namespace FusionEngine { namespace Inspectors
 			inputData.get_callback = getter;
 			m_Inputs[input_element] = inputData;
 		}
+
+		return input_element;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter)
+	typename GenericInspector<ComponentT>::InputElementPtr GenericInspector<ComponentT>::AddRangeInput(const std::string& name, float min, float max, SetterCallbackVariant_t setter, GetterCallbackVariant_t getter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -495,10 +531,12 @@ namespace FusionEngine { namespace Inspectors
 			inputData.get_callback = getter;
 			m_Inputs[input_element] = inputData;
 		}
+
+		return input_element;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter)
+	typename GenericInspector<ComponentT>::InputElementPtr GenericInspector<ComponentT>::AddSelectInput(const std::string& name, const std::vector<std::string>& options, StringSetter_t setter, StringGetter_t getter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -533,10 +571,12 @@ namespace FusionEngine { namespace Inspectors
 			inputData.get_callback = getter;
 			m_Inputs[select_element] = inputData;
 		}
+
+		return select_element;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter)
+	typename GenericInspector<ComponentT>::InputElementPtr GenericInspector<ComponentT>::AddButtonInput(const std::string& text, const std::string& value, StringSetter_t setter)
 	{
 		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
@@ -567,10 +607,12 @@ namespace FusionEngine { namespace Inspectors
 			inputData.callback = setter;
 			m_Inputs[input_element] = inputData;
 		}
+
+		return input_element;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter)
+	std::vector<typename GenericInspector<ComponentT>::InputElementPtr> GenericInspector<ComponentT>::AddCircleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t radius_setter, FloatGetter_t radius_getter)
 	{
 		using namespace Rocket::Core;
 		using namespace Rocket::Controls;
@@ -578,6 +620,7 @@ namespace FusionEngine { namespace Inspectors
 		auto line = Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
 
+		std::vector<InputElementPtr> returnValue;
 		boost::intrusive_ptr<ElementFormControlInput> input_element;
 
 		Factory::InstanceElementText(line, "circle");
@@ -603,6 +646,8 @@ namespace FusionEngine { namespace Inspectors
 				inputData.get_callback = getter;
 				m_Inputs[input_element] = inputData;
 			}
+
+			returnValue.push_back(input_element);
 		};
 		addComponentInput(x_setter, x_getter);
 		addComponentInput(y_setter, y_getter);
@@ -628,13 +673,17 @@ namespace FusionEngine { namespace Inspectors
 				inputData.callback = BoolSetter_t(EditCircleButtonFunctor(this, x_setter, x_getter, y_setter, y_getter, radius_setter, radius_getter));
 				m_Inputs[input_element] = inputData;
 			}
+
+			returnValue.push_back(input_element);
 		}
 
 		line->RemoveReference();
+
+		return returnValue;
 	}
 
 	template <class ComponentT>
-	void GenericInspector<ComponentT>::AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter)
+	std::vector<typename GenericInspector<ComponentT>::InputElementPtr> GenericInspector<ComponentT>::AddRectangleInput(FloatSetter_t x_setter, FloatGetter_t x_getter, FloatSetter_t y_setter, FloatGetter_t y_getter, FloatSetter_t hw_setter, FloatGetter_t hw_getter, FloatSetter_t hh_setter, FloatGetter_t hh_getter, FloatSetter_t angle_setter, FloatGetter_t angle_getter)
 	{
 		using namespace Rocket::Core;
 		using namespace Rocket::Controls;
@@ -642,6 +691,7 @@ namespace FusionEngine { namespace Inspectors
 		auto line = Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
 		this->AppendChild(line);
 
+		std::vector<InputElementPtr> returnValue;
 		boost::intrusive_ptr<ElementFormControlInput> input_element;
 
 		Factory::InstanceElementText(line, "rectangle");
@@ -667,6 +717,8 @@ namespace FusionEngine { namespace Inspectors
 				inputData.get_callback = getter;
 				m_Inputs[input_element] = inputData;
 			}
+
+			returnValue.push_back(input_element);
 		};
 		addComponentInput(x_setter, x_getter);
 		addComponentInput(y_setter, y_getter);
@@ -694,9 +746,13 @@ namespace FusionEngine { namespace Inspectors
 				inputData.callback = BoolSetter_t(EditCircleButtonFunctor(this, x_setter, x_getter, y_setter, y_getter, radius_setter, radius_getter));
 				m_Inputs[input_element] = inputData;
 			}
+
+			returnValue.push_back(input_element);
 		}
 
 		line->RemoveReference();
+
+		return returnValue;
 	}
 
 	template <class ComponentT>
@@ -759,6 +815,8 @@ namespace FusionEngine { namespace Inspectors
 								}
 							}
 						}
+						// If this input has a callback for setting up a "follow" connection
+						if (entry->second.follow_callback)
 						{
 							Rocket::Core::ElementList propertyLinkElems;
 							drag_element->GetElementsByTagName(propertyLinkElems, "proplink");
@@ -767,6 +825,10 @@ namespace FusionEngine { namespace Inspectors
 								auto elem = propertyLinkElems.front();
 								if (auto linkInfo = dynamic_cast<ElementPropertyConnection*>(elem))
 								{
+									for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+									{
+										entry->second.follow_callback(linkInfo->GetComponentPropertyId());
+									}
 								}
 							}
 						}
@@ -786,7 +848,27 @@ namespace FusionEngine { namespace Inspectors
 		for (auto it = components.begin(), end = components.end(); it != end; ++it)
 		{
 			if (auto typed = ComponentIPtr<ComponentT>(*it))
+			{
 				m_Components.push_back(typed);
+				auto properties = (*it)->GetProperties();
+				for (auto it = properties.begin(); it != properties.end(); ++it)
+				{
+					auto entry = m_Properties.find(it->first);
+					if (entry != m_Properties.end())
+					{
+						if (entry->second.elements.empty())
+						{
+							entry->second.connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(it->second->GetID(), std::bind(&This_t::ResetUIValues, this)));
+						}
+						else
+						{
+							std::string propName = it->first;
+							auto cback = [this, propName]() { this->RefreshUIForProp(propName); };
+							entry->second.connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(it->second->GetID(), cback));
+						}
+					}
+				}
+			}
 		}
 
 		ResetUIValues();
@@ -823,6 +905,32 @@ namespace FusionEngine { namespace Inspectors
 		//}
 
 	};
+
+	template <class ComponentT>
+	void GenericInspector<ComponentT>::RefreshUIForProp(const std::string& name)
+	{
+		auto entry = m_Properties.find(name);
+		if (entry != m_Properties.end())
+		{
+			auto& elements = entry->second.elements;
+
+			bool first = true;
+			for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+			{
+				SetUIValueVisitor visitor(first, *it);
+				for (auto elementIt = elements.begin(); elementIt != elements.end(); ++elementIt)
+				{
+					auto inputDataEntry = m_Inputs.find(*elementIt);
+					if (inputDataEntry == m_Inputs.end())
+					{
+						Input& inputData = inputDataEntry->second;
+						boost::apply_visitor(visitor, inputData.ui_element, inputData.get_callback);
+					}
+				}
+				first = false;
+			}
+		}
+	}
 
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::ResetUIValues()

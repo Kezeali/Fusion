@@ -41,23 +41,26 @@ namespace FusionEngine { namespace Inspectors
 
 	void TransformInspector::InitUI()
 	{
+		AddProperty("Position");
 		AddTextInput("X",
 			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
 			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
 			6
 			);
 		AddTextInput("Y",
-			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
-			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
+			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(component->Position.Get().x, value)); }),
+			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().y; }),
 			6
 			);
 
+		AddProperty("Angle");
 		AddTextInput("Angle",
 			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Angle.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Angle.Get(); }),
 			5
 			);
 
+		AddProperty("Depth");
 		AddTextInput("Depth",
 			IntSetter_t([](int value, ComponentIPtr<ITransform> component) { component->Depth.Set(value); }),
 			IntGetter_t([](ComponentIPtr<ITransform> component)->int { return component->Depth.Get(); }),
