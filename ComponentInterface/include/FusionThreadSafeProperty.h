@@ -94,12 +94,16 @@
 
 #define FSN_PROP_GET_NAME(v) BOOST_PP_SEQ_ELEM(1, v)
 #define FSN_PROP_GET_TYPE(v) BOOST_PP_SEQ_ELEM(2, v)
+#define FSN_PROP_GET_SERIALISER(v) BOOST_PP_SEQ_ELEM(3, v)
+#define FSN_PROP_HAS_SERIALISER(v) BOOST_PP_EQUAL( 4, BOOST_PP_SEQ_SIZE(v) )
 
 #define FSN_INIT_PROPS(r, data, v) \
 	FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v)); \
 	FSN_PROP_ADDPROPERTY(BOOST_PP_SEQ_ELEM(1, v));
 #define FSN_DEFINE_PROPS(r, data, v) \
-	ThreadSafeProperty< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA_IF(FSN_PROP_IS_READONLY(v)) BOOST_PP_IF(FSN_PROP_IS_READONLY(v), NullWriter< ## FSN_PROP_GET_TYPE(v) ## >, ) > ## FSN_PROP_GET_NAME(v);
+	ThreadSafeProperty< ## FSN_PROP_GET_TYPE(v) \
+	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_IS_READONLY(v), NullWriter< ## FSN_PROP_GET_TYPE(v) ## >, DefaultStaticWriter< ## FSN_PROP_GET_TYPE(v) ## >) \
+	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser< ## FSN_PROP_GET_TYPE(v) ## >) > ## FSN_PROP_GET_NAME(v);
 
 #define FSN_COIFACE_PROPS(iface_name, properties) \
 	void InitProperties()\
@@ -188,11 +192,30 @@ namespace FusionEngine
 		}
 	};
 
-#ifdef FSN_TSP_SIGNALS2
-	typedef boost::signals2::connection ThreadSafePropertyConnection;
-#else
-	typedef boost::signals::connection ThreadSafePropertyConnection;
-#endif
+	//! Container serialiser
+	template <typename T>
+	struct ContainerPropertySerialiser
+	{
+		static bool IsContinuous() { return false; }
+		static void Serialise(RakNet::BitStream& stream, const T& value)
+		{
+			stream.Write(value.size());
+			for (auto it = value.begin(); it != value.end(); ++it)
+				stream.Write(value);
+		}
+		static void Deserialise(RakNet::BitStream& stream, T& value)
+		{
+			auto size = value.size();
+			if (stream.Read(size))
+			{
+				value.resize(size);
+				for (size_t i = 0; i < size; ++i)
+				{
+					if (stream.Read(value[i])) {} else break;
+				}
+			}
+		}
+	};
 
 	// Here is some complicated bullshit that saves maybe 1 ptr's worth of memory
 	//  (over using 2 std::function objects)

@@ -1410,7 +1410,7 @@ namespace FusionEngine
 							factory.Generate<boost::intrusive_ptr<CScriptAny>>();
 						}
 
-						FSN_ASSERT(methodInfo.caller);
+						FSN_ASSERT(!methodInfo.persistentFollower || methodInfo.caller);
 					}
 				}
 				catch (InvalidArgumentException&)
@@ -1681,8 +1681,7 @@ namespace FusionEngine
 	{
 		const SerialiseMode mode = SerialiseMode::All;
 
-		m_DeltaSerialisationHelper.writeChanges(true, stream,
-			GetScriptPath(), std::string());
+		SerialisationUtils::write(stream, GetScriptPath());
 
 		if (m_ScriptObject)
 		{
@@ -1736,11 +1735,8 @@ namespace FusionEngine
 
 		m_LastDeserMode = mode;
 
-		std::bitset<DeltaSerialiser_t::NumParams> changes;
-		std::string unused;
 		std::string newPath;
-		m_DeltaSerialisationHelper.readChanges(stream, true, changes,
-			newPath, unused);
+		SerialisationUtils::read(stream, newPath);
 
 		if (newPath != m_Path)
 		{
@@ -1856,6 +1852,10 @@ namespace FusionEngine
 				}
 			}
 		}
+	}
+
+	void ASScript::OnPostDeserialisation()
+	{
 	}
 
 	const std::string &ASScript::GetScriptPath() const

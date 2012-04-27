@@ -282,6 +282,8 @@ namespace FusionEngine
 		void SerialiseOccasional(RakNet::BitStream& stream);
 		void DeserialiseOccasional(RakNet::BitStream& stream);
 
+		void OnPostDeserialisation();
+
 		bool SerialiseProp(RakNet::BitStream& stream, CScriptAny* any);
 		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any, size_t prop_index, const std::string& prop_name = std::string());
 		void DeserNonStandardProp(RakNet::BitStream& stream, CScriptAny* any, size_t prop_index, const std::string& prop_name);

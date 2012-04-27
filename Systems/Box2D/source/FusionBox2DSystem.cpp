@@ -363,16 +363,15 @@ namespace FusionEngine
 		//void DeserialiseContinuous(RakNet::BitStream& stream)
 		//{
 		//}
-		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+		void SerialiseOccasional(RakNet::BitStream& stream)
 		{
 			//stream.Write(m_Position.x);
 			//stream.Write(m_Position.y);
 			stream.Write(m_Angle);
 			
 			stream.Write(m_Depth);
-			return true;
 		}
-		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+		void DeserialiseOccasional(RakNet::BitStream& stream)
 		{
 			//stream.Read(m_Position.x);
 			//stream.Read(m_Position.y);

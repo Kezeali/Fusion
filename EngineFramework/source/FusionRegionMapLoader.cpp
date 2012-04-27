@@ -194,7 +194,8 @@ namespace FusionEngine
 			{
 				FSN_EXCEPT(FileSystemException, "Failed to create path (" + editorCachePath_physfs + "): " + std::string(PHYSFS_getLastError()));
 			}
-			m_EditableCache = new RegionCellCache(editorCachePath_physfs);
+			auto fullEditorCachePath = PHYSFS_getWriteDir() + editorCachePath_physfs + "/";
+			m_EditableCache = new RegionCellCache(fullEditorCachePath);
 		}
 	}
 

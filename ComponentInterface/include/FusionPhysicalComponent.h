@@ -299,7 +299,7 @@ namespace FusionEngine
 
 		FSN_COIFACE_PROPS(IPolygonShape,
 			((FSN_GET_SET)(PolygonFile)(std::string))
-			((FSN_GET_SET)(Verts)(std::vector<Vector2>))
+			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_GET)(SkinThickness)(float)) )
 
 		//ThreadSafeProperty<std::string> PolygonFile;
@@ -350,7 +350,7 @@ namespace FusionEngine
 
 		FSN_COIFACE_PROPS(IEdgeShape,
 			((FSN_GET_SET)(PolygonFile)(std::string))
-			((FSN_GET_SET)(Verts)(std::vector<Vector2>))
+			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_IS_SET)(Loop)(bool)) )
 
 		//ThreadSafeProperty<std::string> PolygonFile;
