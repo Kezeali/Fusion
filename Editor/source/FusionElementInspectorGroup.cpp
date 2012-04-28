@@ -287,7 +287,9 @@ namespace FusionEngine { namespace Inspectors
 	{
 		m_Entities.push_back(entity);
 
+#ifdef _DEBUG
 		m_EntityBeingProcessed = entity;
+#endif
 
 		ProcessComponent(entity->GetTransform(), false);
 
@@ -296,7 +298,9 @@ namespace FusionEngine { namespace Inspectors
 			if (*it != entity->GetTransform())
 				ProcessComponent(*it);
 
+#ifdef _DEBUG
 		m_EntityBeingProcessed.reset();
+#endif
 	}
 
 	void ElementGroup::DoneAddingEntities()
@@ -467,12 +471,13 @@ namespace FusionEngine { namespace Inspectors
 
 					if (newCom)
 					{
-						m_EntityBeingProcessed = *it;
-						ProcessComponent(newCom);
+						//m_EntityBeingProcessed = *it;
+						//ProcessComponent(newCom);
+						m_ComponentsToProcess.push_back(std::make_pair(*it, newCom));
 					}
 				}
-				m_EntityBeingProcessed.reset();
-				DoneAddingEntities();
+				//m_EntityBeingProcessed.reset();
+				//DoneAddingEntities();
 			}
 			else if (remove)
 			{
@@ -499,6 +504,32 @@ namespace FusionEngine { namespace Inspectors
 				}
 			}
 		}
+	}
+
+	void ElementGroup::OnUpdate()
+	{
+		Rocket::Core::Element::OnUpdate();
+
+		bool newComponentAdded = false;
+		for (auto it = m_ComponentsToProcess.begin(); it != m_ComponentsToProcess.end();)
+		{
+			if (it->second->IsReady() || it->second->IsActive())
+			{
+#ifdef _DEBUG
+				m_EntityBeingProcessed = it->first;
+#endif
+				ProcessComponent(it->second);
+				it = m_ComponentsToProcess.erase(it);
+				newComponentAdded = true;
+			}
+			else
+				++it;
+		}
+#ifdef _DEBUG
+		m_EntityBeingProcessed.reset();
+#endif
+		if (newComponentAdded)
+			DoneAddingEntities();
 	}
 
 } }

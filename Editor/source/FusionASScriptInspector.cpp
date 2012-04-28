@@ -51,6 +51,7 @@ namespace FusionEngine { namespace Inspectors
 		if (!components.empty())
 		{
 			auto firstScript = ComponentIPtr<ASScript>(components.front());
+			FSN_ASSERT(firstScript);
 			if (!firstScript->GetScriptInterface())
 			{
 				Rocket::Core::Factory::InstanceElementText(this, "Script component not instantiated");
@@ -206,23 +207,164 @@ namespace FusionEngine { namespace Inspectors
 	{
 		auto object = m_Components.front();
 
-		auto typeName = object->GetScriptInterface()->object->GetObjectType()->GetName();
-		Rocket::Core::Factory::InstanceElementText(this, "Script Type: " + Rocket::Core::String(typeName));
+		m_Connections.clear();
 
-		//auto collapsible_section = Rocket::Core::Factory::InstanceElement(this, "collapsible", "collapsible", Rocket::Core::XMLAttributes());
-		//this->AppendChild(collapsible_section);
+		if (m_PropertiesSection)
+		{
+			this->RemoveChild(m_PropertiesSection.get());
+			m_PropertiesSection.reset();
+		}
+
+		m_PropertiesSection = Rocket::Core::Factory::InstanceElement(this, "div", "div", Rocket::Core::XMLAttributes());
+		this->AppendChild(m_PropertiesSection.get());
+
+		auto typeName = object->GetScriptInterface()->object->GetObjectType()->GetName();
+		Rocket::Core::Factory::InstanceElementText(m_PropertiesSection.get(), "Script Type: " + Rocket::Core::String(typeName));
 
 		const auto& props = object->GetScriptProperties();
 		unsigned int index = 0;
 		for (auto it = props.begin(), end = props.end(); it != end; ++it, ++index)
 		{
 			const auto& prop = *it;
-			AddPropertyControl(this, index, prop.name, prop.type_id);
+			AddPropertyControl(m_PropertiesSection.get(), index, prop.name, prop.type_id);
+
+			for (auto cit = m_Components.begin(); cit != m_Components.end(); ++cit)
+			{
+				auto componentProperty = (*cit)->GetProperty(index);
+				m_Connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(componentProperty->GetID(), std::bind(&ASScriptInspector::RefreshPropertyValue, this, index)));
+			}
 		}
 
-		//collapsible_section->RemoveReference();
+		m_PropertiesSection->RemoveReference();
 
 		ResetUIValues();
+	}
+
+	void ASScriptInspector::RefreshPropertyValue(const ScriptPropertyInput& property_input_data, const ComponentIPtr<ASScript>& object, bool first)
+	{
+		boost::intrusive_ptr<CScriptAny> prop = object->GetPropertyRaw(property_input_data.index);
+		if (!prop)
+			return;
+		prop->Release();
+		FSN_ASSERT(prop->GetTypeId() == property_input_data.type_id);
+
+		// Check for built-in types
+		switch (property_input_data.type_id)
+		{
+		case asTYPEID_BOOL:
+			{
+				if (first)
+				{
+					if (prop->value.valueInt != 0)
+						property_input_data.input->SetAttribute("checked", "");
+					else
+						property_input_data.input->RemoveAttribute("checked");
+				}
+				else
+				{
+					if (property_input_data.input->HasAttribute("checked") != (prop->value.valueInt != 0))
+						property_input_data.input->RemoveAttribute("checked");
+				}
+			}
+			break;
+			// Int types
+		case asTYPEID_INT8:
+			{
+				initUIValue(first, property_input_data.input, (std::int8_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_INT16:
+			{
+				initUIValue(first, property_input_data.input, (std::int16_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_INT32:
+			{
+				initUIValue(first, property_input_data.input, (std::int32_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_INT64:
+			{
+				initUIValue(first, property_input_data.input, (std::int64_t)prop->value.valueInt);
+			}
+			break;
+			// Unsigned types
+		case asTYPEID_UINT8:
+			{
+				initUIValue(first, property_input_data.input, (std::uint8_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_UINT16:
+			{
+				initUIValue(first, property_input_data.input, (std::uint16_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_UINT32:
+			{
+				initUIValue(first, property_input_data.input, (std::uint32_t)prop->value.valueInt);
+			}
+			break;
+		case asTYPEID_UINT64:
+			{
+				initUIValue(first, property_input_data.input, (std::uint64_t)prop->value.valueInt);
+			}
+			break;
+			// float types
+		case asTYPEID_FLOAT:
+			{
+				float v = 0.f;
+				if (prop->Retrieve(&v, asTYPEID_FLOAT))
+					initUIValue(first, property_input_data.input, v);
+			}
+			break;
+		case asTYPEID_DOUBLE:
+			{
+				double v = 0.0;
+				if (prop->Retrieve(&v, asTYPEID_DOUBLE))
+				{
+					initUIValue(first, property_input_data.input, v);
+				}
+			}
+			break;
+		default:
+			{
+				if (property_input_data.type_id == m_ScriptEngine->GetStringFactoryReturnTypeId())
+				{
+					std::string strval = *static_cast<std::string*>(prop->value.valueObj);
+					Rocket::Core::String rktStrval(strval.data(), strval.data() + strval.size());
+					if (!first && property_input_data.input->GetValue() != rktStrval)
+						property_input_data.input->SetValue("");
+					else
+						property_input_data.input->SetValue(rktStrval);
+				}
+				else if (property_input_data.type_id == ScriptManager::getSingleton().GetVector2DTypeId())
+				{
+					FSN_ASSERT(property_input_data.array_index == 0 || property_input_data.array_index == 1);
+
+					auto vecVal = *static_cast<Vector2*>(prop->value.valueObj);
+					if (property_input_data.array_index == 0)
+						initUIValue(first, property_input_data.input, vecVal.x);
+					else
+						initUIValue(first, property_input_data.input, vecVal.y);
+				}
+			}
+			break;
+		}
+	}
+
+	void ASScriptInspector::RefreshPropertyValue(unsigned int index)
+	{
+		const auto& indexIndex = m_Inputs.get<2>();
+		auto range = indexIndex.equal_range(index);
+		bool first = true;
+		for (auto cit = m_Components.begin(), cend = m_Components.end(); cit != cend; ++cit)
+		{
+			for (; range.first != range.second; ++range.first)
+			{
+				RefreshPropertyValue(*range.first, *cit, first);
+				first = false;
+			}
+		}
 	}
 
 	void ASScriptInspector::ResetUIValues()
@@ -237,114 +379,7 @@ namespace FusionEngine { namespace Inspectors
 			unsigned int index = 0;
 			for (auto it = m_Inputs.get<0>().begin(), end = m_Inputs.get<0>().end(); it != end; ++it, ++index)
 			{
-				boost::intrusive_ptr<CScriptAny> prop = object->GetPropertyRaw(index);
-				if (!prop)
-					continue;
-				prop->Release();
-				FSN_ASSERT(prop->GetTypeId() == it->type_id);
-
-				// Check for built-in types
-				switch (it->type_id)
-				{
-				case asTYPEID_BOOL:
-					{
-						if (first)
-						{
-							if (prop->value.valueInt != 0)
-								it->input->SetAttribute("checked", "");
-							else
-								it->input->RemoveAttribute("checked");
-						}
-						else
-						{
-							if (it->input->HasAttribute("checked") != (prop->value.valueInt != 0))
-								it->input->RemoveAttribute("checked");
-						}
-					}
-					break;
-					// Int types
-				case asTYPEID_INT8:
-					{
-						initUIValue(first, it->input, (std::int8_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_INT16:
-					{
-						initUIValue(first, it->input, (std::int16_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_INT32:
-					{
-						initUIValue(first, it->input, (std::int32_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_INT64:
-					{
-						initUIValue(first, it->input, (std::int64_t)prop->value.valueInt);
-					}
-					break;
-					// Unsigned types
-				case asTYPEID_UINT8:
-					{
-						initUIValue(first, it->input, (std::uint8_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_UINT16:
-					{
-						initUIValue(first, it->input, (std::uint16_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_UINT32:
-					{
-						initUIValue(first, it->input, (std::uint32_t)prop->value.valueInt);
-					}
-					break;
-				case asTYPEID_UINT64:
-					{
-						initUIValue(first, it->input, (std::uint64_t)prop->value.valueInt);
-					}
-					break;
-					// float types
-				case asTYPEID_FLOAT:
-					{
-						float v = 0.f;
-						if (prop->Retrieve(&v, asTYPEID_FLOAT))
-							initUIValue(first, it->input, v);
-					}
-					break;
-				case asTYPEID_DOUBLE:
-					{
-						double v = 0.0;
-						if (prop->Retrieve(&v, asTYPEID_DOUBLE))
-						{
-							initUIValue(first, it->input, v);
-						}
-					}
-					break;
-				default:
-					{
-						if (it->type_id == m_ScriptEngine->GetStringFactoryReturnTypeId())
-						{
-							std::string strval = *static_cast<std::string*>(prop->value.valueObj);
-							Rocket::Core::String rktStrval(strval.data(), strval.data() + strval.size());
-							if (!first && it->input->GetValue() != rktStrval)
-								it->input->SetValue("");
-							else
-								it->input->SetValue(rktStrval);
-						}
-						else if (it->type_id == ScriptManager::getSingleton().GetVector2DTypeId())
-						{
-							FSN_ASSERT(it->array_index == 0 || it->array_index == 1);
-
-							auto vecVal = *static_cast<Vector2*>(prop->value.valueObj);
-							if (it->array_index == 0)
-								initUIValue(first, it->input, vecVal.x);
-							else
-								initUIValue(first, it->input, vecVal.y);
-						}
-					}
-					break;
-				}
+				RefreshPropertyValue(*it, object, first);
 			}
 			first = false;
 		}

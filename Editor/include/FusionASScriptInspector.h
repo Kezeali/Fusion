@@ -39,6 +39,7 @@
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
 namespace FusionEngine { namespace Inspectors
@@ -63,10 +64,15 @@ namespace FusionEngine { namespace Inspectors
 		};
 		boost::multi_index_container<ScriptPropertyInput, boost::multi_index::indexed_by<
 			boost::multi_index::sequenced<>,
-			boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>, &ScriptPropertyInput::input>>
+			boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>, &ScriptPropertyInput::input>>,
+			boost::multi_index::ordered_non_unique<boost::multi_index::member<ScriptPropertyInput, unsigned int, &ScriptPropertyInput::index>>
 		>> m_Inputs;
 
 		std::vector<ComponentIPtr<ASScript>> m_Components;
+
+		boost::intrusive_ptr<Rocket::Core::Element> m_PropertiesSection;
+
+		std::vector<SyncSig::HandlerConnection_t> m_Connections;
 
 		asIScriptEngine* m_ScriptEngine;
 
@@ -80,6 +86,10 @@ namespace FusionEngine { namespace Inspectors
 		void AddPropertyControl(Rocket::Core::Element* parent, unsigned int index, const std::string& name, unsigned int type_id);
 
 		void InitUI();
+
+		void RefreshPropertyValue(unsigned int index);
+
+		void RefreshPropertyValue(const ScriptPropertyInput& prop, const ComponentIPtr<ASScript>& component, bool first = true);
 
 		void ResetUIValues();
 

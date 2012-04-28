@@ -108,11 +108,11 @@ namespace FusionEngine { namespace Inspectors
 
 		Rocket::Core::Element* body;
 
-		//std::unordered_map<int, InspectorSubsection> m_Subsections;
-		//std::unordered_multimap<ComponentPtr, InspectorSubsection> m_SubsectionsByComponent;
-
+#ifdef _DEBUG
 		EntityPtr m_EntityBeingProcessed;
-		//std::unordered_map<EquivalentInspectorData, std::pair<Inspectors::ComponentInspector*, std::vector<ComponentPtr>>> m_Inspectors;
+#endif
+
+		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToProcess;
 		
 		AddCallback_t m_AddCallback;
 		RemoveCallback_t m_RemoveCallback;
@@ -124,6 +124,8 @@ namespace FusionEngine { namespace Inspectors
 		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 
 		void ProcessEvent(Rocket::Core::Event& ev);
+
+		void OnUpdate();
 		
 	};
 
