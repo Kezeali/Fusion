@@ -606,14 +606,10 @@ namespace FusionEngine
 		}
 
 		// Write the header if this is ID'd ("synched") data
-		if (synched)
+		if (synched && !editable)
 		{
-			//file.seekp(headerPos);
-
 			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
 			{
-				//writer.Write(it->first);
-				//writer.Write(it->second);
 				storeEntityLocation(*m_EntityLocationDB, std::get<0>(*it), loc, std::get<1>(*it), std::get<2>(*it));
 			}
 		}
