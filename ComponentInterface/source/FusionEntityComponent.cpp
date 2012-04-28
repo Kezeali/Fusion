@@ -72,7 +72,7 @@ namespace FusionEngine
 
 	void IComponent::SerialiseContinuous(RakNet::BitStream& stream)
 	{
-		for (auto it = m_LastContinuousProperty; it != nullptr; it = m_LastContinuousProperty->previous)
+		for (auto it = m_LastContinuousProperty; it != nullptr; it = it->previous)
 		{
 			const auto& prop = it->prop;
 			prop->Serialise(stream);
@@ -81,7 +81,7 @@ namespace FusionEngine
 
 	void IComponent::DeserialiseContinuous(RakNet::BitStream& stream)
 	{
-		for (auto it = m_LastContinuousProperty; it != nullptr; it = m_LastContinuousProperty->previous)
+		for (auto it = m_LastContinuousProperty; it != nullptr; it = it->previous)
 		{
 			const auto& prop = it->prop;
 			prop->Deserialise(stream);
@@ -92,7 +92,7 @@ namespace FusionEngine
 
 	void IComponent::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		for (auto it = m_LastOccasionalProperty; it != nullptr; it = m_LastOccasionalProperty->previous)
+		for (auto it = m_LastOccasionalProperty; it != nullptr; it = it->previous)
 		{
 			const auto& prop = it->prop;
 			prop->Serialise(stream);
@@ -101,7 +101,7 @@ namespace FusionEngine
 
 	void IComponent::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
-		for (auto it = m_LastOccasionalProperty; it != nullptr; it = m_LastOccasionalProperty->previous)
+		for (auto it = m_LastOccasionalProperty; it != nullptr; it = it->previous)
 		{
 			const auto& prop = it->prop;
 			prop->Deserialise(stream);
