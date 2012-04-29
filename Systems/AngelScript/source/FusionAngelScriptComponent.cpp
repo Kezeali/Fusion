@@ -165,20 +165,28 @@ namespace FusionEngine
 			: function(fn)
 		{
 			FSN_ASSERT(function);
+			hasNew = false;
 		}
 		void operator() (const T& value)
 		{
 			currentValue = value;
+			hasNew = true;
 		}
 		void ExecuteScriptMethod(asIScriptContext* ctx)
 		{
-			FSN_ASSERT(ctx->GetState() == asEXECUTION_UNINITIALIZED);
-			ctx->Prepare(function);
-			ctx->SetArgObject(0, &currentValue);
-			auto success = ctx->Execute();
+			if (hasNew)
+			{
+				hasNew = false;
+				FSN_ASSERT(ctx->GetState() == asEXECUTION_PREPARED);
+				//ctx->Prepare(function);
+				int r = ctx->SetArgObject(0, &currentValue); FSN_ASSERT(r >= 0);
+				if (r)
+					ctx->Execute();
+			}
 		}
 	private:
 		T currentValue;
+		tbb::atomic<bool> hasNew;
 		asIScriptFunction* function;
 	};
 
@@ -188,20 +196,29 @@ namespace FusionEngine
 	public:
 		PropertyFollowerCallbackForMethod(asIScriptFunction* fn)
 			: function(fn)
-		{}
+		{
+			hasNew = false;
+		}
 		void operator() (const boost::intrusive_ptr<CScriptAny>& value)
 		{
 			currentValue = value;
+			hasNew = true;
 		}
 		void ExecuteScriptMethod(asIScriptContext* ctx)
 		{
-			FSN_ASSERT(ctx->GetState() == asEXECUTION_UNINITIALIZED);
-			ctx->Prepare(function);
-			ctx->SetArgObject(0, currentValue.get());
-			auto success = ctx->Execute();
+			if (hasNew)
+			{
+				hasNew = false;
+				FSN_ASSERT(ctx->GetState() == asEXECUTION_PREPARED);
+				//ctx->Prepare(function);
+				int r = ctx->SetArgObject(0, currentValue.get()); FSN_ASSERT(r >= 0);
+				if (r)
+					ctx->Execute();
+			}
 		}
 	private:
 		boost::intrusive_ptr<CScriptAny> currentValue;
+		tbb::atomic<bool> hasNew;
 		asIScriptFunction* function;
 	};
 
@@ -231,7 +248,7 @@ namespace FusionEngine
 		{
 			auto cb = std::make_shared<PropertyFollowerCallbackForMethod<T>>(method_data.function);
 			method_data.persistentFollower = std::make_shared<PersistentConnectionAgent<T>>([cb](const T& value) { (*cb)(value); } );
-			method_data.caller = cb;
+			method_data.followedPropertyCallback = cb;
 		}
 		ASScript::ScriptMethodData& method_data;
 		int param0_type_id;
@@ -891,41 +908,71 @@ namespace FusionEngine
 			return false;
 	}
 
-	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, const std::string& decl)
+	void ASScript::AddEventHandlerMethodDecl(size_t id, const std::string& decl)
+	{
+		if (id >= m_EventHandlerMethodIndex.size())
+			m_EventHandlerMethodIndex.resize(id + 1, std::numeric_limits<size_t>::max());
+		if (auto ptr = GetMethodData(decl))
+		{
+			auto index = std::distance(&m_ScriptMethods[0], ptr);
+			if (index >= 0)
+				m_EventHandlerMethodIndex[id] = (size_t)index;
+		}
+	}
+
+	bool ASScript::PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, const std::string& decl)
 	{
 		if (!m_ScriptObject)
 			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
 
-		auto _where = m_ScriptMethods.find(decl);
-		if (_where != m_ScriptMethods.end())
+		auto _where = m_MethodDeclIndex.find(decl);
+		if (_where != m_MethodDeclIndex.end())
 		{
-			return PrepareMethod(script_manager, _where->second.id);
-			
-			//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
-			//m_ScriptManager->ConnectToCaller(caller);
+			FSN_ASSERT(m_ScriptMethods.size() > _where->second);
+			return PrepareMethod(ctx, m_ScriptMethods[_where->second].function);
 		}
 		else
 		{
-			//caller = script->m_ScriptObject.GetCaller("void update(float)");
-			//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
+			auto func = GetScriptInterface()->object->GetObjectType()->GetMethodByDecl(decl.c_str());
 
-			int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
-
-			if (auto ctx = PrepareMethod(script_manager, funcId))
+			if (func)
 			{
-				m_ScriptMethods[decl].id = funcId;
-				return ctx;
+				size_t index = 0;
+				for (auto it = m_ScriptMethods.begin(); it != m_ScriptMethods.end(); ++it, ++index)
+				{
+					if (it->function == func)
+					{
+						m_MethodDeclIndex[decl] = index;
+						return PrepareMethod(ctx, func);
+					}
+				}
 			}
+			return false;
 		}
-
-		return boost::intrusive_ptr<asIScriptContext>();
 	}
 
-	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, int id)
+	bool ASScript::PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, size_t event_id)
 	{
-		auto ctx = script_manager->CreateContext();
+		if (m_EventHandlerMethodIndex.size() > event_id)
+		{
+			const auto& index = m_EventHandlerMethodIndex[event_id];
+			if (index != std::numeric_limits<size_t>::max())
+				return PrepareMethod(ctx, m_ScriptMethods[index].function);
+			else
+				return false;
+		}
+		else
+		{
+			m_EventHandlerMethodIndex.resize(event_id + 1, std::numeric_limits<size_t>::max());
+			return false;
+		}
+	}
 
-		int r = ctx->Prepare(id);
+	bool ASScript::PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, asIScriptFunction* func)
+	{
+		FSN_ASSERT(ctx);
+		FSN_ASSERT(ctx->GetState() == asEXECUTION_UNINITIALIZED);
+		int r = ctx->Prepare(func);
 		if (r >= 0)
 		{
 			ctx->SetObject(m_ScriptObject->object.get());
@@ -933,10 +980,10 @@ namespace FusionEngine
 		else
 		{
 			ctx->SetObject(NULL);
-			ctx.reset();
+			return false;
 		}
 
-		return ctx;
+		return true;
 	}
 
 	ASScript::ScriptMethodData* ASScript::GetMethodData(const std::string& decl)
@@ -944,22 +991,63 @@ namespace FusionEngine
 		if (!m_ScriptObject)
 			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
 
-		ScriptMethodData* method = nullptr;
+		ScriptMethodData* methodData = nullptr;
 
-		auto func = m_ScriptObject->object->GetObjectType()->GetMethodByDecl(decl.c_str());
-		if (func != nullptr)
+		auto _where = m_MethodDeclIndex.find(decl);
+		if (_where != m_MethodDeclIndex.end())
 		{
-			method = &m_ScriptMethods[func->GetDeclaration(false)];
-			method->id = func->GetId();
-			method->function = func;
+			FSN_ASSERT(m_ScriptMethods.size() > _where->second);
+			methodData = &m_ScriptMethods[_where->second];
 		}
-		return method;
+		else
+		{
+			auto func = GetScriptInterface()->object->GetObjectType()->GetMethodByDecl(decl.c_str());
+
+			if (func)
+			{
+				size_t index = 0;
+				for (auto it = m_ScriptMethods.begin(); it != m_ScriptMethods.end(); ++it, ++index)
+				{
+					if (it->function == func)
+					{
+						m_MethodDeclIndex[decl] = index;
+						methodData = &(*it);
+					}
+				}
+			}
+		}
+
+		return methodData;
+	}
+	
+	ASScript::ScriptMethodData* ASScript::GetMethodData(size_t event_id)
+	{
+		if (!m_ScriptObject)
+			FSN_EXCEPT(InvalidArgumentException, "Script isn't instanciated");
+
+		if (m_EventHandlerMethodIndex.size() > event_id)
+		{
+			const auto& index = m_EventHandlerMethodIndex[event_id];
+			if (index != std::numeric_limits<size_t>::max())
+				return &m_ScriptMethods[index];
+			else
+				return nullptr;
+		}
+		else
+		{
+			m_EventHandlerMethodIndex.resize(event_id + 1, std::numeric_limits<size_t>::max());
+			return nullptr;
+		}
 	}
 
-	int ASScript::GetMethodId(const std::string& decl)
+	bool ASScript::HasMethod(const std::string& decl)
 	{
-		auto method = GetMethodData(decl);
-		return method ? method->id : -1;
+		return GetMethodData(decl) != nullptr;
+	}
+
+	bool ASScript::HasMethod(size_t event_id)
+	{
+		return GetMethodData(event_id) != nullptr;
 	}
 
 	void ASScript::BindMethod(PropertySignalingSystem_t& system, const std::string& decl, PropertyID id)
@@ -1084,46 +1172,49 @@ namespace FusionEngine
 		{
 			auto engine = ctx->GetEngine();
 
-			int funcId = -1;
+			asIScriptFunction* func = nullptr;
 			bool method = false;
 
 			std::string decl = "void " + functionName + "()";
 
-			auto _where = m_ScriptMethods.find(decl);
-			if (_where != m_ScriptMethods.end())
+			
+			auto _where = m_MethodDeclIndex.find(decl);
+			if (_where != m_MethodDeclIndex.end())
 			{
-				funcId = _where->second.id;
+				FSN_ASSERT(_where->second < m_ScriptMethods.size());
+				func = m_ScriptMethods[_where->second].function;
 				method = true;
 			}
 			else
 			{
-				funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
-				if (funcId >= 0)
+				if (func = GetScriptInterface()->object->GetObjectType()->GetMethodByDecl(decl.c_str()))
 					method = true;
 				else
 				{
-					funcId = m_Module->GetFunctionIdByDecl(decl.c_str());
+					func = m_Module->GetFunctionByDecl(decl.c_str());
 					method = false;
 				}
 			}
-			if (funcId < 0)
+
+			if (func)
+			{
+				auto coCtx = engine->CreateContext();
+				coCtx->Prepare(func);
+				if (method)
+					coCtx->SetObject(m_ScriptObject->object.get());
+
+				ConditionalCoroutine cco;
+				cco.new_ctx = coCtx;
+				if (!fe_fzero(delay))
+					cco.SetTimeout(delay);
+				m_ActiveCoroutinesWithConditions[coCtx] = std::move(cco);
+				coCtx->Release();
+			}
+			else
 			{
 				// No function matching the decl
 				ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
-				return;
 			}
-
-			auto coCtx = engine->CreateContext();
-			coCtx->Prepare(funcId);
-			if (method)
-				coCtx->SetObject(m_ScriptObject->object.get());
-
-			ConditionalCoroutine cco;
-			cco.new_ctx = coCtx;
-			if (!fe_fzero(delay))
-				cco.SetTimeout(delay);
-			m_ActiveCoroutinesWithConditions[coCtx] = std::move(cco);
-			coCtx->Release();
 		}
 	}
 
@@ -1390,13 +1481,16 @@ namespace FusionEngine
 
 			// Init method data
 			auto objType = obj->GetObjectType();
+			m_ScriptMethods.resize(objType->GetMethodCount());
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
 			{
 				auto method = objType->GetMethodByIndex(i);
-				auto& methodInfo = m_ScriptMethods[method->GetDeclaration(false)];
+				auto& methodInfo = m_ScriptMethods[i];
 				
 				methodInfo.function = method;
 				methodInfo.id = method->GetId();
+
+				m_MethodDeclIndex[method->GetDeclaration(false)] = i;
 
 				try
 				{
@@ -1410,7 +1504,7 @@ namespace FusionEngine
 							factory.Generate<boost::intrusive_ptr<CScriptAny>>();
 						}
 
-						FSN_ASSERT(!methodInfo.persistentFollower || methodInfo.caller);
+						FSN_ASSERT(!methodInfo.persistentFollower || methodInfo.followedPropertyCallback);
 					}
 				}
 				catch (InvalidArgumentException&)

@@ -37,6 +37,14 @@
 #include "FusionComponentSystem.h"
 #include "FusionEntityComponent.h"
 
+#include <array>
+#include <memory>
+#include <set>
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <angelscript.h>
 
 #include <boost/multi_index_container.hpp>
@@ -87,7 +95,7 @@ namespace FusionEngine
 		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
 		~AngelScriptWorld();
 
-		void CreateScriptMethodExecutorMap();
+		void CreateScriptMethodMap();
 
 		void OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world);
 		void OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world);
@@ -131,6 +139,19 @@ namespace FusionEngine
 
 		std::map<std::string, std::uint32_t> m_ScriptChecksums;
 		std::map<std::string, std::shared_ptr<DependencyNode>> m_DependencyData;
+
+		enum EventHandlerMethodTypeIds : size_t
+		{
+			PlayerAdded = 0u,
+			PlayerRemoved,
+			SensorEnter,
+			SensorExit,
+			CollisionEnter,
+			CollisionExit,
+			Input,
+			Update,
+			NumHandlerTypes
+		};
 
 	public:
 		struct ComponentScriptInfo
@@ -177,6 +198,7 @@ namespace FusionEngine
 		std::shared_ptr<Box2DWorld> m_Box2dWorld;
 
 		std::unordered_map<std::string, std::function<void (ASScript*, int)>> m_ScriptMethodExecutors;
+		std::array<std::string, EventHandlerMethodTypeIds::NumHandlerTypes> m_EventHandlerMethodDeclarations;
 
 		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
 
@@ -218,6 +240,8 @@ namespace FusionEngine
 		boost::signals2::connection m_PlayerInputConnection;
 		boost::signals2::connection m_PlayerAddedConnection;
 		boost::signals2::connection m_PlayerRemovedConnection;
+
+		boost::intrusive_ptr<asIScriptContext> ExecuteContext(const boost::intrusive_ptr<ASScript>& script, const boost::intrusive_ptr<asIScriptContext>& ctx);
 	};
 
 	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!

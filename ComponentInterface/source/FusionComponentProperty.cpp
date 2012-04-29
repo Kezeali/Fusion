@@ -65,7 +65,7 @@ namespace FusionEngine
 
 	static void ComponentPropertyT_ImplicitCast(asIScriptGeneric* gen)
 	{
-		auto obj = *static_cast<ComponentProperty**>(gen->GetObject());
+		auto obj = static_cast<ComponentProperty*>(gen->GetObject());
 
 		auto engine = gen->GetEngine();
 
@@ -122,6 +122,18 @@ namespace FusionEngine
 		}
 	}
 
+	ComponentProperty* ComponentPropertyTToPlaceholder(void* in, int type_id)
+	{
+		FSN_ASSERT(type_id & asTYPEID_OBJHANDLE);
+
+		auto obj = static_cast<ComponentProperty*>(in);
+		if (obj)
+		{
+			obj->addRef();
+		}
+		return obj;
+	}
+
 	void ComponentPropertyT_RegisterRefCast(asIScriptEngine *engine, const std::string &base, const std::string &derived)
 	{
 		int r;
@@ -141,9 +153,14 @@ namespace FusionEngine
 			"void convert_into(?&out)", asFUNCTION(ComponentPropertyT_refcast),
 			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod(derived.c_str(),
-			"IProperty@ to_placeholder()", asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
-			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		// TODO: enable this when it doesn't cause the script engine to crash on destruction
+		//r = engine->RegisterObjectMethod(derived.c_str(),
+		//	"IProperty@ to_placeholder()", asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
+		//	asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterGlobalFunction("IProperty@ to_placeholder(?&in)",
+			asFUNCTION(ComponentPropertyTToPlaceholder),
+			asCALL_CDECL); FSN_ASSERT( r >= 0 );
 	}
 
 	static void GeneratePropertySpecialisation(asIScriptEngine* engine, const std::string& subtype)
@@ -169,7 +186,7 @@ namespace FusionEngine
 
 		RegisterType<ComponentProperty>(engine, "IProperty");
 
-		r = engine->RegisterObjectMethod("IProperty", "void follow(IProperty@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod("IProperty", "void follow(IProperty@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		//r = engine->RegisterObjectMethod("IProperty", "IProperty& opAssign(IProperty@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		FSN_ASSERT( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == NULL );
@@ -216,7 +233,6 @@ namespace FusionEngine
 		//};
 		//Gen generator; generator.engine = engine;
 		//boost::mpl::for_each<Scripting::FundimentalTypes>(generator);
-
 
 
 		// Type conversion

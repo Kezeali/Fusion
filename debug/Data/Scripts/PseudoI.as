@@ -29,7 +29,7 @@ class PseudoI : ScriptComponent
 		{			
 			//entity.irigidbody.AngularVelocity = 0.9f;
 			entity.irigidbody.Velocity.value = Vector(cos(itransform.Angle), sin(itransform.Angle));
-			bindMethod("void onVelocityChanged(const Vector &in)", @entity.irigidbody.Velocity.to_placeholder());
+			bindMethod("void onVelocityChanged(const Vector &in)", to_placeholder(@entity.irigidbody.Velocity));
 		}
 		//if (frames % 2 == 0)
 		//	entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));

@@ -146,6 +146,7 @@ class SpawnPoint : ScriptComponent
 	
 	void onPlayerAdded(uint local_num, PlayerID net_num)
 	{
+		console.println("onPlayerAdded called");
 		numPlayers = local_num + 1;
 		//++numPlayers;
 		if (local_num == 0 && entityA is null)

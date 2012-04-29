@@ -228,11 +228,11 @@ namespace FusionEngine { namespace Inspectors
 			const auto& prop = *it;
 			AddPropertyControl(m_PropertiesSection.get(), index, prop.name, prop.type_id);
 
-			for (auto cit = m_Components.begin(); cit != m_Components.end(); ++cit)
-			{
-				auto componentProperty = (*cit)->GetProperty(index);
-				m_Connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(componentProperty->GetID(), std::bind(&ASScriptInspector::RefreshPropertyValue, this, index)));
-			}
+			//for (auto cit = m_Components.begin(); cit != m_Components.end(); ++cit)
+			//{
+			//	auto componentProperty = (*cit)->GetProperty(index);
+			//	m_Connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(componentProperty->GetID(), std::bind(&ASScriptInspector::RefreshPropertyValue, this, index)));
+			//}
 		}
 
 		m_PropertiesSection->RemoveReference();

@@ -186,10 +186,14 @@ namespace FusionEngine
 		bool PopCollisionEnterEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev);
 		bool PopCollisionExitEvent(boost::intrusive_ptr<ScriptCollisionEvent>& ev);
 
-		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, const std::string& decl);
-		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, int id);
+		void AddEventHandlerMethodDecl(size_t id, const std::string& decl);
 
-		int GetMethodId(const std::string& decl);
+		bool PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, const std::string& decl);
+		bool PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, size_t event_handler_id);
+		bool PrepareMethod(const boost::intrusive_ptr<asIScriptContext>& ctx, asIScriptFunction* function);
+
+		bool HasMethod(const std::string& decl);
+		bool HasMethod(size_t event_handler_id);
 
 		void BindMethod(PropertySignalingSystem_t& system, const std::string& decl, PropertyID id);
 
@@ -298,13 +302,15 @@ namespace FusionEngine
 		friend class PropertyFollowerFactoryForMethods;
 		struct ScriptMethodData
 		{
-			PersistentFollowerPtr persistentFollower; // Used to bind this method as a callback to a component property
-			std::shared_ptr<IPropertyFollowerCallbackForMethod> caller;
 			asIScriptFunction* function;
 			int id;
+
+			PersistentFollowerPtr persistentFollower; // Used to bind this method as a callback to a component property
+			std::shared_ptr<IPropertyFollowerCallbackForMethod> followedPropertyCallback;
 		};
 
 		ScriptMethodData* GetMethodData(const std::string& decl);
+		ScriptMethodData* GetMethodData(size_t event_id);
 
 		std::string m_Path;
 		bool m_ReloadScript;
@@ -314,11 +320,16 @@ namespace FusionEngine
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		int m_EntityWrapperTypeId;
-		std::map<std::string, ScriptMethodData> m_ScriptMethods;
+		// Script object
 		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
+		// Properties
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		std::vector<ComponentProperty*> m_ScriptPropertyInterfaces;
 		std::vector<PropInfo> m_ScriptPropertyInfo;
+		// Methods
+		std::vector<ScriptMethodData> m_ScriptMethods;
+		std::unordered_map<std::string, size_t> m_MethodDeclIndex;
+		std::vector<size_t> m_EventHandlerMethodIndex; // Indicies refer to m_ScriptMethod
 
 		std::shared_ptr<ASScriptB2ContactListener> m_ContactListener;
 

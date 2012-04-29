@@ -58,6 +58,7 @@
 
 #include "FusionAppType.h"
 #include "FusionComponentProperty.h"
+#include "FusionSerialisationHelper.h"
 
 #define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
@@ -184,11 +185,11 @@ namespace FusionEngine
 		static bool IsContinuous() { return Continuous; }
 		static void Serialise(RakNet::BitStream& stream, const T& value)
 		{
-			stream.Write(value);
+			SerialisationUtils::write(stream, value);
 		}
 		static void Deserialise(RakNet::BitStream& stream, T& value)
 		{
-			stream.Read(value);
+			SerialisationUtils::read(stream, value);
 		}
 	};
 

@@ -54,6 +54,7 @@
 #include <boost/crc.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include <tbb/enumerable_thread_specific.h>
 #include <tbb/parallel_for.h>
 #include <tbb/scalable_allocator.h>
 #include <tbb/spin_mutex.h>
@@ -551,7 +552,7 @@ namespace FusionEngine
 		
 		BuildScripts(true);
 
-		CreateScriptMethodExecutorMap();
+		CreateScriptMethodMap();
 
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
 		m_ASTaskB = new AngelScriptTaskB(this, m_ScriptManager);
@@ -1284,19 +1285,19 @@ namespace FusionEngine
 
 			if (m_Box2dWorld)
 			{
-				bool hasCollisionHandler = script->GetMethodId("void onSensorEnter(CollisionEvent@)") >= 0;
-				hasCollisionHandler |= script->GetMethodId("void onSensorExit(CollisionEvent@)") >= 0;
-				hasCollisionHandler |= script->GetMethodId("void onCollisionEnter(CollisionEvent@)") >= 0;
-				hasCollisionHandler |= script->GetMethodId("void onCollisionExit(CollisionEvent@)") >= 0;
+				const bool hasCollisionHandler = script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorEnter])
+					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorExit])
+					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionEnter])
+					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionExit]);
 				if (hasCollisionHandler)
 				{
 					m_Box2dWorld->AddContactListener(script->GetContactListener());
 				}
 			}
-			// Initialise the method index
-			for (auto it = m_ScriptMethodExecutors.begin(); it != m_ScriptMethodExecutors.end(); ++it)
+			// Initialise the event-handler method index
+			for (size_t i = 0; i < m_EventHandlerMethodDeclarations.size(); ++i)
 			{
-				script->GetMethodId(it->first);
+				script->AddEventHandlerMethodDecl(i, m_EventHandlerMethodDeclarations[i]);
 			}
 		}
 
@@ -1340,22 +1341,65 @@ namespace FusionEngine
 		scripts_to_instantiate.swap(notInstantiated);
 	}
 
-	void AngelScriptWorld::CreateScriptMethodExecutorMap()
+	void AngelScriptWorld::CreateScriptMethodMap()
 	{
-		m_ScriptMethodExecutors["void onSensorEnter(CollisionEvent@)"];
-		m_ScriptMethodExecutors["void onSensorExit(CollisionEvent@)"];
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorEnter] = "void onSensorEnter(CollisionEvent@)";
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorExit] = "void onSensorExit(CollisionEvent@)";
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionEnter] = "void onCollisionEnter(CollisionEvent@)";
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionExit] = "void onCollisionExit(CollisionEvent@)";
 
-		m_ScriptMethodExecutors["void onCollisionEnter(CollisionEvent@)"];
-		m_ScriptMethodExecutors["void onCollisionExit(CollisionEvent@)"];
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::PlayerAdded] = "void onPlayerAdded(uint, PlayerID)";
 
-		m_ScriptMethodExecutors["void onPlayerAdded(uint, PlayerID)"];
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::PlayerRemoved] = "void onPlayerRemoved(uint, PlayerID)";
 
-		m_ScriptMethodExecutors["void onInput(InputEvent@)"];
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::Input] = "void onInput(InputEvent@)";
 
-		m_ScriptMethodExecutors["void update()"];
+		m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::Update] = "void update()";
+
+#ifdef _DEBUG
+		for (auto it = m_EventHandlerMethodDeclarations.begin(); it != m_EventHandlerMethodDeclarations.end(); ++it)
+		{
+			// All event types must have a defined method declaraion
+			FSN_ASSERT(!it->empty());
+		}
+#endif
 	}
 
-	bool ExecuteCollisionEvent(const boost::intrusive_ptr<asIScriptContext>& ctx, const boost::intrusive_ptr<ASScript>& script, const boost::intrusive_ptr<ScriptCollisionEvent>& ev)
+	boost::intrusive_ptr<asIScriptContext> AngelScriptTask::ExecuteContext(const boost::intrusive_ptr<ASScript>& script, const boost::intrusive_ptr<asIScriptContext>& ctx)
+	{
+		int r;
+		try
+		{
+			r = ctx->Execute();
+		}
+		catch (FusionEngine::Exception& e)
+		{
+			SendToConsole(e.ToString());
+		}
+
+		if (r == asEXECUTION_SUSPENDED)
+		{
+			ConditionalCoroutine cco;
+			// Check whether a condition was registered when this yield occured
+			auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
+			if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
+			{
+				cco = std::move(conditionEntry->second);
+				script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
+			}
+			script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
+			// Return a new context (to replace the suspended one)
+			return m_ScriptManager->CreateContext();
+		}
+		else
+		{
+			ctx->Unprepare();
+			// Return the existing context
+			return ctx;
+		}
+	}
+
+	inline bool ExecuteCollisionEvent(const boost::intrusive_ptr<asIScriptContext>& ctx, const boost::intrusive_ptr<ASScript>& script, const boost::intrusive_ptr<ScriptCollisionEvent>& ev)
 	{
 		auto module = script->GetScriptModule();
 
@@ -1380,12 +1424,8 @@ namespace FusionEngine
 				{
 					scriptEv->AddRef();
 					ctx->SetArgObject(0, scriptEv);
-					int r = ctx->Execute();
-					if (r == asEXECUTION_SUSPENDED)
-					{
-						// TODO: write yeild handling function
-						//script->m_ActiveCoroutines.push_back(ctx);
-					}
+					//TODO: use AngelScriptTask::ExecuteContext here instead
+					ctx->Execute();
 				}
 				else
 				{
@@ -1412,9 +1452,12 @@ namespace FusionEngine
 			playerRemovedEvents.swap(m_PlayerRemovedEvents);
 		}
 
+		// TODO: maybe
+		//tbb::enumerable_thread_specific<boost::intrusive_ptr<asIScriptContext*>> threadContexts;
+
 		auto execute_scripts = [&](const tbb::blocked_range<size_t>& range)
 		{
-			//auto ctx = m_ScriptManager->CreateContext();
+			auto ctx = m_ScriptManager->CreateContext();
 			for (size_t ri = range.begin(), rend = range.end(); ri != rend; ++ri)
 			{
 				auto& script = scripts[ri];
@@ -1462,156 +1505,113 @@ namespace FusionEngine
 						{
 							if (!ev->m_Sensor)
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onCollisionEnter(CollisionEvent@)"))
+								if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::CollisionEnter))
 									ExecuteCollisionEvent(ctx, script, ev);
 							}
 							else
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onSensorEnter(CollisionEvent@)"))
+								if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::SensorEnter))
 									ExecuteCollisionEvent(ctx, script, ev);
 							}
+							ctx->Unprepare();
 						}
 						while (script->PopCollisionExitEvent(ev))
 						{
 							if (!ev->m_Sensor)
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onCollisionExit(CollisionEvent@)"))
+								if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::CollisionExit))
 									ExecuteCollisionEvent(ctx, script, ev);
 							}
 							else
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onSensorExit(CollisionEvent@)"))
+								if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::SensorExit))
 									ExecuteCollisionEvent(ctx, script, ev);
 							}
+							ctx->Unprepare();
 						}
 					}
 
+					// Execute property-subscription callbacks
 					for (auto it = script->m_ScriptMethods.begin(); it != script->m_ScriptMethods.end(); ++it)
 					{
-						if (it->second.caller)
+						if (it->followedPropertyCallback)
 						{
-							auto ctx = m_ScriptManager->CreateContext();
-							it->second.caller->ExecuteScriptMethod(ctx.get());
+							ctx->Prepare(it->function);
+							ctx->SetObject(script->GetScriptInterface()->object.get());
+							it->followedPropertyCallback->ExecuteScriptMethod(ctx.get());
+							ctx->Unprepare();
 						}
 					}
 
-					for (auto mit = script->m_ScriptMethods.begin(); mit != script->m_ScriptMethods.end(); ++mit)
+					if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::Update))
+						ctx = ExecuteContext(script, ctx);
+
+					if (script->HasMethod(AngelScriptWorld::EventHandlerMethodTypeIds::PlayerAdded))
 					{
-						// event handler
-						if (mit->first == "void onPlayerAdded(uint, PlayerID)")
+						for (auto it = playerAddedEvents.begin(); it != playerAddedEvents.end(); ++it)
 						{
-							for (auto it = playerAddedEvents.begin(); it != playerAddedEvents.end(); ++it)
+							if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::PlayerAdded))
 							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
-								{
-									int r = ctx->SetArgDWord(0, it->first); FSN_ASSERT(r >=0);
-									r = ctx->SetArgByte(1, it->second); FSN_ASSERT(r >=0);
-									r = ctx->Execute();
-									if (r == asEXECUTION_SUSPENDED)
-									{
-										ConditionalCoroutine cco;
-										// Check whether a condition was registered when this yield occured
-										auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
-										if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
-										{
-											cco = std::move(conditionEntry->second);
-											script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
-										}
-										script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
-									}
-								}
-								else
-								{
-									break;
-								}
+								int r = ctx->SetArgDWord(0, it->first); FSN_ASSERT(r >=0);
+								r = ctx->SetArgByte(1, it->second); FSN_ASSERT(r >=0);
+
+								ctx = ExecuteContext(script, ctx);
+							}
+							else
+							{
+								break;
 							}
 						}
-
-						else if (mit->first == "void onPlayerRemoved(uint, PlayerID)")
-						{
-							for (auto it = playerRemovedEvents.begin(); it != playerRemovedEvents.end(); ++it)
-							{
-								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
-								{
-									ctx->SetArgDWord(0, it->first);
-									ctx->SetArgWord(1, it->second);
-									int r = ctx->Execute();
-									if (r == asEXECUTION_SUSPENDED)
-									{
-										ConditionalCoroutine cco;
-										// Check whether a condition was registered when this yield occured
-										auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
-										if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
-										{
-											cco = std::move(conditionEntry->second);
-											script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
-										}
-										script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
-									}
-								}
-								else
-								{
-									break;
-								}
-							}
-						}
-
-						// Input event handler
-						else if (mit->first == "void onInput(InputEvent@)")
-						{
-							if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
-							{
-								int localPlayer = (int)PlayerRegistry::GetPlayer(script->GetParent()->GetOwnerID()).LocalIndex;
-								auto playerInputEventsEntry = m_PlayerInputEvents.find(localPlayer);
-								if (playerInputEventsEntry != m_PlayerInputEvents.end())
-								{
-									auto& eventQueue = playerInputEventsEntry->second;
-									for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
-									{
-										auto &queuedEvent = *it;//eventQueue.front();
-										if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
-										{
-											auto inputEvent = new ScriptInputEvent(queuedEvent);
-											ctx->SetArgObject(0, inputEvent);
-											int r = ctx->Execute();
-											if (r == asEXECUTION_SUSPENDED)
-											{
-												// TODO: write yeild handling function
-												//script->m_ActiveCoroutines.push_back(ctx);
-											}
-										}
-										else
-										{
-											break;
-										}
-									}
-								}
-							}
-						}
-
-						// Update method
-						else if (mit->first == "void update()")
-						{
-							if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), mit->second.id))
-							{
-								int r = ctx->Execute();
-								if (r == asEXECUTION_SUSPENDED)
-								{
-									ConditionalCoroutine cco;
-									// Check whether a condition was registered when this yield occured
-									auto conditionEntry = script->m_ActiveCoroutinesWithConditions.find(ctx.get());
-									if (conditionEntry != script->m_ActiveCoroutinesWithConditions.end())
-									{
-										cco = std::move(conditionEntry->second);
-										script->m_ActiveCoroutinesWithConditions.erase(conditionEntry);
-									}
-									script->m_ActiveCoroutines.push_back(std::make_pair(ctx, std::move(cco)));
-								}
-							}
-						}
-
-						script->CheckChangedPropertiesIn();
 					}
+
+					if (script->HasMethod(AngelScriptWorld::EventHandlerMethodTypeIds::PlayerRemoved))
+					{
+						for (auto it = playerRemovedEvents.begin(); it != playerRemovedEvents.end(); ++it)
+						{
+							if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::PlayerRemoved))
+							{
+								ctx->SetArgDWord(0, it->first);
+								ctx->SetArgWord(1, it->second);
+								int r = ctx->Execute();
+
+								ctx = ExecuteContext(script, ctx);
+							}
+							else
+							{
+								break;
+							}
+						}
+					}
+
+					if (script->HasMethod(AngelScriptWorld::EventHandlerMethodTypeIds::Input))
+					{
+						if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
+						{
+							int localPlayer = (int)PlayerRegistry::GetPlayer(script->GetParent()->GetOwnerID()).LocalIndex;
+							auto playerInputEventsEntry = m_PlayerInputEvents.find(localPlayer);
+							if (playerInputEventsEntry != m_PlayerInputEvents.end())
+							{
+								auto& eventQueue = playerInputEventsEntry->second;
+								for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
+								{
+									auto &queuedEvent = *it;//eventQueue.front();
+									if (script->PrepareMethod(ctx, AngelScriptWorld::EventHandlerMethodTypeIds::Input))
+									{
+										auto inputEvent = new ScriptInputEvent(queuedEvent);
+										ctx->SetArgObject(0, inputEvent);
+
+										ctx = ExecuteContext(script, ctx);
+									}
+									else
+									{
+										break;
+									}
+								}
+							}
+						}
+					}
+
+					script->CheckChangedPropertiesIn();
 				}
 			}
 		};

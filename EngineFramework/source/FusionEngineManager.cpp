@@ -101,6 +101,7 @@ namespace FusionEngine
 
 	EngineManager::~EngineManager()
 	{
+		m_Console->UnbindCommand("cam_range");
 	}
 
 	void EngineManager::Initialise()
@@ -200,7 +201,7 @@ namespace FusionEngine
 			if (options->GetOption("max_frameskip", &maxFrameskip) && maxFrameskip >= 0)
 				m_Scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
 #endif
-			auto streamingManager = m_StreamingManager;
+			auto streamingManager = m_StreamingManager.get(); // Note that this is intentionally not a smart-ptr, because the console command shouldn't keep this object alive!
 			m_Console->BindCommand("cam_range", [streamingManager](const std::vector<std::string>& cmdargs)->std::string
 			{
 				if (cmdargs.size() >= 2)
