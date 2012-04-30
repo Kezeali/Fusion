@@ -109,9 +109,7 @@ namespace FusionEngine
 			using namespace std::placeholders;
 			auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
 			m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&StreamingCamera::SetPosition, this, _1));
-			m_AngleChangeConnection = system.AddHandler<float>(transform->Position.GetID(), std::bind(&StreamingCamera::SetAngle, this, _1));
-			//m_PositionChangeConnection = transform->Position.Connect(std::bind(&StreamingCamera::SetPosition, this, std::placeholders::_1));
-			//m_AngleChangeConnection = transform->Angle.Connect(std::bind(&StreamingCamera::SetAngle, this, std::placeholders::_1));
+			m_AngleChangeConnection = system.AddHandler<const float&>(transform->Angle.GetID(), std::bind(&StreamingCamera::SetAngle, this, _1));
 
 			m_Position = transform->Position.Get();
 			m_Angle = transform->Angle.Get();
