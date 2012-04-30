@@ -313,11 +313,9 @@ namespace FusionEngine
 		}
 	}
 
-	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void CLSprite::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		FSN_ASSERT(mode == All);
-		//return m_SerialisationHelper.writeChanges(force_all, stream, std::tie(m_Offset, m_FilePath, m_Reload));
-		return m_SerialisationHelper.writeChanges(mode != Changes, stream,
+		m_SerialisationHelper.writeChanges(true, stream,
 			m_Offset, m_LocalDepth,
 			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
 			GetAlignmentOrigin(), GetAlignmentOffset(),
@@ -329,11 +327,11 @@ namespace FusionEngine
 			GetAnimationFrame());
 	}
 
-	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
 		std::bitset<PropsIdx::NumProps> changed;
 
-		m_SerialisationHelper.readChanges(stream, mode != Changes, changed,
+		m_SerialisationHelper.readChanges(stream, true, changed,
 			m_Offset, m_LocalDepth,
 			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
 			AlignmentOrigin.m_Value, AlignmentOffset.m_Value,

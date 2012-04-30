@@ -116,7 +116,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool StreamingCamera::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void StreamingCamera::SerialiseOccasional(RakNet::BitStream& stream)
 	{
 		stream.Write((uint8_t)m_SyncType);
 
@@ -127,11 +127,9 @@ namespace FusionEngine
 		stream.Write(m_ViewportRect.bottom);
 
 		stream.Write(m_AngleEnabled);
-
-		return true;
 	}
 
-	void StreamingCamera::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
+	void StreamingCamera::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
 		uint8_t syncType;
 		stream.Read(syncType);

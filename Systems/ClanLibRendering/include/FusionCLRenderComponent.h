@@ -141,8 +141,8 @@ namespace FusionEngine
 
 		void OnSiblingAdded(const ComponentPtr& component);
 
-		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void SerialiseOccasional(RakNet::BitStream& stream);
+		void DeserialiseOccasional(RakNet::BitStream& stream);
 
 		// ISprite
 		void SetOffset(const Vector2& offset);

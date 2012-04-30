@@ -356,7 +356,7 @@ namespace FusionEngine
 	private:
 		std::string GetType() const { return "StaticTransform"; }
 
-		//bool SerialiseContinuous(RakNet::BitStream& stream)
+		//void SerialiseContinuous(RakNet::BitStream& stream)
 		//{
 		//	return false;
 		//}

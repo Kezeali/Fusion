@@ -204,6 +204,8 @@ namespace FusionEngine
 		Stop();
 
 		delete m_Cache;
+		if (m_EditableCache)
+			delete m_EditableCache;
 	}
 
 	void RegionMapLoader::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager)
@@ -625,10 +627,10 @@ namespace FusionEngine
 			std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
 			std::streampos start = tempStream.tellp();
 			// Write un-synched entity data (written to cache since this is edit mode)
-			WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false);
+			WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false, editable);
 			std::streamsize dataLength = tempStream.tellp() - start;
 
-			WriteCell(tempStream, cell_coord, cell.get(), numSynched, true);
+			WriteCell(tempStream, cell_coord, cell.get(), numSynched, true, editable);
 
 			// Write to the file-stream
 			IO::Streams::CellStreamWriter writer(&file);
@@ -1085,11 +1087,18 @@ namespace FusionEngine
 			FSN_ASSERT(bfs::is_directory(savePath));
 			FSN_ASSERT(bfs::is_empty(savePath));
 
+			if (m_EditableCache)
+			{
+				if (PHYSFS_mkdir((physFsPath + "/editable").c_str()) == 0)
+					FSN_EXCEPT(FileSystemException, "Failed to create save path (" + physFsPath + "/editable): " + std::string(PHYSFS_getLastError()));
+			}
+
 			// Flush the cache
 			// TODO: flush without unloading? (Cache->FlushFiles())
 			m_Cache->DropCache();
 
 			std::vector<bfs::path> regionFiles;
+			std::vector<bfs::path> editableRegionFiles; // TODO: merge these lists and calculate the full target path properly, rather than using ->filename()
 			std::vector<bfs::path> dataFiles;
 			for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
 			{
@@ -1097,6 +1106,16 @@ namespace FusionEngine
 					regionFiles.push_back(it->path());
 				if (it->path().extension() == ".dat")
 					dataFiles.push_back(it->path());
+			}
+			// List editable data
+			if (m_EditableCache)
+			{
+				auto editableDataPath = bfs::path(m_FullBasePath) / "editable";
+				for(bfs::directory_iterator it(editableDataPath); it != bfs::directory_iterator(); ++it)
+				{
+					if (it->path().extension() == ".celldata")
+						editableRegionFiles.push_back(it->path());
+				}
 			}
 
 			std::stringstream numStr; numStr << regionFiles.size();
@@ -1111,6 +1130,16 @@ namespace FusionEngine
 				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
 
 				auto dest = savePath; dest /= it->filename();
+				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			}
+			// AGAIN TODO: merge these lists
+			i = 0;
+			for (auto it = editableRegionFiles.begin(); it != editableRegionFiles.end(); ++it)
+			{
+				std::stringstream str; str << ++i;
+				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+
+				auto dest = savePath; dest /= "editable" / it->filename();
 				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
 			}
 			i = 0;
@@ -1482,10 +1511,28 @@ namespace FusionEngine
 				for (auto it = fileList; *it; ++it)
 				{
 					auto filePath = physFsPath + "/" + *it;
-					if (PHYSFS_delete(filePath.c_str()) == 0)
+					if (!PHYSFS_isDirectory(filepath.c_str()))
 					{
-						PHYSFS_freeList(fileList);
-						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+						if (PHYSFS_delete(filePath.c_str()) == 0)
+						{
+							PHYSFS_freeList(fileList);
+							FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+						}
+					}
+					else
+					{
+						auto fileList2 = PHYSFS_enumerateFiles(filePath.c_str());
+						for (auto it2 = fileList2; *it2; ++it2)
+						{
+							auto filePath2 = filePath + "/" + *it2;
+							if (PHYSFS_delete(filePath2.c_str()) == 0)
+							{
+								PHYSFS_freeList(fileList);
+								PHYSFS_freeList(fileList2);
+								FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath2 + "): " + std::string(PHYSFS_getLastError()));
+							}
+						}
+						PHYSFS_freeList(fileList2);
 					}
 				}
 				PHYSFS_freeList(fileList);
