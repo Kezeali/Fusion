@@ -1022,8 +1022,6 @@ namespace FusionEngine
 					auto result = StdDeserialisePosition(stream, Vector2(), 0);
 					tf->SetPosition(result);
 				}
-
-				ReadComponent(instr, transform.get(), editable);
 			}
 
 			auto entity = std::make_shared<Entity>(manager, transform);
@@ -1034,6 +1032,9 @@ namespace FusionEngine
 				entity->SetName(name);
 
 			entity->SetTerrain(terrain);
+
+			// Read the rest of the transform data, now that the component has been initialised (by adding it to the entity)
+			ReadComponent(instr, transform.get(), editable);
 
 			transform->SynchronisePropertiesNow();
 

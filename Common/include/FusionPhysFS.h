@@ -50,6 +50,8 @@ namespace FusionEngine
 		*/
 		void copy_file(const std::string& from, const std::string& to);
 
+		void clear_folder(const std::string& path);
+
 		//! Returns files & folders matching the given expression
 		std::vector<std::string> regex_find(const std::string& path, const std::string& expression, bool recursive = false);
 

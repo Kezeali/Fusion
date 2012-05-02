@@ -116,9 +116,13 @@ namespace FusionEngine
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
 		{
 			const auto& prop = it->second;
+			FSN_ASSERT(it->first.length() > 0);
 			stream.Write(it->first.length());
-			stream.Write(it->first); // Write the name
-			prop->Serialise(stream);
+			if (it->first.length() > 0)
+			{
+				stream.Write(it->first.c_str(), it->first.length()); // Write the name
+				prop->Serialise(stream);
+			}
 		}
 	}
 
@@ -130,16 +134,21 @@ namespace FusionEngine
 		propsMap.insert(m_Properties.begin(), m_Properties.end());
 		for (size_t i = 0; i < numProps; ++i)
 		{
+			// Read the name
 			std::vector<char> d; size_t l;
 			stream.Read(l); d.resize(l);
-			stream.Read(d.data(), l);
-			std::string name = d.data();
-
-			auto it = propsMap.find(name);
-			if (it != propsMap.end())
+			if (l > 0)
 			{
-				const auto& prop = it->second;
-				prop->Deserialise(stream);
+				stream.Read(d.data(), l);
+				std::string name(d.begin(), d.end());
+
+				// Deserialise the prop
+				auto it = propsMap.find(name);
+				if (it != propsMap.end())
+				{
+					const auto& prop = it->second;
+					prop->Deserialise(stream);
+				}
 			}
 		}
 

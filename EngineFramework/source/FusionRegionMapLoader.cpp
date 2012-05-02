@@ -1038,6 +1038,30 @@ namespace FusionEngine
 		}
 	}
 
+	boost::filesystem::path make_relative(const boost::filesystem::path& base, const boost::filesystem::path& path)
+	{
+		namespace bfs = boost::filesystem;
+
+		bfs::path relativePath;
+
+		auto basePath = base;
+		auto fullPath = path;
+		basePath.make_preferred();
+		fullPath.make_preferred();
+		auto fit = fullPath.begin(), fend = fullPath.end();
+		for (auto it = basePath.begin(), end = basePath.end(); it != end && fit != fend; ++it, ++fit)
+		{
+			if (*it != *fit)
+				break;
+		}
+		for (; fit != fend; ++fit)
+		{
+			relativePath /= fit->string();
+		}
+
+		return relativePath.generic_string();
+	}
+
 	bool RegionMapLoader::PerformSave(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
@@ -1072,17 +1096,14 @@ namespace FusionEngine
 			}
 			else
 			{
-				auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
-				for (auto it = fileList; *it; ++it)
+				try
 				{
-					auto filePath = physFsPath + "/" + *it;
-					if (PHYSFS_delete(filePath.c_str()) == 0)
-					{
-						PHYSFS_freeList(fileList);
-						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
-					}
+					PhysFSHelp::clear_folder(physFsPath + "/");
 				}
-				PHYSFS_freeList(fileList);
+				catch (FileSystemException& ex)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to clear save path: " + ex.GetDescription());
+				}
 			}
 			FSN_ASSERT(bfs::is_directory(savePath));
 			FSN_ASSERT(bfs::is_empty(savePath));
@@ -1098,7 +1119,6 @@ namespace FusionEngine
 			m_Cache->DropCache();
 
 			std::vector<bfs::path> regionFiles;
-			std::vector<bfs::path> editableRegionFiles; // TODO: merge these lists and calculate the full target path properly, rather than using ->filename()
 			std::vector<bfs::path> dataFiles;
 			for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
 			{
@@ -1114,7 +1134,7 @@ namespace FusionEngine
 				for(bfs::directory_iterator it(editableDataPath); it != bfs::directory_iterator(); ++it)
 				{
 					if (it->path().extension() == ".celldata")
-						editableRegionFiles.push_back(it->path());
+						regionFiles.push_back(it->path());
 				}
 			}
 
@@ -1129,17 +1149,7 @@ namespace FusionEngine
 				std::stringstream str; str << ++i;
 				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
 
-				auto dest = savePath; dest /= it->filename();
-				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-			}
-			// AGAIN TODO: merge these lists
-			i = 0;
-			for (auto it = editableRegionFiles.begin(); it != editableRegionFiles.end(); ++it)
-			{
-				std::stringstream str; str << ++i;
-				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
-
-				auto dest = savePath; dest /= "editable" / it->filename();
+				auto dest = savePath; dest /= make_relative(m_FullBasePath, *it);
 				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
 			}
 			i = 0;
@@ -1179,28 +1189,46 @@ namespace FusionEngine
 	{
 		namespace bfs = boost::filesystem;
 
-		auto fileList = PHYSFS_enumerateFiles(path.generic_string().c_str());
-		for (auto it = fileList; *it; ++it)
+		std::deque<bfs::path> toProcess;
+		toProcess.push_back(path);
+		while (!toProcess.empty())
 		{
-			auto filePath = path / (*it);
-			if (filePath.extension() == ext)
-				results.push_back(filePath);
+			const auto& nextPath = toProcess.front();
+			auto fileList = PHYSFS_enumerateFiles(nextPath.generic_string().c_str());
+			for (auto it = fileList; *it; ++it)
+			{
+				auto filePath = nextPath / (*it);
+				if (PHYSFS_isDirectory(filePath.generic_string().c_str()))
+					toProcess.push_back(filePath);
+				if (filePath.extension() == ext)
+					results.push_back(filePath);
+			}
+			PHYSFS_freeList(fileList);
+			toProcess.pop_front();
 		}
-		PHYSFS_freeList(fileList);
 	}
 
 	void getNativeFileList(std::vector<boost::filesystem::path>& results, const boost::filesystem::path& path, const std::string& ext)
 	{
 		namespace bfs = boost::filesystem;
 
-		for(bfs::directory_iterator it(path); it != bfs::directory_iterator(); ++it)
+		std::deque<bfs::path> toProcess;
+		toProcess.push_back(path);
+		while (!toProcess.empty())
 		{
-			if (it->path().extension() == ext)
-				results.push_back(it->path());
+			const auto& nextPath = toProcess.front();
+			for (bfs::directory_iterator it(nextPath); it != bfs::directory_iterator(); ++it)
+			{
+				if (bfs::is_directory(*it))
+					results.push_back(it->path());
+				else if (it->path().extension() == ext)
+					toProcess.push_back(*it);
+			}
+			toProcess.pop_front();
 		}
 	}
 
-	void copyArchivedFiles(std::vector<boost::filesystem::path>& files, const boost::filesystem::path& target_path)
+	void copyArchivedFiles(const boost::filesystem::path& source_path, std::vector<boost::filesystem::path>& files, const boost::filesystem::path& target_path)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1212,12 +1240,12 @@ namespace FusionEngine
 			std::stringstream str; str << ++i;
 			SendToConsole("Load Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
 
-			auto dest = target_path / it->filename();
+			auto dest = target_path / make_relative(source_path, *it);
 			PhysFSHelp::copy_file(it->generic_string(), dest.generic_string());
 		}
 	}
 
-	void copyNativeFiles(std::vector<boost::filesystem::path>& files, const boost::filesystem::path& target_path, const std::function<void (size_t, size_t)>& callback)
+	void copyNativeFiles(const boost::filesystem::path& source_path, std::vector<boost::filesystem::path>& files, const boost::filesystem::path& target_path, const std::function<void (size_t, size_t)>& callback)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1231,37 +1259,13 @@ namespace FusionEngine
 			if (callback)
 				callback(i, files.size());
 
-			auto dest = target_path / it->filename();
+			auto dest = target_path / make_relative(source_path, *it);
 			boost::filesystem::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
 		}
 	}
 
 	void RegionMapLoader::PrepareLoad(const std::string& saveName)
 	{
-	}
-
-	std::string make_relative(const std::string& base, const std::string& path)
-	{
-		namespace bfs = boost::filesystem;
-
-		bfs::path relativePath;
-
-		bfs::path basePath(base);
-		bfs::path fullPath(path);
-		basePath.make_preferred();
-		fullPath.make_preferred();
-		auto fit = fullPath.begin(), fend = fullPath.end();
-		for (auto it = basePath.begin(), end = basePath.end(); it != end && fit != fend; ++it, ++fit)
-		{
-			if (*it != *fit)
-				break;
-		}
-		for (; fit != fend; ++fit)
-		{
-			relativePath /= fit->string();
-		}
-
-		return relativePath.generic_string();
 	}
 
 	void RegionMapLoader::PerformLoad(const std::string& saveName)
@@ -1350,10 +1354,13 @@ namespace FusionEngine
 		m_ReadQueue.clear();
 		m_WriteQueue.clear();
 
-		// Everything needs to reload
+		// Everything needs to reload after this
 		m_SynchLoaded.clear();
+
 		// Drop file handles (files need to be deletable below)
 		m_Cache->DropCache();
+		if (m_EditableCache)
+			m_EditableCache->DropCache();
 
 		// Unload the location DB
 		std::string cacheDbPath = m_EntityLocationDB->path();
@@ -1366,17 +1373,22 @@ namespace FusionEngine
 		{
 			if (!bfs::is_empty(m_FullBasePath))
 			{
-				auto fileList = PHYSFS_enumerateFiles(m_CachePath.c_str());
-				for (auto it = fileList; *it; ++it)
+				try
 				{
-					auto filePath = m_CachePath + "/" + *it;
-					if (PHYSFS_delete(filePath.c_str()) == 0)
-					{
-						PHYSFS_freeList(fileList);
-						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing cache (" + filePath + "): " + std::string(PHYSFS_getLastError()));
-					}
+					PhysFSHelp::clear_folder(m_CachePath + "/");
 				}
-				PHYSFS_freeList(fileList);
+				catch (FileSystemException& ex)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to clear the map cache: " + ex.GetDescription());
+				}
+			}
+
+			if (m_EditableCache)
+			{
+				if (PHYSFS_mkdir((m_CachePath + "/editable").c_str()) == 0)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to create editable cache path: " + std::string(PHYSFS_getLastError()));
+				}
 			}
 
 			// Copy the saved location DB into the cache
@@ -1386,7 +1398,7 @@ namespace FusionEngine
 				{
 					auto saveDbPath = physSavePath / "entitylocations.kc";
 					auto physFsTargetPath = make_relative(PHYSFS_getWriteDir(), cacheDbPath);
-					PhysFSHelp::copy_file(saveDbPath.generic_string(), physFsTargetPath);
+					PhysFSHelp::copy_file(saveDbPath.generic_string(), physFsTargetPath.generic_string());
 				}
 				else
 				{
@@ -1401,12 +1413,12 @@ namespace FusionEngine
 			if (archived)
 			{
 				getArchiveFileList(dataFiles, physSavePath, ".dat");
-				copyArchivedFiles(dataFiles, m_CachePath);
+				copyArchivedFiles(physSavePath, dataFiles, m_CachePath);
 			}
 			else
 			{
 				getNativeFileList(dataFiles, savePath, ".dat");
-				copyNativeFiles(dataFiles, m_FullBasePath, [](size_t, size_t)
+				copyNativeFiles(savePath, dataFiles, m_FullBasePath, [](size_t, size_t)
 				{
 				});
 			}
@@ -1420,12 +1432,12 @@ namespace FusionEngine
 			if (archived)
 			{
 				getArchiveFileList(regionFiles, physSavePath, ".celldata");
-				copyArchivedFiles(regionFiles, m_CachePath);
+				copyArchivedFiles(physSavePath, regionFiles, m_CachePath);
 			}
 			else
 			{
 				getNativeFileList(regionFiles, savePath, ".celldata");
-				copyNativeFiles(regionFiles, m_FullBasePath, [](size_t, size_t)
+				copyNativeFiles(savePath, regionFiles, m_FullBasePath, [](size_t, size_t)
 				{
 					//SendToConsole("Load Progress: copying " + str.str() + " / " + numDataFilesStr + " region files");
 				});
@@ -1506,38 +1518,16 @@ namespace FusionEngine
 				archive.AddPath(savePath, savePath.stem());
 			}
 
+			try
 			{
-				auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
-				for (auto it = fileList; *it; ++it)
-				{
-					auto filePath = physFsPath + "/" + *it;
-					if (!PHYSFS_isDirectory(filepath.c_str()))
-					{
-						if (PHYSFS_delete(filePath.c_str()) == 0)
-						{
-							PHYSFS_freeList(fileList);
-							FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
-						}
-					}
-					else
-					{
-						auto fileList2 = PHYSFS_enumerateFiles(filePath.c_str());
-						for (auto it2 = fileList2; *it2; ++it2)
-						{
-							auto filePath2 = filePath + "/" + *it2;
-							if (PHYSFS_delete(filePath2.c_str()) == 0)
-							{
-								PHYSFS_freeList(fileList);
-								PHYSFS_freeList(fileList2);
-								FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath2 + "): " + std::string(PHYSFS_getLastError()));
-							}
-						}
-						PHYSFS_freeList(fileList2);
-					}
-				}
-				PHYSFS_freeList(fileList);
+				PhysFSHelp::clear_folder(physFsPath + "/");
 			}
-			PHYSFS_delete(physFsPath.c_str());
+			catch (FileSystemException& ex)
+			{
+				FSN_EXCEPT(FileSystemException, "Failed to delete uncompressed save data: " + ex.GetDescription());
+			}
+			if (PHYSFS_delete(physFsPath.c_str()) == 0)
+				FSN_EXCEPT(FileSystemException, "Failed to delete uncompressed save data path: " + std::string(PHYSFS_getLastError()));
 
 			SendToConsole("Done compressing.");
 		}
