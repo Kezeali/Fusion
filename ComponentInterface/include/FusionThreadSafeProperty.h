@@ -377,7 +377,11 @@ namespace FusionEngine
 		void Deserialise(RakNet::BitStream& stream)
 		{
 			m_SubscriptionAgent.LoadSubscription(stream);
-			Serialiser::Deserialise(stream, m_Value);
+			//Serialiser::Deserialise(stream, m_Value);
+			//m_Writer.Write(m_Value);
+			T temp;
+			Serialiser::Deserialise(stream, temp);
+			m_Writer.Write(temp);
 		}
 		bool IsContinuous() const
 		{

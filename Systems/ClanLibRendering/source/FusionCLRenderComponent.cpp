@@ -378,6 +378,30 @@ namespace FusionEngine
 		}
 	}
 
+	void CLSprite::OnPostDeserialisation()
+	{
+		if (m_ImagePath != ImagePath.Get())
+		{
+			m_ReloadImage = true;
+		}
+		if (m_AnimationPath != AnimationPath.Get())
+		{
+			m_ReloadAnimation = true;
+		}
+
+		if (!m_Sprite.is_null()) // Copy the changes to the CL_Sprite, if it is loaded
+		{
+			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
+			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
+			m_Sprite.set_color(Colour.Get());
+			m_Sprite.set_alpha(Alpha.Get());
+			m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
+			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+
+			m_Sprite.set_frame(AnimationFrame.Get());
+		}
+	}
+
 	void CLSprite::SetPosition(const Vector2& value)
 	{
 		//m_NewPosition = value;

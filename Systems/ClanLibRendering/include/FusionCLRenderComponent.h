@@ -144,6 +144,8 @@ namespace FusionEngine
 		void SerialiseOccasional(RakNet::BitStream& stream);
 		void DeserialiseOccasional(RakNet::BitStream& stream);
 
+		void OnPostDeserialisation();
+
 		// ISprite
 		void SetOffset(const Vector2& offset);
 		Vector2 GetOffset() const;
