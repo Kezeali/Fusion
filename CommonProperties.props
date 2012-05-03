@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Systems\AngelScript\include;$(SolutionDir)Systems\Box2D\include;$(SolutionDir)Systems\ClanLibRendering\include;$(SolutionDir)Common\include;$(SolutionDir)ComponentInterface\include;$(SolutionDir)EngineFramework\include;$(SolutionDir)Input\include;$(SolutionDir)Network\include;$(SolutionDir)Visual\include;$(SolutionDir)external;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb_oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Systems\AngelScript\include;$(SolutionDir)Systems\Box2D\include;$(SolutionDir)Systems\ClanLibRendering\include;$(SolutionDir)Common\include;$(SolutionDir)ComponentInterface\include;$(SolutionDir)EngineFramework\include;$(SolutionDir)Input\include;$(SolutionDir)Network\include;$(SolutionDir)Visual\include;$(SolutionDir)external;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\angelscriptDev\sdk\angelscript\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb_oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <CompileAsManaged>false</CompileAsManaged>
@@ -17,7 +17,7 @@
       <DisableSpecificWarnings>4482</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(Configuration);$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\lib;$(SolutionDir)..\FusionDependencies\tbb_oss\lib\ia32\vc10;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\$(Configuration);$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\angelscriptDev\sdk\angelscript\lib;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\lib;$(SolutionDir)..\FusionDependencies\tbb_oss\lib\ia32\vc10;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />
