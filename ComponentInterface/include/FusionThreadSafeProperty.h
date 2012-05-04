@@ -101,10 +101,17 @@
 #define FSN_INIT_PROPS(r, data, v) \
 	FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v)); \
 	FSN_PROP_ADDPROPERTY(BOOST_PP_SEQ_ELEM(1, v));
+// Generates lines like:
+//  ThreadSafeProperty<T, DefaultStaticWriter<T, GenericPropertySerialiser<T>>> prop_name;
+#define FSN_DEFAULTWRITER_TYPENAME(v) BOOST_PP_CAT(FSN_PROP_GET_NAME(v),Writer_t)
+#define FSN_SERIALISER_PARAM(v) BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser< FSN_PROP_GET_TYPE(v) >)
+#define FSN_NULLWRITER_PARAM(v) NullWriter< ## FSN_PROP_GET_TYPE(v) ## >
+#define FSN_DEFAULTWRITER_typedef(v) typedef DefaultStaticWriter< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA() FSN_SERIALISER_PARAM(v) ## > FSN_DEFAULTWRITER_TYPENAME(v);
 #define FSN_DEFINE_PROPS(r, data, v) \
-	ThreadSafeProperty< ## FSN_PROP_GET_TYPE(v) \
-	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_IS_READONLY(v), NullWriter< ## FSN_PROP_GET_TYPE(v) ## >, DefaultStaticWriter< ## FSN_PROP_GET_TYPE(v) ## >) \
-	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser< ## FSN_PROP_GET_TYPE(v) ## >) > ## FSN_PROP_GET_NAME(v);
+	ThreadSafeProperty<FSN_PROP_GET_TYPE(v)\
+	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_IS_READONLY(v), FSN_NULLWRITER_PARAM(v), DefaultStaticWriter<FSN_PROP_GET_TYPE(v)>)\
+	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser<FSN_PROP_GET_TYPE(v)>)\
+	> FSN_PROP_GET_NAME(v);
 
 #define FSN_COIFACE_PROPS(iface_name, properties) \
 	void InitProperties()\
@@ -351,7 +358,10 @@ namespace FusionEngine
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
 		{
-			m_SubscriptionAgent.Subscribe(system, id);
+			if (!std::is_same<Writer, NullWriter<T>>::value)
+			{
+				m_SubscriptionAgent.Subscribe(system, id);
+			}
 		}
 
 		void Synchronise()
@@ -371,17 +381,21 @@ namespace FusionEngine
 
 		void Serialise(RakNet::BitStream& stream)
 		{
-			m_SubscriptionAgent.SaveSubscription(stream);
-			Serialiser::Serialise(stream, m_Value);
+			if (!std::is_same<Writer, NullWriter<T>>::value)
+			{
+				m_SubscriptionAgent.SaveSubscription(stream);
+				Serialiser::Serialise(stream, m_Value);
+			}
 		}
 		void Deserialise(RakNet::BitStream& stream)
 		{
-			m_SubscriptionAgent.LoadSubscription(stream);
-			//Serialiser::Deserialise(stream, m_Value);
-			//m_Writer.Write(m_Value);
-			T temp;
-			Serialiser::Deserialise(stream, temp);
-			m_Writer.Write(temp);
+			if (!std::is_same<Writer, NullWriter<T>>::value)
+			{
+				m_SubscriptionAgent.LoadSubscription(stream);
+				T temp;
+				Serialiser::Deserialise(stream, temp);
+				m_Writer.Write(temp);
+			}
 		}
 		bool IsContinuous() const
 		{

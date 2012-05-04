@@ -47,21 +47,12 @@ namespace FusionEngine
 	
 	FSN_BEGIN_COIFACE(ITransform)
 	public:
-		//FSN_COIFACE_CTOR(ITransform,
-		//	((FSN_GET_SET)(Position))
-		//	((FSN_GET_SET)(Angle))
-		//	((FSN_GET_SET)(Depth)) )
-
-		//ThreadSafeProperty<Vector2> Position;
-		//ThreadSafeProperty<float> Angle;
-		//ThreadSafeProperty<int> Depth;
-
 		FSN_COIFACE_PROPS(ITransform,
 			((FSN_GET_SET)(Position)(Vector2))
 			((FSN_GET_SET)(Angle)(float))
 			((FSN_GET_SET)(Depth)(int)) )
 
-		static void RegisterScriptInterface(asIScriptEngine* engine);
+		//static void RegisterScriptInterface(asIScriptEngine* engine);
 
 		virtual bool HasContinuousPosition() const = 0;
 
