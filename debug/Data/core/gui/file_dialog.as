@@ -39,6 +39,70 @@ class ResourcePreviewFormatter : IDataFormatter
 
 ResourcePreviewFormatter@ previewFormatter = @ResourcePreviewFormatter();
 
+void UpdateFormField(ElementDocument@ doc, const string &in id, const string &in value)
+{
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(id) );
+	if (element !is null)
+	{
+		element.SetValue(value);
+	}
+}
+
+void UpdateFilenameFormField(ElementDocument@ doc, const string &in value)
+{
+	UpdateFormField(doc, "text_filename", value);
+}
+
+void UpdatePathFormField(ElementDocument@ doc)
+{
+	UpdateFormField(doc, "text_path", currentTable);
+	UpdateFormField(doc, "path_display", currentTable);
+	//~ ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById("path_display") );
+	//~ if (element !is null)
+	//~ {
+		//~ element.SetValue(value);
+	//~ }
+}
+
+void ChangePath(ElementDocument@ doc, const string &in path)
+{
+	ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
+	if (dataGrid !is null)
+	{
+		dataGrid.SetDataSource(rString(datasource_name + ".'" + path + "'"));
+
+		currentTable = path;
+	}
+}
+
+string ExtractTableFromDataSource(string filesystem_datasource_string)
+{
+	int p = filesystem_datasource_string.findFirst(".");
+	if (p != -1)
+	{
+		// Get this for later use
+		if (datasource_name == "")
+			datasource_name = filesystem_datasource_string.substr(0, p);
+		
+		return filesystem_datasource.preprocessPath(filesystem_datasource_string.substr(p+1));
+	}
+	else
+		return "";
+}
+
+string UpdateCurrentTable(Event@ event)
+{
+	string dataSource = event.GetParameter(rString("source"), rString(""));
+	console.println("dataSource: " + dataSource);
+	string result = ExtractTableFromDataSource(dataSource);
+	if (currentTable == "")
+	{
+		root = currentTable;
+	}
+	currentTable = result;
+	return result;
+}
+
 void OnWindowLoad(Event@ event)
 {
 	//@previewFormatter = ResourcePreviewFormatter();
@@ -50,27 +114,33 @@ void OnWindowUnload(Event@ event)
 	RemoveDataFormatter(rString("resource_preview"));
 }
 
+void OnWindowShow(Event@ event)
+{
+	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
+	
+	if (dataGrid !is null)
+	{
+		string dataSource = dataGrid.GetAttribute(rString("source"), rString(""));
+		
+		currentTable = ExtractTableFromDataSource(dataSource);
+	
+		root = filesystem_datasource.preprocessPath(currentTable);
+		
+		UpdatePathFormField(doc);
+	}
+	
+	//@previewFormatter = ResourcePreviewFormatter();
+	//AddDataFormatter(rString("resource_preview"), @previewFormatter);
+}
+
 void OnFileSelected(Event@ event)
 {
 	int index = event.GetParameter(rString("row_index"), -1);
 	if (index == -1)
 		return;
 	
-	string dataSource = event.GetParameter(rString("source"), rString(""));
-	string table;
-	if (currentTable == "")
-	{
-		int p = dataSource.findFirst(".");
-		if (p != -1)
-		{
-			table = dataSource.substr(p+1);
-			datasource_name = dataSource.substr(0, p);
-		}
-		root = filesystem_datasource.preprocessPath(table);
-	}
-	else
-		table = currentTable;
-	
+	string table = currentTable;//UpdateCurrentTable(@event);
 	if (table == "")
 		return;
 	
@@ -80,33 +150,17 @@ void OnFileSelected(Event@ event)
 	{
 		// File selected - set the filename textbox
 		string name = filesystem_datasource.filename(table, index);
-		
-		ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_filename")) );
-		if (element !is null)
-		{
-			element.SetValue(name);
-		}
+		UpdateFilenameFormField(doc, name);
 	}
 	else
 	{
 		// Folder selected
 		string path = filesystem_datasource.path(table, index);
-		
-		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
-		if (dataGrid !is null)
-		{
-			dataGrid.SetDataSource(rString(datasource_name + ".'" + path + "'"));
-
-			currentTable = path;
-		}
+		ChangePath(doc, path);
 	}
 	
 	// Set the (hidden) path textbox
-	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
-	if (element !is null)
-	{
-		element.SetValue(currentTable);
-	}
+	UpdatePathFormField(doc);
 }
 
 void OnRowDblClick(Event@ event)
@@ -115,21 +169,7 @@ void OnRowDblClick(Event@ event)
 	if (index == -1)
 		return;
 	
-	string dataSource = event.GetParameter(rString("source"), rString(""));
-	string table;
-	if (currentTable == "")
-	{
-		int p = dataSource.findFirst(".");
-		if (p != -1)
-		{
-			table = dataSource.substr(p+1);
-			datasource_name = dataSource.substr(0, p);
-		}
-		root = filesystem_datasource.preprocessPath(table);
-	}
-	else
-		table = currentTable;
-	
+	string table = currentTable;//UpdateCurrentTable(@event);
 	if (table == "")
 		return;
 	
@@ -138,22 +178,11 @@ void OnRowDblClick(Event@ event)
 	if (filesystem_datasource.isDirectory(table, index))
 	{
 		string path = filesystem_datasource.path(table, index);
-		
-		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
-		if (dataGrid !is null)
-		{
-			dataGrid.SetDataSource(rString(datasource_name + ".'" + path + "'"));
-
-			currentTable = path;
-		}
+		ChangePath(doc, path);
 	}
 	
 	// Set the (hidden) path textbox
-	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
-	if (element !is null)
-	{
-		element.SetValue(currentTable);
-	}
+	UpdatePathFormField(doc);
 }
 
 void OnUpClicked(Event@ event)
@@ -165,17 +194,9 @@ void OnUpClicked(Event@ event)
 			currentTable = currentTable.substr(0, p);
 		
 		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-		ElementDataGrid@ dataGrid = cast<ElementDataGrid>( doc.GetElementById(rString("file_list")) );
-		if (dataGrid !is null)
-		{
-			dataGrid.SetDataSource(rString(datasource_name + ".'" + currentTable + "'"));
-		}
+		ChangePath(doc, currentTable);
 		
-		ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("text_path")) );
-		if (element !is null)
-		{
-			element.SetValue(currentTable);
-		}
+		UpdatePathFormField(doc);
 	}
 }
 

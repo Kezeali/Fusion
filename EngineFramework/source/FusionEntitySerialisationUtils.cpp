@@ -995,7 +995,6 @@ namespace FusionEngine
 
 			if (!archetype.empty())
 			{
-
 			}
 
 			//const auto dataLen = in.read_uint32();

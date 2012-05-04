@@ -657,8 +657,10 @@ namespace FusionEngine
 				if (!path.empty())
 				{
 					auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
-					if (path == "ok")
+					if (path.empty() || path == "ok")
 						path = basepath.string();
+					else
+						path = FilesystemDataSource::PreprocessPath(path);
 					auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
 					saveName.replace_extension();
 					m_SaveName = saveName.generic_string();
@@ -674,8 +676,10 @@ namespace FusionEngine
 				if (!path.empty())
 				{
 					auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
-					if (path == "ok")
+					if (path.empty() || path == "ok")
 						path = basepath.string();
+					else
+						path = FilesystemDataSource::PreprocessPath(path);
 					auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
 					saveName.replace_extension();
 					m_SaveName = saveName.generic_string();

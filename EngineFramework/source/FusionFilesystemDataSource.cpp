@@ -27,10 +27,10 @@
 
 #include "PrecompiledHeaders.h"
 
+#include "FusionFilesystemDataSource.h"
+
 #include "FusionAssert.h"
 #include "FusionExceptionFactory.h"
-
-#include "FusionFilesystemDataSource.h"
 
 #include <boost/filesystem.hpp>
 #include <deque>
@@ -234,18 +234,20 @@ namespace FusionEngine
 		auto entry = AquireEntry(PreprocessPath(table.CString()));
 
 		FSN_ASSERT(row_index >= 0 && (size_t)row_index < entry.children.size());
-
-		const auto& file = entry.children[(size_t)row_index];
-		for (auto it = columns.begin(), end = columns.end(); it != end; ++it)
+		if (row_index >= 0 && (size_t)row_index < entry.children.size())
 		{
-			if (*it == "type")
-				row.push_back(TypeToString(file.type).c_str());
-			else if (*it == "filename")
-				row.push_back(file.name.c_str());
-			else if (*it == "path")
-				row.push_back(file.path.c_str());
-			else if (*it == "filesystem")
-				row.push_back(file.filesystem == Entry::Native ? "native" : "physfs");
+			const auto& file = entry.children[(size_t)row_index];
+			for (auto it = columns.begin(), end = columns.end(); it != end; ++it)
+			{
+				if (*it == "type")
+					row.push_back(TypeToString(file.type).c_str());
+				else if (*it == "filename")
+					row.push_back(file.name.c_str());
+				else if (*it == "path")
+					row.push_back(file.path.c_str());
+				else if (*it == "filesystem")
+					row.push_back(file.filesystem == Entry::Native ? "native" : "physfs");
+			}
 		}
 	}
 
@@ -281,6 +283,11 @@ namespace FusionEngine
 			return entry.children[row_index].path;
 		else
 			return "";
+	}
+
+	std::string FilesystemDataSource::PreprocessPath(const std::string& table)
+	{
+		return FusionEngine::PreprocessPath(table);
 	}
 	
 	std::string FilesystemDataSource::PreproPath(const std::string& table) const

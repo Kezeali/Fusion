@@ -32,7 +32,7 @@
 				width: 12px;
 				height: 12px;
 				icon-decorator: image;
-				icon-image: present.png;
+				icon-image: folder.png;
 			}
 			
 			div.file_icon,
@@ -41,7 +41,7 @@
 				width: 12px;
 				height: 12px;
 				icon-decorator: image;
-				icon-image: high_scores_defender.png;
+				icon-image: file.png;
 			}
 			
 			button#btn_parent_folder
@@ -60,6 +60,11 @@
 				height: 26px;
 				font-size: 13;
 				display: inline;
+			}
+			
+			#path_display
+			{
+				width: 100%;
 			}
 			
 			datagrid#file_list
@@ -111,17 +116,18 @@
 		</style>
 		<script src="file_dialog.as"/>
 	</head>
-	<body template="window" onload="%this:OnWindowLoad(event);">
+	<body template="window" onload="%this:OnWindowLoad(event);" onshow="%this:OnWindowShow(event);">
 		<button id="btn_parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
 		<button id="btn_refresh" onclick="%this:OnRefreshClicked(event);">Refresh</button>
+		<input type="text" id="path_display" name="path" readonly value=""/>
 		<datagrid selectable id="file_list" source="filesystem.#write_dir" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
 			<col fields="type" formatter="filesystem" width="20px"/>
-			<col fields="filename" />
+			<col fields="filename">Name</col>
 		</datagrid>
 		<form id="file_form">
 			<p>
 			File Name:<input type="text" id="text_filename" name="filename"/>
-			<input type="text" id="text_path" name="path"/>
+			<input type="text" id="text_path" name="path" value=""/>
 			<select id="select_type" name="type">
 			</select>
 			</p>

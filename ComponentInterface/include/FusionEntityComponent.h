@@ -254,8 +254,6 @@ namespace FusionEngine
 		virtual void OnSiblingAdded(const ComponentPtr& com) {}
 		virtual void OnSiblingRemoved(const ComponentPtr& com) {}
 
-		virtual void SynchroniseParallelEdits() {}
-
 		enum SerialiseMode { Changes, All, Editable };
 
 		virtual void SerialiseContinuous(RakNet::BitStream& stream);

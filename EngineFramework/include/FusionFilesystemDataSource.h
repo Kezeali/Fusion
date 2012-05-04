@@ -67,8 +67,11 @@ namespace FusionEngine
 		std::string GetFilename(const std::string& table, int row_index);
 		//! Returns the path of the item at the given index
 		std::string GetPath(const std::string& table, int row_index);
-		//! Processes any special tokens in the given table string to return a usable path
+		//! Processes any special tokens in the given table string to return a usable path (this is non-static for scripting purposes)
 		std::string PreproPath(const std::string& table) const;
+
+		//! Static method equivilent to nonstatic method above (which is for scripting API purposes)
+		static std::string PreprocessPath(const std::string& table);
 
 		//! Returns the table & index where the given file resides
 		std::pair<Rocket::Core::String, int> ReverseLookup(const std::string& filename);
