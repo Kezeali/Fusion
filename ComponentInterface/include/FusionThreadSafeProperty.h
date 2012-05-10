@@ -402,6 +402,17 @@ namespace FusionEngine
 			return Serialiser::IsContinuous();
 		}
 
+		template <typename T>
+		void SetSpecific(void* value)
+		{
+			m_Writer.Write(*static_cast<T*>(value));
+		}
+		template <>
+		void SetSpecific<bool>(void* value)
+		{
+			m_Writer.Write(reinterpret_cast<bool>(value));
+		}
+
 		void* GetRef()
 		{
 			return &m_Value;
@@ -410,7 +421,7 @@ namespace FusionEngine
 		{
 			if (Scripting::AppType<T>::type_id == type_id)
 			{
-				m_Writer.Write(*static_cast<T*>(value));
+				SetSpecific<T>(value);
 
 				if (m_ChangedCallback)
 					m_ChangedCallback();
