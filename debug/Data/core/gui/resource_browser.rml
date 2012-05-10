@@ -137,7 +137,7 @@
 		<script src="file_dialog.as"/>
 		<script src="resource_browser.as"/>
 	</head>
-	<body template="window_static" onload="%this:OnWindowLoad(event);" onunload="%this:OnResourceBrowserWindowUnload(event);">
+	<body template="window_static" onload="%this:OnWindowLoad(event);" onunload="%this:OnResourceBrowserWindowUnload(event);" onshow="%this:OnWindowShow(event);">
 		<button id="btn_parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
 		<button id="btn_refresh" onclick="%this:OnRefreshClicked(event);">Refresh</button>
 		<datagrid selectable id="file_list" source="resource_browser.physfs:/Data" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">

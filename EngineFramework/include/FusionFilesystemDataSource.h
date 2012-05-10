@@ -66,9 +66,11 @@ namespace FusionEngine
 		//! Returns the filename of the item at the given index
 		std::string GetFilename(const std::string& table, int row_index);
 		//! Returns the path of the item at the given index
-		std::string GetPath(const std::string& table, int row_index);
+		std::string GetPath(const std::string& table, int row_index, bool include_filesystem = false);
 		//! Processes any special tokens in the given table string to return a usable path (this is non-static for scripting purposes)
 		std::string PreproPath(const std::string& table) const;
+		//! Returns the filesystem part of the given table identifier
+		std::string GetFilesystem(const std::string& table);
 
 		//! Static method equivilent to nonstatic method above (which is for scripting API purposes)
 		static std::string PreprocessPath(const std::string& table);
@@ -128,7 +130,7 @@ namespace FusionEngine
 			{
 				return !(*this == other);
 			}
-			enum Filesystem { Physfs, Native };
+			enum Filesystem { Physfs, Native, NumFilesystemTypes };
 			Filesystem filesystem;
 			enum Type { None, Directory, File, SymbolicLink };
 			Type type;

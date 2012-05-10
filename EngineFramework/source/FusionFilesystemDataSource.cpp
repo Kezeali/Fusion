@@ -65,6 +65,15 @@ namespace FusionEngine
 			return table;
 	}
 
+	inline const char* FilesystemToString(FilesystemDataSource::Entry::Filesystem type)
+	{
+		static const char* filesystemTypes[] = { "physfs", "native" };
+		static_assert(sizeof(filesystemTypes) / sizeof(void*) == FilesystemDataSource::Entry::NumFilesystemTypes, "Must define names for all filesystem types");
+
+		FSN_ASSERT(type != FilesystemDataSource::Entry::NumFilesystemTypes);
+		return filesystemTypes[type];
+	}
+
 	void FilesystemDataFormatter::FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data)
 	{
 		if (!raw_data.empty())
@@ -276,11 +285,21 @@ namespace FusionEngine
 			return "";
 	}
 
-	std::string FilesystemDataSource::GetPath(const std::string& table, int row_index)
+	std::string FilesystemDataSource::GetPath(const std::string& table, int row_index, bool include_filesystem)
 	{
 		auto entry = AquireEntry(PreprocessPath(table));
 		if (row_index >= 0 && entry.children.size() > (size_t)row_index)
-			return entry.children[row_index].path;
+		{
+			if (!include_filesystem)
+			{
+				return entry.children[row_index].path;
+			}
+			else
+			{
+				const auto& child = entry.children[row_index];
+				return std::string(FilesystemToString(child.filesystem)) + ":" + child.path;
+			}
+		}
 		else
 			return "";
 	}
@@ -293,6 +312,11 @@ namespace FusionEngine
 	std::string FilesystemDataSource::PreproPath(const std::string& table) const
 	{
 		return FusionEngine::PreprocessPath(table);
+	}
+
+	std::string FilesystemDataSource::GetFilesystem(const std::string& table)
+	{
+		return FilesystemToString(AquireEntry(PreprocessPath(table)).filesystem);
 	}
 
 	std::pair<Rocket::Core::String, int> FilesystemDataSource::ReverseLookup(const std::string& path)

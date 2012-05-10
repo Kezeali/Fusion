@@ -6,7 +6,7 @@
 			body
 			{
 				width: 640px;
-				height: 320px;
+				height: 360px;
 				
 				margin: auto;
 			}
@@ -25,6 +25,39 @@
 			{
 				text-align: left;
 				overflow: hidden;
+				
+				height:100%; /* needed for container min-height */
+			}
+			
+			div#dcontainer
+			{
+				position:relative; /* needed for footer positioning*/
+				margin:0 auto; /* center, not in IE5 */
+				width:100%;
+				/*background:#f0f0f0;*/
+				
+				/*height:auto !important;  real browsers */
+				height:100%;
+
+				min-height:100%; /* real browsers */
+			}
+
+			div#dheader
+			{
+				padding:1px;
+			}
+
+			div#dcontent
+			{
+				padding:10px 10px 50px; /* bottom padding for footer */
+			}
+
+			div#dfooter
+			{
+				position:absolute;
+				width:100%;
+				bottom:0; /* stick to bottom */
+				/*background:#ddd;*/
 			}
 			
 			div.folder_icon
@@ -64,22 +97,31 @@
 			
 			#path_display
 			{
-				width: 100%;
+				width: 90%;
 			}
 			
 			datagrid#file_list
 			{
 				display: block;
-				height: 80%;
+				width: 98%;
+				height: 100%;
+				
+				background-color: silver;
 			}
+			
+			datagrid#file_list datagridbody
+			{
+				height: 100%;
+			}
+			
 			form#file_form
 			{
 				display: block;
 				width: 100%;
 				height: auto;
 				
-				position: absolute;
-				bottom: 2px;
+				/*position: absolute;
+				bottom: 2px;*/
 			}
 			input.text#text_filename
 			{
@@ -120,21 +162,25 @@
 		<button id="btn_parent_folder" onclick="%this:OnUpClicked(event);">Up</button>
 		<button id="btn_refresh" onclick="%this:OnRefreshClicked(event);">Refresh</button>
 		<input type="text" id="path_display" name="path" readonly value=""/>
+
 		<datagrid selectable id="file_list" source="filesystem.#write_dir" onrowselected="%this:OnFileSelected(event);" onrowdblclick="%this:OnRowDblClick(event)">
 			<col fields="type" formatter="filesystem" width="20px"/>
 			<col fields="filename">Name</col>
 		</datagrid>
-		<form id="file_form">
-			<p>
-			File Name:<input type="text" id="text_filename" name="filename"/>
-			<input type="text" id="text_path" name="path" value=""/>
-			<select id="select_type" name="type">
-			</select>
-			</p>
-			<div id="dialog_submit_buttons">
-				<input type="submit" id="button_ok" name="result" value="ok">Ok</input>
-				<input type="submit" id="button_cancel" name="result" value="cancel">Cancel</input>
-			</div>
-		</form>
+		
+		<div id="dfooter">
+			<form id="file_form">
+				<p>
+					File Name:<input type="text" id="text_filename" name="filename"/>
+					<input type="text" id="text_path" name="path" value=""/>
+					<select id="select_type" name="type">
+					</select>
+				</p>
+				<div id="dialog_submit_buttons">
+					<input type="submit" id="button_ok" name="result" value="ok">Ok</input>
+					<input type="submit" id="button_cancel" name="result" value="cancel">Cancel</input>
+				</div>
+			</form>
+		</div>
 	</body>
 </rml>

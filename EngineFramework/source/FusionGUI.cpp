@@ -646,7 +646,7 @@ namespace FusionEngine
 			asMETHOD(FilesystemDataSource, GetFilename), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(
-			"FilesystemDataSource", "string path(const string &in, int row)",
+			"FilesystemDataSource", "string path(const string &in, int row, bool include_filesystem = false)",
 			asMETHOD(FilesystemDataSource, GetPath), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(

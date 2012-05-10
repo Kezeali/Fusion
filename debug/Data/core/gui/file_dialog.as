@@ -93,7 +93,6 @@ string ExtractTableFromDataSource(string filesystem_datasource_string)
 string UpdateCurrentTable(Event@ event)
 {
 	string dataSource = event.GetParameter(rString("source"), rString(""));
-	console.println("dataSource: " + dataSource);
 	string result = ExtractTableFromDataSource(dataSource);
 	if (currentTable == "")
 	{
@@ -155,7 +154,7 @@ void OnFileSelected(Event@ event)
 	else
 	{
 		// Folder selected
-		string path = filesystem_datasource.path(table, index);
+		string path = filesystem_datasource.path(table, index, true);
 		ChangePath(doc, path);
 	}
 	
@@ -177,7 +176,7 @@ void OnRowDblClick(Event@ event)
 	
 	if (filesystem_datasource.isDirectory(table, index))
 	{
-		string path = filesystem_datasource.path(table, index);
+		string path = filesystem_datasource.path(table, index, true);
 		ChangePath(doc, path);
 	}
 	
