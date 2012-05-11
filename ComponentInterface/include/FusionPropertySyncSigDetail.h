@@ -53,6 +53,11 @@ namespace FusionEngine
 
 				Impl() : hasEvent(false) {}
 
+				void OnDispose()
+				{
+					callback = CallbackFn_t();
+				}
+
 				bool HasMore()
 				{
 					return hasEvent;

@@ -57,6 +57,8 @@ namespace FusionEngine
 			{
 				typedef std::function<void (T)> GeneratorFn_t;
 
+				void OnDispose() {}
+
 				void OnGenerate(T value) { queued_events.push(value); }
 
 				bool HasMore()
@@ -242,6 +244,7 @@ namespace FusionEngine
 				if (range.first != range.second)
 				{
 					range.first->second->trigger_fn = std::function<void ()>();
+					range.first->second->Dispose();
 					m_Generators.erase(key);
 				}
 			}
@@ -251,12 +254,15 @@ namespace FusionEngine
 			{
 				SerialisationMechanism serialiser;
 
-				std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>> triggeredGenerator;
+				std::pair<KeyT, std::weak_ptr<GeneratorPlaceholder>> triggeredGenerator;
 				while (m_TriggeredGenerators.try_pop(triggeredGenerator))
 				{
-					serialiser.BeginGenerator(triggeredGenerator.first);
-					triggeredGenerator.second->Fire(serialiser);
-					serialiser.EndGenerator();
+					if (auto lockedGenerator = triggeredGenerator.second.lock())
+					{
+						serialiser.BeginGenerator(triggeredGenerator.first);
+						lockedGenerator->Fire(serialiser);
+						serialiser.EndGenerator();
+					}
 				}
 
 				return serialiser;
@@ -282,6 +288,8 @@ namespace FusionEngine
 			{
 			public:
 				virtual ~GeneratorPlaceholder() {}
+				
+				virtual void Dispose() = 0;
 
 				virtual void Fire(SerialisationMechanism&) = 0;
 
@@ -301,9 +309,15 @@ namespace FusionEngine
 				Generator()
 				{}
 
+				void Dispose()
+				{
+					OnDispose();
+				}
+
 				void Trigger()
 				{
-					trigger_fn();
+					if (trigger_fn)
+						trigger_fn();
 				}
 
 				void Fire(SerialisationMechanism& serialiser)
@@ -341,7 +355,7 @@ namespace FusionEngine
 
 			typedef tbb::concurrent_hash_map<KeyT, std::shared_ptr<GeneratorPlaceholder>> GeneratorMap_t;
 			GeneratorMap_t m_Generators;
-			tbb::concurrent_queue<std::pair<KeyT, std::shared_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
+			tbb::concurrent_queue<std::pair<KeyT, std::weak_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
 
 			template <class T>
 			std::shared_ptr<Generator<T>> MakeGeneratorObj(KeyT key)
