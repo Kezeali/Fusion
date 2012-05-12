@@ -326,6 +326,8 @@ input.text
 	height: 22px;
 	top: 4px;
 	padding: 3px 3px 0px;
+	
+	overflow: hidden;
 
 	background-decorator: tiled-horizontal;
 	background-left-image: fusion.png 189px 209px 192px 231px;
@@ -524,6 +526,11 @@ undomenu selectbox
 	margin-top: 4px;
 	width: 162px;
 	padding: 1px 4px 4px 4px;
+}
+
+datagrid
+{
+	overflow: hidden auto;
 }
 
 select selectbox,

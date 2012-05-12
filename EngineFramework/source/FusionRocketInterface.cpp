@@ -155,13 +155,13 @@ namespace FusionEngine
 			m_gc.set_program_object(cl_program_color_only);
 		}
 
-		//if (m_ClipEnabled)
-		//	m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+		if (m_ClipEnabled)
+			m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 
 		m_gc.draw_primitives(cl_triangles, num_indices, prim_array);
 
-		//if (m_ClipEnabled)
-		//	m_gc.pop_cliprect();
+		if (m_ClipEnabled)
+			m_gc.pop_cliprect();
 
 		//delete[] polygon;
 		//delete[] vert_colour;
