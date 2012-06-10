@@ -27,7 +27,17 @@
 
 #include "PrecompiledHeaders.h"
 
+#include "FusionArchetypalEntityManager.h"
+#include "FusionArchetype.h"
 #include "FusionArchetypeFactory.h"
+#include "FusionEntity.h"
+#include "FusionEntitySerialisationUtils.h"
+
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+
+namespace bio = boost::iostreams;
 
 namespace FusionEngine
 {
@@ -40,20 +50,52 @@ namespace FusionEngine
 	{
 	}
 
-	std::shared_ptr<Archetype> ArchetypeFactory::GetArchetype(const std::string& type_id) const
+	EntityPtr ArchetypeFactory::GetArchetype(const std::string& type_id) const
 	{
-		return std::shared_ptr<Archetype>();
+		auto entry = m_Archetypes.find(type_id);
+		if (entry != m_Archetypes.end())
+			return entry->second.Archetype;
+		else
+			return EntityPtr();
 	}
 
-	std::shared_ptr<Archetype> ArchetypeFactory::CreateArchetype(const std::string& type_id)
+	EntityPtr ArchetypeFactory::CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type)
 	{
-		return std::shared_ptr<Archetype>();
+		auto entity = std::make_shared<Entity>(nullptr, factory->InstantiateComponent(transform_type));
+		ArchetypeData& data = m_Archetypes[type_id];
+		data.Archetype = entity;
+		return entity;
 	}
 
-	void ArchetypeFactory::MakeInstance(const EntityPtr& entity, const std::string& type_id, const Vector2& pos, float angle)
-	{}
+	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle)
+	{
+		EntityPtr entity;
+		auto entry = m_Archetypes.find(type_id);
+		if (entry != m_Archetypes.end())
+		{
+			entity = entry->second.Archetype->Clone(factory);
 
-	void ArchetypeFactory::DefineArchetypeFromEntity(const std::string& type_id, const EntityPtr& entity)
-	{}
+			auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Definition);
+			agent->m_ChangeConnection = entry->second.SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
+			agent->SetManagedEntity(entity);
+
+			entity->SetArchetypeAgent(agent);
+		}
+		return std::move(entity);
+	}
+
+	void ArchetypeFactory::DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity)
+	{
+		ArchetypeData& data = m_Archetypes[type_id];
+		data.Archetype = entity->Clone(factory);
+		data.Definition = std::make_shared<Archetype>(type_id);
+		data.Definition->Define(entity);
+	}
+
+	EntityPtr EditorArchetypeFactory::MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle)
+	{
+		auto archetype = GetArchetype(type_id);
+		return archetype;
+	}
 
 }

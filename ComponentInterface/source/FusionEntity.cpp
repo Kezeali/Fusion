@@ -364,6 +364,16 @@ namespace FusionEngine
 		return m_ComponentInterfaces;
 	}
 
+	EntityPtr Entity::Clone(ComponentFactory* factory) const
+	{
+		auto entity = std::make_shared<Entity>(GetManager(), m_Transform.p->Clone(factory));
+		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+		{
+			entity->AddComponent((*it)->Clone(factory), (*it)->GetIdentifier());
+		}
+		return entity;
+	}
+
 	void Entity::SynchroniseParallelEdits()
 	{
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)

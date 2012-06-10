@@ -114,6 +114,7 @@ namespace FusionEngine
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
 		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
+		void SetArchetypeFactory(const std::shared_ptr<ArchetypeFactory>& factory) { m_ArchetypeFactory = factory; }
 		// TODO: ? interface MapLoader with Save and Load methods
 		void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader);
 		void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) { m_StreamingManager = manager; }
@@ -174,6 +175,7 @@ namespace FusionEngine
 		std::shared_ptr<ComponentFactory> m_ComponentFactory;
 		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
 		std::shared_ptr<EntityManager> m_EntityManager;
+		std::shared_ptr<ArchetypeFactory> m_ArchetypeFactory;
 
 		WorldSaver* m_Saver;
 		std::shared_ptr<SaveDataArchive> m_DataArchiver;

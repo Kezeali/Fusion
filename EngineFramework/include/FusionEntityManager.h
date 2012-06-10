@@ -61,6 +61,7 @@ namespace FusionEngine
 
 	class ISystemWorld;
 
+	class ArchetypeFactory;
 	class SaveDataArchive;
 
 	enum DomainState
@@ -113,7 +114,7 @@ namespace FusionEngine
 		void LoadActiveEntities(std::istream& stream);
 
 		void SaveNonStreamingEntities(std::ostream& stream, bool editable = false);
-		void LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator, bool editable = false);
+		void LoadNonStreamingEntities(std::istream& stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable = false);
 		//! Saves data used to restore pointers between entities
 		void SaveCurrentReferenceData();
 
@@ -286,7 +287,6 @@ namespace FusionEngine
 		EntitySynchroniser *m_EntitySynchroniser;
 		StreamingManager *m_StreamingManager;
 
-	protected:
 		ComponentUniverse *m_Universe;
 
 		mutable tbb::spin_rw_mutex m_EntityListsMutex;

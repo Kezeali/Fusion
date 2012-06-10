@@ -50,11 +50,16 @@ namespace FusionEngine
 		typedef std::uint16_t ComponentID_t;
 	}
 
+	class Archetype;
+
 	//! Transfers archetype changes to an entity
 	class ArchetypalEntityManager
 	{
 	public:
+		ArchetypalEntityManager(const std::shared_ptr<Archetype>& definition);
 		~ArchetypalEntityManager();
+
+		void SetManagedEntity(const EntityPtr& entity);
 
 		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data);
 
@@ -72,11 +77,21 @@ namespace FusionEngine
 		ModifiedProperties_t m_ModifiedProperties;
 		std::map<Archetypes::ComponentID_t, IComponent*> m_Components;
 
+		std::shared_ptr<Archetype> m_Definition;
+
 		std::weak_ptr<Entity> m_ManagedEntity;
 
+		friend class ArchetypeFactory;
 		boost::signals2::connection m_ChangeConnection;
 
 		ComponentFactory* m_ComponentFactory;
+
+		// Deserialises overriden properties
+		void PerformPropertyOverrides();
+
+		// NOCOPEEE
+		ArchetypalEntityManager(const ArchetypalEntityManager&) {}
+		ArchetypalEntityManager& operator= (const ArchetypalEntityManager&) {}
 	};
 
 }

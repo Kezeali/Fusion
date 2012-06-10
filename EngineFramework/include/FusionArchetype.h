@@ -37,6 +37,7 @@
 #include <iostream>
 #include <set>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <boost/signals2/signal.hpp>
@@ -61,7 +62,8 @@ namespace FusionEngine
 
 		void Define(const EntityPtr& definition);
 
-		boost::signals2::signal<void (Archetypes::PropertyID_t)> ChangeSignal;
+		std::tuple<std::string, std::string, size_t> GetPropertyLocation(Archetypes::PropertyID_t id);
+		std::string GetComponentLocation(Archetypes::ComponentID_t id);
 
 	private:
 		struct ComponentData
@@ -69,7 +71,6 @@ namespace FusionEngine
 			struct PropertyData
 			{
 				Archetypes::PropertyID_t id;
-				std::vector<char> data;
 			};
 
 			std::string type;
@@ -77,9 +78,34 @@ namespace FusionEngine
 			std::vector<PropertyData> properties;
 		};
 
+		struct ReversePropertyData
+		{
+			std::string type;
+			std::string identifier;
+			size_t index;
+		};
+
 		std::string m_Name;
 
-		std::vector<ComponentData> m_Components;
+		typedef std::map<Archetypes::ComponentID_t, ComponentData> ComponentDataMap;
+		typedef std::map<Archetypes::PropertyID_t, ReversePropertyData> PropertyDataMap;
+		ComponentDataMap m_Components;
+		PropertyDataMap m_Properties;
+
+		//struct PropertyIDData
+		//{
+		//	std::string component_identifier;
+		//	size_t index;
+		//};
+		//typedef std::map<Archetypes::PropertyID_t, PropertyIDData> PropertyIDMap_t;
+		//PropertyIDMap_t m_PropertyIDMap;
+		//struct ComponentIDData
+		//{
+		//	std::string identifier;
+		//	PropertyIDMap_t properties;
+		//};
+		//// Defines the property locations for this instance
+		//std::map<Archetypes::ComponentID_t, ComponentIDData> m_ComponentIDMap;
 	};
 
 }

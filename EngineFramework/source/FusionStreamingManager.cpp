@@ -844,9 +844,9 @@ namespace FusionEngine
 			if (findEntityById(entity, cellEntry, cell.get(), id))
 			{
 				if (continuous_data)
-					EntitySerialisationUtils::DeserialiseContinuous(*continuous_data, entity, IComponent::All);
+					EntitySerialisationUtils::DeserialiseContinuous(*continuous_data, entity, EntitySerialisationUtils::SerialiseMode::All);
 				if (occasional_data)
-					EntitySerialisationUtils::DeserialiseOccasional(*occasional_data, entity, IComponent::All);
+					EntitySerialisationUtils::DeserialiseOccasional(*occasional_data, entity, EntitySerialisationUtils::SerialiseMode::All);
 			}
 		}
 	}

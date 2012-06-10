@@ -29,6 +29,7 @@
 
 #include "FusionEngineManager.h"
 
+#include "FusionArchetypeFactory.h"
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
 #include "FusionComponentScriptTypeRegistration.h"
@@ -178,6 +179,7 @@ namespace FusionEngine
 			m_EvesdroppingManager.reset(new EvesdroppingManager());
 			m_ComponentUniverse.reset(new ComponentUniverse());
 			m_EntitySynchroniser.reset(new EntitySynchroniser(m_InputManager.get(), m_CameraSynchroniser.get(), m_StreamingManager.get()));
+			m_ArchetypeFactory.reset(new ArchetypeFactory());
 
 			m_EntityManager.reset(new EntityManager(m_InputManager.get(), m_EntitySynchroniser.get(), m_StreamingManager.get(), m_ComponentUniverse.get(), m_CellArchivist.get()));
 			m_EntityInstantiator.reset(new P2PEntityInstantiator(m_ComponentUniverse.get(), m_EntityManager.get()));
@@ -324,7 +326,7 @@ namespace FusionEngine
 			if (m_Map)
 			{
 				SendToConsole("Loading: Non-streaming entities (from map)...");
-				m_Map->LoadNonStreamingEntities(false, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
+				m_Map->LoadNonStreamingEntities(false, m_EntityManager.get(), m_ComponentUniverse.get(), m_ArchetypeFactory.get(), m_EntityInstantiator.get());
 			}
 
 			m_CellArchivist->Load(name);
@@ -335,7 +337,7 @@ namespace FusionEngine
 
 			SendToConsole("Loading: Non-streaming entities (from data-file)...");
 			if (auto file = m_CellArchivist->LoadDataFile("non_streaming_entities"))
-				m_EntityManager->LoadNonStreamingEntities(*file, m_EntityInstantiator.get());
+				m_EntityManager->LoadNonStreamingEntities(*file, m_ArchetypeFactory.get(), m_EntityInstantiator.get());
 
 			m_CellArchivist->Start();
 
@@ -509,6 +511,7 @@ namespace FusionEngine
 				(*exit)->SetComponentFactory(m_ComponentUniverse);
 				(*exit)->SetEntityInstantiator(m_EntityInstantiator);
 				(*exit)->SetEntityManager(m_EntityManager);
+				(*exit)->SetArchetypeFactory(m_ArchetypeFactory);
 				(*exit)->SetMapLoader(m_CellArchivist);
 				(*exit)->SetStreamingManager(m_StreamingManager);
 				(*exit)->SetWorldSaver(this);
@@ -557,7 +560,7 @@ namespace FusionEngine
 
 				m_StreamingManager->Initialise(m_Map->GetCellSize());
 
-				m_Map->LoadNonStreamingEntities(true, m_EntityManager.get(), m_ComponentUniverse.get(), m_EntityInstantiator.get());
+				m_Map->LoadNonStreamingEntities(true, m_EntityManager.get(), m_ComponentUniverse.get(), m_ArchetypeFactory.get(), m_EntityInstantiator.get());
 			}
 			// Start the asynchronous cell loader
 			m_CellArchivist->Start();

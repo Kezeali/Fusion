@@ -251,7 +251,7 @@ namespace FusionEngine
 		entityData.Write(entity->GetID());
 		entityData.Write(entity->GetOwnerID());
 		RakNet::StringCompressor::Instance()->EncodeString(entity->GetName().c_str(), 256, &entityData);
-		EntitySerialisationUtils::SerialiseEntity(entityData, entity, IComponent::All);
+		EntitySerialisationUtils::SerialiseEntity(entityData, entity, EntitySerialisationUtils::SerialiseMode::All);
 
 		m_Network->Send(destination, !Timestamped, MTID_STARTSYNC, &entityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 	}

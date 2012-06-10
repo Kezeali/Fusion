@@ -49,19 +49,23 @@ namespace FusionEngine
 
 	typedef std::basic_istream<char> ICellStream;
 	typedef std::basic_ostream<char> OCellStream;
+
+	class ArchetypeFactory;
 	
 	namespace EntitySerialisationUtils
 	{
-		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode);
+		enum SerialiseMode { Changes, All };
+
+		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, SerialiseMode mode);
 		EntityPtr DeserialiseEntity(RakNet::BitStream& in, ComponentFactory* factory, EntityManager* manager);
 
-		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode);
-		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode);
+		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, SerialiseMode mode);
+		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode);
 
-		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode);
-		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode);
+		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode);
+		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode);
 
-		static void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		static void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode)
 		{
 			std::vector<uint32_t> notUsed;
 			DeserialiseOccasional(in, notUsed, entity, mode);
@@ -79,10 +83,15 @@ namespace FusionEngine
 		//! Copy inactive entity data
 		void CopyEntityData(ICellStream& in, OCellStream& out);
 
-		//! Save an active entity
+		//! Save an entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
-		//! Load an entity
-		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		//! Load an entity (checks for archetypes)
+		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		
+		//! Load a non-archetypal entity
+		EntityPtr LoadUniqueEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		//! Load an archetypal entity
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator);
 	}
 
 }

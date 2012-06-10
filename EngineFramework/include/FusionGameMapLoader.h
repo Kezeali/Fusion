@@ -46,6 +46,8 @@
 namespace FusionEngine
 {
 
+	class ArchetypeFactory;
+
 	class Cell;
 	class CellCache;
 
@@ -63,7 +65,7 @@ namespace FusionEngine
 		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, EntityInstantiator* instantiator);
 
 		//! Loads entities that aren't managed by the cell archiver
-		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, EntityInstantiator* instantiator);
+		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
 		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
 		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 

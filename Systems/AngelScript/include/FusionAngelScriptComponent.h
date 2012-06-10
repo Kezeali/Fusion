@@ -333,7 +333,6 @@ namespace FusionEngine
 
 		std::shared_ptr<ASScriptB2ContactListener> m_ContactListener;
 
-		IComponent::SerialiseMode m_LastDeserMode;
 		std::vector<boost::intrusive_ptr<CScriptAny>> m_CachedProperties;
 		std::map<std::string, boost::intrusive_ptr<CScriptAny>> m_EditableCachedProperties;
 		std::vector<std::pair<size_t, uint32_t>> m_UninitialisedEntityWrappers;

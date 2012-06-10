@@ -247,6 +247,9 @@ namespace FusionEngine
 
 		const ComInterfaceMap& GetInterfaces() const;
 
+		//! Create a new copy of this entity
+		EntityPtr Clone(ComponentFactory* factory) const;
+
 		void SynchroniseParallelEdits();
 
 		//std::map<std::string, std::string> GetComponentNames() const;

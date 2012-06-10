@@ -43,6 +43,7 @@ namespace FusionEngine
 
 	class ISystemWorld;
 
+	class ArchetypeFactory;
 	class ComponentFactory;
 	class EntityInstantiator;
 	class EntityManager;
@@ -76,6 +77,7 @@ namespace FusionEngine
 		virtual void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) {}
 		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
+		virtual void SetArchetypeFactory(const std::shared_ptr<ArchetypeFactory>& factory) {}
 		virtual void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) {}
 		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
 		virtual void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) {}

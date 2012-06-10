@@ -162,7 +162,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, EntityInstantiator* instantiator)
+	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		namespace io = boost::iostreams;
@@ -185,7 +185,7 @@ namespace FusionEngine
 			numPseudoEnts = reader.ReadValue<size_t>();
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(inflateStream, false, 0, false, factory, entityManager, instantiator);
+				auto entity = LoadEntity(inflateStream, false, 0, false, factory, archetype_factory, entityManager, instantiator);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
 			}
@@ -195,7 +195,7 @@ namespace FusionEngine
 				numSynchedEnts = reader.ReadValue<size_t>();
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntity(inflateStream, true, 0, false, factory, entityManager, instantiator);
+					auto entity = LoadEntity(inflateStream, true, 0, false, factory, archetype_factory, entityManager, instantiator);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}

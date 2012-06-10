@@ -199,6 +199,12 @@ namespace FusionEngine
 		//	delete this;
 		//}
 
+		//! Clones this component
+		/*!
+		* Default implementation uses serialisation to make a copy of the component
+		*/
+		virtual ComponentPtr Clone(ComponentFactory* factory);
+
 		void SetParent(Entity* parent) { m_Parent = parent; }
 		Entity* GetParent() const { return m_Parent; }
 
@@ -253,8 +259,6 @@ namespace FusionEngine
 
 		virtual void OnSiblingAdded(const ComponentPtr& com) {}
 		virtual void OnSiblingRemoved(const ComponentPtr& com) {}
-
-		enum SerialiseMode { Changes, All, Editable };
 
 		virtual void SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);

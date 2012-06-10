@@ -2268,7 +2268,7 @@ namespace FusionEngine
 					reader.Read(entityAngle);
 				}
 
-				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, true, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, true, m_ComponentFactory.get(), m_ArchetypeFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
 
 				if (entity->GetID())
 					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());

@@ -61,6 +61,7 @@ namespace kyotocabinet
 namespace FusionEngine
 {
 
+	class ArchetypeFactory;
 	class RegionCellCache;
 
 	//! CellArchiver implementaion
@@ -209,6 +210,7 @@ namespace FusionEngine
 		EntityInstantiator* m_Instantiator;
 		ComponentFactory* m_Factory;
 		EntityManager* m_EntityManager;
+		ArchetypeFactory* m_ArchetypeFactory;
 
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE

@@ -30,6 +30,7 @@
 #include "FusionEntitySerialisationUtils.h"
 
 #include "FusionArchetypalEntityManager.h"
+#include "FusionArchetypeFactory.h"
 #include "FusionEntity.h"
 #include "FusionEntityComponent.h"
 #include "FusionComponentFactory.h"
@@ -136,7 +137,7 @@ namespace FusionEngine
 			}
 		}
 
-		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -224,7 +225,7 @@ namespace FusionEngine
 		{
 			EntityPtr entity;
 
-			auto mode = IComponent::All;
+			auto mode = SerialiseMode::All;
 
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
@@ -350,7 +351,7 @@ namespace FusionEngine
 				return RakNet::BitSize_t(0);
 		}
 
-		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -398,7 +399,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
@@ -448,7 +449,7 @@ namespace FusionEngine
 			}
 		}
 
-		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
+		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
 			component->SerialiseOccasional(tempStream);
@@ -461,7 +462,7 @@ namespace FusionEngine
 				crc.process_bytes(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
 				uint32_t checksum = crc.checksum();
 
-				if (mode == IComponent::Changes)
+				if (mode == SerialiseMode::Changes)
 				{
 					conData = checksum != storedChecksum; // Ignore unchanged states
 				}
@@ -473,7 +474,7 @@ namespace FusionEngine
 			return conData;
 		}
 
-		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -558,7 +559,7 @@ namespace FusionEngine
 			}
 		}
 
-		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
@@ -967,7 +968,20 @@ namespace FusionEngine
 			}
 		}
 
-		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
+		{
+			CellStreamReader in(&instr);
+
+			std::string archetypeId = in.ReadString();
+			const bool isArchetypal = !archetypeId.empty();
+
+			if (isArchetypal)
+				return LoadArchetypalEntity(instr, archetypeId, editable, factory, archetype_factory, manager, instantiator);
+			else
+				return LoadUniqueEntity(instr, id_included, override_id, editable, factory, manager, instantiator);
+		}
+
+		EntityPtr LoadUniqueEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 
@@ -991,17 +1005,10 @@ namespace FusionEngine
 			bool terrain = false;
 			in.Read(terrain);
 
-			auto archetype = in.ReadString();
-
-			if (!archetype.empty())
-			{
-			}
-
+			ComponentPtr transform;
 			//const auto dataLen = in.read_uint32();
 			//std::vector<unsigned char> referencedEntitiesData(dataLen);
 			//in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
-
-			ComponentPtr transform;
 			{
 				std::string transformType = in.ReadString();
 				transform = factory->InstantiateComponent(transformType);
@@ -1024,6 +1031,7 @@ namespace FusionEngine
 			}
 
 			auto entity = std::make_shared<Entity>(manager, transform);
+
 			entity->SetID(id);
 			entity->SetOwnerID(owner);
 
@@ -1061,6 +1069,50 @@ namespace FusionEngine
 					FSN_ASSERT(component != transform);
 
 					ReadComponent(instr, component.get(), editable);
+				}
+			}
+
+			return entity;
+		}
+
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
+		{
+			CellStreamReader in(&instr);
+
+			Vector2 position;
+			float angle;
+
+			auto len = in.ReadValue<RakNet::BitSize_t>();
+			if (len > 0)
+			{
+				std::vector<char> buffer(len);
+				instr.read(buffer.data(), len);
+				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(buffer.data()), buffer.size(), false);
+
+				position = StdDeserialisePosition(stream, Vector2(), 0);
+			}
+			else
+			{
+				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
+			}
+			
+			angle = in.ReadValue<float>();
+
+			EntityPtr entity = archetype_factory->MakeInstance(factory, archetype_id, position, angle);
+
+			// Deserialise the archetype agent
+			{
+				auto agent = entity->GetArchetypeAgent();
+
+				// Read the property overrides
+				auto len = in.ReadValue<RakNet::BitSize_t>();
+				if (len > 0)
+				{
+					std::vector<char> buffer(len);
+					instr.read(buffer.data(), len);
+					RakNet::BitStream stream(reinterpret_cast<unsigned char*>(buffer.data()), buffer.size(), false);
+
+					agent->Deserialise(stream);
 				}
 			}
 

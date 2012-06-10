@@ -34,13 +34,15 @@
 
 #include "FusionVector2.h"
 
+#include <cstdint>
+
 namespace FusionEngine
 {
 
 	typedef Vector2T<float> Vector2;
 	typedef Vector2T<int> Vector2i;
 
-	typedef Vector2T<int32_t> CellHandle;
+	typedef Vector2T<std::int32_t> CellHandle;
 
 }
 

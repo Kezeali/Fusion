@@ -49,6 +49,7 @@
 namespace FusionEngine
 {
 
+	class ArchetypeFactory;
 	class IComponentSystem;
 	class ComponentUniverse;
 	class ConsoleStdOutWriter;
@@ -151,6 +152,7 @@ namespace FusionEngine
 		std::shared_ptr<EntitySynchroniser> m_EntitySynchroniser;
 		std::shared_ptr<EntityManager> m_EntityManager;
 		std::shared_ptr<P2PEntityInstantiator> m_EntityInstantiator;
+		std::shared_ptr<ArchetypeFactory> m_ArchetypeFactory;
 
 		std::shared_ptr<GameMapLoader> m_MapLoader;
 		std::shared_ptr<GameMap> m_Map;

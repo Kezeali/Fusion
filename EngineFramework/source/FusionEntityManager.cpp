@@ -311,7 +311,7 @@ namespace FusionEngine
 			{
 				auto state = std::make_shared<RakNet::BitStream>();
 				state->Write1();
-				if (SerialiseContinuous(*state, entity, IComponent::All))
+				if (SerialiseContinuous(*state, entity, SerialiseMode::All))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 #ifdef _DEBUG
@@ -338,7 +338,7 @@ namespace FusionEngine
 				state->Write1();
 				auto& existingChecksums = m_SentStates[entity->GetID()];
 				//auto newChecksums = existingChecksums;
-				if (SerialiseOccasional(*state, existingChecksums/*newChecksums*/, entity, IComponent::Changes))
+				if (SerialiseOccasional(*state, existingChecksums/*newChecksums*/, entity, SerialiseMode::Changes))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 					
@@ -530,7 +530,7 @@ namespace FusionEngine
 
 			if (isAuthoritativeState && !PlayerRegistry::IsLocal(synchInfo.authority))
 			{
-				IComponent::SerialiseMode mode = synchInfo.full ? IComponent::All : IComponent::Changes;
+				SerialiseMode mode = synchInfo.full ? SerialiseMode::All : SerialiseMode::Changes;
 				auto& continuous = synchInfo.continuous;
 				auto& occasional = synchInfo.occasional;
 
@@ -1092,7 +1092,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::LoadNonStreamingEntities(std::istream& stream, EntityInstantiator* instantiator, bool editable)
+	void EntityManager::LoadNonStreamingEntities(std::istream& stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable)
 	{
 		IO::Streams::CellStreamReader reader(&stream);
 
@@ -1102,7 +1102,7 @@ namespace FusionEngine
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
 		{
-			auto entity = LoadEntity(stream, true, 0, editable, m_Universe, this, instantiator);
+			auto entity = LoadEntity(stream, true, 0, editable, m_Universe, archetype_factory, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 			m_LoadedNonStreamedEntities.push_back(entity);

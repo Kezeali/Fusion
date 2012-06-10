@@ -32,6 +32,8 @@
 #include "FusionComponentProperty.h"
 #include "FusionPropertySignalingSystem.h"
 
+#include "FusionComponentFactory.h"
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -39,6 +41,18 @@
 
 namespace FusionEngine
 {
+
+	ComponentPtr IComponent::Clone(ComponentFactory* factory)
+	{
+		ComponentPtr component = factory->InstantiateComponent(GetType());
+		RakNet::BitStream stream;
+		this->SerialiseContinuous(stream);
+		component->DeserialiseContinuous(stream);
+		stream.Reset();
+		this->SerialiseOccasional(stream);
+		component->DeserialiseOccasional(stream);
+		return component;
+	}
 
 	boost::intrusive_ptr<ComponentProperty> IComponent::AddProperty(const std::string& name, IComponentProperty* impl)
 	{

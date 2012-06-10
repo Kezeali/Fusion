@@ -32,6 +32,7 @@
 #include "FusionRegionCellCache.h"
 
 #include "FusionAnyFS.h"
+#include "FusionArchetypeFactory.h"
 #include "FusionGameMapLoader.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionEntityInstantiator.h"
@@ -505,7 +506,11 @@ namespace FusionEngine
 
 	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable)
 	{
-		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_EntityManager, m_Instantiator);
+		auto entity = EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_ArchetypeFactory, m_EntityManager, m_Instantiator);
+		// Remove the agent if edit-mode is disabled
+		if (!m_EditMode)
+			entity->SetArchetypeAgent(std::shared_ptr<ArchetypalEntityManager>());
+		return entity;
 	}
 
 	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids, const bool editable)

@@ -29,14 +29,28 @@
 
 #include "FusionArchetypalEntityManager.h"
 
+#include "FusionArchetype.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntity.h"
+#include "FusionEntitySerialisationUtils.h"
+
+#include <boost/lexical_cast.hpp>
 
 namespace FusionEngine
 {
 
+	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetype>& definition)
+		: m_Definition(definition)
+	{
+	}
+
 	ArchetypalEntityManager::~ArchetypalEntityManager()
 	{
+	}
+
+	void ArchetypalEntityManager::SetManagedEntity(const EntityPtr& entity)
+	{
+		m_ManagedEntity = entity;
 	}
 
 	void ArchetypalEntityManager::OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& str)
@@ -74,6 +88,16 @@ namespace FusionEngine
 		}
 	}
 
+	void ArchetypalEntityManager::OnSerialisedDataChanged(RakNet::BitStream& data)
+	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+			EntitySerialisationUtils::DeserialiseContinuous(data, entity, EntitySerialisationUtils::All);
+			EntitySerialisationUtils::DeserialiseOccasional(data, entity, EntitySerialisationUtils::All);
+		}
+		PerformPropertyOverrides();
+	}
+
 	void ArchetypalEntityManager::Serialise(RakNet::BitStream& stream)
 	{
 		stream.Write(m_ModifiedProperties.size());
@@ -96,6 +120,40 @@ namespace FusionEngine
 			stream.Read(*value.second);
 
 			m_ModifiedProperties.insert(std::move(value));
+		}
+
+		PerformPropertyOverrides();
+	}
+
+	void ArchetypalEntityManager::PerformPropertyOverrides()
+	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+			std::string componentType;
+			std::string componentIdentifier;
+			size_t propertyIndex;
+			for (auto it = m_ModifiedProperties.begin(); it != m_ModifiedProperties.end(); ++it)
+			{
+				std::tie(componentType, componentIdentifier, propertyIndex) = m_Definition->GetPropertyLocation(it->first);
+				
+				auto component = entity->GetComponent(componentType, componentIdentifier);
+				if (component)
+				{
+					auto& props = component->GetProperties();
+					if (propertyIndex < props.size())
+					{
+						props[propertyIndex].second->Deserialise(*it->second);
+					}
+					else
+					{
+						SendToConsole("Invalid property index in archetypal entity component: component=" + componentType + "/" + componentIdentifier + " index=" + boost::lexical_cast<std::string>(propertyIndex));
+					}
+				}
+				else
+				{
+					SendToConsole("Missing expected component in archetypal entity: " + componentType + "/" + componentIdentifier);
+				}
+			}
 		}
 	}
 

@@ -59,25 +59,25 @@ namespace FusionEngine
 
 		if (version == Archetypes::s_ArchetypeFileVersion)
 		{
+			m_Components.clear();
+
 			m_Name = reader.ReadString();
 
 			auto numComponents = reader.ReadValue<std::size_t>();
-			m_Components.resize(numComponents);
-			for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
+			for (size_t i = 0; i < numComponents; ++i)
 			{
-				it->identifier = reader.ReadString();
-				it->type = reader.ReadString();
+				auto archComponentId = reader.ReadValue<Archetypes::ComponentID_t>();
+
+				auto& componentData = m_Components[archComponentId];
+
+				componentData.identifier = reader.ReadString();
+				componentData.type = reader.ReadString();
 
 				auto numProperties = reader.ReadValue<std::size_t>();
-				it->properties.resize(numProperties);
-				for (auto pit = it->properties.begin(); pit != it->properties.end(); ++pit)
+				componentData.properties.resize(numProperties);
+				for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
 				{
 					pit->id = reader.ReadValue<Archetypes::PropertyID_t>();
-
-					auto dataLength = pit->data.size();
-					reader.Read(dataLength);
-					pit->data.resize(dataLength);
-					stream.read(pit->data.data(), pit->data.size());
 				}
 			}
 		}
@@ -95,25 +95,29 @@ namespace FusionEngine
 		writer.WriteString(m_Name);
 
 		writer.WriteAs<std::size_t>(m_Components.size());
-		for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
+		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
 		{
-			writer.WriteString(it->identifier);
-			writer.WriteString(it->type);
+			writer.Write(it->first);
 
-			writer.WriteAs<std::size_t>(it->properties.size());
-			for (auto pit = it->properties.begin(); pit != it->properties.end(); ++pit)
+			const auto& componentData = it->second;
+
+			writer.WriteString(componentData.identifier);
+			writer.WriteString(componentData.type);
+
+			writer.WriteAs<std::size_t>(componentData.properties.size());
+			for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
 			{
 				writer.Write(pit->id);
-
-				writer.Write(pit->data.size());
-				stream.write(pit->data.data(), pit->data.size());
 			}
 		}
 	}
 
 	void Archetype::Define(const EntityPtr& definition)
 	{
+		Archetypes::ComponentID_t nextComId = 0;
 		Archetypes::PropertyID_t nextPropId = 0;
+
+		m_Components.clear();
 
 		const auto& components = definition->GetComponents();
 		for (auto it = components.begin(); it != components.end(); ++it)
@@ -122,29 +126,55 @@ namespace FusionEngine
 			const auto type = component->GetType();
 			const auto identifier = component->GetIdentifier();
 
-			auto entry = std::find_if(m_Components.begin(), m_Components.end(), [type, identifier](ComponentData& comda) { return comda.type == type && comda.identifier == identifier; });
-			ComponentData newComda;
-			ComponentData& comda = entry != m_Components.end() ? *entry : newComda;
+			ComponentData& comda = m_Components[nextComId++];
 
 			comda.type = type;
 			comda.identifier = identifier;
 			
-			auto comdaPropEntry = comda.properties.begin();
 			const auto& properties = component->GetProperties();
+			size_t propIndex = 0;
 			for (auto pit = properties.begin(); pit != properties.end(); ++pit)
 			{
 				const auto& prop = *pit;
 
-				RakNet::BitStream stream;
-				prop.second->Serialise(stream);
+				auto propId = nextPropId++;
 
-				if (comdaPropEntry != comda.properties.end())
 				{
-					comdaPropEntry->id = nextPropId++;
-					comdaPropEntry->data.assign(stream.GetData(), stream.GetData() + stream.GetNumberOfBytesUsed());
-					++comdaPropEntry;
+					ComponentData::PropertyData propda;
+					propda.id = propId;
+					comda.properties.push_back(propda);
+				}
+
+				{
+					ReversePropertyData propda;
+					propda.type = type;
+					propda.identifier = identifier;
+					propda.index = propIndex++;
+					m_Properties[propId] = propda;
 				}
 			}
+		}
+	}
+
+	std::tuple<std::string, std::string, size_t> Archetype::GetPropertyLocation(Archetypes::PropertyID_t id)
+	{
+		auto entry = m_Properties.find(id);
+		if (entry != m_Properties.end())
+			return std::make_tuple(entry->second.type, entry->second.identifier, entry->second.index);
+		else
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
+		}
+	}
+
+	std::string Archetype::GetComponentLocation(Archetypes::ComponentID_t id)
+	{
+		auto entry = m_Components.find(id);
+		if (entry != m_Components.end())
+			return entry->second.identifier;
+		else
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Unknown component ID");
 		}
 	}
 
