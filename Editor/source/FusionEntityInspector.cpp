@@ -33,6 +33,8 @@
 
 #include "FusionInspectorUtils.h"
 
+#include "FusionArchetypalEntityManager.h"
+
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
 
@@ -106,6 +108,40 @@ namespace FusionEngine { namespace Inspectors
 			catch (boost::bad_lexical_cast&){}
 			return "";
 		});
+
+		AddTextInput("Archetype",
+			[](const EntityPtr& entity)->std::string
+		{
+			try
+			{
+				std::string val;
+				if (!entity->IsArchetypal())
+					val = "No";
+				else
+				{
+					val = (dynamic_cast<ArchetypeDefinitionAgent*>(entity->GetArchetypeAgent().get()) != nullptr ?
+						"Definition: " : "Instance: ") + entity->GetArchetype();
+				}
+				return val;
+			}
+			catch (boost::bad_lexical_cast&){}
+			return "";
+		});
+
+		{
+			Rocket::Core::XMLAttributes attributes;
+			attributes.Set("type", "submit");
+			attributes.Set("name", Rocket::Core::String("apply"));
+			attributes.Set("value", Rocket::Core::String(""));
+			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(this,
+				"input",
+				"input",
+				attributes);
+
+			Rocket::Core::Factory::InstanceElementText(element, "Apply");
+
+			addControl(this, apply_button, element);
+		}
 	}
 
 	void ElementEntityInspector::AddTextInput(const std::string& name, StringSetter_t setter, StringGetter_t getter, int size)
@@ -208,6 +244,14 @@ namespace FusionEngine { namespace Inspectors
 	void ElementEntityInspector::ProcessEvent(Rocket::Core::Event& ev)
 	{
 		Rocket::Core::Element::ProcessEvent(ev);
+		if (ev.GetTargetElement() == apply_button.get() && ev == "mouseup")
+		{
+			if (auto agent = std::dynamic_pointer_cast<ArchetypeDefinitionAgent>(m_Entity->GetArchetypeAgent()))
+			{
+				SendToConsole("Pushing archetype config");
+				agent->PushConfiguration();
+			}
+		}
 		try
 		{
 			const bool isSelectElem =

@@ -61,6 +61,7 @@ namespace FusionEngine { namespace Inspectors
 		ElementEntityInspector(const Rocket::Core::String& tag);
 		~ElementEntityInspector()
 		{
+			SendToConsole("Closed inspector");
 		}
 
 		void SetEntity(const EntityPtr& entity);
@@ -70,6 +71,8 @@ namespace FusionEngine { namespace Inspectors
 
 	private:
 		EntityPtr m_Entity;
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> apply_button;
 
 		struct Input
 		{

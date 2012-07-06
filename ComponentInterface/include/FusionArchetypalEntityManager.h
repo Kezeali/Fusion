@@ -40,6 +40,7 @@
 #include <map>
 
 #include <boost/signals2/connection.hpp>
+#include <boost/signals2/signal.hpp>
 
 namespace FusionEngine
 {
@@ -52,24 +53,44 @@ namespace FusionEngine
 
 	class Archetype;
 
+	class IArchetypeAgent
+	{
+	public:
+		virtual ~IArchetypeAgent() {}
+
+		virtual void SetManagedEntity(const EntityPtr& entity) = 0;
+
+		virtual void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data) = 0;
+
+		virtual void Serialise(RakNet::BitStream& stream) = 0;
+		virtual void Deserialise(RakNet::BitStream& stream) = 0;
+	};
+
 	//! Transfers archetype changes to an entity
-	class ArchetypalEntityManager
+	class ArchetypalEntityManager : public IArchetypeAgent
 	{
 	public:
 		ArchetypalEntityManager(const std::shared_ptr<Archetype>& definition);
-		~ArchetypalEntityManager();
+		virtual ~ArchetypalEntityManager();
 
 		void SetManagedEntity(const EntityPtr& entity);
 
+		//! Used by instances to override definition properties
 		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data);
 
+		//! Called on instances when the definition changes
 		void OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier);
+		//! Called on instances when the definition changes
 		void OnComponentRemoved(Archetypes::ComponentID_t arch_id);
 
+		//! Called on instances when the definition changes
 		void OnPropertyChanged(Archetypes::PropertyID_t id, RakNet::BitStream& data);
+		//! Called on instances when the definition changes
 		void OnSerialisedDataChanged(RakNet::BitStream& data);
 
+		//! Save the local overrides
 		void Serialise(RakNet::BitStream& stream);
+		//! Load the local overrides
 		void Deserialise(RakNet::BitStream& stream);
 
 	private:
@@ -92,6 +113,31 @@ namespace FusionEngine
 		// NOCOPEEE
 		ArchetypalEntityManager(const ArchetypalEntityManager&) {}
 		ArchetypalEntityManager& operator= (const ArchetypalEntityManager&) {}
+	};
+
+	class ArchetypeDefinitionAgent : public IArchetypeAgent
+	{
+	public:
+		virtual ~ArchetypeDefinitionAgent() {}
+
+		void SetManagedEntity(const EntityPtr& entity);
+
+		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data) {}
+
+		//! Save the local overrides
+		void Serialise(RakNet::BitStream& stream);
+		//! Load the local overrides
+		void Deserialise(RakNet::BitStream& stream);
+
+		// TODO: call this for all modifications in the inspector?
+		void PushConfiguration();
+
+		// TODO: fix component addition/removal
+
+		boost::signals2::signal<void (RakNet::BitStream&)> SignalChange;
+
+	private:
+		std::weak_ptr<Entity> m_ManagedEntity;
 	};
 
 }

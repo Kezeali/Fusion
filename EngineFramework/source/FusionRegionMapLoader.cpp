@@ -509,7 +509,7 @@ namespace FusionEngine
 		auto entity = EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_ArchetypeFactory, m_EntityManager, m_Instantiator);
 		// Remove the agent if edit-mode is disabled
 		if (!m_EditMode)
-			entity->SetArchetypeAgent(std::shared_ptr<ArchetypalEntityManager>());
+			entity->SetArchetypeAgent(std::shared_ptr<IArchetypeAgent>());
 		return entity;
 	}
 

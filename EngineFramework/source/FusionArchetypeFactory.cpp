@@ -73,16 +73,25 @@ namespace FusionEngine
 		auto entry = m_Archetypes.find(type_id);
 		if (entry != m_Archetypes.end())
 		{
+			entry->second.Archetype->SynchroniseParallelEdits();
 			entity = entry->second.Archetype->Clone(factory);
 
 			auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Definition);
-			agent->m_ChangeConnection = entry->second.SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
+			agent->m_ChangeConnection = entry->second.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
 			agent->SetManagedEntity(entity);
 
 			entity->SetArchetypeAgent(agent);
 		}
+		entity->SetPosition(pos);
+		entity->SetAngle(angle);
 		return std::move(entity);
 	}
+
+	//void ArchetypeFactory::PushChange(const std::string& type_id, RakNet::BitStream& data)
+	//{
+	//	ArchetypeData& arc = m_Archetypes[type_id];
+	//	arc.SignalChange(data);
+	//}
 
 	void ArchetypeFactory::DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity)
 	{
@@ -90,12 +99,18 @@ namespace FusionEngine
 		data.Archetype = entity->Clone(factory);
 		data.Definition = std::make_shared<Archetype>(type_id);
 		data.Definition->Define(entity);
+		data.Agent = std::make_shared<ArchetypeDefinitionAgent>();
+		data.Agent->SetManagedEntity(data.Archetype);
+		data.Archetype->SetArchetypeAgent(data.Agent);
 	}
 
 	EntityPtr EditorArchetypeFactory::MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle)
 	{
 		auto archetype = GetArchetype(type_id);
-		return archetype;
+		if (archetype)
+			return archetype->Clone(factory);
+		else
+			return EntityPtr();
 	}
 
 }

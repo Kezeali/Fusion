@@ -63,7 +63,7 @@ namespace FusionEngine
 
 	class StreamedResourceUser;
 
-	class ArchetypalEntityManager;
+	class IArchetypeAgent;
 
 	/*!
 	 * \brief
@@ -193,9 +193,9 @@ namespace FusionEngine
 		bool GetGCFlag() const { return m_GCFlag; }
 
 		//! Sets the archetype agent
-		void SetArchetypeAgent(const std::shared_ptr<ArchetypalEntityManager>& agent) { m_ArchetypeAgent = agent; }
+		void SetArchetypeAgent(const std::shared_ptr<IArchetypeAgent>& agent) { m_ArchetypeAgent = agent; }
 		//! Returns this entity's archetype agent
-		std::shared_ptr<ArchetypalEntityManager> GetArchetypeAgent() const { return m_ArchetypeAgent; } 
+		std::shared_ptr<IArchetypeAgent> GetArchetypeAgent() const { return m_ArchetypeAgent; } 
 		//! Returns true if this entity is archetypal (based on an archetype)
 		bool IsArchetypal() const { return (bool)m_ArchetypeAgent; }
 
@@ -406,7 +406,7 @@ namespace FusionEngine
 
 		PropertySignalingSystem_t *m_PropChangedQueue;
 
-		std::shared_ptr<ArchetypalEntityManager> m_ArchetypeAgent;
+		std::shared_ptr<IArchetypeAgent> m_ArchetypeAgent;
 
 		EntityRepo* m_Manager;
 

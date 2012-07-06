@@ -39,12 +39,13 @@
 #include <map>
 #include <memory>
 
-#include <boost/signals2/signal.hpp>
+//#include <boost/signals2/signal.hpp>
 
 namespace FusionEngine
 {
 
 	class Archetype;
+	class ArchetypeDefinitionAgent;
 
 	//! Used to define archetypes
 	class ArchetypeFactory
@@ -67,6 +68,9 @@ namespace FusionEngine
 		//! Defines the given archetype using the given entity
 		void DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity);
 
+		//! Used by the definition to push changes to instances
+		//void PushChange(const std::string& type_id, RakNet::BitStream& data);
+
 	private:
 		struct ArchetypeData
 		{
@@ -74,7 +78,7 @@ namespace FusionEngine
 			EntityPtr Archetype;
 			// TODO: rename the 'Archetype' class 'Archetypes::PropertyDefinition'
 			std::shared_ptr<FusionEngine::Archetype> Definition;
-			boost::signals2::signal<void (RakNet::BitStream&)> SignalChange;
+			std::shared_ptr<ArchetypeDefinitionAgent> Agent;
 
 			ArchetypeData() {}
 			explicit ArchetypeData(EntityPtr entity) : Archetype(entity) {}

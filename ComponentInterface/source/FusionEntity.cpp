@@ -369,7 +369,8 @@ namespace FusionEngine
 		auto entity = std::make_shared<Entity>(GetManager(), m_Transform.p->Clone(factory));
 		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
 		{
-			entity->AddComponent((*it)->Clone(factory), (*it)->GetIdentifier());
+			if (dynamic_cast<ITransform*>(it->get()) != m_Transform.get())
+				entity->AddComponent((*it)->Clone(factory), (*it)->GetIdentifier());
 		}
 		return entity;
 	}

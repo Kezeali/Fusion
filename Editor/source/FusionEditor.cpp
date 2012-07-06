@@ -29,6 +29,7 @@
 
 #include "FusionEditor.h"
 
+#include "FusionArchetypeFactory.h"
 #include "FusionCamera.h"
 #include "FusionCellCache.h"
 #include "FusionComponentFactory.h"
@@ -1665,6 +1666,34 @@ namespace FusionEngine
 			srand(CL_System::get_time());
 
 			bool randomAngle = ev.shift;
+
+			if (ev.id == CL_KEY_8)
+			{
+				if (!ev.shift)
+				{
+					auto entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+					m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc1", entity);
+				}
+				else
+				{
+					auto arc = m_ArchetypeFactory->GetArchetype("arc1");
+					arc->SynchroniseParallelEdits();
+					CreatePropertiesWindow(arc);
+				}
+
+				return;
+			}
+
+			if (ev.id == CL_KEY_9)
+			{
+				Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
+				TranslateScreenToWorld(&pos.x, &pos.y);
+				Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
+
+				auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
+				m_EntityManager->AddEntity(entity);
+				return;
+			}
 			
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
 			if (caller)
@@ -2299,8 +2328,11 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> entities;
 
-		InspectorGenerator(Rocket::Core::ElementDocument* doc_)
-			: doc(doc_)
+		ArchetypeFactory* archetypeFactory;
+
+		InspectorGenerator(Rocket::Core::ElementDocument* doc_, ArchetypeFactory* archetypeFactory_)
+			: doc(doc_),
+			archetypeFactory(archetypeFactory_)
 		{
 			FSN_ASSERT(doc);
 
@@ -2437,7 +2469,7 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc);
+		InspectorGenerator generator(doc, m_ArchetypeFactory.get());
 		InitInspectorGenerator(generator);
 
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
@@ -2458,7 +2490,7 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc);
+		InspectorGenerator generator(doc, m_ArchetypeFactory.get());
 		InitInspectorGenerator(generator);
 
 		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });

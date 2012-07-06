@@ -157,4 +157,31 @@ namespace FusionEngine
 		}
 	}
 
+	void ArchetypeDefinitionAgent::SetManagedEntity(const EntityPtr& entity)
+	{
+		m_ManagedEntity = entity;
+	}
+
+	//! Save the local overrides
+	void ArchetypeDefinitionAgent::Serialise(RakNet::BitStream& stream)
+	{
+	}
+
+	//! Load the local overrides
+	void ArchetypeDefinitionAgent::Deserialise(RakNet::BitStream& stream)
+	{
+	}
+
+	void ArchetypeDefinitionAgent::PushConfiguration()
+	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+			RakNet::BitStream stream;
+			std::vector<std::uint32_t> checksums;
+			EntitySerialisationUtils::SerialiseContinuous(stream, entity, EntitySerialisationUtils::All);
+			EntitySerialisationUtils::SerialiseOccasional(stream, checksums, entity, EntitySerialisationUtils::All);
+			SignalChange(stream);
+		}
+	}
+
 }
