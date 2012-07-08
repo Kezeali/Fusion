@@ -52,6 +52,8 @@ namespace FusionEngine
 
 	EntityPtr ArchetypeFactory::GetArchetype(const std::string& type_id) const
 	{
+		boost::mutex::scoped_lock lock(m_Mutex);
+
 		auto entry = m_Archetypes.find(type_id);
 		if (entry != m_Archetypes.end())
 			return entry->second.Archetype;
@@ -59,28 +61,43 @@ namespace FusionEngine
 			return EntityPtr();
 	}
 
-	EntityPtr ArchetypeFactory::CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type)
-	{
-		auto entity = std::make_shared<Entity>(nullptr, factory->InstantiateComponent(transform_type));
-		ArchetypeData& data = m_Archetypes[type_id];
-		data.Archetype = entity;
-		return entity;
-	}
+	//EntityPtr ArchetypeFactory::CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type)
+	//{
+	//	boost::mutex::scoped_lock lock(m_Mutex);
+
+	//	ArchetypeData& data = m_Archetypes[type_id];
+
+	//	data.Archetype = std::make_shared<Entity>(nullptr, factory->InstantiateComponent(transform_type));
+	//	// Generate the type definition
+	//	data.Profile = std::make_shared<Archetype>(type_id);
+	//	data.Profile->Define(data.Archetype);
+	//	// Create and apply the definition agent
+	//	data.Agent = std::make_shared<ArchetypeDefinitionAgent>();
+	//	data.Agent->SetManagedEntity(data.Archetype);
+	//	data.Archetype->SetArchetypeAgent(data.Agent);
+
+	//	return data.Archetype;
+	//}
 
 	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle)
 	{
 		EntityPtr entity;
-		auto entry = m_Archetypes.find(type_id);
-		if (entry != m_Archetypes.end())
 		{
-			entry->second.Archetype->SynchroniseParallelEdits();
-			entity = entry->second.Archetype->Clone(factory);
+			boost::mutex::scoped_lock lock(m_Mutex);
+			
+			auto entry = m_Archetypes.find(type_id);
+			if (entry != m_Archetypes.end())
+			{
+				// Since archetypes aren't updated regularly, make sure the properties are up to date (so they can be cloned accurately)
+				entry->second.Archetype->SynchroniseParallelEdits();
+				entity = entry->second.Archetype->Clone(factory);
 
-			auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Definition);
-			agent->m_ChangeConnection = entry->second.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
-			agent->SetManagedEntity(entity);
+				auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Profile);
+				agent->m_ChangeConnection = entry->second.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
+				agent->SetManagedEntity(entity);
 
-			entity->SetArchetypeAgent(agent);
+				entity->SetArchetypeAgent(agent);
+			}
 		}
 		entity->SetPosition(pos);
 		entity->SetAngle(angle);
@@ -95,22 +112,17 @@ namespace FusionEngine
 
 	void ArchetypeFactory::DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity)
 	{
-		ArchetypeData& data = m_Archetypes[type_id];
-		data.Archetype = entity->Clone(factory);
-		data.Definition = std::make_shared<Archetype>(type_id);
-		data.Definition->Define(entity);
-		data.Agent = std::make_shared<ArchetypeDefinitionAgent>();
-		data.Agent->SetManagedEntity(data.Archetype);
-		data.Archetype->SetArchetypeAgent(data.Agent);
-	}
+		boost::mutex::scoped_lock lock(m_Mutex);
 
-	EntityPtr EditorArchetypeFactory::MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle)
-	{
-		auto archetype = GetArchetype(type_id);
-		if (archetype)
-			return archetype->Clone(factory);
-		else
-			return EntityPtr();
+		ArchetypeData& data = m_Archetypes[type_id];
+		// Generate the archetype by cloning the given entity
+		data.Archetype = entity->Clone(factory);
+		// Generate the type definition
+		data.Profile = std::make_shared<Archetypes::Profile>(type_id);
+		auto componentIds = data.Profile->Define(data.Archetype);
+		// Create and apply the definition agent
+		data.Agent = std::make_shared<ArchetypeDefinitionAgent>(data.Archetype, data.Profile, std::move(componentIds));
+		data.Archetype->SetArchetypeDefinitionAgent(data.Agent);
 	}
 
 }

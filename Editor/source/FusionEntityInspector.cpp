@@ -249,7 +249,7 @@ namespace FusionEngine { namespace Inspectors
 			if (auto agent = std::dynamic_pointer_cast<ArchetypeDefinitionAgent>(m_Entity->GetArchetypeAgent()))
 			{
 				SendToConsole("Pushing archetype config");
-				agent->PushConfiguration();
+				agent->PushState();
 			}
 		}
 		try

@@ -38,106 +38,121 @@ namespace FusionEngine
 
 	namespace Archetypes
 	{
-		const int s_ArchetypeFileVersion = 1;
-	}
+		const int s_ArchetypeFileVersion = 2;
 
-	Archetype::Archetype(const std::string& name)
-		: m_Name(name)
-	{
-	}
-
-	Archetype::~Archetype()
-	{
-	}
-
-	void Archetype::Load(std::istream& stream)
-	{
-		IO::Streams::CellStreamReader reader(&stream);
-		
-		auto version = Archetypes::s_ArchetypeFileVersion;
-		reader.Read(version);
-
-		if (version == Archetypes::s_ArchetypeFileVersion)
+		Profile::Profile(const std::string& name)
+			: m_Name(name),
+			m_NextComId(0),
+			m_NextPropId(0)
 		{
-			m_Components.clear();
+		}
 
-			m_Name = reader.ReadString();
+		Profile::~Profile()
+		{
+		}
 
-			auto numComponents = reader.ReadValue<std::size_t>();
-			for (size_t i = 0; i < numComponents; ++i)
+		void Profile::Load(std::istream& stream)
+		{
+			IO::Streams::CellStreamReader reader(&stream);
+		
+			auto version = Archetypes::s_ArchetypeFileVersion;
+			reader.Read(version);
+
+			if (version == Archetypes::s_ArchetypeFileVersion)
 			{
-				auto archComponentId = reader.ReadValue<Archetypes::ComponentID_t>();
+				m_Components.clear();
 
-				auto& componentData = m_Components[archComponentId];
+				m_Name = reader.ReadString();
 
-				componentData.identifier = reader.ReadString();
-				componentData.type = reader.ReadString();
+				reader.Read(m_NextComId);
+				reader.Read(m_NextPropId);
 
-				auto numProperties = reader.ReadValue<std::size_t>();
-				componentData.properties.resize(numProperties);
+				auto numComponents = reader.ReadValue<std::size_t>();
+				for (size_t i = 0; i < numComponents; ++i)
+				{
+					auto archComponentId = reader.ReadValue<Archetypes::ComponentID_t>();
+
+					auto& componentData = m_Components[archComponentId];
+
+					componentData.identifier = reader.ReadString();
+					componentData.type = reader.ReadString();
+
+					auto numProperties = reader.ReadValue<std::size_t>();
+					componentData.properties.resize(numProperties);
+					for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
+					{
+						pit->id = reader.ReadValue<Archetypes::PropertyID_t>();
+					}
+				}
+			}
+			else // unknown version
+			{
+				FSN_EXCEPT(FileTypeException, "Unable to load archetype file (version code is incorrect)");
+			}
+		}
+
+		void Profile::Save(std::ostream& stream)
+		{
+			IO::Streams::CellStreamWriter writer(&stream);
+			FSN_ASSERT(Archetypes::s_ArchetypeFileVersion == 1);
+			writer.Write(Archetypes::s_ArchetypeFileVersion);
+			writer.WriteString(m_Name);
+
+			writer.Write(m_NextComId);
+			writer.Write(m_NextPropId);
+
+			writer.WriteAs<std::size_t>(m_Components.size());
+			for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+			{
+				writer.Write(it->first);
+
+				const auto& componentData = it->second;
+
+				writer.WriteString(componentData.identifier);
+				writer.WriteString(componentData.type);
+
+				writer.WriteAs<std::size_t>(componentData.properties.size());
 				for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
 				{
-					pit->id = reader.ReadValue<Archetypes::PropertyID_t>();
+					writer.Write(pit->id);
 				}
 			}
 		}
-		else // unknown version
+
+		std::map<ComponentPtr, ComponentID_t> Profile::Define(const EntityPtr& definition)
 		{
-			FSN_EXCEPT(FileTypeException, "Invalid archetype file (version code unknown)");
-		}
-	}
+			std::map<ComponentPtr, ComponentID_t> resultHackityHack;
 
-	void Archetype::Save(std::ostream& stream)
-	{
-		IO::Streams::CellStreamWriter writer(&stream);
-		FSN_ASSERT(Archetypes::s_ArchetypeFileVersion == 1);
-		writer.Write(Archetypes::s_ArchetypeFileVersion);
-		writer.WriteString(m_Name);
+			m_Components.clear();
 
-		writer.WriteAs<std::size_t>(m_Components.size());
-		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
-		{
-			writer.Write(it->first);
-
-			const auto& componentData = it->second;
-
-			writer.WriteString(componentData.identifier);
-			writer.WriteString(componentData.type);
-
-			writer.WriteAs<std::size_t>(componentData.properties.size());
-			for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
+			const auto& components = definition->GetComponents();
+			for (auto it = components.begin(); it != components.end(); ++it)
 			{
-				writer.Write(pit->id);
+				const auto& component = *it;
+				resultHackityHack[component] = AddComponent(component);
 			}
+
+			return std::move(resultHackityHack);
 		}
-	}
 
-	void Archetype::Define(const EntityPtr& definition)
-	{
-		Archetypes::ComponentID_t nextComId = 0;
-		Archetypes::PropertyID_t nextPropId = 0;
-
-		m_Components.clear();
-
-		const auto& components = definition->GetComponents();
-		for (auto it = components.begin(); it != components.end(); ++it)
+		ComponentID_t Profile::AddComponent(const ComponentPtr& component)
 		{
-			const auto& component = *it;
 			const auto type = component->GetType();
 			const auto identifier = component->GetIdentifier();
 
-			ComponentData& comda = m_Components[nextComId++];
+			const auto comId = m_NextComId++;
+			ComponentData& comda = m_Components[comId];
 
 			comda.type = type;
 			comda.identifier = identifier;
-			
+
 			const auto& properties = component->GetProperties();
 			size_t propIndex = 0;
 			for (auto pit = properties.begin(); pit != properties.end(); ++pit)
 			{
 				const auto& prop = *pit;
 
-				auto propId = nextPropId++;
+				const auto propId = m_NextPropId++;
 
 				{
 					ComponentData::PropertyData propda;
@@ -153,29 +168,48 @@ namespace FusionEngine
 					m_Properties[propId] = propda;
 				}
 			}
-		}
-	}
 
-	std::tuple<std::string, std::string, size_t> Archetype::GetPropertyLocation(Archetypes::PropertyID_t id)
-	{
-		auto entry = m_Properties.find(id);
-		if (entry != m_Properties.end())
-			return std::make_tuple(entry->second.type, entry->second.identifier, entry->second.index);
-		else
-		{
-			FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
+			return comId;
 		}
-	}
 
-	std::string Archetype::GetComponentLocation(Archetypes::ComponentID_t id)
-	{
-		auto entry = m_Components.find(id);
-		if (entry != m_Components.end())
-			return entry->second.identifier;
-		else
+		void Profile::RemoveComponent(ComponentID_t component)
 		{
-			FSN_EXCEPT(InvalidArgumentException, "Unknown component ID");
+			auto entry = m_Components.find(component);
+			if (entry != m_Components.end())
+			{
+				// Remove all the entries for this component's properties
+				auto& properties = entry->second.properties;
+				for (auto it = properties.begin(); it != properties.end(); ++it)
+				{
+					m_Properties.erase(it->id);
+				}
+				// Remove the component entry itself
+				m_Components.erase(entry);
+			}
 		}
+
+		std::tuple<std::string, std::string, size_t> Profile::GetPropertyLocation(Archetypes::PropertyID_t id)
+		{
+			auto entry = m_Properties.find(id);
+			if (entry != m_Properties.end())
+				return std::make_tuple(entry->second.type, entry->second.identifier, entry->second.index);
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
+			}
+		}
+
+		std::string Profile::GetComponentLocation(Archetypes::ComponentID_t id)
+		{
+			auto entry = m_Components.find(id);
+			if (entry != m_Components.end())
+				return entry->second.identifier;
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Unknown component ID");
+			}
+		}
+
 	}
 
 }

@@ -40,11 +40,15 @@
 #include <memory>
 
 //#include <boost/signals2/signal.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace FusionEngine
 {
 
-	class Archetype;
+	namespace Archetypes
+	{
+		class Profile;
+	}
 	class ArchetypeDefinitionAgent;
 
 	//! Used to define archetypes
@@ -60,7 +64,7 @@ namespace FusionEngine
 		EntityPtr GetArchetype(const std::string& type_id) const;
 
 		//! Creates a new archetype
-		EntityPtr CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type);
+		//EntityPtr CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type);
 
 		//! Makes the given entity an instance of the given archetype
 		virtual EntityPtr MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle);
@@ -76,8 +80,7 @@ namespace FusionEngine
 		{
 		public:
 			EntityPtr Archetype;
-			// TODO: rename the 'Archetype' class 'Archetypes::PropertyDefinition'
-			std::shared_ptr<FusionEngine::Archetype> Definition;
+			std::shared_ptr<Archetypes::Profile> Profile;
 			std::shared_ptr<ArchetypeDefinitionAgent> Agent;
 
 			ArchetypeData() {}
@@ -90,12 +93,8 @@ namespace FusionEngine
 		std::map<std::string, ArchetypeData> m_Archetypes;
 
 		bool m_Editable;
-	};
 
-	class EditorArchetypeFactory : public ArchetypeFactory
-	{
-	public:
-		EntityPtr MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle);
+		mutable boost::mutex m_Mutex;
 	};
 
 }

@@ -48,65 +48,71 @@ namespace FusionEngine
 	namespace Archetypes
 	{
 		extern const int s_ArchetypeFileVersion;
-	}
 
-	//! Data defining an entity archetype
-	class Archetype
-	{
-	public:
-		Archetype(const std::string& name);
-		~Archetype();
-
-		void Load(std::istream& data);
-		void Save(std::ostream& data);
-
-		void Define(const EntityPtr& definition);
-
-		std::tuple<std::string, std::string, size_t> GetPropertyLocation(Archetypes::PropertyID_t id);
-		std::string GetComponentLocation(Archetypes::ComponentID_t id);
-
-	private:
-		struct ComponentData
+		//! Data defining the layout of an entity archetype
+		class Profile
 		{
-			struct PropertyData
+		public:
+			Profile(const std::string& name);
+			~Profile();
+
+			void Load(std::istream& data);
+			void Save(std::ostream& data);
+
+			std::map<ComponentPtr, ComponentID_t> Define(const EntityPtr& definition);
+
+			ComponentID_t AddComponent(const ComponentPtr& component);
+			void RemoveComponent(ComponentID_t component);
+
+			std::tuple<std::string, std::string, size_t> GetPropertyLocation(Archetypes::PropertyID_t id);
+			std::string GetComponentLocation(Archetypes::ComponentID_t id);
+
+		private:
+			struct ComponentData
 			{
-				Archetypes::PropertyID_t id;
+				struct PropertyData
+				{
+					Archetypes::PropertyID_t id;
+				};
+
+				std::string type;
+				std::string identifier;
+				std::vector<PropertyData> properties;
 			};
 
-			std::string type;
-			std::string identifier;
-			std::vector<PropertyData> properties;
+			struct ReversePropertyData
+			{
+				std::string type;
+				std::string identifier;
+				size_t index;
+			};
+
+			std::string m_Name;
+
+			typedef std::map<Archetypes::ComponentID_t, ComponentData> ComponentDataMap;
+			typedef std::map<Archetypes::PropertyID_t, ReversePropertyData> PropertyDataMap;
+			ComponentDataMap m_Components;
+			PropertyDataMap m_Properties;
+
+			Archetypes::ComponentID_t m_NextComId;
+			Archetypes::PropertyID_t m_NextPropId;
+
+			//struct PropertyIDData
+			//{
+			//	std::string component_identifier;
+			//	size_t index;
+			//};
+			//typedef std::map<Archetypes::PropertyID_t, PropertyIDData> PropertyIDMap_t;
+			//PropertyIDMap_t m_PropertyIDMap;
+			//struct ComponentIDData
+			//{
+			//	std::string identifier;
+			//	PropertyIDMap_t properties;
+			//};
+			//// Defines the property locations for this instance
+			//std::map<Archetypes::ComponentID_t, ComponentIDData> m_ComponentIDMap;
 		};
-
-		struct ReversePropertyData
-		{
-			std::string type;
-			std::string identifier;
-			size_t index;
-		};
-
-		std::string m_Name;
-
-		typedef std::map<Archetypes::ComponentID_t, ComponentData> ComponentDataMap;
-		typedef std::map<Archetypes::PropertyID_t, ReversePropertyData> PropertyDataMap;
-		ComponentDataMap m_Components;
-		PropertyDataMap m_Properties;
-
-		//struct PropertyIDData
-		//{
-		//	std::string component_identifier;
-		//	size_t index;
-		//};
-		//typedef std::map<Archetypes::PropertyID_t, PropertyIDData> PropertyIDMap_t;
-		//PropertyIDMap_t m_PropertyIDMap;
-		//struct ComponentIDData
-		//{
-		//	std::string identifier;
-		//	PropertyIDMap_t properties;
-		//};
-		//// Defines the property locations for this instance
-		//std::map<Archetypes::ComponentID_t, ComponentIDData> m_ComponentIDMap;
-	};
+	}
 
 }
 

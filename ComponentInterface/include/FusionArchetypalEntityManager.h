@@ -49,14 +49,14 @@ namespace FusionEngine
 	{
 		typedef std::uint32_t PropertyID_t;
 		typedef std::uint16_t ComponentID_t;
+
+		class Profile;
 	}
 
-	class Archetype;
-
-	class IArchetypeAgent
+	class IInstanceAgent
 	{
 	public:
-		virtual ~IArchetypeAgent() {}
+		virtual ~IInstanceAgent() {}
 
 		virtual void SetManagedEntity(const EntityPtr& entity) = 0;
 
@@ -66,11 +66,25 @@ namespace FusionEngine
 		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 	};
 
-	//! Transfers archetype changes to an entity
-	class ArchetypalEntityManager : public IArchetypeAgent
+	class IDefinitionAgent
 	{
 	public:
-		ArchetypalEntityManager(const std::shared_ptr<Archetype>& definition);
+		virtual ~IDefinitionAgent() {}
+
+		virtual void Serialise(RakNet::BitStream& stream) = 0;
+		virtual void Deserialise(RakNet::BitStream& stream) = 0;
+
+		virtual void ComponentAdded(const ComponentPtr& component) = 0;
+		virtual void ComponentRemoved(const ComponentPtr& component) = 0;
+
+		virtual void PushState() = 0;
+	};
+
+	//! Transfers archetype changes to an entity
+	class ArchetypalEntityManager : public IInstanceAgent
+	{
+	public:
+		ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition);
 		virtual ~ArchetypalEntityManager();
 
 		void SetManagedEntity(const EntityPtr& entity);
@@ -98,7 +112,7 @@ namespace FusionEngine
 		ModifiedProperties_t m_ModifiedProperties;
 		std::map<Archetypes::ComponentID_t, IComponent*> m_Components;
 
-		std::shared_ptr<Archetype> m_Definition;
+		std::shared_ptr<Archetypes::Profile> m_Profile;
 
 		std::weak_ptr<Entity> m_ManagedEntity;
 
@@ -115,29 +129,35 @@ namespace FusionEngine
 		ArchetypalEntityManager& operator= (const ArchetypalEntityManager&) {}
 	};
 
-	class ArchetypeDefinitionAgent : public IArchetypeAgent
+	class ArchetypeDefinitionAgent : public IDefinitionAgent
 	{
 	public:
+		ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile, std::map<ComponentPtr, Archetypes::ComponentID_t> ids);
 		virtual ~ArchetypeDefinitionAgent() {}
-
-		void SetManagedEntity(const EntityPtr& entity);
-
-		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data) {}
 
 		//! Save the local overrides
 		void Serialise(RakNet::BitStream& stream);
 		//! Load the local overrides
 		void Deserialise(RakNet::BitStream& stream);
 
-		// TODO: call this for all modifications in the inspector?
-		void PushConfiguration();
+		void ComponentAdded(const ComponentPtr& component);
+		void ComponentRemoved(const ComponentPtr& component);
 
-		// TODO: fix component addition/removal
+		void PushState();
+
+		boost::signals2::signal<void (Archetypes::ComponentID_t, const std::string&, const std::string&)> SignalAddComponent;
+
+		boost::signals2::signal<void (Archetypes::ComponentID_t)> SignalRemoveComponent;
 
 		boost::signals2::signal<void (RakNet::BitStream&)> SignalChange;
 
 	private:
-		std::weak_ptr<Entity> m_ManagedEntity;
+		std::weak_ptr<Entity> m_DefinitionEntity;
+
+		std::shared_ptr<Archetypes::Profile> m_Profile;
+
+		// This seems dumb, and should probably be refactored (perhaps store the ID in the component itself?)
+		std::map<ComponentPtr, Archetypes::ComponentID_t> m_ComponentIdMap;
 	};
 
 }

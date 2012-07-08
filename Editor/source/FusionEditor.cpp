@@ -30,6 +30,7 @@
 #include "FusionEditor.h"
 
 #include "FusionArchetypeFactory.h"
+#include "FusionArchetypalEntityManager.h"
 #include "FusionCamera.h"
 #include "FusionCellCache.h"
 #include "FusionComponentFactory.h"

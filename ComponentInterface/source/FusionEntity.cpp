@@ -29,12 +29,14 @@
 
 #include "FusionEntity.h"
 
+#include "FusionArchetypalEntityManager.h"
 #include "FusionExceptionFactory.h"
 #include "FusionTransformComponent.h"
 #include "FusionPlayerInput.h"
 #include "FusionResourceManager.h"
 #include "FusionStreamedResourceUser.h"
 #include "FusionNetworkManager.h"
+
 
 #include <boost/lexical_cast.hpp>
 
@@ -274,6 +276,12 @@ namespace FusionEngine
 		// Add the new component to the main list
 		m_Components.push_back(component);
 		component->SetParent(this);
+
+		// Update the archetype definition
+		if (m_ArchetypeDefinitionAgent)
+		{
+			m_ArchetypeDefinitionAgent->ComponentAdded(component);
+		}
 	}
 
 	void Entity::RemoveComponent(const ComponentPtr& component)
@@ -312,6 +320,12 @@ namespace FusionEngine
 			}
 			else
 				implementors.erase(identifier);
+		}
+
+		// Update the archetype definition
+		if (m_ArchetypeDefinitionAgent)
+		{
+			m_ArchetypeDefinitionAgent->ComponentRemoved(component);
 		}
 	}
 
@@ -367,6 +381,16 @@ namespace FusionEngine
 	EntityPtr Entity::Clone(ComponentFactory* factory) const
 	{
 		auto entity = std::make_shared<Entity>(GetManager(), m_Transform.p->Clone(factory));
+
+		entity->SetOwnerID(GetOwnerID());
+		entity->SetTerrain(IsTerrain());
+
+		entity->SetArchetype(GetArchetype());
+		entity->SetArchetypeAgent(GetArchetypeAgent());
+		// Note: ArchetypeDefinitionAgent is intentionally not copied, since
+		//  the cloned entity doesn't define the archetype (duh)
+
+		// Copy the rest of the components (transform is added by the ctor)
 		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
 		{
 			if (dynamic_cast<ITransform*>(it->get()) != m_Transform.get())

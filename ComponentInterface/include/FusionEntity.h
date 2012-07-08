@@ -63,7 +63,8 @@ namespace FusionEngine
 
 	class StreamedResourceUser;
 
-	class IArchetypeAgent;
+	class IInstanceAgent;
+	class IDefinitionAgent;
 
 	/*!
 	 * \brief
@@ -193,11 +194,21 @@ namespace FusionEngine
 		bool GetGCFlag() const { return m_GCFlag; }
 
 		//! Sets the archetype agent
-		void SetArchetypeAgent(const std::shared_ptr<IArchetypeAgent>& agent) { m_ArchetypeAgent = agent; }
+		void SetArchetypeAgent(const std::shared_ptr<IInstanceAgent>& agent) { m_ArchetypeAgent = agent; }
+		//! Drops the current agent
+		void ResetArchetypeAgent() { return m_ArchetypeAgent.reset(); } 
 		//! Returns this entity's archetype agent
-		std::shared_ptr<IArchetypeAgent> GetArchetypeAgent() const { return m_ArchetypeAgent; } 
+		std::shared_ptr<IInstanceAgent> GetArchetypeAgent() const { return m_ArchetypeAgent; }
+		//! Returns this entity's archetype agent
 		//! Returns true if this entity is archetypal (based on an archetype)
 		bool IsArchetypal() const { return (bool)m_ArchetypeAgent; }
+
+		//! Sets the archetype-definition agent (used when this entity defines an archetype)
+		void SetArchetypeDefinitionAgent(const std::shared_ptr<IDefinitionAgent>& agent) { m_ArchetypeDefinitionAgent = agent; }
+		//! Returns this entity's archetype definition agent
+		std::shared_ptr<IDefinitionAgent> GetArchetypeDefinitionAgent() const { return m_ArchetypeDefinitionAgent; }
+		//! Returns true if this entity defines an archetype
+		bool IsArchetype() const { return (bool)m_ArchetypeDefinitionAgent; }
 
 		//! Adds the given component
 		void AddComponent(const ComponentPtr& component, std::string identifier = std::string());
@@ -406,7 +417,8 @@ namespace FusionEngine
 
 		PropertySignalingSystem_t *m_PropChangedQueue;
 
-		std::shared_ptr<IArchetypeAgent> m_ArchetypeAgent;
+		std::shared_ptr<IInstanceAgent> m_ArchetypeAgent;
+		std::shared_ptr<IDefinitionAgent> m_ArchetypeDefinitionAgent;
 
 		EntityRepo* m_Manager;
 

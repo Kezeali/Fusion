@@ -39,8 +39,8 @@
 namespace FusionEngine
 {
 
-	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetype>& definition)
-		: m_Definition(definition)
+	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition)
+		: m_Profile(definition)
 	{
 	}
 
@@ -134,7 +134,7 @@ namespace FusionEngine
 			size_t propertyIndex;
 			for (auto it = m_ModifiedProperties.begin(); it != m_ModifiedProperties.end(); ++it)
 			{
-				std::tie(componentType, componentIdentifier, propertyIndex) = m_Definition->GetPropertyLocation(it->first);
+				std::tie(componentType, componentIdentifier, propertyIndex) = m_Profile->GetPropertyLocation(it->first);
 				
 				auto component = entity->GetComponent(componentType, componentIdentifier);
 				if (component)
@@ -157,9 +157,11 @@ namespace FusionEngine
 		}
 	}
 
-	void ArchetypeDefinitionAgent::SetManagedEntity(const EntityPtr& entity)
+	ArchetypeDefinitionAgent::ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile, std::map<ComponentPtr, Archetypes::ComponentID_t> ids)
+		: m_DefinitionEntity(entity),
+		m_Profile(profile),
+		m_ComponentIdMap(ids)
 	{
-		m_ManagedEntity = entity;
 	}
 
 	//! Save the local overrides
@@ -172,9 +174,26 @@ namespace FusionEngine
 	{
 	}
 
-	void ArchetypeDefinitionAgent::PushConfiguration()
+	void ArchetypeDefinitionAgent::ComponentAdded(const ComponentPtr& component)
 	{
-		if (auto entity = m_ManagedEntity.lock())
+		auto id = m_Profile->AddComponent(component);
+		m_ComponentIdMap[component] = id;
+		SignalAddComponent(id, component->GetType(), component->GetIdentifier());
+	}
+
+	void ArchetypeDefinitionAgent::ComponentRemoved(const ComponentPtr& component)
+	{
+		auto entry = m_ComponentIdMap.find(component);
+		if (entry != m_ComponentIdMap.end())
+		{
+			m_Profile->RemoveComponent(entry->second);
+			SignalRemoveComponent(entry->second);
+		}
+	}
+
+	void ArchetypeDefinitionAgent::PushState()
+	{
+		if (auto entity = m_DefinitionEntity.lock())
 		{
 			RakNet::BitStream stream;
 			std::vector<std::uint32_t> checksums;
