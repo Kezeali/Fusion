@@ -48,25 +48,23 @@ namespace FusionEngine
 		m_HasDefaultName(false),
 		m_Id(0),
 		m_OwnerID(0),
+		m_Terrain(false),
+		m_Manager(manager),
 		m_Flags(0),
+		m_CellIndex(0xFFFFFFFF, 0xFFFFFFFF),
 		m_Domain(GAME_DOMAIN),
 		m_Layer(0),
-		m_MarkedToRemove(false),
-		m_StreamedIn(false),
-		m_CellIndex(0xFFFFFFFF, 0xFFFFFFFF),
+		m_Depth(0),
 		m_Spawned(false),
+		m_StreamedIn(false),
 		m_Paused(false),
 		m_Hidden(false),
-		m_Depth(0),
 		m_WaitStepsRemaining(0),
-		m_Manager(manager)
+		m_MarkedToRemove(false)
 	{
 		m_Authority = 0;
 
 		m_MarkedToDeactivate = false;
-
-		//FSN_ASSERT(sys);
-		//m_PropChangedQueue = sys;
 
 		m_LockingReferences = 0;
 		m_GCFlag = false;
@@ -242,13 +240,11 @@ namespace FusionEngine
 		FSN_ASSERT(component);
 		// Don't allow the addition of multiple transform components:
 		FSN_ASSERT(dynamic_cast<ITransform*>(component.get()) == nullptr || dynamic_cast<ITransform*>(component.get()) == m_Transform.get());
-		FSN_ASSERT(m_PropChangedQueue);
 		// TODO:
 		//FSN_ASSERT(!DeltaTime::IsExecuting());
 
 		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
-		//component->SetPropChangedQueue(*m_PropChangedQueue);
 		component->InitInterfaces();
 
 		// Add the new component to the component-by-interface map
@@ -526,7 +522,7 @@ namespace FusionEngine
 		return m_Layer;
 	}
 
-	inline void Entity::SetStreamedIn(bool is_streamed_in)
+	void Entity::SetStreamedIn(bool is_streamed_in)
 	{
 		m_StreamedIn = is_streamed_in;
 	}

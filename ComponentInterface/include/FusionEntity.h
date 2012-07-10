@@ -393,8 +393,8 @@ namespace FusionEngine
 	protected:
 		std::string m_Type;
 		std::string m_Name;
-		ObjectID m_Id;
 		bool m_HasDefaultName;
+		ObjectID m_Id;
 
 		//! The player who owns this entity, 0 for default ownership
 		//!  (which falls to the arbitrator, if ownership is needed)
@@ -414,8 +414,6 @@ namespace FusionEngine
 
 		std::vector<ComponentPtr> m_Components;
 		ComInterfaceMap m_ComponentInterfaces;
-
-		PropertySignalingSystem_t *m_PropChangedQueue;
 
 		std::shared_ptr<IInstanceAgent> m_ArchetypeAgent;
 		std::shared_ptr<IDefinitionAgent> m_ArchetypeDefinitionAgent;
@@ -438,24 +436,26 @@ namespace FusionEngine
 
 		CellHandle m_CellIndex;
 
-		bool m_Spawned;
-		bool m_StreamedIn;
-		bool m_Paused;
-		bool m_Hidden;
-		unsigned int m_WaitStepsRemaining;
-		bool m_MarkedToRemove;
-		tbb::atomic<bool> m_MarkedToDeactivate;
-
-		int m_Depth;
-
 		// EntityManager domain (1-8)
 		EntityDomain m_Domain;
 		// Renderer layer
 		size_t m_Layer;
 
+		int m_Depth;
+
+		bool m_Spawned;
+		bool m_StreamedIn;
+		bool m_Paused;
+		bool m_Hidden;
+
+		unsigned int m_WaitStepsRemaining;
+
+		bool m_MarkedToRemove;
+		tbb::atomic<bool> m_MarkedToDeactivate;
+
 		StreamedResourceArray m_StreamedResources;
 
-		inline void SetStreamedIn(bool is_streamed_in);
+		void SetStreamedIn(bool is_streamed_in);
 	};
 
 }
