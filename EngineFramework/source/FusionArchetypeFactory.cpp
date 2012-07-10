@@ -117,6 +117,7 @@ namespace FusionEngine
 		ArchetypeData& data = m_Archetypes[type_id];
 		// Generate the archetype by cloning the given entity
 		data.Archetype = entity->Clone(factory);
+		data.Archetype->SetArchetype(type_id);
 		// Generate the type definition
 		data.Profile = std::make_shared<Archetypes::Profile>(type_id);
 		auto componentIds = data.Profile->Define(data.Archetype);

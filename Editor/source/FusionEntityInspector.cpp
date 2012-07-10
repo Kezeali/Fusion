@@ -112,20 +112,12 @@ namespace FusionEngine { namespace Inspectors
 		AddTextInput("Archetype",
 			[](const EntityPtr& entity)->std::string
 		{
-			try
-			{
-				std::string val;
-				if (!entity->IsArchetypal())
-					val = "No";
-				else
-				{
-					val = (dynamic_cast<ArchetypeDefinitionAgent*>(entity->GetArchetypeAgent().get()) != nullptr ?
-						"Definition: " : "Instance: ") + entity->GetArchetype();
-				}
-				return val;
-			}
-			catch (boost::bad_lexical_cast&){}
-			return "";
+			if (entity->IsArchetypal())
+				return "Instance: " + entity->GetArchetype();
+			else if (entity->IsArchetype())
+				return "Definition: " + entity->GetArchetype();
+			else
+				return "No";
 		});
 
 		{
@@ -246,7 +238,7 @@ namespace FusionEngine { namespace Inspectors
 		Rocket::Core::Element::ProcessEvent(ev);
 		if (ev.GetTargetElement() == apply_button.get() && ev == "mouseup")
 		{
-			if (auto agent = std::dynamic_pointer_cast<ArchetypeDefinitionAgent>(m_Entity->GetArchetypeAgent()))
+			if (auto agent = m_Entity->GetArchetypeDefinitionAgent())
 			{
 				SendToConsole("Pushing archetype config");
 				agent->PushState();

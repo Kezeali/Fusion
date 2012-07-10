@@ -1691,8 +1691,26 @@ namespace FusionEngine
 				TranslateScreenToWorld(&pos.x, &pos.y);
 				Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
 
-				auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
-				m_EntityManager->AddEntity(entity);
+				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+				{
+					for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
+						for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
+						{
+							Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
+
+							float angle = 0.f;
+							if (randomAngle)
+								angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
+
+							auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
+							m_EntityManager->AddEntity(entity);
+						}
+				}
+				else
+				{
+					auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
+					m_EntityManager->AddEntity(entity);
+				}
 				return;
 			}
 			
