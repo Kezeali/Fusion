@@ -382,7 +382,8 @@ namespace FusionEngine
 		entity->SetTerrain(IsTerrain());
 
 		entity->SetArchetype(GetArchetype());
-		entity->SetArchetypeAgent(GetArchetypeAgent());
+		// TODO: clone the agent
+		//entity->SetArchetypeAgent(GetArchetypeAgent());
 		// Note: ArchetypeDefinitionAgent is intentionally not copied, since
 		//  the cloned entity doesn't define the archetype (duh)
 

@@ -97,10 +97,11 @@ namespace FusionEngine
 				agent->SetManagedEntity(entity);
 
 				entity->SetArchetypeAgent(agent);
+
+				entity->SetPosition(pos);
+				entity->SetAngle(angle);
 			}
 		}
-		entity->SetPosition(pos);
-		entity->SetAngle(angle);
 		return std::move(entity);
 	}
 

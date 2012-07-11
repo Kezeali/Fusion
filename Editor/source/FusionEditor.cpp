@@ -1704,6 +1704,8 @@ namespace FusionEngine
 
 							auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
 							m_EntityManager->AddEntity(entity);
+
+							SendToConsole("Instanciate " + boost::lexical_cast<std::string>(pos.x));
 						}
 				}
 				else

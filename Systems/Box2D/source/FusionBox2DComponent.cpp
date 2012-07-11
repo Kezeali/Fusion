@@ -168,7 +168,7 @@ namespace FusionEngine
 		}
 	}
 
-	// 120 is max sim framerate (TODO: actually restrict this)
+	// 120 is assumed to be the max sim framerate (TODO: actually restrict this)
 	static const float s_MaxVelocity = b2_maxTranslation * 120.f;
 	static const float s_MinVelocity = -s_MaxVelocity;
 	static const float s_MaxRotationalVelocity = b2_maxRotation * 120.f;

@@ -422,8 +422,8 @@ namespace FusionEngine
 
 					transform->DeserialiseContinuous(in);
 
-					if (in.GetReadOffset() - startPos != stateLength)
-						FSN_EXCEPT(Exception, "Component read too much data");
+					if ((in.GetReadOffset() - startPos) != stateLength)
+						FSN_EXCEPT(Exception, "Component read too much/little data");
 				}
 			}
 
@@ -432,7 +432,7 @@ namespace FusionEngine
 			size_t numComponents;
 			in.Read(numComponents);
 			// TEMP - just ignore states for incomplete entities (TODO: synchronise entities properly)
-			if (numComponents != existingComponents.size() - 1) return;
+			if (numComponents != existingComponents.size() - 1) { SendToConsole("Warning: received partial entity"); return; }
 			//FSN_ASSERT(numComponents == existingComponents.size() - 1);
 			if (numComponents != 0)
 			{
@@ -444,7 +444,14 @@ namespace FusionEngine
 
 					const auto stateLength = ReadStateLength(in);
 					if (stateLength > 0)
+					{
+						const auto startPos = in.GetReadOffset();
+
 						component->DeserialiseContinuous(in);
+
+						if ((in.GetReadOffset() - startPos) != stateLength)
+							FSN_EXCEPT(Exception, "Component read too much/little data");
+					}
 				}
 			}
 		}
