@@ -125,6 +125,9 @@ namespace FusionEngine
 		// Create and apply the definition agent
 		data.Agent = std::make_shared<ArchetypeDefinitionAgent>(data.Archetype, data.Profile, std::move(componentIds));
 		data.Archetype->SetArchetypeDefinitionAgent(data.Agent);
+
+		// TODO: add archetypes to the entity manager or something to maintain them
+		data.Archetype->StreamIn();
 	}
 
 }

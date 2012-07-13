@@ -94,6 +94,7 @@ namespace FusionEngine
 		{
 			EntitySerialisationUtils::DeserialiseContinuous(data, entity, EntitySerialisationUtils::All);
 			EntitySerialisationUtils::DeserialiseOccasional(data, entity, EntitySerialisationUtils::All);
+			data.ResetReadPointer();
 		}
 		PerformPropertyOverrides();
 	}
@@ -162,6 +163,12 @@ namespace FusionEngine
 		m_Profile(profile),
 		m_ComponentIdMap(ids)
 	{
+		// Add property listeners to push changes
+		auto& components = entity->GetComponents();
+		for (auto it = components.begin(); it != components.end(); ++it)
+		{
+			AddPropertyListeners(*it);
+		}
 	}
 
 	//! Save the local overrides
@@ -178,6 +185,9 @@ namespace FusionEngine
 	{
 		auto id = m_Profile->AddComponent(component);
 		m_ComponentIdMap[component] = id;
+
+		AddPropertyListeners(component);
+
 		SignalAddComponent(id, component->GetType(), component->GetIdentifier());
 	}
 
@@ -200,6 +210,17 @@ namespace FusionEngine
 			EntitySerialisationUtils::SerialiseContinuous(stream, entity, EntitySerialisationUtils::All);
 			EntitySerialisationUtils::SerialiseOccasional(stream, checksums, entity, EntitySerialisationUtils::All);
 			SignalChange(stream);
+		}
+	}
+
+	void ArchetypeDefinitionAgent::AddPropertyListeners(const ComponentPtr& component)
+	{
+		auto& properties = component->GetProperties();
+		for (auto pit = properties.begin(); pit != properties.end(); ++pit)
+		{
+			const auto id = pit->second->GetID();
+			m_PropertyListenerConnections[id] = 
+				EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(id, std::bind(&ArchetypeDefinitionAgent::PushState, this));
 		}
 	}
 

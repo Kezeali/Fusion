@@ -31,6 +31,8 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionTypes.h"
+#include "FusionPropertySignalingSystem.h"
+#include "FusionSynchronisedSignalingSystem.h"
 
 #include <BitStream.h>
 
@@ -38,6 +40,7 @@
 #include <functional>
 #include <memory>
 #include <map>
+#include <unordered_map>
 
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/signal.hpp>
@@ -158,6 +161,10 @@ namespace FusionEngine
 
 		// This seems dumb, and should probably be refactored (perhaps store the ID in the component itself?)
 		std::map<ComponentPtr, Archetypes::ComponentID_t> m_ComponentIdMap;
+
+		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
+
+		void AddPropertyListeners(const ComponentPtr& component);
 	};
 
 }
