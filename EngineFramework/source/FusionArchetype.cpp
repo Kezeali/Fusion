@@ -166,6 +166,7 @@ namespace FusionEngine
 					propda.component_type = type;
 					propda.component_identifier = identifier;
 					propda.index = propIndex++;
+					propda.name = prop.first;
 					m_Properties[propId] = propda;
 				}
 			}
