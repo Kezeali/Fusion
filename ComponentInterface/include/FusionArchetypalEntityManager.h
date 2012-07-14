@@ -65,6 +65,8 @@ namespace FusionEngine
 
 		virtual void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data) = 0;
 
+		virtual void RemoveOverride(const std::string& property_name) = 0;
+
 		virtual void Serialise(RakNet::BitStream& stream) = 0;
 		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 	};
@@ -95,13 +97,13 @@ namespace FusionEngine
 		//! Used by instances to override definition properties
 		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data);
 
+		void RemoveOverride(const std::string& property_name);
+
 		//! Called on instances when the definition changes
 		void OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier);
 		//! Called on instances when the definition changes
 		void OnComponentRemoved(Archetypes::ComponentID_t arch_id);
 
-		//! Called on instances when the definition changes
-		void OnPropertyChanged(Archetypes::PropertyID_t id, RakNet::BitStream& data);
 		//! Called on instances when the definition changes
 		void OnSerialisedDataChanged(RakNet::BitStream& data);
 
@@ -124,8 +126,14 @@ namespace FusionEngine
 
 		ComponentFactory* m_ComponentFactory;
 
+		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
+
 		// Deserialises overriden properties
 		void PerformPropertyOverrides();
+
+		void AddPropertyListeners(const ComponentPtr& component);
+
+		void OnInstancePropertyChanged(Archetypes::PropertyID_t id);
 
 		// NOCOPEEE
 		ArchetypalEntityManager(const ArchetypalEntityManager&) {}

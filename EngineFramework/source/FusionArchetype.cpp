@@ -162,8 +162,9 @@ namespace FusionEngine
 
 				{
 					ReversePropertyData propda;
-					propda.type = type;
-					propda.identifier = identifier;
+					propda.component_id = comId;
+					propda.component_type = type;
+					propda.component_identifier = identifier;
 					propda.index = propIndex++;
 					m_Properties[propId] = propda;
 				}
@@ -188,26 +189,61 @@ namespace FusionEngine
 			}
 		}
 
-		std::tuple<std::string, std::string, size_t> Profile::GetPropertyLocation(Archetypes::PropertyID_t id)
+		std::pair<Archetypes::ComponentID_t, size_t> Profile::GetPropertyLocation(Archetypes::PropertyID_t id) const
 		{
 			auto entry = m_Properties.find(id);
 			if (entry != m_Properties.end())
-				return std::make_tuple(entry->second.type, entry->second.identifier, entry->second.index);
+				return std::make_pair(entry->second.component_id, entry->second.index);
 			else
 			{
 				FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
 			}
 		}
 
-		std::string Profile::GetComponentLocation(Archetypes::ComponentID_t id)
+		std::tuple<std::string, std::string, Archetypes::ComponentID_t, size_t> Profile::GetPropertyLocationAndComponentInfo(Archetypes::PropertyID_t id) const
+		{
+			auto entry = m_Properties.find(id);
+			if (entry != m_Properties.end())
+				return std::make_tuple(entry->second.component_type, entry->second.component_identifier, entry->second.component_id, entry->second.index);
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
+			}
+		}
+
+		std::pair<std::string, std::string> Profile::GetComponentInfoViaProperty(Archetypes::PropertyID_t id) const
+		{
+			auto entry = m_Properties.find(id);
+			if (entry != m_Properties.end())
+				return std::make_pair(entry->second.component_type, entry->second.component_identifier);
+			else
+			{
+				FSN_EXCEPT(InvalidArgumentException, "Unknown property ID");
+			}
+		}
+
+		std::pair<std::string, std::string> Profile::GetComponentInfo(Archetypes::ComponentID_t id) const
 		{
 			auto entry = m_Components.find(id);
 			if (entry != m_Components.end())
-				return entry->second.identifier;
+				return std::make_pair(entry->second.type, entry->second.identifier);
 			else
 			{
 				FSN_EXCEPT(InvalidArgumentException, "Unknown component ID");
 			}
+		}
+
+		PropertyID_t Profile::FindProperty(const std::string& name) const
+		{
+			for (auto it = m_Properties.begin(); it != m_Properties.end(); ++it)
+			{
+				if (it->second.name == name)
+				{
+					return it->first;
+				}
+			}
+			FSN_ASSERT_FAIL("No such property exists.");
+			return std::numeric_limits<PropertyID_t>::max();
 		}
 
 	}

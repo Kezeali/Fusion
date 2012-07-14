@@ -64,8 +64,15 @@ namespace FusionEngine
 			ComponentID_t AddComponent(const ComponentPtr& component);
 			void RemoveComponent(ComponentID_t component);
 
-			std::tuple<std::string, std::string, size_t> GetPropertyLocation(Archetypes::PropertyID_t id);
-			std::string GetComponentLocation(Archetypes::ComponentID_t id);
+			//! Returns the component ID & offset which can be used to find the given property
+			std::pair<Archetypes::ComponentID_t, size_t> GetPropertyLocation(Archetypes::PropertyID_t id) const;
+			std::tuple<std::string, std::string, Archetypes::ComponentID_t, size_t> GetPropertyLocationAndComponentInfo(Archetypes::PropertyID_t id) const;
+			//! Returns the type and identifier of the given component
+			std::pair<std::string, std::string> GetComponentInfo(Archetypes::ComponentID_t id) const;
+			std::pair<std::string, std::string> GetComponentInfoViaProperty(Archetypes::PropertyID_t id) const;
+
+			//! Returns the archetype ID of the property with the given name
+			PropertyID_t FindProperty(const std::string& name) const;
 
 		private:
 			struct ComponentData
@@ -73,6 +80,7 @@ namespace FusionEngine
 				struct PropertyData
 				{
 					Archetypes::PropertyID_t id;
+					std::string name;
 				};
 
 				std::string type;
@@ -82,8 +90,12 @@ namespace FusionEngine
 
 			struct ReversePropertyData
 			{
-				std::string type;
-				std::string identifier;
+				// About the component that has this property:
+				Archetypes::ComponentID_t component_id;
+				std::string component_type;
+				std::string component_identifier;
+				// About the property itself:
+				std::string name;
 				size_t index;
 			};
 

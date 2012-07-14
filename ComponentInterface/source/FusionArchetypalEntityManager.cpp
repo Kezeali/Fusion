@@ -33,6 +33,7 @@
 #include "FusionComponentFactory.h"
 #include "FusionEntity.h"
 #include "FusionEntitySerialisationUtils.h"
+#include "FusionLogger.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -58,6 +59,12 @@ namespace FusionEngine
 		m_ModifiedProperties[id].reset(new RakNet::BitStream(str.GetData(), str.GetNumberOfBytesUsed(), true));
 	}
 
+	void ArchetypalEntityManager::RemoveOverride(const std::string& property_name)
+	{
+		const auto id = m_Profile->FindProperty(property_name);
+		m_ModifiedProperties.erase(id);
+	}
+
 	void ArchetypalEntityManager::OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier)
 	{
 		if (auto entity = m_ManagedEntity.lock())
@@ -78,13 +85,6 @@ namespace FusionEngine
 				entity->RemoveComponent(entry->second);
 			}
 			m_Components.erase(entry);
-		}
-	}
-
-	void ArchetypalEntityManager::OnPropertyChanged(Archetypes::PropertyID_t id, RakNet::BitStream& data)
-	{
-		if (auto entity = m_ManagedEntity.lock())
-		{
 		}
 	}
 
@@ -132,29 +132,79 @@ namespace FusionEngine
 		{
 			std::string componentType;
 			std::string componentIdentifier;
+			Archetypes::ComponentID_t componentId;
 			size_t propertyIndex;
 			for (auto it = m_ModifiedProperties.begin(); it != m_ModifiedProperties.end(); ++it)
 			{
-				std::tie(componentType, componentIdentifier, propertyIndex) = m_Profile->GetPropertyLocation(it->first);
-				
-				auto component = entity->GetComponent(componentType, componentIdentifier);
-				if (component)
+				try
 				{
-					auto& props = component->GetProperties();
-					if (propertyIndex < props.size())
+					std::tie(componentId, propertyIndex) = m_Profile->GetPropertyLocation(it->first);
+
+#ifdef _DEBUG
+					std::tie(componentType, componentIdentifier) = m_Profile->GetComponentInfo(componentId);
+					FSN_ASSERT(entity->GetComponent(componentType, componentIdentifier));
+#endif
+
+					auto entry = m_Components.find(componentId);
+					if (entry != m_Components.end())
 					{
-						props[propertyIndex].second->Deserialise(*it->second);
+						auto& props = entry->second->GetProperties();
+						if (propertyIndex < props.size())
+						{
+							props[propertyIndex].second->Deserialise(*it->second);
+						}
+						else
+						{
+							std::tie(componentType, componentIdentifier) = m_Profile->GetComponentInfo(componentId);
+							SendToConsole("Invalid property index in archetypal entity component: component=" + componentType + "/" + componentIdentifier + " index=" + boost::lexical_cast<std::string>(propertyIndex) + ". Type '" + entity->GetArchetype() + "'");
+						}
 					}
 					else
 					{
-						SendToConsole("Invalid property index in archetypal entity component: component=" + componentType + "/" + componentIdentifier + " index=" + boost::lexical_cast<std::string>(propertyIndex));
+						std::tie(componentType, componentIdentifier) = m_Profile->GetComponentInfo(componentId);
+						SendToConsole("Missing expected component in archetypal entity: " + componentType + "/" + componentIdentifier + ". Type '" + entity->GetArchetype() + "'");
 					}
 				}
-				else
+				catch (InvalidArgumentException&)
 				{
-					SendToConsole("Missing expected component in archetypal entity: " + componentType + "/" + componentIdentifier);
+					SendToConsole("Missing location data for a property in archetypal entity. Type '" + entity->GetArchetype() + "'");
 				}
 			}
+		}
+	}
+
+	void ArchetypalEntityManager::AddPropertyListeners(const ComponentPtr& component)
+	{
+		auto& properties = component->GetProperties();
+		for (auto pit = properties.begin(); pit != properties.end(); ++pit)
+		{
+			const auto id = pit->second->GetID();
+			m_PropertyListenerConnections[id] = 
+				EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(id, std::bind(&ArchetypalEntityManager::OnInstancePropertyChanged, this, id));
+		}
+	}
+
+	void ArchetypalEntityManager::OnInstancePropertyChanged(Archetypes::PropertyID_t id)
+	{
+		try
+		{
+			auto locationData = m_Profile->GetPropertyLocation(id);
+			auto entry = m_Components.find(locationData.first);
+			if (entry != m_Components.end())
+			{
+				auto& properties = entry->second->GetProperties();
+				if (properties.size() < locationData.second)
+				{
+					RakNet::BitStream stream;
+					properties[locationData.second].second->Serialise(stream);
+					OverrideProperty(id, stream);
+				}
+			}
+			SendToConsole("Failed to overwrite an archetype instance property: arc definition is wrong.");
+		}
+		catch (InvalidArgumentException&)
+		{
+			SendToConsole("Failed to overwrite an archetype instance property: couldn't locate the property in the arc. definition.");
 		}
 	}
 

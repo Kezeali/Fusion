@@ -40,6 +40,8 @@
 
 #include "FusionInspectorUtils.h"
 
+#include "FusionArchetypalEntityManager.h"
+
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
 
@@ -139,9 +141,10 @@ namespace FusionEngine { namespace Inspectors
 			SetterCallbackVariant_t callback;
 			GetterCallbackVariant_t get_callback;
 			FollowCallback_t follow_callback;
+			std::string property_name;
 		};
 
-		std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
+		std::map<InputElementPtr, Input> m_Inputs;
 
 		std::vector<ComponentIPtr<ComponentT>> m_Components;
 
@@ -410,8 +413,11 @@ namespace FusionEngine { namespace Inspectors
 		auto& data = m_Properties[name];
 		if (element)
 		{
+			FSN_ASSERT(m_Inputs.find(element) != m_Inputs.end());
 			FSN_ASSERT(std::find(data.elements.begin(), data.elements.end(), element) == data.elements.end());
 			data.elements.push_back(element);
+
+			m_Inputs[element].property_name = name;
 		}
 	}
 
@@ -769,7 +775,7 @@ namespace FusionEngine { namespace Inspectors
 			const bool isButton = ev.GetTargetElement()->GetTagName() == "button" || (inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "submit");
 			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change") || (isButton && ev == "click"))
 			{
-				auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(ev.GetTargetElement()));
+				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
 				if (entry != m_Inputs.end())
 				{
 					auto& inputData = entry->second;
@@ -784,6 +790,25 @@ namespace FusionEngine { namespace Inspectors
 			//{
 			//	RequestCircleInput(ev.GetTargetElement()->GetAttribute("name", ""));
 			//}
+			else if (ev == "mouseup")
+			{
+				auto button = ev.GetParameter<int>("button", 0);
+				SendToConsole(boost::lexical_cast<std::string>(button));
+				if (button == 1)
+				{
+					auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
+					if (entry != m_Inputs.end() && !entry->second.property_name.empty())
+					{
+						for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
+						{
+							Entity* entity = it->p->GetParent();
+							FSN_ASSERT(entity);
+							if (entity->GetArchetypeAgent())
+								entity->GetArchetypeAgent()->RemoveOverride(entry->second.property_name);
+						}
+					}
+				}
+			}
 			else if (ev == "dragdrop")
 			{
 				Rocket::Core::Element* dest_container = ev.GetTargetElement();
@@ -849,13 +874,21 @@ namespace FusionEngine { namespace Inspectors
 		{
 			if (auto typed = ComponentIPtr<ComponentT>(*it))
 			{
+				// List the property
 				m_Components.push_back(typed);
+#if _DEBUG
+				size_t matchedProperties = 0;
+#endif
+				// Attach to properties to auto-refresh the UI
 				auto properties = (*it)->GetProperties();
 				for (auto it = properties.begin(); it != properties.end(); ++it)
 				{
 					auto entry = m_Properties.find(it->first);
 					if (entry != m_Properties.end())
 					{
+#if _DEBUG
+						++matchedProperties;
+#endif
 						if (entry->second.elements.empty())
 						{
 							entry->second.connections.push_back(EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(it->second->GetID(), std::bind(&This_t::ResetUIValues, this)));
@@ -868,6 +901,10 @@ namespace FusionEngine { namespace Inspectors
 						}
 					}
 				}
+#if _DEBUG
+				if (matchedProperties < m_Properties.size())
+					SendToConsole("Component missing expected property for inspector.");
+#endif
 			}
 		}
 
