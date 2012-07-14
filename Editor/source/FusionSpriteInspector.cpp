@@ -86,11 +86,11 @@ namespace FusionEngine { namespace Inspectors
 			35
 			);
 
-		AddTextInput("Animation",
+		AddProperty("AnimationPath", AddTextInput("Animation",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->AnimationPath.Set(path); }),
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->AnimationPath.Get(); }),
 			35
-			);
+			));
 
 		// Alignment
 		std::vector<std::string> originOptions;

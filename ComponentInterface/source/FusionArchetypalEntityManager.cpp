@@ -41,8 +41,7 @@ namespace FusionEngine
 {
 
 	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition)
-		: m_Profile(definition),
-		m_AutoOverride(true)
+		: m_Profile(definition)
 	{
 	}
 
@@ -69,6 +68,15 @@ namespace FusionEngine
 		{
 			AddPropertyListeners(*it);
 		}
+	}
+	
+	void ArchetypalEntityManager::AutoOverride(const std::string& name, bool enable)
+	{
+		const auto id = m_Profile->FindProperty(name);
+		if (enable)
+			m_AutoOverride.insert(id);
+		else
+			m_AutoOverride.erase(id);
 	}
 
 	void ArchetypalEntityManager::OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& str)
@@ -157,11 +165,6 @@ namespace FusionEngine
 				{
 					std::tie(componentId, propertyIndex) = m_Profile->GetPropertyLocation(it->first);
 
-#ifdef _DEBUG
-					std::tie(componentType, componentIdentifier) = m_Profile->GetComponentInfo(componentId);
-					FSN_ASSERT(entity->GetComponent(componentType, componentIdentifier));
-#endif
-
 					auto entry = m_Components.find(componentId);
 					if (entry != m_Components.end())
 					{
@@ -169,6 +172,7 @@ namespace FusionEngine
 						if (propertyIndex < props.size())
 						{
 							props[propertyIndex].second->Deserialise(*it->second);
+							it->second->ResetReadPointer();
 						}
 						else
 						{
@@ -207,8 +211,11 @@ namespace FusionEngine
 	{
 		try
 		{
-			if (m_AutoOverride)
+			auto allowed = m_AutoOverride.find(id);
+			if (allowed != m_AutoOverride.end())
 			{
+				m_AutoOverride.erase(allowed);
+
 				auto locationData = m_Profile->GetPropertyLocation(id);
 				auto entry = m_Components.find(locationData.first);
 				if (entry != m_Components.end())

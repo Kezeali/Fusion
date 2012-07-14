@@ -141,7 +141,7 @@ namespace FusionEngine { namespace Inspectors
 			SetterCallbackVariant_t callback;
 			GetterCallbackVariant_t get_callback;
 			FollowCallback_t follow_callback;
-			std::string property_name;
+			std::vector<std::string> property_names;
 		};
 
 		std::map<InputElementPtr, Input> m_Inputs;
@@ -415,9 +415,11 @@ namespace FusionEngine { namespace Inspectors
 		{
 			FSN_ASSERT(m_Inputs.find(element) != m_Inputs.end());
 			FSN_ASSERT(std::find(data.elements.begin(), data.elements.end(), element) == data.elements.end());
+			// Properties can be split across multiple input elements
 			data.elements.push_back(element);
 
-			m_Inputs[element].property_name = name;
+			// Input elements can affect multiple properties
+			m_Inputs[element].property_names.push_back(name);
 		}
 	}
 
@@ -782,9 +784,14 @@ namespace FusionEngine { namespace Inspectors
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 					{
 						boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
-						// Apply overrides
-						//if (entity->GetArchetypeAgent())
-						//	entity->GetArchetypeAgent()->LockInOverrides();
+						// Enable prefab override
+						Entity* entity = it->p->GetParent();
+						FSN_ASSERT(entity);
+						if (entity->GetArchetypeAgent())
+						{
+							for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
+								entity->GetArchetypeAgent()->AutoOverride(*nameIt, true);
+						}
 					}
 
 					if (ev == "enter")
@@ -798,18 +805,20 @@ namespace FusionEngine { namespace Inspectors
 			else if (ev == "mouseup")
 			{
 				auto button = ev.GetParameter<int>("button", 0);
-				SendToConsole(boost::lexical_cast<std::string>(button));
 				if (button == 1)
 				{
 					auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
-					if (entry != m_Inputs.end() && !entry->second.property_name.empty())
+					if (entry != m_Inputs.end() && !entry->second.property_names.empty())
 					{
 						for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
 						{
 							Entity* entity = it->p->GetParent();
 							FSN_ASSERT(entity);
 							if (entity->GetArchetypeAgent())
-								entity->GetArchetypeAgent()->RemoveOverride(entry->second.property_name);
+							{
+								for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
+									entity->GetArchetypeAgent()->RemoveOverride(*nameIt);
+							}
 						}
 					}
 				}
@@ -963,7 +972,7 @@ namespace FusionEngine { namespace Inspectors
 				for (auto elementIt = elements.begin(); elementIt != elements.end(); ++elementIt)
 				{
 					auto inputDataEntry = m_Inputs.find(*elementIt);
-					if (inputDataEntry == m_Inputs.end())
+					if (inputDataEntry != m_Inputs.end())
 					{
 						Input& inputData = inputDataEntry->second;
 						boost::apply_visitor(visitor, inputData.ui_element, inputData.get_callback);
