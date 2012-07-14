@@ -780,7 +780,12 @@ namespace FusionEngine { namespace Inspectors
 				{
 					auto& inputData = entry->second;
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+					{
 						boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
+						// Apply overrides
+						//if (entity->GetArchetypeAgent())
+						//	entity->GetArchetypeAgent()->LockInOverrides();
+					}
 
 					if (ev == "enter")
 						entry->first->Blur();

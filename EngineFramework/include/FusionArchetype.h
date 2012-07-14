@@ -73,6 +73,8 @@ namespace FusionEngine
 
 			//! Returns the archetype ID of the property with the given name
 			PropertyID_t FindProperty(const std::string& name) const;
+			//! Returns the archetype ID of the component with the given type & id
+			ComponentID_t FindComponent(const std::string& type, const std::string& identifier) const;
 
 		private:
 			struct ComponentData

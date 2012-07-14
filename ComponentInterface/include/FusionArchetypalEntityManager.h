@@ -63,6 +63,8 @@ namespace FusionEngine
 
 		virtual void SetManagedEntity(const EntityPtr& entity) = 0;
 
+		virtual void EnableAutoOverride(bool enable) = 0;
+
 		virtual void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data) = 0;
 
 		virtual void RemoveOverride(const std::string& property_name) = 0;
@@ -93,6 +95,9 @@ namespace FusionEngine
 		virtual ~ArchetypalEntityManager();
 
 		void SetManagedEntity(const EntityPtr& entity);
+
+		//! When true, property overrides will be created automatically whenever instance properties change
+		void EnableAutoOverride(bool enable) { m_AutoOverride = enable; }
 
 		//! Used by instances to override definition properties
 		void OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& data);
@@ -127,6 +132,8 @@ namespace FusionEngine
 		ComponentFactory* m_ComponentFactory;
 
 		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
+
+		bool m_AutoOverride;
 
 		// Deserialises overriden properties
 		void PerformPropertyOverrides();

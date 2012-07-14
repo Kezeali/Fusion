@@ -246,6 +246,19 @@ namespace FusionEngine
 			FSN_ASSERT_FAIL("No such property exists.");
 			return std::numeric_limits<PropertyID_t>::max();
 		}
+		
+		ComponentID_t Profile::FindComponent(const std::string& type, const std::string& identifier) const
+		{
+			for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
+			{
+				if (it->second.identifier == identifier && it->second.type == type)
+				{
+					return it->first;
+				}
+			}
+			FSN_ASSERT_FAIL("No such component exists.");
+			return std::numeric_limits<ComponentID_t>::max();
+		}
 
 	}
 

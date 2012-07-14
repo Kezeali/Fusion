@@ -41,7 +41,8 @@ namespace FusionEngine
 {
 
 	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition)
-		: m_Profile(definition)
+		: m_Profile(definition),
+		m_AutoOverride(true)
 	{
 	}
 
@@ -52,6 +53,22 @@ namespace FusionEngine
 	void ArchetypalEntityManager::SetManagedEntity(const EntityPtr& entity)
 	{
 		m_ManagedEntity = entity;
+
+		auto& components = entity->GetComponents();
+
+		for (auto it = components.begin(); it != components.end(); ++it)
+		{
+			auto& component = *it;
+			auto arcId = m_Profile->FindComponent(component->GetType(), component->GetIdentifier());
+			FSN_ASSERT(arcId != std::numeric_limits<Archetypes::ComponentID_t>::max());
+			m_Components[arcId] = component.get();
+		}
+
+		// Add property listeners to add overrides
+		for (auto it = components.begin(); it != components.end(); ++it)
+		{
+			AddPropertyListeners(*it);
+		}
 	}
 
 	void ArchetypalEntityManager::OverrideProperty(Archetypes::PropertyID_t id, RakNet::BitStream& str)
@@ -178,9 +195,11 @@ namespace FusionEngine
 		auto& properties = component->GetProperties();
 		for (auto pit = properties.begin(); pit != properties.end(); ++pit)
 		{
+			const auto arcId = m_Profile->FindProperty(pit->first);
+			FSN_ASSERT(arcId != std::numeric_limits<Archetypes::PropertyID_t>::max());
 			const auto id = pit->second->GetID();
 			m_PropertyListenerConnections[id] = 
-				EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(id, std::bind(&ArchetypalEntityManager::OnInstancePropertyChanged, this, id));
+				EvesdroppingManager::getSingleton().GetSignalingSystem().AddListener(id, std::bind(&ArchetypalEntityManager::OnInstancePropertyChanged, this, arcId));
 		}
 	}
 
@@ -188,19 +207,23 @@ namespace FusionEngine
 	{
 		try
 		{
-			auto locationData = m_Profile->GetPropertyLocation(id);
-			auto entry = m_Components.find(locationData.first);
-			if (entry != m_Components.end())
+			if (m_AutoOverride)
 			{
-				auto& properties = entry->second->GetProperties();
-				if (properties.size() < locationData.second)
+				auto locationData = m_Profile->GetPropertyLocation(id);
+				auto entry = m_Components.find(locationData.first);
+				if (entry != m_Components.end())
 				{
-					RakNet::BitStream stream;
-					properties[locationData.second].second->Serialise(stream);
-					OverrideProperty(id, stream);
+					auto& properties = entry->second->GetProperties();
+					if (locationData.second < properties.size())
+					{
+						RakNet::BitStream stream;
+						properties[locationData.second].second->Serialise(stream);
+						OverrideProperty(id, stream);
+						return;
+					}
 				}
+				SendToConsole("Failed to overwrite an archetype instance property: arc definition is wrong.");
 			}
-			SendToConsole("Failed to overwrite an archetype instance property: arc definition is wrong.");
 		}
 		catch (InvalidArgumentException&)
 		{
