@@ -933,12 +933,6 @@ namespace FusionEngine
 			{
 				// Write the identifier
 				out.WriteString(entity->GetArchetype());
-				// Write the agent data
-				auto agent = entity->GetArchetypeAgent();
-				RakNet::BitStream tempStream;
-				agent->Serialise(tempStream);
-				out.Write(tempStream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 			}
 			else
 				out.WriteString("");
@@ -959,8 +953,17 @@ namespace FusionEngine
 				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 			}
 
+			if (archetypal)
+			{
+				// Write the agent data
+				auto agent = entity->GetArchetypeAgent();
+				RakNet::BitStream tempStream;
+				agent->Serialise(tempStream);
+				out.Write(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+			}
 			// Write a unique entity
-			if (!archetypal)
+			else
 			{
 				WriteComponent(outstr, tfComponent, editable);
 			
