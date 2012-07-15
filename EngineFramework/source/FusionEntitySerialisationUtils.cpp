@@ -949,7 +949,8 @@ namespace FusionEngine
 			// Write the entity position (whether or not it is archetypal)
 			auto tfComponent = entity->GetTransform().get();
 			auto transform = dynamic_cast<ITransform*>(tfComponent);
-			out.WriteString(tfComponent->GetType());
+			if (!archetypal)
+				out.WriteString(tfComponent->GetType());
 			// Write position
 			{
 				RakNet::BitStream tempStream;
