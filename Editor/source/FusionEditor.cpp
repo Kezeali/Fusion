@@ -2463,9 +2463,17 @@ namespace FusionEngine
 		});
 		
 		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
-		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)
+		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)->ComponentPtr
 		{
-			return this->m_EntityInstantiator->AddComponent(entity, type, id);
+			if (!entity->GetArchetypeDefinitionAgent())
+				return this->m_EntityInstantiator->AddComponent(entity, type, id);
+			else
+			{
+				// Don't activate components being added to the arc definition
+				auto com = this->m_ComponentFactory->InstantiateComponent(type);
+				entity->AddComponent(com, id);
+				return com;
+			}
 		});
 		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
 		{
