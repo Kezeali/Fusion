@@ -38,20 +38,15 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <list>
+#include <numeric>
+
 namespace FusionEngine
 {
 
-	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator)
+	ArchetypalEntityManager::ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator)
 		: m_Profile(definition),
 		m_ComponentInstantiator(instantiator)
-	{
-	}
-
-	ArchetypalEntityManager::~ArchetypalEntityManager()
-	{
-	}
-
-	void ArchetypalEntityManager::SetManagedEntity(const EntityPtr& entity)
 	{
 		m_ManagedEntity = entity;
 
@@ -69,6 +64,31 @@ namespace FusionEngine
 		for (auto it = components.begin(); it != components.end(); ++it)
 		{
 			AddPropertyListeners(*it);
+		}
+	}
+
+	ArchetypalEntityManager::~ArchetypalEntityManager()
+	{
+	}
+
+	void ArchetypalEntityManager::ComponentAddedToInstance(const ComponentPtr& component)
+	{
+		m_NonArchetypalComponents.insert(component);
+	}
+
+	void ArchetypalEntityManager::ComponentRemovedFromInstance(const ComponentPtr& component)
+	{
+		// Look for components that have been added to the instance but not the archetype
+		//  (because it is a tree lookup, rather than linear)
+		auto entry = m_NonArchetypalComponents.find(component.get());
+		if (entry != m_NonArchetypalComponents.end())
+			m_NonArchetypalComponents.erase(entry);
+		else
+		{
+			auto arcEntry = std::find_if(m_Components.begin(), m_Components.end(), [component](const std::pair<Archetypes::ComponentID_t, IComponent*>& entry)
+			{ return entry.second == component.get(); });
+			if (arcEntry != m_Components.end())
+				arcEntry->second = nullptr;
 		}
 	}
 	
@@ -133,6 +153,34 @@ namespace FusionEngine
 
 	void ArchetypalEntityManager::Serialise(RakNet::BitStream& stream)
 	{
+		// Write IDs of removed components
+		{
+			std::list<Archetypes::ComponentID_t> idsOfRemovedComponents;
+			for (auto it = m_Components.begin(); it != m_Components.end(); ++it)
+				if (it->second == nullptr)
+					idsOfRemovedComponents.push_back(it->first);
+
+			stream.Write((size_t)idsOfRemovedComponents.size());
+			for (auto it = idsOfRemovedComponents.begin(); it != idsOfRemovedComponents.end(); ++it)
+				stream.Write(*it);
+		}
+		// Write added components
+		stream.Write((size_t)m_NonArchetypalComponents.size());
+		for (auto it = m_NonArchetypalComponents.begin(); it != m_NonArchetypalComponents.end(); ++it)
+		{
+			const auto& component = *it;
+			// Write type & id
+			stream.Write(component->GetType());
+			stream.Write(component->GetIdentifier());
+			// Write state
+			RakNet::BitStream tempStream;
+			component->SerialiseContinuous(tempStream);
+			EntitySerialisationUtils::WriteStateWithLength(stream, tempStream);
+			tempStream.Reset();
+			component->SerialiseOccasional(tempStream);
+			EntitySerialisationUtils::WriteStateWithLength(stream, tempStream);
+		}
+		// Write modified properties
 		stream.Write(m_ModifiedProperties.size());
 		for (auto it = m_ModifiedProperties.begin(); it != m_ModifiedProperties.end(); ++it)
 		{
@@ -141,11 +189,72 @@ namespace FusionEngine
 		}
 	}
 
+//#define DEFER_COMPONENT_OPERATIONS
+
 	void ArchetypalEntityManager::Deserialise(RakNet::BitStream& stream)
 	{
+#ifdef DEFER_COMPONENT_OPERATIONS
+		std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>> addedComponents;
+		std::list<std::pair<Archetypes::ComponentID_t, IComponent*>> removedComponents;
+#else
+		if (auto entity = m_ManagedEntity.lock())
+#endif
+		{
+			// Read removed components
+			{
+				size_t numRemovedComponents = 0;
+				stream.Read(numRemovedComponents);
+				Archetypes::ComponentID_t id;
+				for (size_t i = 0; i < numRemovedComponents; ++i)
+				{
+#ifdef DEFER_COMPONENT_OPERATIONS
+					removedComponents.push_back(std::make_pair(id, m_Components[id]));
+#else
+					stream.Read(id);
+					auto entry = m_Components.find(id);
+					if (entry != m_Components.end())
+					{
+						m_ComponentInstantiator->RemoveComponent(entity, entry->second);
+						entry->second = nullptr;
+					}
+#endif
+				}
+			}
+			// Read added components
+			size_t numAdded = 0;
+			stream.Read(numAdded);
+			for (size_t i = 0; i < numAdded; ++i)
+			{
+				std::string type, identifier;
+				SerialisationUtils::read(stream, type);
+				SerialisationUtils::read(stream, identifier);
+
+#ifdef DEFER_COMPONENT_OPERATIONS
+				auto stateLength = EntitySerialisationUtils::ReadStateLength(stream);
+				auto conStream = new RakNet::BitStream(stream.GetData(), stateLength, true);
+				stateLength = EntitySerialisationUtils::ReadStateLength(stream);
+				auto occStream = new RakNet::BitStream(stream.GetData(), stateLength, true);
+				addedComponents.push_back(std::make_tuple(type, identifier, ));
+#else
+				auto con = m_ComponentInstantiator->AddComponent(entity, type, identifier);
+
+				auto stateLength = EntitySerialisationUtils::ReadStateLength(stream);
+				auto startPos = stream.GetReadOffset();
+				con->DeserialiseContinuous(stream);
+				FSN_ASSERT(stream.GetReadOffset() - startPos == stateLength);
+
+				stateLength = EntitySerialisationUtils::ReadStateLength(stream);
+				startPos = stream.GetReadOffset();
+				con->DeserialiseOccasional(stream);
+				FSN_ASSERT(stream.GetReadOffset() - startPos == stateLength);
+#endif
+			}
+		}
+
+		// Write modified properties
 		auto numModifiedProps = m_ModifiedProperties.size();
 		stream.Read(numModifiedProps);
-		for (size_t i = numModifiedProps; i < numModifiedProps; ++i)
+		for (size_t i = 0; i < numModifiedProps; ++i)
 		{
 			ModifiedProperties_t::value_type value;
 
@@ -155,7 +264,29 @@ namespace FusionEngine
 			m_ModifiedProperties.insert(std::move(value));
 		}
 
+#ifdef DEFER_COMPONENT_OPERATIONS
+		PerformComponentOperations(addedComponents, removedComponents);
+#endif
 		PerformPropertyOverrides();
+	}
+
+	void ArchetypalEntityManager::PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, IComponent*>>& removed)
+	{
+		if (auto entity = m_ManagedEntity.lock())
+		{
+			for (auto it = removed.begin(); it != removed.end(); ++it)
+			{
+				m_ComponentInstantiator->RemoveComponent(entity, it->second);
+				m_Components[it->first] = nullptr;
+			}
+			for (auto it = added.begin(); it != added.end(); ++it)
+			{
+				auto con = m_ComponentInstantiator->AddComponent(entity, std::get<0>(*it), std::get<1>(*it));
+				const auto& state = std::get<2>(*it);
+				con->DeserialiseContinuous(*state);
+				con->DeserialiseOccasional(*state);
+			}
+		}
 	}
 
 	void ArchetypalEntityManager::PerformPropertyOverrides()

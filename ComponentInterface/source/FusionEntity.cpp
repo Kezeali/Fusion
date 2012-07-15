@@ -278,6 +278,10 @@ namespace FusionEngine
 		{
 			m_ArchetypeDefinitionAgent->ComponentAdded(component);
 		}
+		if (m_ArchetypeAgent)
+		{
+			m_ArchetypeAgent->ComponentAddedToInstance(component);
+		}
 	}
 
 	void Entity::RemoveComponent(const ComponentPtr& component)
@@ -322,6 +326,10 @@ namespace FusionEngine
 		if (m_ArchetypeDefinitionAgent)
 		{
 			m_ArchetypeDefinitionAgent->ComponentRemoved(component);
+		}
+		if (m_ArchetypeAgent)
+		{
+			m_ArchetypeAgent->ComponentRemovedFromInstance(component);
 		}
 	}
 

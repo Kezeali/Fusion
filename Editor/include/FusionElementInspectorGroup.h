@@ -108,11 +108,8 @@ namespace FusionEngine { namespace Inspectors
 
 		Rocket::Core::Element* body;
 
-#ifdef _DEBUG
-		EntityPtr m_EntityBeingProcessed;
-#endif
-
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToProcess;
+		std::vector<ComponentPtr> m_ComponentsToRemove;
 		
 		AddCallback_t m_AddCallback;
 		RemoveCallback_t m_RemoveCallback;
@@ -120,6 +117,8 @@ namespace FusionEngine { namespace Inspectors
 		CircleToolExecutor_t m_CircleToolExecutor;
 		RectangleToolExecutor_t m_RectangleToolExecutor;
 		PolygonToolExecutor_t m_PolygonToolExecutor;
+
+		unsigned short m_UpdatesSkipped;
 
 		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 

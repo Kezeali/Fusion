@@ -167,9 +167,14 @@ namespace FusionEngine { namespace Inspectors
 			return newData.button_code;
 		}
 
-		//void ForEachInspector()
-		//{
-		//}
+		void ForEachInspector(const std::function<void (const std::vector<ComponentPtr>&)>& action)
+		{
+			for (auto it = m_Inspectors.begin(), end = m_Inspectors.end(); it != end; ++it)
+			{
+				action(it->second);
+			}
+		}
+
 		void InitInspectors()
 		{
 			for (auto it = m_Inspectors.begin(), end = m_Inspectors.end(); it != end; ++it)
@@ -287,20 +292,12 @@ namespace FusionEngine { namespace Inspectors
 	{
 		m_Entities.push_back(entity);
 
-#ifdef _DEBUG
-		m_EntityBeingProcessed = entity;
-#endif
-
 		ProcessComponent(entity->GetTransform(), false);
 
 		const auto& components = entity->GetComponents();
 		for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			if (*it != entity->GetTransform())
 				ProcessComponent(*it);
-
-#ifdef _DEBUG
-		m_EntityBeingProcessed.reset();
-#endif
 	}
 
 	void ElementGroup::DoneAddingEntities()
@@ -319,10 +316,26 @@ namespace FusionEngine { namespace Inspectors
 	{
 		bool added = AddInspector(component, component->GetType(), removable);
 
-		if (!added) // If there wasn't a specific inspector for the given type, try adding interface inspectors
+		// If there wasn't a specific inspector for the given type, try adding interface inspectors
+		if (!added)
 		{
-			for (auto iit = component->GetInterfaces().begin(), iend = component->GetInterfaces().end(); iit != iend; ++iit)
-				added |= AddInspector(component, *iit, removable);
+			// Make sure the transform inspector is at the top
+			const auto& actualInterfaces = component->GetInterfaces();
+			auto entry = actualInterfaces.find("ITransform");
+			if (entry == actualInterfaces.end())
+			{
+				for (auto it = actualInterfaces.begin(), end = actualInterfaces.end(); it != end; ++it)
+					added |= AddInspector(component, *it, removable);
+			}
+			else
+			{
+				AddInspector(component, "ITransform", false);
+
+				std::set<std::string> interfacesMinusTransform = actualInterfaces;
+				interfacesMinusTransform.erase("ITransform");
+				for (auto it = interfacesMinusTransform.begin(), end = interfacesMinusTransform.end(); it != end; ++it)
+					added |= AddInspector(component, *it, removable);
+			}
 		}
 		if (!added)
 			SendToConsole("No inspector for component type: " + component->GetType());
@@ -345,9 +358,10 @@ namespace FusionEngine { namespace Inspectors
 				//value.first = inspector;
 				//value.second.push_back(component);
 
+				// The title format is "interface (actual type) - identifier"
 				auto name = component->GetType();
 				if (name != inspector_type)
-					name += " (" + inspector_type + " interface)";
+					name = inspector_type + " (" + name + ")";
 				if (!component->GetIdentifier().empty())
 					name += " - " + component->GetIdentifier();
 
@@ -471,13 +485,9 @@ namespace FusionEngine { namespace Inspectors
 
 					if (newCom)
 					{
-						//m_EntityBeingProcessed = *it;
-						//ProcessComponent(newCom);
 						m_ComponentsToProcess.push_back(std::make_pair(*it, newCom));
 					}
 				}
-				//m_EntityBeingProcessed.reset();
-				//DoneAddingEntities();
 			}
 			else if (remove)
 			{
@@ -515,9 +525,6 @@ namespace FusionEngine { namespace Inspectors
 		{
 			if (it->second->IsReady() || it->second->IsActive())
 			{
-#ifdef _DEBUG
-				m_EntityBeingProcessed = it->first;
-#endif
 				ProcessComponent(it->second);
 				it = m_ComponentsToProcess.erase(it);
 				newComponentAdded = true;
@@ -525,9 +532,51 @@ namespace FusionEngine { namespace Inspectors
 			else
 				++it;
 		}
-#ifdef _DEBUG
-		m_EntityBeingProcessed.reset();
-#endif
+
+		if (m_UpdatesSkipped > 30)
+		{
+			m_UpdatesSkipped = 0;
+
+			for (auto it = m_Entities.begin(); it != m_Entities.end(); ++it)
+			{
+				const auto& entity = *it;
+				const auto& entityComponents = entity->GetComponents();
+				for (auto cIt = entityComponents.begin(); cIt != entityComponents.end(); ++cIt)
+				{
+					auto subsections = m_Subsections->GetSubsections(*cIt);
+
+					// No UI subsections have been created for this component yet: process it
+					if (subsections.empty())
+					{
+						ProcessComponent(*cIt);
+						newComponentAdded = true;
+					}
+				}
+
+				std::set<ComponentPtr> inspectedComponents;
+				m_Subsections->ForEachInspector([&inspectedComponents](const std::vector<ComponentPtr>& components)
+				{
+					inspectedComponents.insert(components.begin(), components.end());
+				});
+				for (auto cIt = inspectedComponents.begin(); cIt != inspectedComponents.end(); ++cIt)
+				{
+					const auto& component = *cIt;
+					if (component->GetParent() == nullptr)
+					{
+						auto subsectionsToRemove = m_Subsections->GetSubsections(*cIt);
+						for (auto it = subsectionsToRemove.begin(), end = subsectionsToRemove.end(); it != end; ++it)
+						{
+							body->RemoveChild(it->get());
+						}
+
+						m_Subsections->RemoveEntries(component);
+					}
+				}
+			}
+		}
+		else
+			++m_UpdatesSkipped;
+
 		if (newComponentAdded)
 			DoneAddingEntities();
 	}

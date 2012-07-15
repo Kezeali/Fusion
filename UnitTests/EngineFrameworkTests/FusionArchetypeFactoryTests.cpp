@@ -7,6 +7,7 @@
 #include "FusionEngineManager.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionEntity.h"
+#include "FusionP2PEntityInstantiator.h"
 #include "FusionPhysFSIOStream.h"
 
 #include <gtest/gtest.h>
@@ -23,7 +24,7 @@ struct archetype_f : public testing::Test
 	virtual void SetUp()
 	{
 		manager.reset(new EngineManager(args));
-		ASSERT_NO_THROW(factory.reset(new ArchetypeFactory));
+		ASSERT_NO_THROW(factory.reset(new ArchetypeFactory(nullptr)));
 	}
 	virtual void TearDown()
 	{

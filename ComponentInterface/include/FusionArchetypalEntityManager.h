@@ -40,6 +40,7 @@
 #include <functional>
 #include <memory>
 #include <map>
+#include <tuple>
 #include <unordered_map>
 
 #include <boost/signals2/connection.hpp>
@@ -61,7 +62,8 @@ namespace FusionEngine
 	public:
 		virtual ~IInstanceAgent() {}
 
-		virtual void SetManagedEntity(const EntityPtr& entity) = 0;
+		virtual void ComponentAddedToInstance(const ComponentPtr& component) = 0;
+		virtual void ComponentRemovedFromInstance(const ComponentPtr& component) = 0;
 
 		virtual void AutoOverride(const std::string& name, bool enable) = 0;
 
@@ -92,10 +94,11 @@ namespace FusionEngine
 	class ArchetypalEntityManager : public IInstanceAgent
 	{
 	public:
-		ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator);
+		ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator);
 		virtual ~ArchetypalEntityManager();
 
-		void SetManagedEntity(const EntityPtr& entity);
+		void ComponentAddedToInstance(const ComponentPtr& component);
+		void ComponentRemovedFromInstance(const ComponentPtr& component);
 
 		//! When true, an override will be created automatically next time the given instance property changes
 		void AutoOverride(const std::string& name, bool enable);
@@ -121,6 +124,9 @@ namespace FusionEngine
 	private:
 		typedef std::map<Archetypes::PropertyID_t, std::unique_ptr<RakNet::BitStream>> ModifiedProperties_t;
 		ModifiedProperties_t m_ModifiedProperties;
+
+		std::set<ComponentPtr> m_NonArchetypalComponents;
+
 		std::map<Archetypes::ComponentID_t, IComponent*> m_Components;
 
 		std::shared_ptr<Archetypes::Profile> m_Profile;
@@ -138,6 +144,8 @@ namespace FusionEngine
 
 		std::set<Archetypes::ComponentID_t> m_AutoOverride;
 
+		// Add / remove components that exist in the definition but not the instance and vice versa
+		void PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, IComponent*>>& removed);
 		// Deserialises overriden properties
 		void PerformPropertyOverrides();
 

@@ -93,7 +93,7 @@ namespace FusionEngine
 				entry->second.Archetype->SynchroniseParallelEdits();
 				entity = entry->second.Archetype->Clone(factory);
 
-				auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Profile, m_ComponentInstantiator);
+				auto agent = std::make_shared<ArchetypalEntityManager>(entity, entry->second.Profile, m_ComponentInstantiator);
 				// Set up signal handlers
 				{
 					using namespace std::placeholders;
@@ -101,7 +101,6 @@ namespace FusionEngine
 					agent->m_ComponentAddedConnection = entry->second.Agent->SignalAddComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentAdded, agent.get(), _1, _2, _3));
 					agent->m_ComponentRemovedConnection = entry->second.Agent->SignalRemoveComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentRemoved, agent.get(), _1));
 				}
-				agent->SetManagedEntity(entity);
 
 				entity->SetArchetypeAgent(agent);
 

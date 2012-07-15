@@ -314,7 +314,7 @@ namespace FusionEngine
 			return entity;
 		}
 
-		bool WriteComponentState(RakNet::BitStream& out, RakNet::BitStream& state, const IComponent* component)
+		bool WriteStateWithLength(RakNet::BitStream& out, RakNet::BitStream& state)
 		{
 			if (state.GetNumberOfBitsUsed() > 0)
 			{
@@ -328,7 +328,7 @@ namespace FusionEngine
 					return true;
 				}
 				else
-					FSN_EXCEPT(InvalidArgumentException, "Serialised state for " + component->GetType() + " is too large");
+					FSN_EXCEPT(SerialisationError, "Serialised state for is too large");
 			}
 			else
 			{
@@ -376,7 +376,7 @@ namespace FusionEngine
 
 				RakNet::BitStream tempStream;
 				transformComponent->SerialiseContinuous(tempStream);
-				dataWritten = WriteComponentState(out, tempStream, transformComponent.get());
+				dataWritten = WriteStateWithLength(out, tempStream);
 			}
 
 			out.Write(numComponents);
@@ -392,7 +392,7 @@ namespace FusionEngine
 					RakNet::BitStream tempStream;
 					component->SerialiseContinuous(tempStream);
 
-					dataWritten |= WriteComponentState(out, tempStream, component.get());
+					dataWritten |= WriteStateWithLength(out, tempStream);
 				}
 			}
 
@@ -476,7 +476,7 @@ namespace FusionEngine
 				storedChecksum = checksum;
 			}
 
-			WriteComponentState(out, tempStream, component);
+			WriteStateWithLength(out, tempStream);
 
 			return conData;
 		}

@@ -74,6 +74,11 @@ namespace FusionEngine
 		//! Deserialises and returns the position data from the given state, if it contains such data
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);
 
+		//! Writes the length of the stream, then the stream itself
+		bool WriteStateWithLength(RakNet::BitStream& out, RakNet::BitStream& state);
+		//! Reads length data written by WriteStateWithLength()
+		RakNet::BitSize_t ReadStateLength(RakNet::BitStream& in);
+
 		void WriteComponent(OCellStream& out, IComponent* component, bool editable);
 		void ReadComponent(ICellStream& in, IComponent* component, bool editable);
 
