@@ -1102,7 +1102,7 @@ namespace FusionEngine
 			CellStreamReader in(&instr);
 
 			Vector2 position;
-			float angle;
+			const float angle = 0.0f;
 
 			auto len = in.ReadValue<RakNet::BitSize_t>();
 			if (len > 0)
@@ -1117,8 +1117,6 @@ namespace FusionEngine
 			{
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
-			
-			angle = in.ReadValue<float>();
 
 			EntityPtr entity = archetype_factory->MakeInstance(factory, archetype_id, position, angle);
 
