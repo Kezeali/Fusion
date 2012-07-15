@@ -258,6 +258,8 @@ namespace FusionEngine
 		{
 			ModifiedProperties_t::value_type value;
 
+			value.second.reset(new RakNet::BitStream());
+
 			stream.Read(value.first);
 			stream.Read(*value.second);
 
