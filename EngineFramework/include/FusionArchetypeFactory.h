@@ -55,7 +55,13 @@ namespace FusionEngine
 	class ArchetypeFactory
 	{
 	public:
-		ArchetypeFactory();
+		//! CTOR
+		/*!
+		* \param instantiator
+		* The component instantiator which should be used to add components to live archetype instances. Only needed
+		* in edit mode.
+		*/
+		ArchetypeFactory(EntityInstantiator* instantiator);
 		virtual ~ArchetypeFactory();
 
 		void SetEditable(bool value) { m_Editable = value; }
@@ -95,6 +101,8 @@ namespace FusionEngine
 		bool m_Editable;
 
 		mutable boost::mutex m_Mutex;
+
+		EntityInstantiator* m_ComponentInstantiator;
 	};
 
 }

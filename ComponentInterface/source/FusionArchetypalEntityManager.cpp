@@ -32,6 +32,7 @@
 #include "FusionArchetype.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntity.h"
+#include "FusionEntityInstantiator.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionLogger.h"
 
@@ -40,8 +41,9 @@
 namespace FusionEngine
 {
 
-	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition)
-		: m_Profile(definition)
+	ArchetypalEntityManager::ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator)
+		: m_Profile(definition),
+		m_ComponentInstantiator(instantiator)
 	{
 	}
 
@@ -92,24 +94,29 @@ namespace FusionEngine
 
 	void ArchetypalEntityManager::OnComponentAdded(Archetypes::ComponentID_t arch_id, const std::string& type, const std::string& identifier)
 	{
-		if (auto entity = m_ManagedEntity.lock())
+		if (m_ComponentInstantiator != nullptr)
 		{
-			auto com = m_ComponentFactory->InstantiateComponent(type);
-			entity->AddComponent(com, identifier);
-			m_Components[arch_id] = com.get();
+			if (auto entity = m_ManagedEntity.lock())
+			{
+				auto com = m_ComponentInstantiator->AddComponent(entity, type, identifier);
+				m_Components[arch_id] = com.get();
+			}
 		}
 	}
 
 	void ArchetypalEntityManager::OnComponentRemoved(Archetypes::ComponentID_t arch_id)
 	{
-		auto entry = m_Components.find(arch_id);
-		if (entry != m_Components.end())
+		if (m_ComponentInstantiator != nullptr)
 		{
-			if (auto entity = m_ManagedEntity.lock())
+			auto entry = m_Components.find(arch_id);
+			if (entry != m_Components.end())
 			{
-				entity->RemoveComponent(entry->second);
+				if (auto entity = m_ManagedEntity.lock())
+				{
+					m_ComponentInstantiator->RemoveComponent(entity, entry->second);
+				}
+				m_Components.erase(entry);
 			}
-			m_Components.erase(entry);
 		}
 	}
 

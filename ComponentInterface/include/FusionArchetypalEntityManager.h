@@ -92,7 +92,7 @@ namespace FusionEngine
 	class ArchetypalEntityManager : public IInstanceAgent
 	{
 	public:
-		ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition);
+		ArchetypalEntityManager(const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator);
 		virtual ~ArchetypalEntityManager();
 
 		void SetManagedEntity(const EntityPtr& entity);
@@ -129,8 +129,10 @@ namespace FusionEngine
 
 		friend class ArchetypeFactory;
 		boost::signals2::connection m_ChangeConnection;
+		boost::signals2::connection m_ComponentAddedConnection;
+		boost::signals2::connection m_ComponentRemovedConnection;
 
-		ComponentFactory* m_ComponentFactory;
+		EntityInstantiator* m_ComponentInstantiator;
 
 		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
 

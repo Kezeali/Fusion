@@ -179,10 +179,11 @@ namespace FusionEngine
 			m_EvesdroppingManager.reset(new EvesdroppingManager());
 			m_ComponentUniverse.reset(new ComponentUniverse());
 			m_EntitySynchroniser.reset(new EntitySynchroniser(m_InputManager.get(), m_CameraSynchroniser.get(), m_StreamingManager.get()));
-			m_ArchetypeFactory.reset(new ArchetypeFactory());
 
 			m_EntityManager.reset(new EntityManager(m_InputManager.get(), m_EntitySynchroniser.get(), m_StreamingManager.get(), m_ComponentUniverse.get(), m_CellArchivist.get()));
 			m_EntityInstantiator.reset(new P2PEntityInstantiator(m_ComponentUniverse.get(), m_EntityManager.get()));
+
+			m_ArchetypeFactory.reset(new ArchetypeFactory(m_EntityInstantiator.get()));
 
 			m_MapLoader.reset(new GameMapLoader(options));
 

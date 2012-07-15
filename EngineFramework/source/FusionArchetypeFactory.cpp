@@ -42,7 +42,8 @@ namespace bio = boost::iostreams;
 namespace FusionEngine
 {
 
-	ArchetypeFactory::ArchetypeFactory()
+	ArchetypeFactory::ArchetypeFactory(EntityInstantiator* instantiator)
+		: m_ComponentInstantiator(instantiator)
 	{
 	}
 
@@ -92,8 +93,14 @@ namespace FusionEngine
 				entry->second.Archetype->SynchroniseParallelEdits();
 				entity = entry->second.Archetype->Clone(factory);
 
-				auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Profile);
-				agent->m_ChangeConnection = entry->second.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), std::placeholders::_1));
+				auto agent = std::make_shared<ArchetypalEntityManager>(entry->second.Profile, m_ComponentInstantiator);
+				// Set up signal handlers
+				{
+					using namespace std::placeholders;
+					agent->m_ChangeConnection = entry->second.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), _1));
+					agent->m_ComponentAddedConnection = entry->second.Agent->SignalAddComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentAdded, agent.get(), _1, _2, _3));
+					agent->m_ComponentRemovedConnection = entry->second.Agent->SignalRemoveComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentRemoved, agent.get(), _1));
+				}
 				agent->SetManagedEntity(entity);
 
 				entity->SetArchetypeAgent(agent);
