@@ -926,7 +926,10 @@ namespace FusionEngine
 
 			out.Write(entity->IsTerrain());
 
-			if (entity->IsArchetypal())
+			bool archetypal = entity->IsArchetypal();
+
+			// Write an archetypal entity
+			if (archetypal)
 			{
 				// Write the identifier
 				out.WriteString(entity->GetArchetype());
@@ -943,6 +946,7 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
 
+			// Write the entity position (whether or not it is archetypal)
 			auto tfComponent = entity->GetTransform().get();
 			auto transform = dynamic_cast<ITransform*>(tfComponent);
 			out.WriteString(tfComponent->GetType());
@@ -953,24 +957,29 @@ namespace FusionEngine
 				out.Write(tempStream.GetNumberOfBytesUsed());
 				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 			}
-			WriteComponent(outstr, tfComponent, editable);
 
-			out.Write(numComponents);
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			// Write a unique entity
+			if (!archetypal)
 			{
-				auto& component = *it;
-				if (component.get() != tfComponent)
+				WriteComponent(outstr, tfComponent, editable);
+			
+				out.Write(numComponents);
+				for (auto it = components.begin(), end = components.end(); it != end; ++it)
 				{
-					out.WriteString(component->GetType());
-					out.WriteString(component->GetIdentifier());
+					auto& component = *it;
+					if (component.get() != tfComponent)
+					{
+						out.WriteString(component->GetType());
+						out.WriteString(component->GetIdentifier());
+					}
 				}
-			}
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
-			{
-				auto& component = *it;
-				if (component.get() != tfComponent)
+				for (auto it = components.begin(), end = components.end(); it != end; ++it)
 				{
-					WriteComponent(outstr, component.get(), editable);
+					auto& component = *it;
+					if (component.get() != tfComponent)
+					{
+						WriteComponent(outstr, component.get(), editable);
+					}
 				}
 			}
 		}
@@ -979,19 +988,7 @@ namespace FusionEngine
 		{
 			CellStreamReader in(&instr);
 
-			std::string archetypeId = in.ReadString();
-			const bool isArchetypal = !archetypeId.empty();
-
-			if (isArchetypal)
-				return LoadArchetypalEntity(instr, archetypeId, editable, factory, archetype_factory, manager, instantiator);
-			else
-				return LoadUniqueEntity(instr, id_included, override_id, editable, factory, manager, instantiator);
-		}
-
-		EntityPtr LoadUniqueEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
-		{
-			CellStreamReader in(&instr);
-
+			// Load entity info
 			ObjectID id = 0;
 			if (id_included)
 			{
@@ -1011,6 +1008,20 @@ namespace FusionEngine
 
 			bool terrain = false;
 			in.Read(terrain);
+
+			// Check for an archetype
+			std::string archetypeId = in.ReadString();
+			const bool isArchetypal = !archetypeId.empty();
+
+			if (isArchetypal)
+				return LoadArchetypalEntity(instr, archetypeId, id, owner, name, terrain, editable, factory, archetype_factory, manager, instantiator);
+			else
+				return LoadUniqueEntity(instr, id, owner, name, terrain, editable, factory, manager, instantiator);
+		}
+
+		EntityPtr LoadUniqueEntity(ICellStream& instr, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		{
+			CellStreamReader in(&instr);
 
 			ComponentPtr transform;
 			//const auto dataLen = in.read_uint32();
@@ -1082,7 +1093,7 @@ namespace FusionEngine
 			return entity;
 		}
 
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 

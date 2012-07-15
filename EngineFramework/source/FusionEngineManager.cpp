@@ -187,7 +187,7 @@ namespace FusionEngine
 
 			m_MapLoader.reset(new GameMapLoader(options));
 
-			m_CellArchivist->SetInstantiator(m_EntityInstantiator.get(), m_ComponentUniverse.get(), m_EntityManager.get());
+			m_CellArchivist->SetInstantiator(m_EntityInstantiator.get(), m_ComponentUniverse.get(), m_EntityManager.get(), m_ArchetypeFactory.get());
 
 			m_TaskManager.reset(new TaskManager());
 			m_Scheduler.reset(new TaskScheduler(m_TaskManager.get(), m_EntityManager.get(), m_CellArchivist.get()));

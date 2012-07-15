@@ -79,7 +79,7 @@ namespace FusionEngine
 		RegionMapLoader(bool edit_mode, const std::string& cache_path = "/cache");
 		~RegionMapLoader();
 
-		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager);
+		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager, ArchetypeFactory* arc_factory);
 
 		void SetSavePath(const std::string& save_path) { m_SavePath = save_path; }
 		const std::string& GetSavePath() const { return m_SavePath; }

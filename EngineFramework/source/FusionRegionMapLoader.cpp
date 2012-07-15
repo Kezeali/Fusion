@@ -169,6 +169,7 @@ namespace FusionEngine
 		m_Instantiator(nullptr),
 		m_Factory(nullptr),
 		m_EntityManager(nullptr),
+		m_ArchetypeFactory(nullptr),
 		m_NewData(false),
 		m_TransactionEnded(false)
 	{
@@ -209,11 +210,12 @@ namespace FusionEngine
 			delete m_EditableCache;
 	}
 
-	void RegionMapLoader::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager)
+	void RegionMapLoader::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager, ArchetypeFactory* arc_factory)
 	{
 		m_Instantiator = instantiator;
 		m_Factory = component_factory;
 		m_EntityManager = manager;
+		m_ArchetypeFactory = arc_factory;
 	}
 
 	void RegionMapLoader::SetMap(const std::shared_ptr<GameMap>& map)

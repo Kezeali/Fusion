@@ -94,9 +94,9 @@ namespace FusionEngine
 		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		
 		//! Load a non-archetypal entity
-		EntityPtr LoadUniqueEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		//! Load an archetypal entity
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator);
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator);
 	}
 
 }
