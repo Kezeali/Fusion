@@ -774,6 +774,7 @@ namespace FusionEngine { namespace Inspectors
 				dynamic_cast<Rocket::Controls::ElementFormControlDataSelect*>(ev.GetTargetElement());
 			auto inputElem = dynamic_cast<Rocket::Controls::ElementFormControlInput*>(ev.GetTargetElement());
 			const bool isCheckboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "checkbox";
+			const bool isTextboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "text";
 			const bool isButton = ev.GetTargetElement()->GetTagName() == "button" || (inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "submit");
 			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change") || (isButton && ev == "click"))
 			{
@@ -796,6 +797,20 @@ namespace FusionEngine { namespace Inspectors
 
 					if (ev == "enter")
 						entry->first->Blur();
+				}
+			}
+			else if (isTextboxElem && ev == "blur")
+			{
+				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
+				if (entry != m_Inputs.end())
+				{
+					bool first = true;
+					auto& inputData = entry->second;
+					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+					{
+						boost::apply_visitor(SetUIValueVisitor(first, *it), inputData.ui_element, inputData.callback);
+						first = false;
+					}
 				}
 			}
 			//else if (ev.GetTargetElement()->IsClassSet("circle_input") && ev == "focus")
