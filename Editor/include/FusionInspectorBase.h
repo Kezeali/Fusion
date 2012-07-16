@@ -808,7 +808,7 @@ namespace FusionEngine { namespace Inspectors
 					auto& inputData = entry->second;
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 					{
-						boost::apply_visitor(SetUIValueVisitor(first, *it), inputData.ui_element, inputData.callback);
+						boost::apply_visitor(SetUIValueVisitor(first, *it), inputData.ui_element, inputData.get_callback);
 						first = false;
 					}
 				}
