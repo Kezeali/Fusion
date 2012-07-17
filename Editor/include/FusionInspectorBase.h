@@ -437,6 +437,7 @@ namespace FusionEngine { namespace Inspectors
 
 		Rocket::Core::XMLAttributes attributes;
 		attributes.Set("type", "text");
+		attributes.Set("enter_event", true);
 		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
 		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
 		attributes.Set("value", "");
@@ -638,6 +639,7 @@ namespace FusionEngine { namespace Inspectors
 			Rocket::Core::XMLAttributes attributes;
 			//attributes.Set("class", "circle_input");
 			attributes.Set("type", "text");
+			attributes.Set("enter_event", true);
 			attributes.Set("size", 10);
 			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
 				"input",
@@ -709,6 +711,7 @@ namespace FusionEngine { namespace Inspectors
 			Rocket::Core::XMLAttributes attributes;
 			//attributes.Set("class", "circle_input");
 			attributes.Set("type", "text");
+			attributes.Set("enter_event", true);
 			attributes.Set("size", 10);
 			Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
 				"input",
@@ -801,6 +804,8 @@ namespace FusionEngine { namespace Inspectors
 			}
 			else if (isTextboxElem && ev == "blur")
 			{
+				// TODO: make it an setable option whether un-focusing an input resets or commits the changed value
+				//  (could default to commiting once undo/redo for properties is implemented tho)
 				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
 				if (entry != m_Inputs.end())
 				{
