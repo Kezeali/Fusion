@@ -291,15 +291,15 @@ namespace FusionEngine
 		//float GetMapWidth() const { return m_Bounds.x * 2.f; }
 		float GetCellSize() const { return m_CellSize; }
 
-		inline CellHandle ToCellLocation(float x, float y) const;
-		inline CellHandle ToCellLocation(const Vector2 &position) const;
+		CellHandle ToCellLocation(float x, float y) const;
+		CellHandle ToCellLocation(const Vector2 &position) const;
 
-		inline Cell *CellAtCellLocation(const CellHandle& cell_location);
+		Cell *CellAtCellLocation(const CellHandle& cell_location);
 
-		inline Cell *CellAtPosition(float x, float y);
-		inline Cell *CellAtPosition(const Vector2 &position);
+		Cell *CellAtPosition(float x, float y);
+		Cell *CellAtPosition(const Vector2 &position);
 
-		inline std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
+		std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
 
 		void QueryRect(const std::function<bool (const EntityPtr&)>& fn, const Vector2& lb, const Vector2& ub) const;
 
@@ -468,13 +468,13 @@ namespace FusionEngine
 
 		CellDataSource* m_Archivist;
 
-		inline void StoreWhenDereferenced(const CellHandle& location);
-		inline void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);
-		inline void StoreWhenDereferenced(const CellMap_t::iterator& location);
+		void StoreWhenDereferenced(const CellHandle& location);
+		void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);
+		void StoreWhenDereferenced(const CellMap_t::iterator& location);
 
 		std::shared_ptr<Cell>& RetrieveCell(const CellHandle &location);
-		inline void StoreCell(const CellHandle& location);
-		inline void StoreCell(const CellMap_t::iterator& location);
+		void StoreCell(const CellHandle& location);
+		void StoreCell(const CellMap_t::iterator& location);
 		//! Makes sure that the given cell is in either Ready or Retrieve state
 		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);
 
@@ -491,6 +491,10 @@ namespace FusionEngine
 		void GenerateRemoteActivationEvent(ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state);
 		void GenerateRemoteDeactivationEvent(ObjectID entity, PlayerID viewer);
 
+		typedef std::pair<Vector2, float> StreamPosition_t;
+		typedef std::list<StreamPosition_t> LocalStreamPositionsList_t;
+		typedef std::list<std::pair<StreamPosition_t, PlayerID>> RemoteStreamPositionsList_t;
+		void MergeRange(std::list<CL_Rect>& inactiveRanges, std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, CL_Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam);
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
 
