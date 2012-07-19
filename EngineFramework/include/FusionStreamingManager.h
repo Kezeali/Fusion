@@ -468,13 +468,13 @@ namespace FusionEngine
 
 		CellDataSource* m_Archivist;
 
-		inline void StoreWhenDereferenced(const CellHandle& location);
-		inline void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);
-		inline void StoreWhenDereferenced(const CellMap_t::iterator& location);
+		void StoreWhenDereferenced(const CellHandle& location);
+		void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);
+		void StoreWhenDereferenced(const CellMap_t::iterator& location);
 
 		std::shared_ptr<Cell>& RetrieveCell(const CellHandle &location);
-		inline void StoreCell(const CellHandle& location);
-		inline void StoreCell(const CellMap_t::iterator& location);
+		void StoreCell(const CellHandle& location);
+		void StoreCell(const CellMap_t::iterator& location);
 		//! Makes sure that the given cell is in either Ready or Retrieve state
 		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);
 
@@ -491,6 +491,10 @@ namespace FusionEngine
 		void GenerateRemoteActivationEvent(ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state);
 		void GenerateRemoteDeactivationEvent(ObjectID entity, PlayerID viewer);
 
+		typedef std::pair<Vector2, float> StreamPosition_t;
+		typedef std::list<StreamPosition_t> LocalStreamPositionsList_t;
+		typedef std::list<std::pair<StreamPosition_t, PlayerID>> RemoteStreamPositionsList_t;
+		void MergeRange(std::list<CL_Rect>& inactiveRanges, std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, CL_Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam);
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
 
