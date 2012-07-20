@@ -335,8 +335,24 @@ namespace FusionEngine
 
 		//const std::set<EntityPtr> &GetActiveEntities() const;
 
+		//! Update modes
+		/*
+		* Default: Only update areas around cameras that have moved
+		* AllCameras: Update areas around all cameras, whether they have moved or not
+		* CheckArchive: Poll the archive to check if cells that have been requested are ready
+		*  (if this isn't set, it will happen every few seconds)
+		* AllCamerasAndArchive: AllCameras + CheckArchive
+		*/
+		enum UpdateMode
+		{
+			Default = 0x00,
+			AllCameras = 0x01,
+			CheckArchive = 0x02,
+			AllCamerasAndArchive = AllCameras | CheckArchive
+		};
+
 		//! Calculates the active streaming area for each camera
-		void Update(const bool refresh = false);
+		void Update(const float delta, const int mode = Default);
 
 		static void Register(asIScriptEngine *engine);
 
@@ -463,6 +479,9 @@ namespace FusionEngine
 		CellMap_t m_CellsBeingLoaded;
 		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
+
+		float m_TimeUntilVoidRefresh;
+		float m_TimeUntilCheckRequests;
 
 		CellMap_t m_CellsToStore;
 

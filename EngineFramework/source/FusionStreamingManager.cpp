@@ -97,6 +97,8 @@ namespace FusionEngine
 
 	StreamingManager::StreamingManager(CellDataSource* archivist)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
+		m_TimeUntilVoidRefresh(0.0f),
+		m_TimeUntilCheckRequests(0.0f),
 		m_Archivist(archivist)
 	{
 		m_Range = s_DefaultActivationRange;
@@ -519,7 +521,7 @@ namespace FusionEngine
 	void StreamingManager::StoreAllCells(bool setup_refresh)
 	{
 		while (!m_TheVoid.objects.empty())
-			Update(false);
+			Update(0.0f, CheckArchive);
 
 		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
 		{
@@ -1329,12 +1331,24 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::Update(const bool refresh)
+	static const float m_PollArchiveInterval = 0.25f;
+
+	void StreamingManager::Update(const float delta, const int mode)
 	{
-		// TODO: Don't check The Void every frame, wait a few milis in between queries to give the loader a chance
-		//  Also don't check requested entities every frame 
-		// Try to clear The Void
+		const bool checkArchive = (mode & CheckArchive) != 0;
+		const bool refreshCameras = (mode & AllCameras) != 0;
+
+		bool refreshedVoid = false;
+		if (!checkArchive && m_TimeUntilVoidRefresh > 0.0f)
 		{
+			m_TimeUntilVoidRefresh -= delta;
+		}
+		else
+		{
+			m_TimeUntilVoidRefresh = m_PollArchiveInterval;
+			refreshedVoid = true;
+
+			// Try to clear The Void
 			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
 			if (lock)
 			{
@@ -1396,58 +1410,67 @@ namespace FusionEngine
 			}
 		}
 
-		std::vector<ObjectID> failedRequests;
-		// Check for requested cells that have finished loading
-		for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
+		if (!checkArchive && m_TimeUntilCheckRequests > 0.0f)
 		{
-			auto& cellLocation = it->first;
+			m_TimeUntilCheckRequests -= delta;
+		}
+		else if (checkArchive || !refreshedVoid)
+		{
+			m_TimeUntilCheckRequests = m_PollArchiveInterval;
 
-			FSN_ASSERT(m_Cells.find(cellLocation) != m_Cells.end());
-			auto cell = CellAtCellLocation(cellLocation);
-
-			if (cell->IsLoaded())
+			std::vector<ObjectID> failedRequests;
+			// Check for requested cells that have finished loading
+			for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
 			{
-				Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-				if (lock && cell->IsLoaded())
+				auto& cellLocation = it->first;
+
+				FSN_ASSERT(m_Cells.find(cellLocation) != m_Cells.end());
+				auto cell = CellAtCellLocation(cellLocation);
+
+				if (cell->IsLoaded())
 				{
-					auto& requestedIds = it->second;
-					for (auto eit = cell->objects.begin(), eend = cell->objects.end(); eit != eend; ++eit)
+					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+					if (lock && cell->IsLoaded())
 					{
-						if (requestedIds.count(eit->first->GetID()) != 0)
+						auto& requestedIds = it->second;
+						for (auto eit = cell->objects.begin(), eend = cell->objects.end(); eit != eend; ++eit)
 						{
-							requestedIds.erase(eit->first->GetID());
-							if (!eit->second.active)
+							if (requestedIds.count(eit->first->GetID()) != 0)
 							{
-								ActivateEntity(cellLocation, *cell, eit->first, eit->second);
-								if (!cell->inRange)
-									QueueEntityForDeactivation(eit->second, true);
+								requestedIds.erase(eit->first->GetID());
+								if (!eit->second.active)
+								{
+									ActivateEntity(cellLocation, *cell, eit->first, eit->second);
+									if (!cell->inRange)
+										QueueEntityForDeactivation(eit->second, true);
+								}
 							}
 						}
-					}
-					// List requested entities that weren't found in the expected cell
-					for (auto rit = requestedIds.begin(), rend = requestedIds.end(); rit != rend; ++rit)
-					{
-						if (m_Archivist->GetEntityLocation(*rit) != cellLocation) // Location changed
+						// List requested entities that weren't found in the expected cell
+						for (auto rit = requestedIds.begin(), rend = requestedIds.end(); rit != rend; ++rit)
 						{
-							failedRequests.push_back(*rit);
+							if (m_Archivist->GetEntityLocation(*rit) != cellLocation) // Location changed
+							{
+								failedRequests.push_back(*rit);
+							}
+							else // Missing altogether (listed in DB, but entry is inaccurate)
+							{
+								std::stringstream str; str << "ObjectID [" << *rit << "] was expected in cell [" << cellLocation.x << "," << cellLocation.y << "]";
+								AddLogEntry("Streaming", "Failed to load requested entity (missing from cell data): " + str.str(), LOG_CRITICAL);
+								m_Archivist->Remove(*rit);
+							}
 						}
-						else // Missing altogether (listed in DB, but entry is inaccurate)
-						{
-							std::stringstream str; str << "ObjectID [" << *rit << "] was expected in cell [" << cellLocation.x << "," << cellLocation.y << "]";
-							AddLogEntry("Streaming", "Failed to load requested entity (missing from cell data): " + str.str(), LOG_CRITICAL);
-							m_Archivist->Remove(*rit);
-						}
-					}
-					it = m_RequestedEntities.erase(it);
-					end = m_RequestedEntities.end();
-					continue;
-				} // if (lock)
-			} // if (loaded)
-			++it;
+						it = m_RequestedEntities.erase(it);
+						end = m_RequestedEntities.end();
+						continue;
+					} // if (lock)
+				} // if (loaded)
+				++it;
+			}
+			// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
+			for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
+				ActivateEntity(*it);
 		}
-		// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
-		for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
-			ActivateEntity(*it);
 
 		for (auto it = m_CellsToStore.begin(), end = m_CellsToStore.end(); it != end;)
 		{
@@ -1490,7 +1513,7 @@ namespace FusionEngine
 				const bool localCam = cam.owner == 0 || PlayerRegistry::IsLocal(cam.owner);
 
 				// Figure out the active range of this camera
-				if (refresh || cam.firstUpdate || !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.1f))
+				if (refreshCameras || cam.firstUpdate || !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.1f))
 				{
 					Vector2 oldPosition = cam.lastUsedPosition;
 					cam.lastUsedPosition = newPosition;
