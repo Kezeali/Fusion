@@ -269,6 +269,9 @@ namespace FusionEngine
 		//! Clears out all held cells
 		void Reset();
 
+		void SetPollArchiveInterval(const float interval);
+		float GetPollArchiveInterval() const { return m_PollArchiveInterval; }
+
 		//! Adds the given camera
 		void AddCamera(const CameraPtr &cam, float range = -1.f);
 		//! Removes the given camera
@@ -480,6 +483,7 @@ namespace FusionEngine
 		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
+		float m_PollArchiveInterval;
 		float m_TimeUntilVoidRefresh;
 		float m_TimeUntilCheckRequests;
 

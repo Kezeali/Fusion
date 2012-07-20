@@ -54,6 +54,8 @@ namespace FusionEngine
 
 	const float s_DefaultDeactivationTime = 0.1f;
 
+	static const float s_DefaultPollArchiveInterval = 0.25f;
+
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
 #define FSN_CELL_LOG
@@ -97,6 +99,7 @@ namespace FusionEngine
 
 	StreamingManager::StreamingManager(CellDataSource* archivist)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
+		m_PollArchiveInterval(s_DefaultPollArchiveInterval),
 		m_TimeUntilVoidRefresh(0.0f),
 		m_TimeUntilCheckRequests(0.0f),
 		m_Archivist(archivist)
@@ -143,6 +146,11 @@ namespace FusionEngine
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		m_Cameras.clear();
 		m_CamIds.freeAll();
+	}
+
+	void StreamingManager::SetPollArchiveInterval(const float interval)
+	{
+		m_PollArchiveInterval = interval;
 	}
 
 	void StreamingManager::Save(std::ostream& stream)
@@ -1331,8 +1339,6 @@ namespace FusionEngine
 		}
 	}
 
-	static const float m_PollArchiveInterval = 0.25f;
-
 	void StreamingManager::Update(const float delta, const int mode)
 	{
 		const bool checkArchive = (mode & CheckArchive) != 0;
@@ -1410,14 +1416,18 @@ namespace FusionEngine
 			}
 		}
 
+		bool makeRequestsAllowed = false;
 		if (!checkArchive && m_TimeUntilCheckRequests > 0.0f)
 		{
 			m_TimeUntilCheckRequests -= delta;
 		}
 		else if (checkArchive || !refreshedVoid)
 		{
+			makeRequestsAllowed = true;
 			m_TimeUntilCheckRequests = m_PollArchiveInterval;
-
+		}
+		
+		{
 			std::vector<ObjectID> failedRequests;
 			// Check for requested cells that have finished loading
 			for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
@@ -1467,9 +1477,13 @@ namespace FusionEngine
 				} // if (loaded)
 				++it;
 			}
-			// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
-			for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
-				ActivateEntity(*it);
+
+			if (makeRequestsAllowed)
+			{
+				// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
+				for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
+					ActivateEntity(*it);
+			}
 		}
 
 		for (auto it = m_CellsToStore.begin(), end = m_CellsToStore.end(); it != end;)
@@ -1687,17 +1701,19 @@ namespace FusionEngine
 			// Clear loaded cells
 			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex); // TheVoid's mutex is used to lock m_CellsBeingLoaded
 			if (lock)
-			for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
 			{
-				auto cell = it->second;
-				if (cell->IsLoaded())
+				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
 				{
-					processCell(it->first, *cell, allLocalStreamPositions, allRemoteStreamPositions);
-					it = m_CellsBeingLoaded.erase(it);
-					end = m_CellsBeingLoaded.end();
+					auto cell = it->second;
+					if (cell->IsLoaded())
+					{
+						processCell(it->first, *cell, allLocalStreamPositions, allRemoteStreamPositions);
+						it = m_CellsBeingLoaded.erase(it);
+						end = m_CellsBeingLoaded.end();
+					}
+					else
+						++it;
 				}
-				else
-					++it;
 			}
 		}
 	}

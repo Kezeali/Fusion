@@ -1652,6 +1652,18 @@ namespace FusionEngine
 					//ShowDeleteDialog();
 				}
 				break;
+			case CL_KEY_PRIOR:
+				{
+				float interval = m_StreamingManager->GetPollArchiveInterval();
+				m_StreamingManager->SetPollArchiveInterval(interval += 0.05f);
+				}
+				break;
+			case CL_KEY_NEXT:
+				{
+				float interval = m_StreamingManager->GetPollArchiveInterval();
+				m_StreamingManager->SetPollArchiveInterval(interval -= 0.05f);
+				}
+				break;
 			}
 		}
 		// Numbers

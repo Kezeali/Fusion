@@ -351,9 +351,9 @@ namespace FusionEngine
 
 		m_Quit.reset();
 		m_Thread = boost::thread(&RegionMapLoader::Run, this);
-#ifdef _WIN32
-		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#endif
+//#ifdef _WIN32
+//		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+//#endif
 	}
 
 	void RegionMapLoader::Stop()
@@ -658,6 +658,8 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
+			if (!m_WriteQueue.empty() || !m_ReadQueue.empty())
+				SendToConsole(retrying ? "Retrying" : "Archive Running");
 			if (eventId == 1) // TransactionEnded
 			{
 				ClearReadyCells(readyCells);
@@ -670,6 +672,13 @@ namespace FusionEngine
 					{
 						PerformSave(saveName);
 					}
+				}
+
+				bool writingMsg = false;
+				if (!m_WriteQueue.empty())
+				{
+					writingMsg = true;
+					SendToConsole("Writing");
 				}
 
 				std::list<WriteQueue_t::value_type> writesToRetry;
@@ -768,6 +777,14 @@ namespace FusionEngine
 							}
 						}
 					}
+				}
+				if (writingMsg)
+					SendToConsole("Done Writing");
+				bool readingMsg = false;
+				if (!m_ReadQueue.empty())
+				{
+					readingMsg = true;
+					SendToConsole("Reading");
 				}
 				{
 					std::tuple<std::weak_ptr<Cell>, CellCoord_t> toRead;
@@ -887,6 +904,8 @@ namespace FusionEngine
 						}
 					}
 				}
+				if (readingMsg)
+					SendToConsole("Done Reading");
 				// Re-enqueue blocked writes/reads
 				retrying = false;
 				if (!writesToRetry.empty())
@@ -1016,6 +1035,9 @@ namespace FusionEngine
 
 					}
 				}
+
+				if (readingMsg || writingMsg)
+					SendToConsole("Done Running Archive");
 
 				if (eventId == 0) // Quit
 				{
