@@ -44,6 +44,9 @@
 
 #include <boost/crc.hpp>
 
+//#include <tbb/atomic.h>
+#include <functional>
+
 using namespace FusionEngine::IO::Streams;
 
 namespace FusionEngine
@@ -1097,6 +1100,54 @@ namespace FusionEngine
 			return entity;
 		}
 
+		class ArchetypalEntityFuture : public EntityFuture
+		{
+		public:
+			ArchetypalEntityFuture(const std::function<const ResourceDataPtr&>& finalise);
+
+			void OnArchetypeLoaded(ResourceDataPtr resource);
+
+			EntityPtr get();
+
+			bool ready() const;
+
+		private:
+			ResourceDataPtr m_Resource;
+			std::function<EntityPtr (const ResourceDataPtr&)> m_FinaliseFn;
+
+			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
+
+			CL_Event m_GotResult;
+			//tbb::atomic<bool> gotResult;
+		};
+
+		ArchetypalEntityFuture::ArchetypalEntityFuture(const std::function<const ResourceDataPtr&>& finalise)
+			: m_FinaliseFn(finalise),
+			m_GotResult(true, false)
+		{
+		}
+
+		void ArchetypalEntityFuture::OnArchetypeLoaded(ResourceDataPtr resource)
+		{
+			m_Resource = resource;
+			m_GotResult.set();
+		}
+
+		EntityPtr ArchetypalEntityFuture::get()
+		{
+			CL_Event::wait(m_GotResult);
+
+			if (m_Resource)
+				return m_FinaliseFn(m_Resource);
+			else
+				return EntityPtr();
+		}
+
+		bool ArchetypalEntityFuture::ready() const
+		{
+			return (bool)m_Resource;
+		}
+
 		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
@@ -1118,7 +1169,7 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
 
-			EntityPtr entity = archetype_factory->MakeInstance(factory, archetype_id, position, angle);
+			EntityPtr entity;// = archetype_factory->MakeInstance(factory, archetype_id, position, angle);
 
 			// Deserialise the archetype agent
 			{

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2009-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -39,6 +39,8 @@
 #include "FusionNetDestinationHelpers.h"
 
 #include "FusionLogger.h"
+
+#include <boost/thread.hpp>
 
 #include <cmath>
 
@@ -101,7 +103,6 @@ namespace FusionEngine
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_PollArchiveInterval(s_DefaultPollArchiveInterval),
 		m_TimeUntilVoidRefresh(0.0f),
-		m_TimeUntilCheckRequests(0.0f),
 		m_Archivist(archivist)
 	{
 		m_Range = s_DefaultActivationRange;
@@ -109,18 +110,10 @@ namespace FusionEngine
 
 		m_CellSize = s_DefaultCellSize;
 		m_InverseCellSize = 1.f / m_CellSize;
-
-		//NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_ADD, this);
-		//NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_REMOVE, this);
-		//NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_MOVE, this);
 	}
 
 	StreamingManager::~StreamingManager()
 	{
-		//NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_ADD, this);
-		//NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_REMOVE, this);
-		//NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_MOVE, this);
-		//delete[] m_Cells;
 	}
 
 	void StreamingManager::Initialise(float cell_size)
@@ -526,10 +519,13 @@ namespace FusionEngine
 		m_Cells.erase(entry);
 	}
 
-	void StreamingManager::StoreAllCells(bool setup_refresh)
+	void StreamingManager::StoreAllCells(bool refresh_next_update)
 	{
 		while (!m_TheVoid.objects.empty())
-			Update(0.0f, CheckArchive);
+		{
+			CL_System::sleep(1);
+			Update(Default);
+		}
 
 		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
 		{
@@ -539,9 +535,12 @@ namespace FusionEngine
 
 			m_Archivist->Store(loc.x, loc.y, cell);
 		}
-		//m_Cells.clear();
+		// Not dropping the cell references here (which could be done by
+		//  clearing m_Cells) informs the archivist that the cells are
+		//  still in use, dispite being stored (so it wont destroy their
+		//  contents when it is done.)
 
-		if (setup_refresh)
+		if (refresh_next_update)
 		{
 			// This will make the next call to Update do a full refresh
 			CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
@@ -1339,21 +1338,11 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::Update(const float delta, const int mode)
+	void StreamingManager::Update(const int mode)
 	{
-		const bool checkArchive = (mode & CheckArchive) != 0;
 		const bool refreshCameras = (mode & AllCameras) != 0;
 
-		bool refreshedVoid = false;
-		if (!checkArchive && m_TimeUntilVoidRefresh > 0.0f)
 		{
-			m_TimeUntilVoidRefresh -= delta;
-		}
-		else
-		{
-			m_TimeUntilVoidRefresh = m_PollArchiveInterval;
-			refreshedVoid = true;
-
 			// Try to clear The Void
 			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
 			if (lock)
@@ -1415,17 +1404,6 @@ namespace FusionEngine
 				}
 			}
 		}
-
-		bool makeRequestsAllowed = false;
-		if (!checkArchive && m_TimeUntilCheckRequests > 0.0f)
-		{
-			m_TimeUntilCheckRequests -= delta;
-		}
-		else if (checkArchive || !refreshedVoid)
-		{
-			makeRequestsAllowed = true;
-			m_TimeUntilCheckRequests = m_PollArchiveInterval;
-		}
 		
 		{
 			std::vector<ObjectID> failedRequests;
@@ -1478,12 +1456,9 @@ namespace FusionEngine
 				++it;
 			}
 
-			if (makeRequestsAllowed)
-			{
-				// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
-				for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
-					ActivateEntity(*it);
-			}
+			// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
+			for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
+				ActivateEntity(*it);
 		}
 
 		for (auto it = m_CellsToStore.begin(), end = m_CellsToStore.end(); it != end;)
@@ -1610,9 +1585,6 @@ namespace FusionEngine
 
 			for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
 			{
-				//std::stringstream inactivestr;
-				//inactivestr << it->left << ", " << it->top << ", " << it->right << ", " << it->bottom;
-				//SendToConsole("Deactivated " + inactivestr.str());
 #ifdef _DEBUG
 				// Make sure there is no overlap (overlapping ranges should have been clipped above)
 				const bool noOverlap = std::all_of(activeRanges.begin(), activeRanges.end(),
@@ -1633,13 +1605,6 @@ namespace FusionEngine
 
 				if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
 				{
-					//if (!clippedInactiveRanges.empty())
-					//{
-					//	std::stringstream activestr;
-					//	activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
-					//	SendToConsole("Activated " + activestr.str());
-					//}
-
 					int iy = activeRange.top;
 					int ix = activeRange.left;
 

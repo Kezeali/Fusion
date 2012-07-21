@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2009-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -308,12 +308,12 @@ namespace FusionEngine
 
 		//! Pass all loaded cells to the archivist to be stored
 		/*!
-		* \param setup_refresh
+		* \param refresh_next_update
 		* Setting this to true will make the next call to Update() do a full refresh
 		* (process all cameras) so any cells that were being retrieved before this was
 		* called will continue to be loaded.
 		*/
-		void StoreAllCells(bool setup_refresh = true);
+		void StoreAllCells(bool refresh_next_update = true);
 
 		//! Writes info needed when loading saves
 		void Save(std::ostream& stream);
@@ -349,13 +349,11 @@ namespace FusionEngine
 		enum UpdateMode
 		{
 			Default = 0x00,
-			AllCameras = 0x01,
-			CheckArchive = 0x02,
-			AllCamerasAndArchive = AllCameras | CheckArchive
+			AllCameras = 0x01
 		};
 
 		//! Calculates the active streaming area for each camera
-		void Update(const float delta, const int mode = Default);
+		void Update(const int mode = Default);
 
 		static void Register(asIScriptEngine *engine);
 
@@ -485,7 +483,6 @@ namespace FusionEngine
 
 		float m_PollArchiveInterval;
 		float m_TimeUntilVoidRefresh;
-		float m_TimeUntilCheckRequests;
 
 		CellMap_t m_CellsToStore;
 

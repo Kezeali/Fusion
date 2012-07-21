@@ -88,10 +88,18 @@ namespace FusionEngine
 		//! Copy inactive entity data
 		void CopyEntityData(ICellStream& in, OCellStream& out);
 
+		class EntityFuture
+		{
+		public:
+			virtual ~EntityFuture() {}
+
+			virtual EntityPtr get() = 0;
+		};
+
 		//! Save an entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
 		//! Load an entity (checks for archetypes)
-		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		EntityFuture LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		
 		//! Load a non-archetypal entity
 		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);

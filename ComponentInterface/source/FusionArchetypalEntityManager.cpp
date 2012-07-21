@@ -391,12 +391,10 @@ namespace FusionEngine
 		}
 	}
 
-	//! Save the local overrides
 	void ArchetypeDefinitionAgent::Serialise(RakNet::BitStream& stream)
 	{
 	}
 
-	//! Load the local overrides
 	void ArchetypeDefinitionAgent::Deserialise(RakNet::BitStream& stream)
 	{
 	}

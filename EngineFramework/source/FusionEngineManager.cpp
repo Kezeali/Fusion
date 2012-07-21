@@ -88,7 +88,7 @@ namespace FusionEngine
 		SetupPhysFS::mount_archives(s_PackagesPath, "", "zip", false);
 
 		// Clear cache
-		SetupPhysFS::clear_temp();
+		//SetupPhysFS::clear_temp();
 
 		// Init Logger
 		m_Logger.reset(new Logger);

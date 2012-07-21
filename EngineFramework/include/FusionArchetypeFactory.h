@@ -51,6 +51,23 @@ namespace FusionEngine
 	}
 	class ArchetypeDefinitionAgent;
 
+	class SaveDataArchive;
+
+	struct ArchetypeData
+	{
+	public:
+		EntityPtr Archetype;
+		std::shared_ptr<Archetypes::Profile> Profile;
+		std::shared_ptr<ArchetypeDefinitionAgent> Agent;
+
+		ArchetypeData() {}
+		explicit ArchetypeData(EntityPtr entity) : Archetype(entity) {}
+		ArchetypeData(ArchetypeData&& other) : Archetype(std::move(other.Archetype)) {}
+	private:
+		ArchetypeData(const ArchetypeData&) {}
+		ArchetypeData& operator=(const ArchetypeData&) {}
+	};
+
 	//! Used to define archetypes
 	class ArchetypeFactory
 	{
@@ -62,47 +79,37 @@ namespace FusionEngine
 		* in edit mode.
 		*/
 		ArchetypeFactory(EntityInstantiator* instantiator);
-		virtual ~ArchetypeFactory();
+		~ArchetypeFactory();
 
 		void SetEditable(bool value) { m_Editable = value; }
 
-		//! Returns an existing archetype
-		EntityPtr GetArchetype(const std::string& type_id) const;
-
-		//! Creates a new archetype
-		//EntityPtr CreateArchetype(ComponentFactory* factory, const std::string& type_id, const std::string& transform_type);
+		void Save(std::ostream& stream);
+		void Load(std::istream& stream);
 
 		//! Makes the given entity an instance of the given archetype
-		virtual EntityPtr MakeInstance(ComponentFactory* factory, const std::string& type_id, const Vector2& pos, float angle);
+		EntityPtr MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
 
 		//! Defines the given archetype using the given entity
 		void DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity);
 
-		//! Used by the definition to push changes to instances
-		//void PushChange(const std::string& type_id, RakNet::BitStream& data);
-
 	private:
-		struct ArchetypeData
-		{
-		public:
-			EntityPtr Archetype;
-			std::shared_ptr<Archetypes::Profile> Profile;
-			std::shared_ptr<ArchetypeDefinitionAgent> Agent;
-
-			ArchetypeData() {}
-			explicit ArchetypeData(EntityPtr entity) : Archetype(entity) {}
-			ArchetypeData(ArchetypeData&& other) : Archetype(std::move(other.Archetype)) {}
-		private:
-			ArchetypeData(const ArchetypeData&) {}
-			ArchetypeData& operator=(const ArchetypeData&) {}
-		};
-		std::map<std::string, ArchetypeData> m_Archetypes;
+		std::string m_TypeName;
+		ArchetypeData m_ArchetypeData;
 
 		bool m_Editable;
 
 		mutable boost::mutex m_Mutex;
 
 		EntityInstantiator* m_ComponentInstantiator;
+	};
+
+	//! Archetype resource loader callback
+	void LoadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! Archetype resource unloader callback
+	void UnloadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+
+	class ArchetypeInstantiator
+	{
 	};
 
 }

@@ -1749,7 +1749,7 @@ namespace FusionEngine
 
 	void EntityManager::UpdateActiveRegions()
 	{
-		m_StreamingManager->Update(DeltaTime::GetDeltaTime(), StreamingManager::Default);
+		m_StreamingManager->Update(StreamingManager::Default);
 	}
 
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
