@@ -63,7 +63,7 @@ namespace FusionEngine
 	class PlayerManager;
 	class PlayerRegistry;
 	class Profiling;
-	class RegionMapLoader;
+	class RegionCellArchivist;
 	class SoundOutput;
 
 	class TaskManager;
@@ -125,7 +125,7 @@ namespace FusionEngine
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
-		std::shared_ptr<RegionMapLoader> m_CellArchivist;
+		std::shared_ptr<RegionCellArchivist> m_CellArchivist;
 		std::shared_ptr<StreamingManager> m_StreamingManager;
 		std::shared_ptr<CameraSynchroniser> m_CameraSynchroniser;
 

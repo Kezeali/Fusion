@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -36,6 +36,7 @@
 #include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionEntityInstantiator.h"
+#include "FusionResourceManager.h"
 
 #include "FusionBinaryStream.h"
 
@@ -44,7 +45,6 @@
 
 #include <boost/crc.hpp>
 
-//#include <tbb/atomic.h>
 #include <functional>
 
 using namespace FusionEngine::IO::Streams;
@@ -991,7 +991,74 @@ namespace FusionEngine
 			}
 		}
 
-		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
+		class DoNothingEntityFuture : public EntityFuture
+		{
+		public:
+			DoNothingEntityFuture(const EntityPtr& entity) : m_Entity(entity) {}
+
+			EntityPtr get() { return m_Entity; }
+
+			bool is_ready() const { return true; }
+
+		private:
+			EntityPtr m_Entity;
+		};
+
+		class ArchetypalEntityFuture : public EntityFuture
+		{
+		public:
+			ArchetypalEntityFuture(const std::string& archetype_id, const std::function<EntityPtr (const ResourceDataPtr&)>& finalise);
+
+			void OnArchetypeLoaded(ResourceDataPtr resource);
+
+			EntityPtr get();
+
+			bool is_ready() const;
+
+		private:
+			ResourceDataPtr m_Resource;
+			std::function<EntityPtr (const ResourceDataPtr&)> m_FinaliseFn;
+
+			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
+
+			CL_Event m_GotResult;
+		};
+
+		ArchetypalEntityFuture::ArchetypalEntityFuture(const std::string& archetype_id, const std::function<EntityPtr (const ResourceDataPtr&)>& finalise)
+			: m_FinaliseFn(finalise),
+			m_GotResult(true, false)
+		{
+			m_ResourceLoaderCnx = std::make_shared<boost::signals2::scoped_connection>(
+				ResourceManager::getSingleton().GetResource("ArchetypeFactory", archetype_id, std::bind(&ArchetypalEntityFuture::OnArchetypeLoaded, this, std::placeholders::_1)));
+		}
+
+		void ArchetypalEntityFuture::OnArchetypeLoaded(ResourceDataPtr resource)
+		{
+			m_Resource = resource;
+			m_GotResult.set();
+		}
+
+		EntityPtr ArchetypalEntityFuture::get()
+		{
+			CL_Event::wait(m_GotResult);
+
+			if (m_Resource)
+				return m_FinaliseFn(m_Resource);
+			else
+				return EntityPtr();
+		}
+
+		bool ArchetypalEntityFuture::is_ready() const
+		{
+			return (bool)m_Resource;
+		}
+
+		EntityPtr LoadEntityImmeadiate(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser)
+		{
+			return LoadEntity(in, id_included, override_id, editable, factory, manager, synchroniser)->get();
+		}
+
+		std::shared_ptr<EntityFuture> LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 
@@ -1021,9 +1088,17 @@ namespace FusionEngine
 			const bool isArchetypal = !archetypeId.empty();
 
 			if (isArchetypal)
-				return LoadArchetypalEntity(instr, archetypeId, id, owner, name, terrain, editable, factory, archetype_factory, manager, instantiator);
+			{
+				return std::make_shared<ArchetypalEntityFuture>(archetypeId, [&](const ResourceDataPtr& resource)->EntityPtr
+				{
+					auto archetypeFactory = static_cast<ArchetypeFactory*>(resource->GetDataPtr());
+					return LoadArchetypalEntity(instr, archetypeFactory, id, owner, name, terrain, editable, factory, manager, instantiator);
+				});
+			}
 			else
-				return LoadUniqueEntity(instr, id, owner, name, terrain, editable, factory, manager, instantiator);
+			{
+				return std::make_shared<DoNothingEntityFuture>(LoadUniqueEntity(instr, id, owner, name, terrain, editable, factory, manager, instantiator));
+			}
 		}
 
 		EntityPtr LoadUniqueEntity(ICellStream& instr, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
@@ -1100,55 +1175,7 @@ namespace FusionEngine
 			return entity;
 		}
 
-		class ArchetypalEntityFuture : public EntityFuture
-		{
-		public:
-			ArchetypalEntityFuture(const std::function<const ResourceDataPtr&>& finalise);
-
-			void OnArchetypeLoaded(ResourceDataPtr resource);
-
-			EntityPtr get();
-
-			bool ready() const;
-
-		private:
-			ResourceDataPtr m_Resource;
-			std::function<EntityPtr (const ResourceDataPtr&)> m_FinaliseFn;
-
-			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
-
-			CL_Event m_GotResult;
-			//tbb::atomic<bool> gotResult;
-		};
-
-		ArchetypalEntityFuture::ArchetypalEntityFuture(const std::function<const ResourceDataPtr&>& finalise)
-			: m_FinaliseFn(finalise),
-			m_GotResult(true, false)
-		{
-		}
-
-		void ArchetypalEntityFuture::OnArchetypeLoaded(ResourceDataPtr resource)
-		{
-			m_Resource = resource;
-			m_GotResult.set();
-		}
-
-		EntityPtr ArchetypalEntityFuture::get()
-		{
-			CL_Event::wait(m_GotResult);
-
-			if (m_Resource)
-				return m_FinaliseFn(m_Resource);
-			else
-				return EntityPtr();
-		}
-
-		bool ArchetypalEntityFuture::ready() const
-		{
-			return (bool)m_Resource;
-		}
-
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			CellStreamReader in(&instr);
 
@@ -1169,7 +1196,7 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
 
-			EntityPtr entity;// = archetype_factory->MakeInstance(factory, archetype_id, position, angle);
+			EntityPtr entity = archetype_factory->MakeInstance(factory, position, angle);
 
 			// Deserialise the archetype agent
 			{

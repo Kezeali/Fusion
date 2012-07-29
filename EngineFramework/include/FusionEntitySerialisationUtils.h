@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -88,23 +88,30 @@ namespace FusionEngine
 		//! Copy inactive entity data
 		void CopyEntityData(ICellStream& in, OCellStream& out);
 
+		//! In the future, there will be an ENTITY! IT IS THE ENTITY FUTURE.
 		class EntityFuture
 		{
 		public:
 			virtual ~EntityFuture() {}
 
+			//! Waits for the value to be available, then returns it
 			virtual EntityPtr get() = 0;
+
+			//! Returns true if the return value is available
+			virtual bool is_ready() const = 0;
 		};
 
 		//! Save an entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
 		//! Load an entity (checks for archetypes)
-		EntityFuture LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		std::shared_ptr<EntityFuture> LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		//! Load an entity RIGHT NOW
+		EntityPtr LoadEntityImmeadiate(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		
 		//! Load a non-archetypal entity
 		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		//! Load an archetypal entity
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, const std::string& archetype_id, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityManager* manager, EntityInstantiator* instantiator);
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator);
 	}
 
 }

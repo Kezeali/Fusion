@@ -845,7 +845,7 @@ namespace FusionEngine
 		m_MouseMoveSlot = m_DisplayWindow.get_ic().get_mouse().sig_pointer_move().connect(this, &Editor::OnMouseMove);
 	}
 
-	void Editor::SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader)
+	void Editor::SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader)
 	{
 		m_MapLoader = map_loader;	
 	}
@@ -1689,7 +1689,7 @@ namespace FusionEngine
 				}
 				else
 				{
-					auto arc = m_ArchetypeFactory->GetArchetype("arc1");
+					auto arc = m_ArchetypeFactory->GetArchetype();
 					arc->SynchroniseParallelEdits();
 					CreatePropertiesWindow(arc);
 				}
@@ -1714,7 +1714,7 @@ namespace FusionEngine
 							if (randomAngle)
 								angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
 
-							auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
+							auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
 							m_EntityManager->AddEntity(entity);
 
 							SendToConsole("Instanciate " + boost::lexical_cast<std::string>(pos.x));
@@ -1722,7 +1722,7 @@ namespace FusionEngine
 				}
 				else
 				{
-					auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), "arc1", simPos, 0.0f);
+					auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
 					m_EntityManager->AddEntity(entity);
 				}
 				return;
@@ -2330,7 +2330,7 @@ namespace FusionEngine
 					reader.Read(entityAngle);
 				}
 
-				auto entity = EntitySerialisationUtils::LoadEntity(*file, true, 0, true, m_ComponentFactory.get(), m_ArchetypeFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+				auto entity = EntitySerialisationUtils::LoadEntityImmeadiate(*file, true, 0, true, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
 
 				if (entity->GetID())
 					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());

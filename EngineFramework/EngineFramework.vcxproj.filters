@@ -82,6 +82,9 @@
     <ClCompile Include="source\FusionArchetype.cpp">
       <Filter>Archetypes</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionMultiEntityLoader.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -156,6 +159,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionArchetype.h">
       <Filter>Archetypes</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionMultiEntityLoader.h">
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

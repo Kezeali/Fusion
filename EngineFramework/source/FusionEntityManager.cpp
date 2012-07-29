@@ -1102,7 +1102,7 @@ namespace FusionEngine
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
 		{
-			auto entity = LoadEntity(stream, true, 0, editable, m_Universe, archetype_factory, this, instantiator);
+			auto entity = LoadEntityImmeadiate(stream, true, 0, editable, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 			m_LoadedNonStreamedEntities.push_back(entity);

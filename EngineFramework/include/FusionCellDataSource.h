@@ -37,10 +37,10 @@ namespace FusionEngine
 
 	// TODO: rename to cellarchiver
 	//! Store and retreive entity data
-	class CellDataSource
+	class CellArchiver
 	{
 	public:
-		virtual ~CellDataSource() {}
+		virtual ~CellArchiver() {}
 
 		virtual void Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell) = 0;
 		virtual std::shared_ptr<Cell> Retrieve(int32_t x, int32_t y) = 0;

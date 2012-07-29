@@ -65,8 +65,7 @@ namespace FusionEngine
 	class RegionCellCache;
 
 	//! CellArchiver implementaion
-	// TODO: rename to RegionCellArchivist
-	class RegionMapLoader : public CellDataSource, public SaveDataArchive
+	class RegionCellArchivist : public CellArchiver, public SaveDataArchive
 	{
 	public:
 		typedef Vector2T<int32_t> CellCoord_t;
@@ -76,8 +75,8 @@ namespace FusionEngine
 		* The map provides a static entity source, whilst the CellArchiver (cache) provides methods for 
 		* storing and retrieving entity states.
 		*/
-		RegionMapLoader(bool edit_mode, const std::string& cache_path = "/cache");
-		~RegionMapLoader();
+		RegionCellArchivist(bool edit_mode, const std::string& cache_path = "/cache");
+		~RegionCellArchivist();
 
 		void SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager, ArchetypeFactory* arc_factory);
 
@@ -160,9 +159,53 @@ namespace FusionEngine
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
-		EntityPtr LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable);
+		struct WriteTask
+		{
+			std::weak_ptr<Cell> cell;
+			CellCoord_t coord;
+			bool unloadWhenDone;
 
-		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids, const bool editable = false);
+			WriteTask()
+				: unloadWhenDone(false)
+			{}
+
+			WriteTask(const std::weak_ptr<Cell>& cell_, const CellCoord_t& coord_, const bool unload_when_done)
+				: cell(cell_),
+				coord(coord_),
+				unloadWhenDone(unload_when_done)
+			{}
+
+			WriteTask(WriteTask&& other)
+				: cell(std::move(other.cell)),
+				coord(other.coord),
+				unloadWhenDone(other.unloadWhenDone)
+			{}
+		};
+
+		struct ReadTask
+		{
+			std::weak_ptr<Cell> cell;
+			CellCoord_t coord;
+			std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>> entitiesInTransit;
+
+			ReadTask()
+			{}
+
+			ReadTask(const std::weak_ptr<Cell>& cell_, const CellCoord_t& coord_)
+				: cell(cell_),
+				coord(coord_)
+			{}
+
+			ReadTask(ReadTask&& other)
+				: cell(std::move(other.cell)),
+				coord(other.coord),
+				entitiesInTransit(std::move(other.entitiesInTransit))
+			{}
+		};
+
+		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable);
+
+		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, ICellStream& file, bool data_includes_ids, const bool editable = false);
 
 		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable = false);
 
@@ -171,6 +214,8 @@ namespace FusionEngine
 		void Run();
 
 	private:
+		bool ProcessIncommingEntities(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::shared_ptr<Cell>& conveniently_locked_cell);
+
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
 		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
@@ -212,19 +257,22 @@ namespace FusionEngine
 		EntityManager* m_EntityManager;
 		ArchetypeFactory* m_ArchetypeFactory;
 
+
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE
-		typedef tbb::concurrent_queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool>> WriteQueue_t;
-		typedef tbb::concurrent_queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t>> ReadQueue_t;
+		typedef tbb::concurrent_queue<WriteTask> WriteQueue_t;
+		typedef tbb::concurrent_queue<ReadTask> ReadQueue_t;
 #else
 		boost::mutex m_WriteQueueMutex;
 		boost::mutex m_ReadQueueMutex;
-		typedef std::queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool>> WriteQueue_t;
-		typedef std::queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t>> ReadQueue_t;
+		typedef std::queue<std::tuple<WriteTask> WriteQueue_t;
+		typedef std::queue<std::tuple<ReadTask> ReadQueue_t;
 #endif
 		WriteQueue_t m_WriteQueue;
 		ReadQueue_t m_ReadQueue;
 
+		// Cells waiting on archetypes to finish loading (put aside to not hold up the other cells)
+		std::list<ReadTask> m_IncommingCells;
 
 		//! TODO un-caps these when vc++ supports enum class
 		enum UpdateOperation { UPDATE, REMOVE };

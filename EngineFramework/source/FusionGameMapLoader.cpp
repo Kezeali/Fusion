@@ -185,7 +185,7 @@ namespace FusionEngine
 			numPseudoEnts = reader.ReadValue<size_t>();
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(inflateStream, false, 0, false, factory, archetype_factory, entityManager, instantiator);
+				auto entity = LoadEntityImmeadiate(inflateStream, false, 0, false, factory, entityManager, instantiator);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
 			}
@@ -195,7 +195,7 @@ namespace FusionEngine
 				numSynchedEnts = reader.ReadValue<size_t>();
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntity(inflateStream, true, 0, false, factory, archetype_factory, entityManager, instantiator);
+					auto entity = LoadEntityImmeadiate(inflateStream, true, 0, false, factory, entityManager, instantiator);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}
@@ -211,7 +211,7 @@ namespace FusionEngine
 	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
 	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
 	//  cells
-	void GameMap::CompileMap(std::ostream &fileStream, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(std::ostream &fileStream, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;

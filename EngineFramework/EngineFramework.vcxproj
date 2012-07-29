@@ -90,6 +90,7 @@
     <ClCompile Include="source\FusionGameMapLoader.cpp" />
     <ClCompile Include="source\FusionGUI.cpp" />
     <ClCompile Include="source\FusionMessageBox.cpp" />
+    <ClCompile Include="source\FusionMultiEntityLoader.cpp" />
     <ClCompile Include="source\FusionP2PEntityInstantiator.cpp" />
     <ClCompile Include="source\FusionPrefabInstantiator.cpp" />
     <ClCompile Include="source\FusionRegionCellCache.cpp" />
@@ -119,6 +120,7 @@
     <ClInclude Include="include\FusionGameMapLoader.h" />
     <ClInclude Include="include\FusionGUI.h" />
     <ClInclude Include="include\FusionMessageBox.h" />
+    <ClInclude Include="include\FusionMultiEntityLoader.h" />
     <ClInclude Include="include\FusionP2PEntityInstantiator.h" />
     <ClInclude Include="include\FusionPrefabInstantiator.h" />
     <ClInclude Include="include\FusionRegionCellCache.h" />

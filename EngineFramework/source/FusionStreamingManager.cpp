@@ -99,7 +99,7 @@ namespace FusionEngine
 #endif
 	}
 
-	StreamingManager::StreamingManager(CellDataSource* archivist)
+	StreamingManager::StreamingManager(CellArchiver* archivist)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_PollArchiveInterval(s_DefaultPollArchiveInterval),
 		m_TimeUntilVoidRefresh(0.0f),

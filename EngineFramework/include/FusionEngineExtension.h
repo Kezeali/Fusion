@@ -47,7 +47,7 @@ namespace FusionEngine
 	class ComponentFactory;
 	class EntityInstantiator;
 	class EntityManager;
-	class RegionMapLoader;
+	class RegionCellArchivist;
 	class StreamingManager;
 
 	class SaveDataArchive;
@@ -78,7 +78,7 @@ namespace FusionEngine
 		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
 		virtual void SetArchetypeFactory(const std::shared_ptr<ArchetypeFactory>& factory) {}
-		virtual void SetMapLoader(const std::shared_ptr<RegionMapLoader>& map_loader) {}
+		virtual void SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader) {}
 		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
 		virtual void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) {}
 		virtual void SetWorldSaver(WorldSaver* saver) {}

@@ -45,12 +45,12 @@
 namespace FusionEngine
 {
 
-	class RegionMapLoader;
+	class RegionCellArchivist;
 
 	class TaskScheduler
 	{
 	public:
-		TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionMapLoader* archivist);
+		TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionCellArchivist* archivist);
 
 		~TaskScheduler();
 
@@ -97,7 +97,7 @@ namespace FusionEngine
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;
-		RegionMapLoader* m_Archivist;
+		RegionCellArchivist* m_Archivist;
 
 		void SortTasks();
 

@@ -75,10 +75,10 @@ namespace FusionEngine
 		reader.Read(m_Editable);
 
 		// Load the archetype definition entity
-		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntity(stream, false, 0, m_Editable, nullptr, m_ComponentInstantiator, nullptr, nullptr);
+		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntityImmeadiate(stream, false, 0, m_Editable, nullptr, nullptr, m_ComponentInstantiator);
 		m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
 		// Load the profile
-		m_ArchetypeData.Profile = std::make_shared<Archetypes::Profile>();
+		m_ArchetypeData.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
 		m_ArchetypeData.Profile->Load(stream);
 	}
 
@@ -147,17 +147,15 @@ namespace FusionEngine
 		}
 		catch (CL_Exception& ex)
 		{
-			delete data;
+			delete factory;
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
 		catch (Exception&)
 		{
-			delete data;
+			delete factory;
 			throw;
 		}
-
-		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
-		resource->SetDataPtr(data);
+		resource->SetDataPtr(factory);
 
 		resource->setLoaded(true);
 	}
@@ -167,7 +165,7 @@ namespace FusionEngine
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
-			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			delete static_cast<ArchetypeFactory*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
 	}

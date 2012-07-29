@@ -197,7 +197,7 @@ namespace FusionEngine
 	};
 
 	//! Region-file based cell data source
-	class RegionCellCache : public CellCache
+	class RegionCellCache : public CellDataSource
 	{
 	public:
 		typedef Vector2T<int32_t> CellCoord_t;

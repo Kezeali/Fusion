@@ -41,11 +41,11 @@ namespace FusionEngine
 	typedef boost::iostreams::filtering_istream ArchiveIStream;
 	typedef boost::iostreams::filtering_ostream ArchiveOStream;
 
-	// TODO: rename to CellDataSource
-	class CellCache
+	//! Interface to retrieve raw cell data
+	class CellDataSource
 	{
 	public:
-		virtual ~CellCache() {}
+		virtual ~CellDataSource() {}
 
 		virtual std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
 		virtual std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y) = 0;

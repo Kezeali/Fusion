@@ -53,7 +53,7 @@
 namespace FusionEngine
 {
 
-	class CellDataSource;
+	class CellArchiver;
 
 	struct CellHandleGreater
 	{
@@ -260,7 +260,7 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager(CellDataSource* archivist);
+		StreamingManager(CellArchiver* archivist);
 		//! Destructor
 		~StreamingManager();
 
@@ -486,7 +486,7 @@ namespace FusionEngine
 
 		CellMap_t m_CellsToStore;
 
-		CellDataSource* m_Archivist;
+		CellArchiver* m_Archivist;
 
 		void StoreWhenDereferenced(const CellHandle& location);
 		void StoreWhenDereferenced(const CellHandle& location, const std::shared_ptr<Cell>& cell);

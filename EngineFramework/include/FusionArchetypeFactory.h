@@ -86,6 +86,8 @@ namespace FusionEngine
 		void Save(std::ostream& stream);
 		void Load(std::istream& stream);
 
+		const EntityPtr& GetArchetype() const { return m_ArchetypeData.Archetype; }
+
 		//! Makes the given entity an instance of the given archetype
 		EntityPtr MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
 

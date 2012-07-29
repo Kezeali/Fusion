@@ -167,7 +167,7 @@ namespace FusionEngine
 			m_PlayerManager.reset(new PlayerManager());
 
 			// Init Streaming
-			m_CellArchivist.reset(new RegionMapLoader(m_EditMode));
+			m_CellArchivist.reset(new RegionCellArchivist(m_EditMode));
 			m_StreamingManager = std::make_shared<StreamingManager>(m_CellArchivist.get());
 
 			m_ScriptManager->RegisterGlobalObject("StreamingManager streaming", m_StreamingManager.get());
@@ -437,17 +437,19 @@ namespace FusionEngine
 
 	void EngineManager::AddResourceLoaders()
 	{
-		m_ResourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, NULL);
+		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource));
 		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
 
-		m_ResourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
-		m_ResourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO", &LoadAudio, &UnloadAudio));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio)); // Note that this intentionally uses the same unload method
 
-		m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
+		m_ResourceManager->AddResourceLoader(ResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
+
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
 	}
 
 	const CL_DisplayWindow& EngineManager::GetDisplayWindow() const

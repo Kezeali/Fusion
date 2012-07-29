@@ -93,7 +93,7 @@ namespace FusionEngine
 		}
 	};
 
-	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, RegionMapLoader::CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
+	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, RegionCellArchivist::CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
 	{
 		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
 
@@ -128,7 +128,7 @@ namespace FusionEngine
 		db.set((const char*)&id, sizeof(id), data.data(), data.size());
 	}
 
-	static bool getEntityLocation(kyotocabinet::HashDB& db, RegionMapLoader::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
+	static bool getEntityLocation(kyotocabinet::HashDB& db, RegionCellArchivist::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
 	{
 		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
 
@@ -160,7 +160,7 @@ namespace FusionEngine
 		db->tune_map(2LL << 20); // 2MB memory-map
 	}
 
-	RegionMapLoader::RegionMapLoader(bool edit_mode, const std::string& cache_path)
+	RegionCellArchivist::RegionCellArchivist(bool edit_mode, const std::string& cache_path)
 		: m_EditMode(edit_mode),
 		m_Running(false),
 		m_RegionSize(s_DefaultRegionSize),
@@ -201,7 +201,7 @@ namespace FusionEngine
 		}
 	}
 
-	RegionMapLoader::~RegionMapLoader()
+	RegionCellArchivist::~RegionCellArchivist()
 	{
 		Stop();
 
@@ -210,7 +210,7 @@ namespace FusionEngine
 			delete m_EditableCache;
 	}
 
-	void RegionMapLoader::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager, ArchetypeFactory* arc_factory)
+	void RegionCellArchivist::SetInstantiator(EntityInstantiator* instantiator, ComponentFactory* component_factory, EntityManager* manager, ArchetypeFactory* arc_factory)
 	{
 		m_Instantiator = instantiator;
 		m_Factory = component_factory;
@@ -218,7 +218,7 @@ namespace FusionEngine
 		m_ArchetypeFactory = arc_factory;
 	}
 
-	void RegionMapLoader::SetMap(const std::shared_ptr<GameMap>& map)
+	void RegionCellArchivist::SetMap(const std::shared_ptr<GameMap>& map)
 	{
 		m_Map = map;
 
@@ -232,19 +232,19 @@ namespace FusionEngine
 		m_Cache->SetupEditMode(m_EditMode, m_Map->GetBounds());
 	}
 
-	void RegionMapLoader::Update(ObjectID id, const RegionMapLoader::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
+	void RegionCellArchivist::Update(ObjectID id, const RegionCellArchivist::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::UPDATE, new_location, std::move(continuous), std::move(occasional)));
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Update(ObjectID id, int32_t new_x, int32_t new_y)
+	void RegionCellArchivist::Update(ObjectID id, int32_t new_x, int32_t new_y)
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::UPDATE, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
+	void RegionCellArchivist::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
 	{
 		// TODO: store active entity locations in-memory (in StreamingManager)?
 		FSN_ASSERT(m_EntityLocationDB);
@@ -254,13 +254,13 @@ namespace FusionEngine
 		storeEntityLocation(*m_EntityLocationDB, id, CellCoord_t(new_x, new_y), offset, length);
 	}
 
-	void RegionMapLoader::Remove(ObjectID id)
+	void RegionCellArchivist::Remove(ObjectID id)
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::REMOVE, CellCoord_t(), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
 	}
 
-	Vector2T<int32_t> RegionMapLoader::GetEntityLocation(ObjectID id)
+	Vector2T<int32_t> RegionCellArchivist::GetEntityLocation(ObjectID id)
 	{
 		CellCoord_t loc(std::numeric_limits<CellCoord_t::type>::max(), std::numeric_limits<CellCoord_t::type>::max());
 		if (m_EntityLocationDB) // TODO: lock while loading save-game and wait here
@@ -271,7 +271,7 @@ namespace FusionEngine
 		return loc;
 	}
 
-	void RegionMapLoader::Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell)
+	void RegionCellArchivist::Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell)
 	{
 		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store)
 		{
@@ -279,7 +279,7 @@ namespace FusionEngine
 			// The last tuple param indicates whether the cell should be cleared (unloaded)
 			//  when the write operation is done: it checks whether this is the only reference
 			//  to the cell
-			m_WriteQueue.push(std::make_tuple(cell, CellCoord_t(x, y), cell.unique()));
+			m_WriteQueue.push(WriteTask(cell, CellCoord_t(x, y), cell.unique()));
 			m_NewData.set();
 			
 			TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
@@ -288,7 +288,7 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<Cell> RegionMapLoader::Retrieve(int32_t x, int32_t y)
+	std::shared_ptr<Cell> RegionCellArchivist::Retrieve(int32_t x, int32_t y)
 	{
 		TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
 		FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
@@ -304,7 +304,7 @@ namespace FusionEngine
 		if (state != Cell::Retrieve && (state != Cell::Ready || !cell->loaded))
 		{
 			AddHist(CellCoord_t(x, y), "Enqueued In");
-			m_ReadQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
+			m_ReadQueue.push(ReadTask(cell, CellCoord_t(x, y)));
 			m_NewData.set();
 		}
 		else if (cell->loaded)
@@ -319,44 +319,44 @@ namespace FusionEngine
 		return cell;
 	}
 
-	RegionMapLoader::TransactionLock::TransactionLock(RegionMapLoader::TransactionMutex_t& mutex, CL_Event& ev)
+	RegionCellArchivist::TransactionLock::TransactionLock(RegionCellArchivist::TransactionMutex_t& mutex, CL_Event& ev)
 		: lock(mutex),
 		endEvent(ev)
 	{}
 
-	RegionMapLoader::TransactionLock::~TransactionLock()
+	RegionCellArchivist::TransactionLock::~TransactionLock()
 	{
 		endEvent.set();
 	}
 
-	std::unique_ptr<RegionMapLoader::TransactionLock> RegionMapLoader::MakeTransaction()
+	std::unique_ptr<RegionCellArchivist::TransactionLock> RegionCellArchivist::MakeTransaction()
 	{
 		return std::unique_ptr<TransactionLock>(new TransactionLock(m_TransactionMutex, m_TransactionEnded));
 	}
 
-	void RegionMapLoader::BeginTransaction()
+	void RegionCellArchivist::BeginTransaction()
 	{
 		m_TransactionMutex.lock();
 	}
 
-	void RegionMapLoader::EndTransaction()
+	void RegionCellArchivist::EndTransaction()
 	{
 		m_TransactionMutex.unlock();
 		m_TransactionEnded.set();
 	}
 
-	void RegionMapLoader::Start()
+	void RegionCellArchivist::Start()
 	{
 		m_Running = true;
 
 		m_Quit.reset();
-		m_Thread = boost::thread(&RegionMapLoader::Run, this);
+		m_Thread = boost::thread(&RegionCellArchivist::Run, this);
 //#ifdef _WIN32
 //		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
 //#endif
 	}
 
-	void RegionMapLoader::Stop()
+	void RegionCellArchivist::Stop()
 	{
 		m_Quit.set();
 		m_Thread.join();
@@ -364,17 +364,17 @@ namespace FusionEngine
 		m_Running = false;
 	}
 
-	std::unique_ptr<std::istream> RegionMapLoader::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
+	std::unique_ptr<std::istream> RegionCellArchivist::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
 	{
 		return m_Cache->GetCellStreamForReading(cell_x, cell_y);
 	}
 
-	std::unique_ptr<std::ostream> RegionMapLoader::GetCellStreamForWriting(int32_t cell_x, int32_t cell_y)
+	std::unique_ptr<std::ostream> RegionCellArchivist::GetCellStreamForWriting(int32_t cell_x, int32_t cell_y)
 	{
 		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
 
-	void RegionMapLoader::SaveEntityLocationDB(const std::string& filename)
+	void RegionCellArchivist::SaveEntityLocationDB(const std::string& filename)
 	{
 		if (m_EntityLocationDB)
 		{
@@ -416,13 +416,13 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::EnqueueQuickSave(const std::string& save_name)
+	void RegionCellArchivist::EnqueueQuickSave(const std::string& save_name)
 	{
 		m_SaveQueue.push(save_name);
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Save(const std::string& save_name)
+	void RegionCellArchivist::Save(const std::string& save_name)
 	{
 		const bool wasRunning = m_Thread.joinable();
 		if (wasRunning)
@@ -435,7 +435,7 @@ namespace FusionEngine
 			Start();
 	}
 
-	void RegionMapLoader::EnqueueQuickLoad(const std::string& save_name)
+	void RegionCellArchivist::EnqueueQuickLoad(const std::string& save_name)
 	{
 		// Stop and clear the cache
 		PrepareLoad(save_name);
@@ -444,7 +444,7 @@ namespace FusionEngine
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Load(const std::string& save_name)
+	void RegionCellArchivist::Load(const std::string& save_name)
 	{
 		const bool wasRunning = m_Thread.joinable();
 		if (wasRunning)
@@ -455,7 +455,7 @@ namespace FusionEngine
 			Start();
 	}
 
-	std::unique_ptr<std::ostream> RegionMapLoader::CreateDataFile(const std::string& filename)
+	std::unique_ptr<std::ostream> RegionCellArchivist::CreateDataFile(const std::string& filename)
 	{
 		namespace bfs = boost::filesystem;
 		namespace io = boost::iostreams;
@@ -482,7 +482,7 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_ostream>();
 	}
 
-	std::unique_ptr<std::istream> RegionMapLoader::LoadDataFile(const std::string& filename)
+	std::unique_ptr<std::istream> RegionCellArchivist::LoadDataFile(const std::string& filename)
 	{
 		namespace bfs = boost::filesystem;
 		namespace io = boost::iostreams;
@@ -506,21 +506,17 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_istream>();
 	}
 
-	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable)
+	std::shared_ptr<EntitySerialisationUtils::EntityFuture> RegionCellArchivist::LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable)
 	{
-		auto entity = EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_ArchetypeFactory, m_EntityManager, m_Instantiator);
-		// Remove the agent if edit-mode is disabled
-		if (!m_EditMode)
-			entity->ResetArchetypeAgent();
-		return entity;
+		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, editable, m_Factory, m_EntityManager, m_Instantiator);
 	}
 
-	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids, const bool editable)
+	size_t RegionCellArchivist::LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, ICellStream& file, bool data_includes_ids, const bool editable)
 	{
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
 
-		FSN_ASSERT_MSG(numEntries < (1 << 16), "Probably invalid data");
+		FSN_ASSERT_MSG(numEntries < (1 << 16), "Probably invalid data: entry count is implausible");
 
 		std::vector<ObjectID> idIndex;
 
@@ -543,23 +539,55 @@ namespace FusionEngine
 		// Read entity data
 		for (size_t n = 0; n < numEntries; ++n)
 		{
-			//auto& archivedEntity = *it;
-			auto archivedEntity = LoadEntity(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0, editable);
-
-			Vector2 pos = archivedEntity->GetPosition();
-			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
-			CellEntry entry;
-			entry.x = pos.x; entry.y = pos.y;
-
-			archivedEntity->SetStreamingCellIndex(coord);
-
-			cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
+			incomming_entities.push_back(LoadEntity(file, false, data_includes_ids ? idIndex[n] : 0, editable));
 		}
+
 		return numEntries;
 	}
 
+	bool RegionCellArchivist::ProcessIncommingEntities(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::shared_ptr<Cell>& conveniently_locked_cell)
+	{
+		for (auto it = incomming_entities.begin(); it != incomming_entities.end();)
+		{
+			const auto& future = *it;
+
+			if (future->is_ready())
+			{
+				auto entity = future->get();
+
+				Vector2 pos = entity->GetPosition();
+				// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
+				CellEntry entry;
+				entry.x = pos.x; entry.y = pos.y;
+
+				entity->SetStreamingCellIndex(coord);
+
+				conveniently_locked_cell->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
+
+				it = incomming_entities.erase(it);
+			}
+			else
+				++it;
+		}
+
+		// When all the entities are constructed:
+		if (incomming_entities.empty())
+		{
+			// Remove the archetype agent if edit-mode is disabled
+			if (!m_EditMode)
+			{
+				for (auto it = conveniently_locked_cell->objects.begin(); it != conveniently_locked_cell->objects.end(); ++it)
+					it->first->ResetArchetypeAgent();
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void RegionMapLoader::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable)
+	void RegionCellArchivist::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable)
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -624,7 +652,7 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable)
+	void RegionCellArchivist::WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable)
 	{
 		if (filePtr && *filePtr)
 		{
@@ -649,7 +677,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
 	}
 
-	void RegionMapLoader::Run()
+	void RegionCellArchivist::Run()
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -685,12 +713,12 @@ namespace FusionEngine
 				std::list<ReadQueue_t::value_type> readsToRetry;
 				// Read / write cell data
 				{
-					std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool> toWrite;
+					WriteTask toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
 					{
-						const std::weak_ptr<Cell>& cellWpt = std::get<0>(toWrite);
-						const auto& cell_coord = std::get<1>(toWrite);
-						const bool unload_when_done = std::get<2>(toWrite);
+						const std::weak_ptr<Cell>& cellWpt = toWrite.cell;
+						const auto& cell_coord = toWrite.coord;
+						const bool unload_when_done = toWrite.unloadWhenDone;
 						if (auto cell = cellWpt.lock()) // Make sure the queue item is valid
 						{
 							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
@@ -776,6 +804,13 @@ namespace FusionEngine
 								writesToRetry.push_back(toWrite);
 							}
 						}
+
+						// Check for read requests (only write one cell at a time when there are read requests queued)
+						if (!m_ReadQueue.empty())
+						{
+							m_NewData.set();
+							break;
+						}
 					}
 				}
 				if (writingMsg)
@@ -787,17 +822,17 @@ namespace FusionEngine
 					SendToConsole("Reading");
 				}
 				{
-					std::tuple<std::weak_ptr<Cell>, CellCoord_t> toRead;
+					ReadTask toRead;
 					while (m_ReadQueue.try_pop(toRead))
 					{
-						std::weak_ptr<Cell>& cellWpt = std::get<0>(toRead);
-						const CellCoord_t& cell_coord = std::get<1>(toRead);
+						std::weak_ptr<Cell>& cellWpt = toRead.cell;
+						const CellCoord_t& cell_coord = toRead.coord;
 						if (auto cell = cellWpt.lock())
 						{
 							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 							if (lock)
 							{
-								// Make sure this cell hasn't been re-activated:
+								// Make sure this cell hasn't been deactivated:
 								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
 								{
 									FSN_ASSERT(!cell->loaded);
@@ -829,9 +864,9 @@ namespace FusionEngine
 												auto mapDataLength = reader.ReadValue<std::streamsize>();
 
 												if (mapDataLength > 0)
-													LoadEntitiesFromCellData(cell_coord, cell.get(), inflateStream, false);
+													LoadEntitiesFromCellData(cell_coord, toRead.entitiesInTransit, inflateStream, false);
 												if (uncached)
-													LoadEntitiesFromCellData(cell_coord, cell.get(), inflateStream, true);
+													LoadEntitiesFromCellData(cell_coord, toRead.entitiesInTransit, inflateStream, true);
 											}
 										}
 
@@ -852,20 +887,31 @@ namespace FusionEngine
 												reader.ReadValue<std::streamsize>();
 												//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
 #endif
-												LoadEntitiesFromCellData(cell_coord, cell.get(), file, false, m_EditMode); // In edit-mode unsynched entities are also written to the cache
+												LoadEntitiesFromCellData(cell_coord, toRead.entitiesInTransit, file, false, m_EditMode); // In edit-mode unsynched entities are also written to the cache
 #ifdef _DEBUG
 												// Make sure all the data was read
 												// TODO: in Release builds: skip to the end if it wasn't all read?
 												//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
 #endif
 											}
-											size_t num = LoadEntitiesFromCellData(cell_coord, cell.get(), file, true, m_EditMode);
+											LoadEntitiesFromCellData(cell_coord, toRead.entitiesInTransit, file, true, m_EditMode);
 
 											//std::stringstream str; str << i;
 											//SendToConsole("Cell " + str.str() + " streamed in");
 
-											AddHist(cell_coord, "Loaded", num);
-											cell->loaded = true;
+											AddHist(cell_coord, "Loading (waiting for any archetypes)");
+
+											ProcessIncommingEntities(cell_coord, toRead.entitiesInTransit, cell);
+											// If there isn't any archetypes to load, the cell will be available immeadiately:
+											if (toRead.entitiesInTransit.empty())
+											{
+												AddHist(cell_coord, "Loaded");
+												cell->loaded = true;
+											}
+											else // ... Otherwise it will have to be processed later
+											{
+												m_IncommingCells.push_back(toRead);
+											}
 										}
 										else
 										{
@@ -904,6 +950,22 @@ namespace FusionEngine
 						}
 					}
 				}
+
+				for (auto it = m_IncommingCells.begin(); it != m_IncommingCells.end();)
+				{
+					auto& task = *it;
+					if (auto lockedCell = task.cell.lock())
+					{
+						if (lockedCell->waiting == Cell::Retrieve)
+						{
+							if (ProcessIncommingEntities(task.coord, task.entitiesInTransit, lockedCell))
+								it = m_IncommingCells.erase(it);
+							else
+								++it;
+						}
+					}
+				}
+
 				if (readingMsg)
 					SendToConsole("Done Reading");
 				// Re-enqueue blocked writes/reads
@@ -1050,7 +1112,7 @@ namespace FusionEngine
 		asThreadCleanup();
 	}
 
-	void RegionMapLoader::ClearReadyCells(std::list<CellCoord_t>& readyCells)
+	void RegionCellArchivist::ClearReadyCells(std::list<CellCoord_t>& readyCells)
 	{
 		// Drop references to cells that are done processing (if m_CellsBeingProcessed isn't locked by a current transaction)
 		if (!readyCells.empty())
@@ -1091,7 +1153,7 @@ namespace FusionEngine
 		return relativePath.generic_string();
 	}
 
-	bool RegionMapLoader::PerformSave(const std::string& saveName)
+	bool RegionCellArchivist::PerformSave(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1293,11 +1355,11 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::PrepareLoad(const std::string& saveName)
+	void RegionCellArchivist::PrepareLoad(const std::string& saveName)
 	{
 	}
 
-	void RegionMapLoader::PerformLoad(const std::string& saveName)
+	void RegionCellArchivist::PerformLoad(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1497,7 +1559,7 @@ namespace FusionEngine
 			Start();
 	}
 
-	void RegionMapLoader::CompressSave(const std::string& saveName)
+	void RegionCellArchivist::CompressSave(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
 
@@ -1672,7 +1734,7 @@ namespace FusionEngine
 		CopyData(buffer, dest_in, dest_out, unsynchedDataLength);
 	}
 
-	std::streamsize RegionMapLoader::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
+	std::streamsize RegionCellArchivist::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
 	{
 		CopyBuffer_t buffer;
 
@@ -1758,7 +1820,7 @@ namespace FusionEngine
 		return newEntityDataLength;
 	}
 
-	void RegionMapLoader::MoveEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out) const
+	void RegionCellArchivist::MoveEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out) const
 	{
 		// Make sure the data is actually being moved!
 		FSN_ASSERT(&source_in != &dest_in);
@@ -1809,7 +1871,7 @@ namespace FusionEngine
 		CopyData(buffer, source_in, source_out);
 	}
 
-	void RegionMapLoader::DeleteEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out) const
+	void RegionCellArchivist::DeleteEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out) const
 	{
 		CopyBuffer_t buffer;
 

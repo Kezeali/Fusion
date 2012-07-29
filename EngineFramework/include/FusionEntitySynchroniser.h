@@ -134,7 +134,7 @@ namespace FusionEngine
 
 		CameraSynchroniser* m_CameraSynchroniser;
 
-		CellDataSource* m_Archivist;
+		CellArchiver* m_Archivist;
 		StreamingManager* m_StreamingManager;
 
 		RakNetwork *m_Network;

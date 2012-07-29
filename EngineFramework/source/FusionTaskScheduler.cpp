@@ -39,7 +39,7 @@
 namespace FusionEngine
 {
 
-	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionMapLoader* archivist)
+	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionCellArchivist* archivist)
 		: m_TaskManager(task_manager),
 		m_EntityManager(entity_manager),
 		m_Archivist(archivist),
