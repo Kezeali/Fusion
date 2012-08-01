@@ -275,9 +275,15 @@ namespace FusionEngine
 			}
 
 			//! Subscribe to receive notification when new generators are added
-			HandlerConnection_t SubscribeNewGenerators(const std::function<void (KeyT, This_t&)>& callback)
+			HandlerConnection_t SubscribeNewGenerators(KeyT key, const std::function<void (KeyT, This_t&)>& callback)
 			{
 				return std::make_shared<boost::signals2::scoped_connection>(SigGeneratorDefined.connect(callback));
+			}
+
+			//! Simmilar to SubscribeNewGenerators, but for a specific key (SubscribeNewGenerators is a massive performance hog)
+			void RequestNewGeneratorCallback(KeyT key, const std::shared_ptr<std::function<void (KeyT, This_t&)>>& callback)
+			{
+				m_NewGeneratorCallbacks[key] = callback;
 			}
 
 			boost::signals2::signal<void (KeyT, This_t&)> SigGeneratorDefined;
@@ -357,6 +363,8 @@ namespace FusionEngine
 			GeneratorMap_t m_Generators;
 			tbb::concurrent_queue<std::pair<KeyT, std::weak_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
 
+			std::unordered_map<KeyT, std::weak_ptr<std::function<void (KeyT, This_t&)>>> m_NewGeneratorCallbacks;
+
 			template <class T>
 			std::shared_ptr<Generator<T>> MakeGeneratorObj(KeyT key)
 			{
@@ -366,7 +374,14 @@ namespace FusionEngine
 				generator->trigger_fn = [this, key, generator]() { this->m_TriggeredGenerators.push(std::make_pair(key, generator)); };
 				m_Generators.insert(std::make_pair(key, generator));
 
-				SigGeneratorDefined(key, *this);
+				//SigGeneratorDefined(key, *this);
+				auto entry = m_NewGeneratorCallbacks.find(key);
+				if (entry != m_NewGeneratorCallbacks.end())
+				{
+					if (auto callback = entry->second.lock())
+						(*callback)(key, *this);
+					m_NewGeneratorCallbacks.erase(entry);
+				}
 
 				return std::move(generator);
 			}
