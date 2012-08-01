@@ -449,6 +449,7 @@ namespace FusionEngine
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
 
+		new ArchetypeFactoryManager();
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
 	}
 

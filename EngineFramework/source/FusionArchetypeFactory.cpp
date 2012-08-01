@@ -41,10 +41,88 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
+#include <tbb/atomic.h>
+
 namespace bio = boost::iostreams;
 
 namespace FusionEngine
 {
+
+	static const size_t s_DefaultVolatileCapacity = 100;
+
+	//! Implements ResourceSustainer
+	class SimpleResourceSustainer : public ResourceSustainer
+	{
+	public:
+		//! CTOR
+		SimpleResourceSustainer();
+
+		//! Prevent the cache from clearing
+		virtual void Sustain();
+		//! Allow the cache to clear
+		virtual void EndSustain();
+
+		void SetVolatileCapacity(size_t capacity) { m_VolitileCapacity = capacity; }
+		size_t GetVolatileCapacity() const { return m_VolitileCapacity; }
+
+		//! Adds a resource to the cache
+		void StoreResource(const ResourceDataPtr& resource);
+
+	private:
+		std::list<ResourceDataPtr> m_Volatile;
+		std::list<ResourceDataPtr> m_Sustained;
+
+		tbb::atomic<bool> m_Sustaining;
+		size_t m_VolitileCapacity;
+	};
+
+	ArchetypeFactoryManager::ArchetypeFactoryManager()
+		: m_ResourceSustainer(new SimpleResourceSustainer())
+	{
+	}
+
+	void ArchetypeFactoryManager::Sustain()
+	{
+		getSingleton().m_ResourceSustainer->Sustain();
+	}
+
+	void ArchetypeFactoryManager::EndSustain()
+	{
+		getSingleton().m_ResourceSustainer->EndSustain();
+	}
+
+	void ArchetypeFactoryManager::StoreFactory(const ResourceDataPtr& resource)
+	{
+		getSingleton().m_ResourceSustainer->StoreResource(resource);
+	}
+
+	SimpleResourceSustainer::SimpleResourceSustainer()
+		: m_VolitileCapacity(s_DefaultVolatileCapacity)
+	{
+		m_Sustaining = false;
+	}
+
+	void SimpleResourceSustainer::Sustain()
+	{
+		m_Sustaining = true;
+	}
+
+	void SimpleResourceSustainer::EndSustain()
+	{
+		m_Sustaining = false;
+		m_Sustained.clear();
+	}
+
+	void SimpleResourceSustainer::StoreResource(const ResourceDataPtr& resource)
+	{
+		if (m_Sustaining)
+		{
+			m_Sustained.push_back(resource);
+		}
+		m_Volatile.push_back(resource);
+		if (m_Volatile.size() > m_VolitileCapacity)
+			m_Volatile.pop_front();
+	}
 
 	ArchetypeFactory::ArchetypeFactory(EntityInstantiator* instantiator)
 		: m_ComponentInstantiator(instantiator)
@@ -156,6 +234,8 @@ namespace FusionEngine
 			throw;
 		}
 		resource->SetDataPtr(factory);
+
+		ArchetypeFactoryManager::getSingleton().StoreFactory(resource);
 
 		resource->setLoaded(true);
 	}

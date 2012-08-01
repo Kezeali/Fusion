@@ -580,6 +580,10 @@ namespace FusionEngine
 					it->first->ResetArchetypeAgent();
 			}
 
+			AddHist(coord, "Loaded");
+			conveniently_locked_cell->loaded = true;
+			conveniently_locked_cell->waiting = Cell::Ready;
+
 			return true;
 		}
 
@@ -822,6 +826,9 @@ namespace FusionEngine
 					SendToConsole("Reading");
 				}
 				{
+					// Keep archetype factory resources loaded during this stage
+					ArchetypeFactoryManager::Sustain();
+
 					ReadTask toRead;
 					while (m_ReadQueue.try_pop(toRead))
 					{
@@ -949,6 +956,8 @@ namespace FusionEngine
 							}
 						}
 					}
+
+					ArchetypeFactoryManager::EndSustain();
 				}
 
 				for (auto it = m_IncommingCells.begin(); it != m_IncommingCells.end();)
@@ -956,12 +965,23 @@ namespace FusionEngine
 					auto& task = *it;
 					if (auto lockedCell = task.cell.lock())
 					{
-						if (lockedCell->waiting == Cell::Retrieve)
+						Cell::mutex_t::scoped_try_lock lock(lockedCell->mutex);
+						if (lock)
 						{
-							if (ProcessIncommingEntities(task.coord, task.entitiesInTransit, lockedCell))
-								it = m_IncommingCells.erase(it);
+							SendToConsole("Processing incomming cells");
+							if (lockedCell->waiting == Cell::Retrieve)
+							{
+								if (ProcessIncommingEntities(task.coord, task.entitiesInTransit, lockedCell))
+									it = m_IncommingCells.erase(it);
+								else
+									++it;
+							}
 							else
-								++it;
+							{
+								// If the requester asked to store the cell, it was never loaded so it can simply be marked ready
+								lockedCell->waiting = Cell::Ready;
+								readyCells.push_back(task.coord);
+							}
 						}
 					}
 				}

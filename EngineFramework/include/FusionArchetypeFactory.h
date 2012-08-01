@@ -34,6 +34,7 @@
 #include "FusionTypes.h"
 
 #include "FusionComponentFactory.h"
+#include "FusionResource.h"
 
 #include <string>
 #include <map>
@@ -53,6 +54,34 @@ namespace FusionEngine
 
 	class SaveDataArchive;
 
+	//! General purpose resource holder (for keeping resources alive when they aren't in use)
+	class ResourceSustainer
+	{
+	public:
+		virtual ~ResourceSustainer() {}
+		//! Prevent the cache from clearing
+		virtual void Sustain() = 0;
+		//! Allow the cache to clear
+		virtual void EndSustain() = 0;
+
+		//! Adds a resource to the cache
+		virtual void StoreResource(const ResourceDataPtr& resource) = 0;
+	};
+
+	//! Firm but fair
+	class ArchetypeFactoryManager : public Singleton<ArchetypeFactoryManager>
+	{
+	public:
+		ArchetypeFactoryManager();
+
+		static void Sustain();
+		static void EndSustain();
+		static void StoreFactory(const ResourceDataPtr& resource);
+	private:
+		std::unique_ptr<ResourceSustainer> m_ResourceSustainer;
+	};
+
+	//! Data that defines the type of entity that a given factory can instantiate
 	struct ArchetypeData
 	{
 	public:
