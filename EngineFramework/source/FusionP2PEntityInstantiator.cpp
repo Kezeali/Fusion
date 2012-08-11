@@ -523,7 +523,7 @@ namespace FusionEngine
 		return newEntity;//.get();
 	}
 
-	static IComponent* InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
+	static EntityComponent* InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
 	{
 		auto com = obj->AddComponent(entity, type, identifier);
 		com->addRef();
@@ -537,8 +537,8 @@ namespace FusionEngine
 		engine->RegisterObjectMethod("EntityInstantiator", "Entity instantiate(const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
 			asFUNCTION(InstantiationSynchroniser_InstantiateAuto), asCALL_CDECL_OBJLAST);
 
-		engine->RegisterObjectMethod("EntityInstantiator", "IComponent@ addComponent(Entity, const string &in, const string &in)",
-			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, P2PEntityInstantiator*), IComponent*), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("EntityInstantiator", "EntityComponent@ addComponent(Entity, const string &in, const string &in)",
+			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, P2PEntityInstantiator*), EntityComponent*), asCALL_CDECL_OBJLAST);
 	}
 
 }

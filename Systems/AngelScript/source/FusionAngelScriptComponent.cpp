@@ -276,7 +276,7 @@ namespace FusionEngine
 			GeneratePersistentFollower();
 		}
 
-		//void SetOwner(IComponent* com)
+		//void SetOwner(EntityComponent* com)
 		//{
 		//	m_Owner = com;
 		//}
@@ -779,9 +779,9 @@ namespace FusionEngine
 		}
 	}
 
-	static ASScript::ScriptInterface* ScriptInterface_FromComponent(IComponent* component)
+	static ASScript::ScriptInterface* ScriptInterface_FromComponent(EntityComponent* component)
 	{
-		auto scriptComponent = convert_ref<IComponent, ASScript>(component);
+		auto scriptComponent = convert_ref<EntityComponent, ASScript>(component);
 		if (scriptComponent)
 		{
 			auto scriptInterface = scriptComponent->GetScriptInterface();
@@ -811,7 +811,7 @@ namespace FusionEngine
 			s_ASScriptTypeId = engine->GetTypeIdByDecl("ASScript");
 			FSN_ASSERT(s_ASScriptTypeId >= 0);
 
-			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectBehaviour("EntityComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, IProperty@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 

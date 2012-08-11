@@ -73,7 +73,7 @@ namespace FusionEngine
 	*/
 	class ComponentProperty : public RefCounted
 	{
-		friend class IComponent;
+		friend class EntityComponent;
 	public:
 		//! CTOR
 		ComponentProperty()
@@ -88,6 +88,7 @@ namespace FusionEngine
 			m_ScriptType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(m_Impl->GetTypeId());
 		}
 
+		//! Called to allow the component implementation to connect to any signal generators from properties that it needs to follow
 		void AquireSignalGenerator(PropertySignalingSystem_t& system)
 		{
 			m_Impl->AquireSignalGenerator(system, GetID());

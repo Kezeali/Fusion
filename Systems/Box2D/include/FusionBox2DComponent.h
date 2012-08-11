@@ -54,7 +54,7 @@ namespace FusionEngine
 	class Box2DWorld;
 	class Box2DFixture;
 
-	class Box2DBody : public IComponent, public ITransform, public IRigidBody
+	class Box2DBody : public EntityComponent, public ITransform, public IRigidBody
 	{
 		friend class Box2DWorld;
 		friend class Box2DTask;
@@ -134,7 +134,7 @@ namespace FusionEngine
 
 		float m_SmoothTightness;
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const
 		{
 			switch (GetBodyType())
@@ -322,7 +322,7 @@ namespace FusionEngine
 		}
 	};
 
-	class Box2DFixture : public IComponent, public IFixture
+	class Box2DFixture : public EntityComponent, public IFixture
 	{
 		friend class Box2DWorld;
 		friend class Box2DBody;
@@ -352,7 +352,7 @@ namespace FusionEngine
 	private:
 		virtual b2Shape* GetShape() = 0;
 
-		// IComponent
+		// EntityComponent
 		void OnSiblingAdded(const ComponentPtr& com);
 		void OnSiblingRemoved(const ComponentPtr& com);
 
@@ -427,7 +427,7 @@ namespace FusionEngine
 	private:
 		b2Shape* GetShape() { return &m_CircleShape; }
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "b2Circle"; }
 
 		// Box2DFixture overides
@@ -460,7 +460,7 @@ namespace FusionEngine
 	private:
 		b2Shape* GetShape() { return m_PolygonResource.IsLoaded() ? m_PolygonResource.Get() : &m_PolyShape; }
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "b2Polygon"; }
 
 		// Box2DFixture overides
@@ -505,7 +505,7 @@ namespace FusionEngine
 	private:
 		b2Shape* GetShape() { return m_PolygonResource.IsLoaded() ? m_PolygonResource.Get() : &m_ChainShape; }
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "b2EdgeChain"; }
 
 		// Box2DFixture overides

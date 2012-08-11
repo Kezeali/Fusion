@@ -79,8 +79,8 @@ namespace FusionEngine
 		//! Reads length data written by WriteStateWithLength()
 		RakNet::BitSize_t ReadStateLength(RakNet::BitStream& in);
 
-		void WriteComponent(OCellStream& out, IComponent* component, bool editable);
-		void ReadComponent(ICellStream& in, IComponent* component, bool editable);
+		void WriteComponent(OCellStream& out, EntityComponent* component, bool editable);
+		void ReadComponent(ICellStream& in, EntityComponent* component, bool editable);
 
 		//! Merge inactive entity data
 		std::streamsize MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);

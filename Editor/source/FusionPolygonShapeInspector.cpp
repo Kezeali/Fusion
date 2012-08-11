@@ -42,7 +42,7 @@ namespace FusionEngine { namespace Inspectors
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
 			auto verts = component->Verts.Get();
-			auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+			auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
 			for (auto it = verts.begin(), end = verts.end(); it != end; ++it)
 			{
 				*it += offset;
@@ -51,7 +51,7 @@ namespace FusionEngine { namespace Inspectors
 			}
 			this->m_PolygonToolExecutor(verts, [component](const std::vector<Vector2>& verts)
 			{
-				auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+				auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
 				auto localVerts = verts;
 				for (auto it = localVerts.begin(), end = localVerts.end(); it != end; ++it)
 				{
@@ -66,7 +66,7 @@ namespace FusionEngine { namespace Inspectors
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
 			Vector2 hsize(10.f, 10.f);
-			Vector2 center = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+			Vector2 center = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
 			center.x = ToRenderUnits(center.x); center.y = ToRenderUnits(center.y);
 			float angle = 0.0f;
 			this->m_RectangleToolExecutor(hsize, center, angle, [component](const Vector2& hs, const Vector2& c, float a)

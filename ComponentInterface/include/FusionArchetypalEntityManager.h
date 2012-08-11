@@ -127,7 +127,7 @@ namespace FusionEngine
 
 		std::set<ComponentPtr> m_NonArchetypalComponents;
 
-		std::map<Archetypes::ComponentID_t, IComponent*> m_Components;
+		std::map<Archetypes::ComponentID_t, EntityComponent*> m_Components;
 
 		std::shared_ptr<Archetypes::Profile> m_Profile;
 
@@ -145,7 +145,7 @@ namespace FusionEngine
 		std::set<Archetypes::ComponentID_t> m_AutoOverride;
 
 		// Add / remove components that exist in the definition but not the instance and vice versa
-		void PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, IComponent*>>& removed);
+		void PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, EntityComponent*>>& removed);
 		// Deserialises overriden properties
 		void PerformPropertyOverrides();
 

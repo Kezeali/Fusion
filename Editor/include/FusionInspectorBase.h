@@ -181,13 +181,13 @@ namespace FusionEngine { namespace Inspectors
 
 			void operator() (bool, ComponentIPtr<ComponentT> component)
 			{
-				auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+				auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
 
 				const Vector2 c(ToRenderUnits(x_getter(component) + offset.x), ToRenderUnits(y_getter(component) + offset.y));
 				const float r = ToRenderUnits(radius_getter(component));
 				executor->m_CircleToolExecutor(c, r, [this, component](const Vector2& c, float r)
 				{
-					auto offset = dynamic_cast<IComponent*>(component.get())->GetParent()->GetPosition();
+					auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
 					x_setter(ToSimUnits(c.x) - offset.x, component);
 					y_setter(ToSimUnits(c.y) - offset.y, component);
 					radius_setter(ToSimUnits(r), component);

@@ -86,14 +86,14 @@ namespace FusionEngine
 		{}
 
 		ComponentIPtr(T* i)
-			: p(dynamic_cast<IComponent*>(i))
+			: p(dynamic_cast<EntityComponent*>(i))
 		{}
 
 		ComponentIPtr(ComponentPtr com)
 			: p(com)
 		{}
 
-		//ComponentIPtr(IComponent* com)
+		//ComponentIPtr(EntityComponent* com)
 		//	: p(com)
 		//{}
 
@@ -173,11 +173,11 @@ namespace FusionEngine
 
 	//typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
 	
-	class IComponent : public RefCounted
+	class EntityComponent : public RefCounted
 	{
 	public:
 		//! Cotr
-		IComponent()
+		EntityComponent()
 			: RefCounted(0),
 			m_InterfacesInitialised(false),
 			m_LastContinuousProperty(nullptr),
@@ -186,7 +186,7 @@ namespace FusionEngine
 			m_Ready = NotReady;
 		}
 		//! Destructor
-		virtual ~IComponent()
+		virtual ~EntityComponent()
 		{
 			if (m_LastContinuousProperty)
 				delete m_LastContinuousProperty;
@@ -212,6 +212,13 @@ namespace FusionEngine
 		const std::string& GetIdentifier() const { return m_Identifier; }
 
 		virtual std::string GetType() const = 0;
+
+		//! Gets the specific type of this component. Used by ComponentTypeInfoCache.
+		/*!
+		 * The specific type should be defined such that the properties
+		 * can be assumed to be consistent at runtime
+		 */
+		virtual std::string GetProfileType() const { return GetType(); }
 
 		const std::set<std::string>& GetInterfaces()
 		{
@@ -246,7 +253,7 @@ namespace FusionEngine
 		//! Returns true after this Ready is called on this component
 		/*
 		* ISystemWorld#OnActivation wont be called until all siblings are ready.
-		* The default ISystemWorld#Prepare() calls IComponent#Ready() on the passed component
+		* The default ISystemWorld#Prepare() calls EntityComponent#Ready() on the passed component
 		* (i.e. it assumes that the component has no mission-critical resources.)
 		*/
 		bool IsReady() const { return m_Ready == Ready; }
@@ -297,6 +304,7 @@ namespace FusionEngine
 
 		//std::shared_ptr<ComponentImpl> m_Impl;
 
+		std::shared_ptr<std::map<std::string, size_t>> m_PropertiesMap;
 	};
 
 //! Calls InitProperties() on the given interface type
@@ -313,26 +321,26 @@ namespace FusionEngine
 	template <class T>
 	static void IComponent_addRef(T* obj)
 	{
-		auto com = dynamic_cast<IComponent*>(obj);
+		auto com = dynamic_cast<EntityComponent*>(obj);
 		com->addRef();
 	}
 
 	template <class T>
 	static void IComponent_release(T* obj)
 	{
-		auto com = dynamic_cast<IComponent*>(obj);
+		auto com = dynamic_cast<EntityComponent*>(obj);
 		com->release();
 	}
 
 	template <class T>
 	static std::string IComponent_GetType(T* obj)
 	{
-		auto com = dynamic_cast<IComponent*>(obj);
+		auto com = dynamic_cast<EntityComponent*>(obj);
 		return com->GetType();
 	}
 
 	template <class Derived>
-	Derived* ComponentCast(IComponent *obj)
+	Derived* ComponentCast(EntityComponent *obj)
 	{
 		if (obj != nullptr)
 		{
@@ -355,7 +363,7 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterComponentInterfaceType(asIScriptEngine *engine)
 	{
-		//IComponent::RegisterType<IComponent>(engine, T::GetTypeName());
+		//EntityComponent::RegisterType<EntityComponent>(engine, T::GetTypeName());
 		//int v = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF | asOBJ_NOHANDLE); FSN_ASSERT(v >= 0);
 		int r;
 		r = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF); FSN_ASSERT(r >= 0);
@@ -365,7 +373,7 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, (T::GetTypeName() + "@ f()").c_str(), asFUNCTION(ComponentCast<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("EntityComponent", asBEHAVE_REF_CAST, (T::GetTypeName() + "@ f()").c_str(), asFUNCTION(ComponentCast<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 }

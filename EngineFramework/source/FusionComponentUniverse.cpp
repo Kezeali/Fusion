@@ -30,12 +30,14 @@
 #include "FusionComponentUniverse.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionComponentTypeInfo.h"
 
 namespace FusionEngine
 {
 
 	ComponentUniverse::ComponentUniverse()
 	{
+		m_ComponentTypeInfoCache = std::make_shared<ComponentTypeInfoCache>();
 	}
 
 	ComponentUniverse::~ComponentUniverse()

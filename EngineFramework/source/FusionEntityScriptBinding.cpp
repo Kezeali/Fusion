@@ -51,17 +51,17 @@ namespace FusionEngine
 			: component(nullptr)
 		{}
 
-		ASComponentFuture(IComponent* com)
+		ASComponentFuture(EntityComponent* com)
 			: component(com)
 		{}
 
-		IComponent* component;
+		EntityComponent* component;
 
 		static void Register(asIScriptEngine* engine);
 		
 	};
 
-	static IComponent* ASComponentFuture_GetComponent(ASComponentFuture* obj)
+	static EntityComponent* ASComponentFuture_GetComponent(ASComponentFuture* obj)
 	{
 		return obj->component;
 	}
@@ -71,8 +71,8 @@ namespace FusionEngine
 		ASComponentFuture::RegisterType<ASComponentFuture>(engine, "ComponentFuture");
 
 		int r;
-		r = engine->RegisterObjectBehaviour("ComponentFuture", asBEHAVE_IMPLICIT_REF_CAST, "IComponent@ f()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("ComponentFuture", "IComponent@ get()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("ComponentFuture", asBEHAVE_IMPLICIT_REF_CAST, "EntityComponent@ f()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("ComponentFuture", "EntityComponent@ get()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 	static ASComponentFuture* Entity_GetComponent(EntityPtr* obj, std::string type, std::string ident)

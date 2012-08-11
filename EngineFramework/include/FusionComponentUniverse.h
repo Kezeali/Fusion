@@ -43,6 +43,7 @@ namespace FusionEngine
 {
 
 	class ISystemWorld;
+	class ComponentTypeInfoCache;
 
 	//! Stores component worlds
 	class ComponentUniverse : public ComponentFactory
@@ -77,6 +78,8 @@ namespace FusionEngine
 		ComponentTypes_t m_ComponentTypes;
 
 		boost::mutex m_Mutex;
+
+		std::shared_ptr<ComponentTypeInfoCache> m_ComponentTypeInfoCache;
 	};
 
 }

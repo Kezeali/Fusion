@@ -49,9 +49,9 @@ namespace FusionEngine
 
 	//! Camera component
 	/*
-	* \todo Add a property to IComponent(?) that indicates that the given component type must only have one instance per entity
+	* \todo Add a property to EntityComponent(?) that indicates that the given component type must only have one instance per entity
 	*/
-	class StreamingCamera : public IComponent, public ICamera
+	class StreamingCamera : public EntityComponent, public ICamera
 	{
 		friend class CLRenderWorld;
 		friend class CLRenderTask;
@@ -80,7 +80,7 @@ namespace FusionEngine
 
 		void SetAngle(float angle);
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "StreamingCamera"; }
 
 		void OnSiblingAdded(const ComponentPtr& component);

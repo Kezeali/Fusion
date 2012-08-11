@@ -50,7 +50,7 @@ namespace FusionEngine
 	template <class IFaceT>
 	IFaceT* GetIface(void* obj)
 	{
-		auto ifaceObj = dynamic_cast<IFaceT*>(static_cast<IComponent*>(obj));
+		auto ifaceObj = dynamic_cast<IFaceT*>(static_cast<EntityComponent*>(obj));
 		//FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
 		if (ifaceObj)
 			return ifaceObj;

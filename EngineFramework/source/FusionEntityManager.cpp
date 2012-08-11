@@ -1780,11 +1780,11 @@ namespace FusionEngine
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
 			auto& com = *it;
-			if (com->GetReadyState() == IComponent::NotReady)
+			if (com->GetReadyState() == EntityComponent::NotReady)
 			{
 				if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 				{
-					com->SetReadyState(IComponent::Preparing);
+					com->SetReadyState(EntityComponent::Preparing);
 					world->Prepare(com);
 					allAreReady &= com->IsReady();
 				}
@@ -1840,16 +1840,16 @@ namespace FusionEngine
 
 	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component)
 	{
-		if (component->GetReadyState() == IComponent::NotReady)
+		if (component->GetReadyState() == EntityComponent::NotReady)
 		{
-			component->SetReadyState(IComponent::Preparing);
+			component->SetReadyState(EntityComponent::Preparing);
 			world->Prepare(component);
 		}
 		if (component->IsReady())
 		{
 			world->OnActivation(component);
 			component->GetParent()->OnComponentActivated(component); // Tell the siblings
-			component->SetReadyState(IComponent::Active);
+			component->SetReadyState(EntityComponent::Active);
 			component->SynchronisePropertiesNow();
 			return true;
 		}
@@ -1882,7 +1882,7 @@ namespace FusionEngine
 		if (auto world = m_Universe->GetWorldByComponentType(com->GetType()))
 		{
 			world->OnDeactivation(com);
-			com->SetReadyState(IComponent::NotReady);
+			com->SetReadyState(EntityComponent::NotReady);
 		}
 		else
 			FSN_EXCEPT(InvalidArgumentException, "Herp derp");

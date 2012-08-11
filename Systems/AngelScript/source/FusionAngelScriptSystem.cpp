@@ -658,7 +658,7 @@ namespace FusionEngine
 
 					scriptComponentInterfaces.push_back(_where->second);
 				}
-				else // Native components can be casted directly from the IComponent returned by getComponent
+				else // Native components can be casted directly from the EntityComponent returned by getComponent
 				{
 					convenientComponentProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"

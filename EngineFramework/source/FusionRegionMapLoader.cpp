@@ -351,9 +351,9 @@ namespace FusionEngine
 
 		m_Quit.reset();
 		m_Thread = boost::thread(&RegionCellArchivist::Run, this);
-//#ifdef _WIN32
-//		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-//#endif
+#ifdef _WIN32
+		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#endif
 	}
 
 	void RegionCellArchivist::Stop()

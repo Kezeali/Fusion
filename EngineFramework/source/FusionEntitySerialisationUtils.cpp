@@ -151,7 +151,7 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
-			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+			auto transform = dynamic_cast<EntityComponent*>(entity->GetTransform().get());
 			{
 				std::string type = transform->GetType();
 				compressor->EncodeString(type.c_str(), type.length() + 1, &out);
@@ -459,7 +459,7 @@ namespace FusionEngine
 			}
 		}
 
-		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, SerialiseMode mode)
+		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, EntityComponent* component, SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
 			component->SerialiseOccasional(tempStream);
@@ -543,7 +543,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseComponentOccasional(RakNet::BitStream& in, uint32_t& checksum, IComponent* component)
+		void DeserialiseComponentOccasional(RakNet::BitStream& in, uint32_t& checksum, EntityComponent* component)
 		{
 			//const auto stateLength = ReadStateLength(in);
 			//if (stateLength)
@@ -806,7 +806,7 @@ namespace FusionEngine
 			}
 		}
 
-		void WriteComponent(OCellStream& outstr, IComponent* component, bool editable)
+		void WriteComponent(OCellStream& outstr, EntityComponent* component, bool editable)
 		{
 			FSN_ASSERT(component);
 
@@ -848,7 +848,7 @@ namespace FusionEngine
 			}
 		}
 
-		void ReadComponent(ICellStream& instr, IComponent* component, bool editable)
+		void ReadComponent(ICellStream& instr, EntityComponent* component, bool editable)
 		{
 			FSN_ASSERT(component);
 

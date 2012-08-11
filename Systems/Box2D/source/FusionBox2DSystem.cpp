@@ -337,7 +337,7 @@ namespace FusionEngine
 		return InstantiateComponent(type, Vector2::zero(), 0.f);
 	}
 
-	class StaticTransform : public IComponent, public ITransform
+	class StaticTransform : public EntityComponent, public ITransform
 	{
 	public:
 		FSN_LIST_INTERFACES((ITransform))

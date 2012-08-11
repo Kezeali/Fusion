@@ -156,7 +156,7 @@ namespace FusionEngine
 	};
 
 	//! Angelscript component
-	class ASScript : public IComponent, public IScript
+	class ASScript : public EntityComponent, public IScript
 	{
 		friend class AngelScriptWorld;
 		friend class AngelScriptTask;
@@ -275,8 +275,9 @@ namespace FusionEngine
 		static void YeildActiveScriptUntil(std::function<bool (void)> condition, float timeout = 0.f);
 
 	private:
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "ASScript"; }
+		std::string GetProfileType() const { return m_ScriptObject ? m_ScriptObject->object->GetObjectType()->GetName() : GetType(); }
 
 		void OnSiblingAdded(const ComponentPtr& com);
 		void OnSiblingRemoved(const ComponentPtr& com);

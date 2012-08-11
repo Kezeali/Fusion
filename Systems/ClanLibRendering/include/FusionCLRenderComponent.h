@@ -52,7 +52,7 @@ namespace FusionEngine
 	class SpriteAnimation;
 	class SpriteDefinition2;
 
-	class IDrawable : public IComponent
+	class IDrawable : public EntityComponent
 	{
 	public:
 		virtual ~IDrawable() {}
@@ -136,7 +136,7 @@ namespace FusionEngine
 
 		CL_Rectf m_AABB;
 
-		// IComponent
+		// EntityComponent
 		std::string GetType() const { return "CLSprite"; }
 
 		void OnSiblingAdded(const ComponentPtr& component);

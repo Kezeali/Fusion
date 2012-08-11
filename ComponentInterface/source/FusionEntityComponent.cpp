@@ -30,6 +30,7 @@
 #include "FusionEntityComponent.h"
 
 #include "FusionComponentProperty.h"
+#include "FusionComponentTypeInfo.h"
 #include "FusionPropertySignalingSystem.h"
 
 #include "FusionComponentFactory.h"
@@ -42,7 +43,7 @@
 namespace FusionEngine
 {
 
-	ComponentPtr IComponent::Clone(ComponentFactory* factory)
+	ComponentPtr EntityComponent::Clone(ComponentFactory* factory)
 	{
 		ComponentPtr component = factory->InstantiateComponent(GetType());
 		RakNet::BitStream stream;
@@ -54,7 +55,7 @@ namespace FusionEngine
 		return component;
 	}
 
-	boost::intrusive_ptr<ComponentProperty> IComponent::AddProperty(const std::string& name, IComponentProperty* impl)
+	boost::intrusive_ptr<ComponentProperty> EntityComponent::AddProperty(const std::string& name, IComponentProperty* impl)
 	{
 #ifdef _DEBUG
 		auto isContainer = [impl](const std::pair<std::string, PropertyPtr>& existing)->bool { return existing.second->GetImpl() == impl; };
@@ -76,7 +77,7 @@ namespace FusionEngine
 		return prop;
 	}
 
-	void IComponent::SynchronisePropertiesNow()
+	void EntityComponent::SynchronisePropertiesNow()
 	{
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
 		{
@@ -84,7 +85,7 @@ namespace FusionEngine
 		}
 	}
 
-	void IComponent::SerialiseContinuous(RakNet::BitStream& stream)
+	void EntityComponent::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		for (auto it = m_LastContinuousProperty; it != nullptr; it = it->previous)
 		{
@@ -93,7 +94,7 @@ namespace FusionEngine
 		}
 	}
 
-	void IComponent::DeserialiseContinuous(RakNet::BitStream& stream)
+	void EntityComponent::DeserialiseContinuous(RakNet::BitStream& stream)
 	{
 		for (auto it = m_LastContinuousProperty; it != nullptr; it = it->previous)
 		{
@@ -104,7 +105,7 @@ namespace FusionEngine
 		OnPostDeserialisation();
 	}
 
-	void IComponent::SerialiseOccasional(RakNet::BitStream& stream)
+	void EntityComponent::SerialiseOccasional(RakNet::BitStream& stream)
 	{
 		for (auto it = m_LastOccasionalProperty; it != nullptr; it = it->previous)
 		{
@@ -113,7 +114,7 @@ namespace FusionEngine
 		}
 	}
 
-	void IComponent::DeserialiseOccasional(RakNet::BitStream& stream)
+	void EntityComponent::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
 		for (auto it = m_LastOccasionalProperty; it != nullptr; it = it->previous)
 		{
@@ -124,7 +125,7 @@ namespace FusionEngine
 		OnPostDeserialisation();
 	}
 
-	void IComponent::SerialiseEditable(RakNet::BitStream& stream)
+	void EntityComponent::SerialiseEditable(RakNet::BitStream& stream)
 	{
 		stream.Write(m_Properties.size());
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
@@ -140,12 +141,16 @@ namespace FusionEngine
 		}
 	}
 
-	void IComponent::DeserialiseEditable(RakNet::BitStream& stream)
+	void EntityComponent::DeserialiseEditable(RakNet::BitStream& stream)
 	{
 		size_t numProps = 0;
 		stream.Read(numProps);
-		std::map<std::string, PropertyPtr> propsMap;
-		propsMap.insert(m_Properties.begin(), m_Properties.end());
+
+		if (!m_PropertiesMap)
+			m_PropertiesMap = ComponentTypeInfoCache::getSingleton().GetComponentTypeInfo(this);
+
+		const auto& propertiesMap = *m_PropertiesMap;
+		
 		for (size_t i = 0; i < numProps; ++i)
 		{
 			// Read the name
@@ -157,10 +162,10 @@ namespace FusionEngine
 				std::string name(d.begin(), d.end());
 
 				// Deserialise the prop
-				auto it = propsMap.find(name);
-				if (it != propsMap.end())
+				auto it = propertiesMap.find(name);
+				if (it != propertiesMap.end())
 				{
-					const auto& prop = it->second;
+					const auto& prop = m_Properties[it->second].second;
 					prop->Deserialise(stream);
 				}
 			}

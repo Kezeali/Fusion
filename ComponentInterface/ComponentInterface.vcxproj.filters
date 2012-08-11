@@ -31,6 +31,9 @@
     <ClCompile Include="source\FusionComponentProperty.cpp">
       <Filter>Entity</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionComponentTypeInfo.cpp">
+      <Filter>Entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">
@@ -75,5 +78,8 @@
       <Filter>Entity</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionSyncSigScriptInterface.h" />
+    <ClInclude Include="include\FusionComponentTypeInfo.h">
+      <Filter>Entity</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

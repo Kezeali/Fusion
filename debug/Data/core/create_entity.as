@@ -44,7 +44,7 @@ void createEntity(int type, const Vector &in pos, float angle)
 	{
 		Entity e = editor.CreateEntity("b2Static", pos, angle, false, true);
 		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
-		IComponent@ b2Circle = instantiator.addComponent(e, "b2Circle", "");
+		EntityComponent@ b2Circle = instantiator.addComponent(e, "b2Circle", "");
 		IFixture@ fixture = cast<IFixture>(b2Circle);
 		ICircleShape@ shape = cast<ICircleShape>(b2Circle);
 		
@@ -56,7 +56,7 @@ void createEntity(int type, const Vector &in pos, float angle)
 	{
 		Entity e = editor.CreateEntity("b2Static", pos, angle, false, true);
 		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
-		IComponent@ b2Circle = instantiator.addComponent(e, "b2Circle", "");
+		EntityComponent@ b2Circle = instantiator.addComponent(e, "b2Circle", "");
 		IFixture@ fixture = cast<IFixture>(b2Circle);
 		ICircleShape@ shape = cast<ICircleShape>(b2Circle);
 		

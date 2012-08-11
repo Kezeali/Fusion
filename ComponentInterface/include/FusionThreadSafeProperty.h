@@ -117,7 +117,7 @@
 	void InitProperties()\
 	{\
 	typedef iface_name iface;\
-	auto component = dynamic_cast<IComponent*>(this);\
+	auto component = dynamic_cast<EntityComponent*>(this);\
 	FSN_ASSERT(component);\
 	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
 	}\
@@ -236,7 +236,7 @@ namespace FusionEngine
 		virtual void Set(SetT) = 0;
 		virtual GetT Get() const = 0;
 		
-		virtual IComponent* GetObjectAsComponent() const = 0;
+		virtual EntityComponent* GetObjectAsComponent() const = 0;
 	};
 
 	template <class C, class GetT, class SetT>
@@ -270,10 +270,10 @@ namespace FusionEngine
 			return (m_Object->*m_GetFn)();
 		}
 		
-		IComponent* GetObjectAsComponent() const
+		EntityComponent* GetObjectAsComponent() const
 		{
 			FSN_ASSERT(m_Object);
-			return dynamic_cast<IComponent*>(m_Object);
+			return dynamic_cast<EntityComponent*>(m_Object);
 		}
 	};
 

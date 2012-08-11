@@ -104,7 +104,6 @@ namespace FusionEngine
 
 	private:
 		SyncSig::HandlerConnection_t m_ActiveConnection;
-		std::shared_ptr<std::function<void (PropertyID, PropertySignalingSystem_t&)>> m_Callback;
 		PropertyID m_PropertyID;
 
 		virtual SyncSig::HandlerConnection_t AddHandler(PropertySignalingSystem_t& system) = 0;
@@ -164,11 +163,10 @@ namespace FusionEngine
 		{
 			// Using the same connection holder here means that the NewGenerators
 			//  subscription will be broken as soon as a handler is successfully added
-			m_Callback.reset(new std::function<void (PropertyID, PropertySignalingSystem_t&)>([this](PropertyID key, PropertySignalingSystem_t& system)
+			m_ActiveConnection = system.SubscribeNewGenerators(m_PropertyID, [this](PropertyID key, PropertySignalingSystem_t& system)
 			{
 				m_ActiveConnection = AddHandler(system);
-			}));
-			/*m_ActiveConnection = */system.RequestNewGeneratorCallback(m_PropertyID, m_Callback);
+			});
 		}
 	}
 

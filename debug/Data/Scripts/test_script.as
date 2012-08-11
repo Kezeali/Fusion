@@ -54,7 +54,7 @@ class Test : ScriptComponent
 			//instantiator.addComponent(newEnt, "TestC", "script_c");
 			//script = true;
 		}
-		IComponent@ com = newEnt.getComponent("ISprite");
+		EntityComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		if (sprite is null)
 		{
@@ -84,7 +84,7 @@ class Test : ScriptComponent
 		instantiator.addComponent(newEnt, "b2Circle", "");
 		instantiator.addComponent(newEnt, "CLSprite", "");
 		instantiator.addComponent(newEnt, "PseudoI", "notai");
-		IComponent@ com = newEnt.getComponent("ISprite");
+		EntityComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
@@ -106,7 +106,7 @@ class Test : ScriptComponent
 		//  where you can pass some sort of collection
 		Entity newEnt = instantiator.instantiate("StaticTransform", false, pos, rand() * 3.14f, 0);
 		instantiator.addComponent(newEnt, "CLSprite", "");
-		IComponent@ com = newEnt.getComponent("ISprite");
+		EntityComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath = "Entities/Dirt.png";
 		

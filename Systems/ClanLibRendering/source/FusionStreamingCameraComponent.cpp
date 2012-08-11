@@ -101,7 +101,7 @@ namespace FusionEngine
 		m_IncommingAngle = angle;
 	}
 
-	// IComponent
+	// EntityComponent
 	void StreamingCamera::OnSiblingAdded(const ComponentPtr& component)
 	{
 		if (auto transform = dynamic_cast<ITransform*>(component.get()))

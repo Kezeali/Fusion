@@ -416,8 +416,8 @@ namespace FusionEngine
 		ComponentProperty::Register(engine);
 
 		// Component types
-		IComponent::RegisterType<IComponent>(engine, "IComponent");
-		engine->RegisterObjectMethod("IComponent", "string getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL);
+		EntityComponent::RegisterType<EntityComponent>(engine, "EntityComponent");
+		engine->RegisterObjectMethod("EntityComponent", "string getType()", asMETHOD(EntityComponent, GetType), asCALL_THISCALL);
 
 		ITransform_RegisterScriptInterface(engine);
 		IRigidBody_RegisterScriptInterface(engine);

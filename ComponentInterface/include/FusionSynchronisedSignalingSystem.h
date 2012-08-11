@@ -277,19 +277,29 @@ namespace FusionEngine
 			//! Subscribe to receive notification when new generators are added
 			HandlerConnection_t SubscribeNewGenerators(KeyT key, const std::function<void (KeyT, This_t&)>& callback)
 			{
-				return std::make_shared<boost::signals2::scoped_connection>(SigGeneratorDefined.connect(callback));
-			}
+				FSN_ASSERT(!HasGenerator(key));
 
-			//! Simmilar to SubscribeNewGenerators, but for a specific key (SubscribeNewGenerators is a massive performance hog)
-			void RequestNewGeneratorCallback(KeyT key, const std::shared_ptr<std::function<void (KeyT, This_t&)>>& callback)
-			{
-				m_NewGeneratorCallbacks[key] = callback;
+				NewGeneratorSignalMap_t::accessor accessor;
+				const bool inserted = m_NewGeneratorSignals.insert(accessor, key);
+				if (inserted)
+					accessor->second = std::make_shared<SigNewGenerator_t>();
+				auto connection = std::make_shared<boost::signals2::scoped_connection>(accessor->second->connect(callback));
+				// It's possible that this callback was inserted concurrently with the signal being retrieved
+				//  due to the generator coming available: check for that
+				if (inserted && HasGenerator(key))
+				{
+					callback(key, *this);
+					m_NewGeneratorSignals.erase(accessor);
+					return HandlerConnection_t();
+				}
+				else
+					return std::move(connection);
 			}
 
 			boost::signals2::signal<void (KeyT, This_t&)> SigGeneratorDefined;
 
 		private:
-			//! Interface for any generator (type-erasure, blah blah)
+			//! Interface for any generator (type-erasure ish, blah blah)
 			class GeneratorPlaceholder
 			{
 			public:
@@ -363,7 +373,9 @@ namespace FusionEngine
 			GeneratorMap_t m_Generators;
 			tbb::concurrent_queue<std::pair<KeyT, std::weak_ptr<GeneratorPlaceholder>>> m_TriggeredGenerators;
 
-			std::unordered_map<KeyT, std::weak_ptr<std::function<void (KeyT, This_t&)>>> m_NewGeneratorCallbacks;
+			typedef boost::signals2::signal<void (KeyT, This_t&)> SigNewGenerator_t;
+			typedef tbb::concurrent_hash_map<KeyT, std::shared_ptr<SigNewGenerator_t>> NewGeneratorSignalMap_t;
+			NewGeneratorSignalMap_t m_NewGeneratorSignals;
 
 			template <class T>
 			std::shared_ptr<Generator<T>> MakeGeneratorObj(KeyT key)
@@ -375,12 +387,12 @@ namespace FusionEngine
 				m_Generators.insert(std::make_pair(key, generator));
 
 				//SigGeneratorDefined(key, *this);
-				auto entry = m_NewGeneratorCallbacks.find(key);
-				if (entry != m_NewGeneratorCallbacks.end())
+				NewGeneratorSignalMap_t::const_accessor accessor;
+				if (m_NewGeneratorSignals.find(accessor, key))
 				{
-					if (auto callback = entry->second.lock())
-						(*callback)(key, *this);
-					m_NewGeneratorCallbacks.erase(entry);
+					auto& callback = *accessor->second;
+					callback(key, *this);
+					m_NewGeneratorSignals.erase(accessor);
 				}
 
 				return std::move(generator);

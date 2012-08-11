@@ -85,7 +85,7 @@ namespace FusionEngine
 			m_NonArchetypalComponents.erase(entry);
 		else
 		{
-			auto arcEntry = std::find_if(m_Components.begin(), m_Components.end(), [component](const std::pair<Archetypes::ComponentID_t, IComponent*>& entry)
+			auto arcEntry = std::find_if(m_Components.begin(), m_Components.end(), [component](const std::pair<Archetypes::ComponentID_t, EntityComponent*>& entry)
 			{ return entry.second == component.get(); });
 			if (arcEntry != m_Components.end())
 				arcEntry->second = nullptr;
@@ -195,7 +195,7 @@ namespace FusionEngine
 	{
 #ifdef DEFER_COMPONENT_OPERATIONS
 		std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>> addedComponents;
-		std::list<std::pair<Archetypes::ComponentID_t, IComponent*>> removedComponents;
+		std::list<std::pair<Archetypes::ComponentID_t, EntityComponent*>> removedComponents;
 #else
 		if (auto entity = m_ManagedEntity.lock())
 #endif
@@ -272,7 +272,7 @@ namespace FusionEngine
 		PerformPropertyOverrides();
 	}
 
-	void ArchetypalEntityManager::PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, IComponent*>>& removed)
+	void ArchetypalEntityManager::PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, EntityComponent*>>& removed)
 	{
 		if (auto entity = m_ManagedEntity.lock())
 		{
