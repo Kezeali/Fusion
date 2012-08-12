@@ -58,7 +58,7 @@ namespace FusionEngine
 			: m_PropertyID(-1)
 		{}
 
-		virtual ~PersistentFollower() {}
+		virtual ~PersistentFollower();
 
 		void Subscribe(PropertySignalingSystem_t& system, int property_id)
 		{
@@ -103,6 +103,7 @@ namespace FusionEngine
 		void ActivateSubscription(PropertySignalingSystem_t& system);
 
 	private:
+		SyncSig::HandlerConnection_t m_WaitingConnection;
 		SyncSig::HandlerConnection_t m_ActiveConnection;
 		PropertyID m_PropertyID;
 
@@ -154,19 +155,27 @@ namespace FusionEngine
 		tbb::atomic<PropertyID> m_NextID;
 	};
 
+	inline PersistentFollower::~PersistentFollower()
+	{
+		if (m_WaitingConnection)
+			EvesdroppingManager::getSingleton().GetSignalingSystem().OnUnsubscribeNewGenerators(m_PropertyID);
+	}
 
 	inline void PersistentFollower::ActivateSubscription(PropertySignalingSystem_t& system)
 	{
-		if (system.HasGenerator(m_PropertyID))
-			m_ActiveConnection = AddHandler(system);
-		else
+		if (IsSubscribed())
 		{
-			// Using the same connection holder here means that the NewGenerators
-			//  subscription will be broken as soon as a handler is successfully added
-			m_ActiveConnection = system.SubscribeNewGenerators(m_PropertyID, [this](PropertyID key, PropertySignalingSystem_t& system)
-			{
+			if (system.HasGenerator(m_PropertyID))
 				m_ActiveConnection = AddHandler(system);
-			});
+			else
+			{
+				m_ActiveConnection.reset();
+				m_WaitingConnection = system.SubscribeNewGenerators(m_PropertyID, [this](PropertyID key, PropertySignalingSystem_t& system)
+				{
+					m_WaitingConnection.reset();
+					m_ActiveConnection = AddHandler(system);
+				});
+			}
 		}
 	}
 

@@ -381,12 +381,16 @@ namespace FusionEngine
 
 		void Serialise(RakNet::BitStream& stream)
 		{
+			// Non-writable properties don't need to be synched
+			//  (one assumes that they represent some dependent
+			//  or constant value)
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
 				m_SubscriptionAgent.SaveSubscription(stream);
 				Serialiser::Serialise(stream, m_Value);
 			}
 		}
+
 		void Deserialise(RakNet::BitStream& stream)
 		{
 			if (!std::is_same<Writer, NullWriter<T>>::value)
@@ -397,6 +401,18 @@ namespace FusionEngine
 				m_Writer.Write(temp);
 			}
 		}
+
+		void DeserialiseNonConcurrent(RakNet::BitStream& stream)
+		{
+			if (!std::is_same<Writer, NullWriter<T>>::value)
+			{
+				Synchronise();
+				m_SubscriptionAgent.LoadSubscription(stream);
+				Serialiser::Deserialise(stream, m_Value);
+				m_GetSetCallbacks->Set(m_Value);
+			}
+		}
+
 		bool IsContinuous() const
 		{
 			return Serialiser::IsContinuous();

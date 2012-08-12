@@ -64,6 +64,14 @@
 
 namespace bio = boost::iostreams;
 
+namespace tbb
+{
+	size_t tbb_hasher(const FusionEngine::RegionCellArchivist::CellCoord_t& value)
+	{
+		return FusionEngine::hash_value(value);
+	}
+}
+
 namespace FusionEngine
 {
 
@@ -282,23 +290,21 @@ namespace FusionEngine
 			m_WriteQueue.push(WriteTask(cell, CellCoord_t(x, y), cell.unique()));
 			m_NewData.set();
 			
-			TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
-			FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
-			m_CellsBeingProcessed[CellCoord_t(x, y)] = std::move(cell);
+			//TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
+			//FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
+			CellsBeingProcessedMap_t::accessor accessor;
+			m_CellsBeingProcessed.insert(accessor, CellCoord_t(x, y));
+			accessor->second = std::move(cell);
 		}
 	}
 
 	std::shared_ptr<Cell> RegionCellArchivist::Retrieve(int32_t x, int32_t y)
 	{
-		TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
-		FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
-#ifdef _DEBUG
-		auto r = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>()));
-		auto _where = r.first;
-#else
-		auto _where = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>())).first;
-#endif
-		auto& cell = _where->second;
+		//TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
+		//FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
+		CellsBeingProcessedMap_t::accessor accessor;
+		m_CellsBeingProcessed.insert(accessor, std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>()));
+		auto& cell = accessor->second;
 
 		auto state = cell->waiting.fetch_and_store(Cell::Retrieve);
 		if (state != Cell::Retrieve && (state != Cell::Ready || !cell->loaded))
@@ -312,7 +318,7 @@ namespace FusionEngine
 			AddHist(CellCoord_t(x, y), "Already loaded");
 			cell->waiting = Cell::Ready;
 			std::shared_ptr<Cell> retVal = std::move(cell); // move the ptr so the stored one can be erased
-			m_CellsBeingProcessed.erase(_where);
+			m_CellsBeingProcessed.erase(accessor);
 			return std::move(retVal);
 		}
 
@@ -329,19 +335,19 @@ namespace FusionEngine
 		endEvent.set();
 	}
 
-	std::unique_ptr<RegionCellArchivist::TransactionLock> RegionCellArchivist::MakeTransaction()
-	{
-		return std::unique_ptr<TransactionLock>(new TransactionLock(m_TransactionMutex, m_TransactionEnded));
-	}
+	//std::unique_ptr<RegionCellArchivist::TransactionLock> RegionCellArchivist::MakeTransaction()
+	//{
+	//	return std::unique_ptr<TransactionLock>(new TransactionLock(m_TransactionMutex, m_TransactionEnded));
+	//}
 
 	void RegionCellArchivist::BeginTransaction()
 	{
-		m_TransactionMutex.lock();
+		//m_TransactionMutex.lock();
 	}
 
 	void RegionCellArchivist::EndTransaction()
 	{
-		m_TransactionMutex.unlock();
+		//m_TransactionMutex.unlock();
 		m_TransactionEnded.set();
 	}
 
@@ -351,9 +357,9 @@ namespace FusionEngine
 
 		m_Quit.reset();
 		m_Thread = boost::thread(&RegionCellArchivist::Run, this);
-#ifdef _WIN32
-		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-#endif
+//#ifdef _WIN32
+//		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+//#endif
 	}
 
 	void RegionCellArchivist::Stop()
@@ -1138,8 +1144,8 @@ namespace FusionEngine
 		if (!readyCells.empty())
 		{
 			{
-				TransactionMutex_t::scoped_lock lock(m_TransactionMutex);
-				if (lock)
+				//TransactionMutex_t::scoped_lock lock(m_TransactionMutex);
+				//if (lock)
 				{
 					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
 						m_CellsBeingProcessed.erase(*it);

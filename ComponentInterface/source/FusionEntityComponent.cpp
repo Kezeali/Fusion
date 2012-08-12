@@ -143,14 +143,13 @@ namespace FusionEngine
 
 	void EntityComponent::DeserialiseEditable(RakNet::BitStream& stream)
 	{
-		size_t numProps = 0;
-		stream.Read(numProps);
-
 		if (!m_PropertiesMap)
 			m_PropertiesMap = ComponentTypeInfoCache::getSingleton().GetComponentTypeInfo(this);
 
+		size_t numProps = 0;
+		stream.Read(numProps);
+
 		const auto& propertiesMap = *m_PropertiesMap;
-		
 		for (size_t i = 0; i < numProps; ++i)
 		{
 			// Read the name

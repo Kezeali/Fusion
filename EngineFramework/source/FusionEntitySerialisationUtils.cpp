@@ -900,6 +900,8 @@ namespace FusionEngine
 						SendToConsole("Not all serialised data was used when reading a " + component->GetType() + " (editable mode)");
 				}
 			}
+
+			component->SynchronisePropertiesNow();
 		}
 
 		//{
@@ -942,6 +944,12 @@ namespace FusionEngine
 
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
+
+			// Synchronise all the properties of each component to make sure the most recent state is
+			//  saved (important when, for example, an entity is loaded and immeadiately saved without
+			//  ever being activated)
+			for (auto it = components.begin(); it != components.end(); ++it)
+				(*it)->SynchronisePropertiesNow();
 
 			// Write the entity position (whether or not it is archetypal)
 			auto tfComponent = entity->GetTransform().get();
@@ -1143,7 +1151,7 @@ namespace FusionEngine
 			// Read the rest of the transform data, now that the component has been initialised (by adding it to the entity)
 			ReadComponent(instr, transform.get(), editable);
 
-			transform->SynchronisePropertiesNow();
+			//transform->SynchronisePropertiesNow();
 
 			//{
 			//	RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);

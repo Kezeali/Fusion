@@ -296,6 +296,17 @@ namespace FusionEngine
 					return std::move(connection);
 			}
 
+			//! Remove subscription to the given generator key
+			void OnUnsubscribeNewGenerators(KeyT key)
+			{
+				NewGeneratorSignalMap_t::accessor accessor;
+				if (m_NewGeneratorSignals.find(accessor, key))
+				{
+					if (accessor->second->num_slots() == 0)
+						m_NewGeneratorSignals.erase(accessor);
+				}
+			}
+
 			boost::signals2::signal<void (KeyT, This_t&)> SigGeneratorDefined;
 
 		private:

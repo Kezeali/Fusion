@@ -43,6 +43,7 @@
 #include <unordered_set>
 #include <tuple>
 #include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_hash_map.h>
 
 #include "FusionCellDataSource.h"
 #include "FusionGameMapLoader.h"
@@ -245,10 +246,11 @@ namespace FusionEngine
 
 		std::unordered_set<std::pair<int32_t, int32_t>> m_SynchLoaded;
 
+		typedef tbb::concurrent_hash_map<CellCoord_t, std::shared_ptr<Cell>> CellsBeingProcessedMap_t;
 		// Cells who's ownership has been passed to this archiver via Store or created by Retrieve
-		std::unordered_map<CellCoord_t, std::shared_ptr<Cell>, boost::hash<CellCoord_t>> m_CellsBeingProcessed;
+		CellsBeingProcessedMap_t m_CellsBeingProcessed;
 
-		TransactionMutex_t m_TransactionMutex;
+		//TransactionMutex_t m_TransactionMutex;
 
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 
