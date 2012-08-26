@@ -98,13 +98,13 @@ namespace FusionEngine
 	 * \brief
 	 * Opens an xml file using the given VirtualDirectory object
 	 */
-	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir);
+	ticpp::Document OpenXml(const std::string &filename, CL_VirtualDirectory vdir);
 
 	std::string &OpenString(std::string& content, const std::string &filename, CL_VirtualDirectory vdir);
 
 	std::string OpenString(const std::string &filename, CL_VirtualDirectory vdir);
 	
-	void SaveXml(TiXmlDocument* doc, const std::string &filename, CL_VirtualDirectory vdir);
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, CL_VirtualDirectory vdir);
 
 	void SaveString(const std::string &content, const std::string &filename, CL_VirtualDirectory vdir);
 
@@ -112,13 +112,13 @@ namespace FusionEngine
 	 * \brief
 	 * Helper for opening an xml file using PhysFS (which will be the usual way.)
 	 */
-	TiXmlDocument* OpenXml_PhysFS(const std::string &filename);
+	ticpp::Document OpenXml_PhysFS(const std::string &filename);
 
 	std::string &OpenString_PhysFS(std::string &content, const std::string &filename);
 
 	std::string OpenString_PhysFS(const std::string &filename);
 
-	void SaveXml_PhysFS(TiXmlDocument* doc, const std::string &filename);
+	void SaveXml_PhysFS(const ticpp::Document& doc, const std::string &filename);
 
 	void SaveString_PhysFS(const std::string &content, const std::string &filename);
 

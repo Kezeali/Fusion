@@ -159,7 +159,19 @@ namespace FusionEngine
 			return true;
 		}
 		else
+		{
+			switch (db.error().code())
+			{
+			case kyotocabinet::BasicDB::Error::NOREC:
+				AddLogEntry(db.error().message(), LOG_INFO); // Missing record is an expected error, since this method is called for every retrieval
+				break;
+			default:
+				AddLogEntry(db.error().message(), LOG_NORMAL);
+				break;
+			}
+
 			return false;
+		}
 	}
 
 	inline void setupTuning(kyotocabinet::HashDB* db)
@@ -213,6 +225,9 @@ namespace FusionEngine
 	{
 		Stop();
 
+		if (!m_EntityLocationDB->close())
+			AddLogEntry(m_EntityLocationDB->error().message());
+
 		delete m_Cache;
 		if (m_EditableCache)
 			delete m_EditableCache;
@@ -232,7 +247,10 @@ namespace FusionEngine
 
 		PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "/entitylocations.kc");
 		if (m_EntityLocationDB)
-			m_EntityLocationDB->close();
+		{
+			if (!m_EntityLocationDB->close())
+				AddLogEntry(m_EntityLocationDB->error().message());
+		}
 		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
 		setupTuning(m_EntityLocationDB.get());
 		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
@@ -399,7 +417,8 @@ namespace FusionEngine
 			{
 				// Close the DB to do a clean copy (closed DB can be smaller)
 				std::string dbPath = m_EntityLocationDB->path();
-				m_EntityLocationDB->close();
+				if (!m_EntityLocationDB->close())
+					AddLogEntry(m_EntityLocationDB->error().message());
 				m_EntityLocationDB.reset();
 
 				try

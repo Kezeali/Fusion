@@ -140,7 +140,7 @@ namespace FusionEngine
 		~SpriteDefinition();
 
 		//! Load the given XML document
-		void LoadXml(const std::string &working_directory, TiXmlDocument *document, CL_VirtualDirectory &dir);
+		void LoadXml(const std::string &working_directory, const ticpp::Document &document, CL_VirtualDirectory &dir);
 
 		CL_Sprite CreateSprite(CL_GraphicContext &gc);
 
@@ -163,8 +163,8 @@ namespace FusionEngine
 		//! Returns true if the file exists
 		bool exists(const std::string &filename);
 
-		void loadImageElements(TiXmlElement *root);
-		void loadMoreOptions(TiXmlElement *root);
+		void loadImageElements(ticpp::Element *root);
+		void loadMoreOptions(ticpp::Element *root);
 
 		// Counts sprites based on this definition - when count reaches zero
 		//  all image data is cleared

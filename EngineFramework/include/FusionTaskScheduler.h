@@ -94,6 +94,7 @@ namespace FusionEngine
 		std::vector<ISystemTask*> m_SortedRenderTasks;
 
 		std::vector<std::unique_ptr<ISystemTask>> m_ProxyTasks; // This is to make sure they are deleted
+		std::unique_ptr<ISystemTask> m_StreamingTask;
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;

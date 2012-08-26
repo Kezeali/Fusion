@@ -95,7 +95,7 @@ namespace FusionEngine
 
 	void ResourceManager::loadResourceAndDeps(const ResourceDataPtr& resource, unsigned int depth_limit)
 	{
-		if (!resource->IsLoaded())
+		if (!resource->IsLoaded() && !resource->RequiresGC())
 		{
 			if (depth_limit == 0)
 			{

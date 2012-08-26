@@ -62,7 +62,7 @@ namespace FusionEngine
 		FSN_ASSERT(std::find_if(m_Properties.begin(), m_Properties.end(), isContainer) == m_Properties.end());
 #endif
 
-		boost::intrusive_ptr<ComponentProperty> prop(new ComponentProperty(impl, EvesdroppingManager::getSingleton().GenerateNextId()));
+		boost::intrusive_ptr<ComponentProperty> prop(new ComponentProperty(impl, EvesdroppingManager::getSingleton().GenerateNextId()), false);
 
 		m_Properties.push_back(std::make_pair(name, prop));
 

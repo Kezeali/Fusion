@@ -129,7 +129,7 @@ namespace FusionEngine
 		void SendPackets();
 		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager);
 
-		ConsolidatedInput *m_PlayerInputs;
+		std::unique_ptr<ConsolidatedInput> m_PlayerInputs;
 		InputManager *m_InputManager;
 
 		CameraSynchroniser* m_CameraSynchroniser;

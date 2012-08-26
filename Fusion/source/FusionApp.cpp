@@ -1,5 +1,9 @@
 #include "PrecompiledHeaders.h"
 
+#ifdef _DEBUG
+#include <vld.h>
+#endif
+
 #include "FusionEngineManager.h"
 #include "FusionEditor.h"
 

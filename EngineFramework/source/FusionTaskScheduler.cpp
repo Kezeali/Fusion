@@ -192,11 +192,10 @@ namespace FusionEngine
 
 		if (m_EntityManager)
 		{
-			auto streamingTask = new StreamingTask(m_EntityManager, m_Archivist);
-			m_SortedTasks.push_back(streamingTask);
-			m_SortedSimulationTasks.push_back(streamingTask);
-			m_SortedRenderTasks.push_back(streamingTask);
-			//m_SortedRenderTasks.push_back(new StreamingTaskB(m_EntityManager));
+			m_StreamingTask.reset(new StreamingTask(m_EntityManager, m_Archivist));
+			m_SortedTasks.push_back(m_StreamingTask.get());
+			m_SortedSimulationTasks.push_back(m_StreamingTask.get());
+			m_SortedRenderTasks.push_back(m_StreamingTask.get());
 		}
 
 		SortTasks();

@@ -305,14 +305,11 @@ namespace FusionEngine
 
 	void InputManager::LoadInputMaps(const std::string &filename)
 	{
-		TiXmlDocument* inner = nullptr;
 		// Create the file if it doesn't exist
 		if (PHYSFS_exists(filename.c_str()) == 0)
 			PhysFSHelp::copy_file("default-" + filename, filename);
 
-		inner = OpenXml_PhysFS(filename);
-		// Read the file
-		ticpp::Document doc(inner);
+		ticpp::Document doc = OpenXml_PhysFS(filename);
 		loadControls(&doc);
 	}
 

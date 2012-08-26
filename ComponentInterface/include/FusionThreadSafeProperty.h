@@ -323,6 +323,8 @@ namespace FusionEngine
 
 		~ThreadSafeProperty()
 		{
+			if (m_GetSetCallbacks)
+				delete m_GetSetCallbacks;
 		}
 		
 		ThreadSafeProperty& operator= (const ThreadSafeProperty& copy)

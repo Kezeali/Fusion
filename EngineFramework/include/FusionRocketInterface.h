@@ -49,12 +49,14 @@ namespace FusionEngine
 	{
 	public:
 		RocketSystem();
-	public:
+
 		virtual float GetElapsedTime();
 		virtual bool LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message);
 
 	protected:
 		LogPtr m_RocketLog;
+
+		virtual void Release();
 	};
 
 	//! libRocket RenderInterface implmentation
@@ -65,7 +67,7 @@ namespace FusionEngine
 
 		typedef std::unordered_map<CL_String, CL_Texture> TextureMap;
 		typedef std::list<CL_VertexArrayBuffer> GeometryMap;
-	public:
+
 		//! Called by Rocket when it wants to render geometry that it does not wish to optimise.
 		virtual void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation);
 
@@ -88,11 +90,6 @@ namespace FusionEngine
 		//! Called by Rocket when a loaded texture is no longer required.
 		virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
 
-		//virtual void Release();
-
-	//protected:
-	//	virtual void OnReferenceDeactivate();
-
 	protected:
 		CL_GraphicContext m_gc;
 
@@ -106,6 +103,8 @@ namespace FusionEngine
 		bool m_ClipEnabled;
 		//TextureMap m_Textures;
 		//GeometryMap m_Geometry;
+
+		virtual void Release();
 	};
 
 	//! libRocket FileInterface implementation
@@ -132,10 +131,8 @@ namespace FusionEngine
 
 		virtual size_t Length(Rocket::Core::FileHandle file);
 
-		//virtual void Release();
-
-	//protected:
-	//	virtual void OnReferenceDeactivate();
+		protected:
+			virtual void Release();
 	};
 
 }

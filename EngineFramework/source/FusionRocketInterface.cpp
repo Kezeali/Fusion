@@ -72,10 +72,10 @@ namespace FusionEngine
 		return true;
 	}
 
-	//void RocketSystem::Release()
-	//{
-	//	delete this;
-	//}
+	void RocketSystem::Release()
+	{
+		delete this;
+	}
 
 	/////////////////
 	// RocketRenderer
@@ -366,10 +366,10 @@ namespace FusionEngine
 		delete ((RocketCL_Texture*)texture);
 	}
 
-	//void RocketRenderer::Release()
-	//{
-	//	delete this;
-	//}
+	void RocketRenderer::Release()
+	{
+		delete this;
+	}
 
 	//////
 	// RFS
@@ -454,9 +454,9 @@ namespace FusionEngine
 		return (size_t)PHYSFS_fileLength((PHYSFS_File*)file);
 	}
 
-	//void RocketFileSystem::Release()
-	//{
-	//	delete this;
-	//}
+	void RocketFileSystem::Release()
+	{
+		delete this;
+	}
 
 }

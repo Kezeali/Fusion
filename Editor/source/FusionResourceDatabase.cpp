@@ -65,6 +65,8 @@ namespace FusionEngine
 	ResourceDatabase::~ResourceDatabase()
 	{
 		m_OnResourceLoadedConnection.disconnect();
+
+		m_Database->close();
 	}
 
 	void ResourceDatabase::Clear()

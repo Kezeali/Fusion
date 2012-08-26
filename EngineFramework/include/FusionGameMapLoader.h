@@ -99,7 +99,7 @@ namespace FusionEngine
 	class GameMapLoader : public PacketHandler
 	{
 	public:
-		GameMapLoader(ClientOptions *options);
+		GameMapLoader(/*ClientOptions *options*/);
 		~GameMapLoader();
 
 		void HandlePacket(RakNet::Packet *packet);
@@ -135,7 +135,7 @@ namespace FusionEngine
 
 		boost::signals2::connection m_FactoryConnection;
 
-		ClientOptions *m_ClientOptions;
+		//ClientOptions *m_ClientOptions;
 	};
 
 }

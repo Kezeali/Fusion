@@ -127,7 +127,7 @@ namespace FusionEngine
 			ticpp::Document doc;
 			if (PHYSFS_exists(filename.c_str()))
 			{
-				doc = ticpp::Document(OpenXml_PhysFS(filename));
+				doc = OpenXml_PhysFS(filename);
 			}
 			else if (default_if_missing)
 			{				
@@ -137,7 +137,7 @@ namespace FusionEngine
 					PhysFSHelp::copy_file("default-" + filename, filename);
 
 					// Parse the xml
-					doc = ticpp::Document(OpenXml_PhysFS(filename));
+					doc = OpenXml_PhysFS(filename);
 				}
 				catch (FileSystemException&)
 				{

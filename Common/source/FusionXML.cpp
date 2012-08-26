@@ -100,26 +100,25 @@ namespace FusionEngine
 	}
 
 
-	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
+	ticpp::Document OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
 	{
-		TiXmlDocument* doc = new TiXmlDocument();
+		ticpp::Document doc;
 		try
 		{
 			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
-			char *filedata = new char[in.get_size()];
-			in.read(filedata, in.get_size());
+			std::string filebuffer;
+			filebuffer.resize(in.get_size());
+			in.read(&filebuffer[0], in.get_size());
 
-			doc->Parse((const char*)filedata, 0, TIXML_ENCODING_UTF8);
+			doc.Parse(filebuffer, 0, TIXML_ENCODING_UTF8);
 		}
 		catch (CL_Exception&)
 		{
-			delete doc;
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
 		catch (std::bad_alloc&)
 		{
-			delete doc;
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
 
@@ -163,14 +162,14 @@ namespace FusionEngine
 		return content;
 	}
 
-	void SaveXml(TiXmlDocument* doc, const std::string &filename, CL_VirtualDirectory vdir)
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		try
 		{
 			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
 
 			ClanLibTiXmlFile fileIntf(out);
-			doc->SaveFile(&fileIntf);
+			doc.SaveFile(&fileIntf);
 		}
 		catch (CL_Exception&)
 		{
@@ -192,7 +191,7 @@ namespace FusionEngine
 		}
 	}
 
-	TiXmlDocument* OpenXml_PhysFS(const std::string &filename)
+	ticpp::Document OpenXml_PhysFS(const std::string &filename)
 	{
 		// Make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -216,7 +215,7 @@ namespace FusionEngine
 		return OpenString(content, filename, vdir);
 	}
 
-	void SaveXml_PhysFS(TiXmlDocument* doc, const std::string &filename)
+	void SaveXml_PhysFS(const ticpp::Document& doc, const std::string &filename)
 	{
 		// make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");

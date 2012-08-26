@@ -103,15 +103,17 @@ namespace FusionEngine
 	EngineManager::~EngineManager()
 	{
 		m_Console->UnbindCommand("cam_range");
+
+		delete ArchetypeFactoryManager::getSingletonPtr();
 	}
 
 	void EngineManager::Initialise()
 	{
 		try
 		{
-			ClientOptions* options = new ClientOptions("settings.xml", "settings");
+			std::unique_ptr<ClientOptions> options(new ClientOptions("settings.xml", "settings"));
 
-			ReadOptions(options);
+			ReadOptions(*options);
 			m_EditMode = options->GetOption_bool("edit");
 			options->GetOption("screen_width", &m_DisplayDimensions.x);
 			options->GetOption("screen_height", &m_DisplayDimensions.y);
@@ -185,7 +187,7 @@ namespace FusionEngine
 
 			m_ArchetypeFactory.reset(new ArchetypeFactory(m_EntityInstantiator.get()));
 
-			m_MapLoader.reset(new GameMapLoader(options));
+			m_MapLoader.reset(new GameMapLoader());
 
 			m_CellArchivist->SetInstantiator(m_EntityInstantiator.get(), m_ComponentUniverse.get(), m_EntityManager.get(), m_ArchetypeFactory.get());
 
@@ -358,9 +360,9 @@ namespace FusionEngine
 		}
 	}
 
-	void EngineManager::ReadOptions(ClientOptions* options)
+	void EngineManager::ReadOptions(const ClientOptions& options)
 	{
-		auto loggingLevel = options->GetOption_str("logging_level");
+		auto loggingLevel = options.GetOption_str("logging_level");
 		if (loggingLevel.empty() || loggingLevel == "normal")
 			m_Logger->SetDefaultThreshold(LOG_NORMAL);
 		else if (loggingLevel == "info")
@@ -370,10 +372,10 @@ namespace FusionEngine
 		else if (loggingLevel == "critical")
 			m_Logger->SetDefaultThreshold(LOG_CRITICAL);
 
-		if (options->GetOption_bool("console_logging"))
+		if (options.GetOption_bool("console_logging"))
 			m_Logger->ActivateConsoleLogging();
 
-		auto activeExtensionsStr = options->GetOption_str("active_extensions");
+		auto activeExtensionsStr = options.GetOption_str("active_extensions");
 		auto activeExtensions = fe_splitstring(activeExtensionsStr, ",");
 		m_EnabledExtensions.insert(activeExtensions.begin(), activeExtensions.end());
 	}

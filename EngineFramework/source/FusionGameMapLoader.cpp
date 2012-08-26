@@ -354,9 +354,9 @@ namespace FusionEngine
 		FSN_ASSERT(uint32_t(fileStream.tellp()) == locationsEndOffset);
 	}
 
-	GameMapLoader::GameMapLoader(ClientOptions *options)
-		: m_ClientOptions(options),
-		/*m_Factory(factory),
+	GameMapLoader::GameMapLoader(/*ClientOptions *options*/)
+		: /*m_ClientOptions(options),
+		m_Factory(factory),
 		m_Manager(manager),
 		m_FileSource(filesource),*/
 		m_NextTypeIndex(0),
