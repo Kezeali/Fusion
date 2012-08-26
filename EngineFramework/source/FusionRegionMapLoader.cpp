@@ -272,7 +272,8 @@ namespace FusionEngine
 
 	void RegionCellArchivist::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
 	{
-		// TODO: store active entity locations in-memory (in StreamingManager)?
+		FSN_ASSERT(false); // This method is obsolete, just keeping it for possible later convinience
+
 		FSN_ASSERT(m_EntityLocationDB);
 		CellCoord_t loc;
 		std::streamoff offset = 0; std::streamsize length = 0;

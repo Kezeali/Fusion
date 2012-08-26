@@ -41,6 +41,7 @@
 #include "FusionLogger.h"
 
 #include <boost/thread.hpp>
+#include <tbb/concurrent_hash_map.h>
 
 #include <cmath>
 
@@ -59,6 +60,33 @@ namespace FusionEngine
 	static const float s_DefaultPollArchiveInterval = 0.25f;
 
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
+
+	class ActiveEntityDirectory
+	{
+	public:
+		ActiveEntityDirectory()
+		{
+		}
+
+		void StoreEntityLocation(ObjectID id, const Vector2T<int32_t>& location)
+		{
+			m_Directory.insert(std::make_pair(id, location));
+		}
+
+		bool RetrieveEntityLocation(ObjectID id, Vector2T<int32_t>& location) const
+		{
+			Directory_t::const_accessor accessor;
+			if (m_Directory.find(accessor, id))
+			{
+				location = accessor->second;
+				return true;
+			}
+		}
+
+	private:
+		typedef tbb::concurrent_hash_map<ObjectID, Vector2T<int32_t>> Directory_t;
+		Directory_t m_Directory;
+	};
 
 #define FSN_CELL_LOG
 
@@ -103,6 +131,7 @@ namespace FusionEngine
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_PollArchiveInterval(s_DefaultPollArchiveInterval),
 		m_TimeUntilVoidRefresh(0.0f),
+		m_ActiveEntityDirectory(new ActiveEntityDirectory()),
 		m_Archivist(archivist)
 	{
 		m_Range = s_DefaultActivationRange;
@@ -396,18 +425,6 @@ namespace FusionEngine
 
 	Cell *StreamingManager::CellAtPosition(float x, float y)
 	{
-//#ifdef INFINITE_STREAMING
-//		Maths::ClampThis(x, -m_Bounds.x, m_Bounds.x);
-//		Maths::ClampThis(y, -m_Bounds.y, m_Bounds.y);
-//#endif
-//		FSN_ASSERT( x >= -m_Bounds.x );
-//		FSN_ASSERT( x <= +m_Bounds.x );
-//		FSN_ASSERT( y >= -m_Bounds.y );
-//		FSN_ASSERT( y <= +m_Bounds.y );
-//		unsigned int ix = Maths::Clamp<unsigned int>( (unsigned int)( (x + m_Bounds.x) * m_InverseCellSize ), 0, m_XCellCount - 1 );
-//		unsigned int iy = Maths::Clamp<unsigned int>( (unsigned int)( (y + m_Bounds.y) * m_InverseCellSize ), 0, m_YCellCount - 1 );
-//		FSN_ASSERT( iy*m_XCellCount+ix < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/ );
-		
 		return CellAtCellLocation(ToCellLocation(x, y));
 	}
 	
@@ -795,7 +812,7 @@ namespace FusionEngine
 
 			entity->SetStreamingCellIndex(newCellLocation);
 			if (entity->IsSyncedEntity())
-				m_Archivist->ActiveUpdate(entity->GetID(), newCellLocation.x, newCellLocation.y);
+				m_ActiveEntityDirectory->StoreEntityLocation(entity->GetID(), newCellLocation);
 		}
 
 		// see if the object needs to be activated or deactivated
@@ -903,47 +920,48 @@ namespace FusionEngine
 
 	bool StreamingManager::ActivateEntity(ObjectID id)
 	{
-		auto loc = m_Archivist->GetEntityLocation(id);
-		//auto it = m_EntityDirectory.find(id);
-		//if (it != m_EntityDirectory.end())
+		Vector2T<int32_t> loc;
+		// Try to get the entity location from the active directory
+		if (!m_ActiveEntityDirectory->RetrieveEntityLocation(id, loc))
+			loc = m_Archivist->GetEntityLocation(id); // Check the archivist
+
+		if (loc != s_VoidCellIndex)
 		{
-			if (loc != s_VoidCellIndex)
+			auto cell = RetrieveCell(loc);
+			Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+			if (!lock || !cell->IsLoaded())
 			{
-				auto cell = RetrieveCell(loc);
-				Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-				if (!lock || !cell->IsLoaded())
-				{
-					//m_Archivist->Retrieve(loc.x, loc.y);
-					m_RequestedEntities[loc].insert(id);
-				}
-				else
-				{
-					EntityPtr entity;
-					CellEntry* entry = nullptr;
-					if (findEntityById(entity, entry, cell.get(), id))
-					{
-						FSN_ASSERT(entity && entry);
-						if (!entry->active)
-							//ActivateEntity(cell, entity, *entry);
-							m_RequestedEntities[loc].insert(id);
-					}
-					else
-						return false;
-				}
-				return true;
+				//m_Archivist->Retrieve(loc.x, loc.y);
+				m_RequestedEntities[loc].insert(id);
 			}
-			else// if (loc == s_VoidCellIndex)
+			else
 			{
-				Cell* cell = &m_TheVoid;
 				EntityPtr entity;
 				CellEntry* entry = nullptr;
-				if (findEntityById(entity, entry, cell, id))
+				if (findEntityById(entity, entry, cell.get(), id))
 				{
 					FSN_ASSERT(entity && entry);
 					if (!entry->active)
-						ActivateEntity(s_VoidCellIndex, *cell, entity, *entry);
-					return true;
+						//ActivateEntity(cell, entity, *entry);
+						m_RequestedEntities[loc].insert(id);
 				}
+				else
+					return false;
+			}
+			return true;
+		}
+		else// if (loc == s_VoidCellIndex)
+		{
+			// Check The Void for the cell
+			Cell* cell = &m_TheVoid;
+			EntityPtr entity;
+			CellEntry* entry = nullptr;
+			if (findEntityById(entity, entry, cell, id))
+			{
+				FSN_ASSERT(entity && entry);
+				if (!entry->active)
+					ActivateEntity(s_VoidCellIndex, *cell, entity, *entry);
+				return true;
 			}
 		}
 		

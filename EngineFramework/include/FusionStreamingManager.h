@@ -55,6 +55,8 @@ namespace FusionEngine
 
 	class CellArchiver;
 
+	class ActiveEntityDirectory;
+
 	struct CellHandleGreater
 	{
 		bool operator() (const CellHandle& l, const CellHandle& r) const
@@ -66,56 +68,6 @@ namespace FusionEngine
 		}
 	};
 
-	static const float s_DefaultSmoothDecayRate = 0.01f;
-
-	template <typename T>
-	class Smooth
-	{
-	public:
-		Smooth(T initial, float initial_tightness)
-			: Value(initial),
-			Target(initial),
-			BaseTightness(initial_tightness),
-			Tightness(initial_tightness),
-			DecayRate(s_DefaultSmoothDecayRate)
-		{
-		}
-
-		Smooth(T initial, float initial_tightness, float decay_rate)
-			: Value(initial),
-			Target(initial),
-			BaseTightness(initial_tightness),
-			Tightness(initial_tightness),
-			DecayRate(decay_rate)
-		{
-		}
-
-		void Update()
-		{
-			Value = Value + (Target-Value) * Tightness;
-
-			if (fe_fequal(Value, Target))
-				Tightness = BaseTightness;
-			else
-				Tightness = Tightness + (BaseTightness - Tightness) * DecayRate;
-		}
-
-		T Value;
-		T Target;
-
-		float Tightness;
-		float BaseTightness;
-
-		float DecayRate;
-	};
-
-	template <typename T>
-	T fe_interpolate(T previous, T current, float alpha)
-	{
-		return previous * (1-alpha) + current * alpha;
-	}
-
-#define INFINITE_STREAMING
 //#define STREAMING_USEMAP
 //#define FSN_CELL_HISTORY
 
@@ -480,6 +432,8 @@ namespace FusionEngine
 		CellMap_t m_CellsBeingLoaded;
 		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
+
+		std::unique_ptr<ActiveEntityDirectory> m_ActiveEntityDirectory;
 
 		float m_PollArchiveInterval;
 		float m_TimeUntilVoidRefresh;
