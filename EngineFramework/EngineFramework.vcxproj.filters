@@ -163,5 +163,8 @@
     <ClInclude Include="include\FusionMultiEntityLoader.h">
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionActiveEntityDirectory.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

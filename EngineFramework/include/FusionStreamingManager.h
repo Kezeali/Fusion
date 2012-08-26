@@ -433,8 +433,6 @@ namespace FusionEngine
 		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
-		std::unique_ptr<ActiveEntityDirectory> m_ActiveEntityDirectory;
-
 		float m_PollArchiveInterval;
 		float m_TimeUntilVoidRefresh;
 

@@ -64,6 +64,7 @@ namespace FusionEngine
 
 	class ArchetypeFactory;
 	class RegionCellCache;
+	class ActiveEntityDirectory;
 
 	//! CellArchiver implementaion
 	class RegionCellArchivist : public CellArchiver, public SaveDataArchive
@@ -87,7 +88,8 @@ namespace FusionEngine
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);
 
-		void ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y);
+		void UpdateActiveEntityLocation(ObjectID id, const Vector2T<int32_t>& location);
+		bool GetActiveEntityLocation(ObjectID id, Vector2T<int32_t>& location);
 
 		void Update(ObjectID id, int32_t new_x, int32_t new_y);
 
@@ -251,6 +253,8 @@ namespace FusionEngine
 		CellsBeingProcessedMap_t m_CellsBeingProcessed;
 
 		//TransactionMutex_t m_TransactionMutex;
+
+		std::unique_ptr<ActiveEntityDirectory> m_ActiveEntityDirectory;
 
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 

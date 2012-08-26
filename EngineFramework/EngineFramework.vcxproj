@@ -101,6 +101,7 @@
     <ClCompile Include="source\FusionTaskScheduler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionActiveEntityDirectory.h" />
     <ClInclude Include="include\FusionArchetype.h" />
     <ClInclude Include="include\FusionArchetypeFactory.h" />
     <ClInclude Include="include\FusionCellCache.h" />

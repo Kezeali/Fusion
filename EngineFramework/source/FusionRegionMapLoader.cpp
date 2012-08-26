@@ -31,6 +31,7 @@
 
 #include "FusionRegionCellCache.h"
 
+#include "FusionActiveEntityDirectory.h"
 #include "FusionAnyFS.h"
 #include "FusionArchetypeFactory.h"
 #include "FusionGameMapLoader.h"
@@ -104,11 +105,6 @@ namespace FusionEngine
 	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, RegionCellArchivist::CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
 	{
 		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
-
-		if (id == 1)
-		{
-			SendToConsole("One");
-		}
 
 		// Convert to little-endian
 		if (CL_Endian::is_system_big())
@@ -186,6 +182,7 @@ namespace FusionEngine
 		m_RegionSize(s_DefaultRegionSize),
 		m_SavePath(s_SavePath),
 		m_CachePath(cache_path),
+		m_ActiveEntityDirectory(new ActiveEntityDirectory()),
 		m_Instantiator(nullptr),
 		m_Factory(nullptr),
 		m_EntityManager(nullptr),
@@ -270,15 +267,14 @@ namespace FusionEngine
 		m_NewData.set();
 	}
 
-	void RegionCellArchivist::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
+	void RegionCellArchivist::UpdateActiveEntityLocation(ObjectID id, const Vector2T<int32_t>& location)
 	{
-		FSN_ASSERT(false); // This method is obsolete, just keeping it for possible later convinience
+		m_ActiveEntityDirectory->StoreEntityLocation(id, location);
+	}
 
-		FSN_ASSERT(m_EntityLocationDB);
-		CellCoord_t loc;
-		std::streamoff offset = 0; std::streamsize length = 0;
-		getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
-		storeEntityLocation(*m_EntityLocationDB, id, CellCoord_t(new_x, new_y), offset, length);
+	bool RegionCellArchivist::GetActiveEntityLocation(ObjectID id, Vector2T<int32_t>& location)
+	{
+		return m_ActiveEntityDirectory->RetrieveEntityLocation(id, location);
 	}
 
 	void RegionCellArchivist::Remove(ObjectID id)
@@ -678,6 +674,9 @@ namespace FusionEngine
 			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
 			{
 				storeEntityLocation(*m_EntityLocationDB, std::get<0>(*it), loc, std::get<1>(*it), std::get<2>(*it));
+
+				// The saved entity location is now up to date: don't need the location in the active db anymore
+				m_ActiveEntityDirectory->DropEntityLocation(std::get<0>(*it));
 			}
 		}
 	}

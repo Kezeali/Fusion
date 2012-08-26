@@ -28,6 +28,7 @@
 
 #include "FusionStreamingManager.h"
 
+#include "FusionActiveEntityDirectory.h"
 #include "FusionBinaryStream.h"
 #include "FusionCellDataSource.h"
 #include "FusionEntitySerialisationUtils.h"
@@ -41,7 +42,6 @@
 #include "FusionLogger.h"
 
 #include <boost/thread.hpp>
-#include <tbb/concurrent_hash_map.h>
 
 #include <cmath>
 
@@ -60,33 +60,6 @@ namespace FusionEngine
 	static const float s_DefaultPollArchiveInterval = 0.25f;
 
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
-
-	class ActiveEntityDirectory
-	{
-	public:
-		ActiveEntityDirectory()
-		{
-		}
-
-		void StoreEntityLocation(ObjectID id, const Vector2T<int32_t>& location)
-		{
-			m_Directory.insert(std::make_pair(id, location));
-		}
-
-		bool RetrieveEntityLocation(ObjectID id, Vector2T<int32_t>& location) const
-		{
-			Directory_t::const_accessor accessor;
-			if (m_Directory.find(accessor, id))
-			{
-				location = accessor->second;
-				return true;
-			}
-		}
-
-	private:
-		typedef tbb::concurrent_hash_map<ObjectID, Vector2T<int32_t>> Directory_t;
-		Directory_t m_Directory;
-	};
 
 #define FSN_CELL_LOG
 
@@ -131,7 +104,6 @@ namespace FusionEngine
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_PollArchiveInterval(s_DefaultPollArchiveInterval),
 		m_TimeUntilVoidRefresh(0.0f),
-		m_ActiveEntityDirectory(new ActiveEntityDirectory()),
 		m_Archivist(archivist)
 	{
 		m_Range = s_DefaultActivationRange;
@@ -812,7 +784,7 @@ namespace FusionEngine
 
 			entity->SetStreamingCellIndex(newCellLocation);
 			if (entity->IsSyncedEntity())
-				m_ActiveEntityDirectory->StoreEntityLocation(entity->GetID(), newCellLocation);
+				m_Archivist->UpdateActiveEntityLocation(entity->GetID(), newCellLocation);
 		}
 
 		// see if the object needs to be activated or deactivated
@@ -921,9 +893,9 @@ namespace FusionEngine
 	bool StreamingManager::ActivateEntity(ObjectID id)
 	{
 		Vector2T<int32_t> loc;
-		// Try to get the entity location from the active directory
-		if (!m_ActiveEntityDirectory->RetrieveEntityLocation(id, loc))
-			loc = m_Archivist->GetEntityLocation(id); // Check the archivist
+		// Try to get the entity location from the active directory...
+		if (!m_Archivist->GetActiveEntityLocation(id, loc))
+			loc = m_Archivist->GetEntityLocation(id); // ... then check the archivist
 
 		if (loc != s_VoidCellIndex)
 		{

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -49,12 +49,15 @@ namespace FusionEngine
 		virtual void Update(ObjectID id, int32_t new_x, int32_t new_y, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
 		//! Update data (inactive cells)
 		virtual void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
-		//! Update location (active cells)
-		virtual void ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y) = 0;
 		//! Remove data
 		virtual void Remove(ObjectID id) = 0;
 
 		virtual Vector2T<int32_t> GetEntityLocation(ObjectID id) = 0;
+
+		//! Update an active entities cell coord
+		virtual void UpdateActiveEntityLocation(ObjectID id, const Vector2T<int32_t>& location) = 0;
+		//! Get the cell coord of an active entity
+		virtual bool GetActiveEntityLocation(ObjectID id, Vector2T<int32_t>& location) = 0;
 	};
 
 }
