@@ -15,3 +15,5 @@ robocopy "..\..\FusionDependencies\bin" "..\release" *.dll /XF *d.dll
 
 robocopy "..\..\RAS\library" "..\debug" *_d.dll *_d.pdb
 robocopy "..\..\RAS\library" "..\release" *.dll /XF *_d.dll
+
+robocopy "..\..\FusionDependencies\Visual Leak Detector\bin\Win32" "..\debug" *.*
