@@ -253,6 +253,7 @@ namespace FusionEngine
 			if (!m_DisplayWindow.is_null())
 				MessageBoxA(m_DisplayWindow.get_hwnd(), (std::string("Failed to initialise engine: ") + ex.what()).c_str(), "Error", MB_OK);
 #endif
+			throw;
 		}
 	}
 
