@@ -264,7 +264,7 @@ namespace FusionEngine
 				FSN_ASSERT(systemTask != nullptr);
 
 				// Affinity will increase the chances that each SystemTask will be assigned
-				//  to a unique thread, regardless of PerformanceHint
+				//  to a unique thread
 				const auto affinityId = *(affinityIterator++);
 				if (affinityIterator == m_AffinityIDs.end())
 					affinityIterator = m_AffinityIDs.begin();
@@ -288,19 +288,14 @@ namespace FusionEngine
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 #endif
 
-		std::vector<ISystemTask*> primaryThreadTasksNotRun;
+		//std::vector<ISystemTask*> primaryThreadTasksNotRun;
 
 		// Run primary-thread tasks
 		for (auto it = m_PrimaryThreadSystemTasks.begin() ; it != m_PrimaryThreadSystemTasks.end(); ++it)
 		{
-			// We are, so execute it now on the primary thread
-			//__ITT_EVENT_START( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
-
 			FSN_PROFILE((*it)->GetSystemWorld()->GetSystem()->GetName());
 
 			(*it)->Update(m_DeltaTime);
-
-			//__ITT_EVENT_END( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
 		}
 
 #ifdef _WIN32
@@ -309,7 +304,7 @@ namespace FusionEngine
 
 		m_PrimaryThreadSystemTasks.clear();
 
-		// Contribute to the parallel execution, and when it completes, we're done
+		// Contribute to the parallel execution
 		try
 		{
 			m_SystemTasksRoot->wait_for_all();

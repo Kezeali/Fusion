@@ -47,7 +47,7 @@ namespace FusionEngine
 
 	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
 
-	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02 };
+	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04 };
 
 	//! Component System
 	class IComponentSystem

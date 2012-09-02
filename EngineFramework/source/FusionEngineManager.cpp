@@ -217,6 +217,27 @@ namespace FusionEngine
 				return "Streaming range is " + boost::lexical_cast<std::string>(streamingManager->GetRange());
 			});
 
+			auto scheduler = m_Scheduler.get();
+			m_Console->BindCommand("r_fpslimit", [scheduler](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 2)
+				{
+					bool enable = cmdargs[1] == "on";
+					scheduler->SetFramerateLimiter(enable);
+				}
+				return scheduler->GetFramerateLimiter() ? "FPS limited" : "FPS unlimited";
+			});
+
+			m_Console->BindCommand("benchmark", [scheduler](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 2)
+				{
+					bool enable = cmdargs[1] == "on";
+					scheduler->SetUnlimited(enable);
+				}
+				return "";
+			});
+
 			m_Console->BindCommand("exec", [](const std::vector<std::string>& cmdargs)->std::string
 			{
 				if (cmdargs.size() >= 2)
@@ -611,19 +632,16 @@ namespace FusionEngine
 				m_ResourceManager->UnloadUnreferencedResources();
 				m_ResourceManager->DeliverLoadedResources();
 
-				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
+				// Execute only Rendering and Streaming in editmode or while connecting
+				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? (SystemType::Rendering | SystemType::Streaming) : (SystemType::Rendering | SystemType::Simulation | SystemType::Streaming));
 
 				if (executed & SystemType::Rendering)
 				{
-#ifdef PROFILE_BUILD
 					m_DisplayWindow.flip(0);
-#else
-					m_DisplayWindow.flip();
-#endif
 					gc.clear();
 				}
 
-				if ((executed & SystemType::Simulation) || m_EditMode)
+				if (executed & SystemType::Streaming)
 				{
 					m_CellArchivist->BeginTransaction();
 					// Actually activate / deactivate components
@@ -635,17 +653,6 @@ namespace FusionEngine
 				}
 
 				// Propagate property changes
-				// TODO: throw if properties are changed during Rendering step?
-				//PropChangedQueue::value_type changed;
-				//while (propChangedQueue.try_pop(changed))
-				//{
-				//	auto com = changed.first.lock();
-				//	if (com)
-				//	{
-				//		changed.second->Synchronise();
-				//		changed.second->FireSignal();
-				//	}
-				//}
 				m_EvesdroppingManager->GetSignalingSystem().Fire();
 
 				if (executed & SystemType::Simulation)

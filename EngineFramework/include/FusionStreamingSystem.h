@@ -47,7 +47,7 @@ namespace FusionEngine
 	public:
 		StreamingTask(EntityManager* streaming_manager, RegionCellArchivist* archivist)
 			: ISystemTask(nullptr), m_StreamingManager(streaming_manager), m_Archivist(archivist),
-			newSlowness(0u)
+			newSlowness(0u), lastTick(0)
 		{}
 		~StreamingTask() {}
 
@@ -69,6 +69,7 @@ namespace FusionEngine
 		RegionCellArchivist* m_Archivist;
 
 		uint32_t newSlowness;
+		Tick_t lastTick;
 	};
 
 	class StreamingTaskB : public ISystemTask

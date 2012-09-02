@@ -550,8 +550,8 @@ namespace FusionEngine
 		Cell* cell = cellSpt.get();
 		CellEntry* entry = nullptr;
 
-		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-		if (lock && cell->IsLoaded())
+		Cell::mutex_t::scoped_lock lock;
+		if (lock.try_acquire(cell->mutex) && cell->IsLoaded())
 		{
 			entity->SetStreamingCellIndex(cellIndex);
 
@@ -654,8 +654,8 @@ namespace FusionEngine
 			FSN_ASSERT(currentCell);
 			if (currentCell && currentCell->IsLoaded())
 			{
-				currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
-				// TODO: maybe: rather than this (and setting StreamingCellIndex to VoidCellIndex), entities could be implicitly in the void if the cell isn't loaded
+				currentCell_lock.acquire(currentCell->mutex);
+				// TODO: consider: rather than this (and setting StreamingCellIndex to VoidCellIndex), entities could be implicitly in the void if the cell isn't loaded
 				FSN_ASSERT(currentCell->IsLoaded());
 #ifdef STREAMING_USEMAP
 				_where = currentCell->objects.find(entityKey);
@@ -681,7 +681,7 @@ namespace FusionEngine
 		{
 			currentCell = &m_TheVoid;
 
-			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
+			currentCell_lock.acquire(currentCell->mutex);
 			_where = rFindEntityInCell(currentCell, entityKey);
 			FSN_ASSERT( _where != currentCell->objects.end() );
 			cellEntry = &_where->second;
@@ -701,7 +701,7 @@ namespace FusionEngine
 #endif
 
 		FSN_ASSERT(cellEntry != nullptr);
-		FSN_ASSERT(currentCell_lock && currentCell_lock.owns_lock());
+		//FSN_ASSERT(currentCell_lock && currentCell_lock.owns_lock());
 
 		bool move = !fe_fequal(cellEntry->x, new_x, 0.001f) || !fe_fequal(cellEntry->y, new_y, 0.001f);
 		const bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
@@ -723,8 +723,8 @@ namespace FusionEngine
 		}
 		else
 		{
-			Cell::mutex_t::scoped_try_lock newCell_lock(newCell->mutex);
-			if (!newCell_lock || !newCell->IsLoaded())
+			Cell::mutex_t::scoped_lock newCell_lock;
+			if (!newCell_lock.try_acquire(newCell->mutex) || !newCell->IsLoaded())
 			{
 				// Since the target cell isn't ready, move the entity into The Void (temporarily)
 				newCell = &m_TheVoid;
@@ -734,11 +734,11 @@ namespace FusionEngine
 				
 				if (currentCell != &m_TheVoid)
 				{
-					newCell_lock = Cell::mutex_t::scoped_try_lock(m_TheVoid.mutex);
-					FSN_ASSERT(newCell_lock.owns_lock());
+					newCell_lock.acquire(m_TheVoid.mutex);
+					//FSN_ASSERT(newCell_lock);
 				}
-				else
-					newCell_lock = Cell::mutex_t::scoped_try_lock();
+				else // Don't need a new lock - already in The Void, and that cell's lock was aquired above
+					newCell_lock.release();
 			}
 			
 			{
@@ -764,7 +764,7 @@ namespace FusionEngine
 			// remove from current cell
 			if (currentCell != nullptr)
 			{
-				FSN_ASSERT(currentCell_lock);
+				//FSN_ASSERT(currentCell_lock);
 #ifdef STREAMING_USEMAP
 				currentCell->objects.erase(_where);
 #else
@@ -900,8 +900,8 @@ namespace FusionEngine
 		if (loc != s_VoidCellIndex)
 		{
 			auto cell = RetrieveCell(loc);
-			Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-			if (!lock || !cell->IsLoaded())
+			Cell::mutex_t::scoped_lock lock;
+			if (!lock.try_acquire(cell->mutex) || !cell->IsLoaded())
 			{
 				//m_Archivist->Retrieve(loc.x, loc.y);
 				m_RequestedEntities[loc].insert(id);
@@ -1164,8 +1164,8 @@ namespace FusionEngine
 					else
 					{
 						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-						if (lock)
+						Cell::mutex_t::scoped_lock lock;
+						if (lock.try_acquire(cell->mutex))
 						{
 							for (auto cell_it = cell->objects.begin(), cell_end = cell->objects.end(); cell_it != cell_end; ++cell_it)
 							{
@@ -1189,8 +1189,8 @@ namespace FusionEngine
 
 	void StreamingManager::processCell(const CellHandle& cell_location, Cell& cell, const std::list<std::pair<Vector2, float>>& cams, const std::list<std::pair<std::pair<Vector2, float>, PlayerID>>& remote_cams)
 	{
-		Cell::mutex_t::scoped_try_lock lock(cell.mutex);
-		if (lock && cell.IsLoaded())
+		Cell::mutex_t::scoped_lock lock;
+		if (cell.IsLoaded() && lock.try_acquire(cell.mutex) && cell.IsLoaded())
 		{
 			//try
 			//{
@@ -1334,8 +1334,8 @@ namespace FusionEngine
 
 		{
 			// Try to clear The Void
-			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
-			if (lock)
+			Cell::mutex_t::scoped_lock lock;
+			if (lock.try_acquire(m_TheVoid.mutex))
 			{
 				for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
 				{
@@ -1352,8 +1352,8 @@ namespace FusionEngine
 					}
 					else
 					{
-						Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
-						if (lock && actualCell->IsLoaded())
+						Cell::mutex_t::scoped_lock lock;
+						if (lock.try_acquire(actualCell->mutex) && actualCell->IsLoaded())
 						{
 							auto entity = it->first;
 							// TODO:
@@ -1407,8 +1407,8 @@ namespace FusionEngine
 
 				if (cell->IsLoaded())
 				{
-					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-					if (lock && cell->IsLoaded())
+					Cell::mutex_t::scoped_lock lock;
+					if (lock.try_acquire(cell->mutex) && cell->IsLoaded())
 					{
 						auto& requestedIds = it->second;
 						for (auto eit = cell->objects.begin(), eend = cell->objects.end(); eit != eend; ++eit)
@@ -1654,8 +1654,8 @@ namespace FusionEngine
 		else // All active ranges stale
 		{
 			// Clear loaded cells
-			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex); // TheVoid's mutex is used to lock m_CellsBeingLoaded
-			if (lock)
+			Cell::mutex_t::scoped_lock lock; // TheVoid's mutex is used to lock m_CellsBeingLoaded
+			if (lock.try_acquire(m_TheVoid.mutex))
 			{
 				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
 				{

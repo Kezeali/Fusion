@@ -47,7 +47,7 @@
 #include "FusionHashable.h"
 
 //#include <tbb/concurrent_unordered_map.h>
-//#include <tbb/mutex.h>
+#include <tbb/spin_mutex.h>
 #include <boost/thread/recursive_mutex.hpp>
 
 namespace FusionEngine
@@ -167,7 +167,7 @@ namespace FusionEngine
 
 		bool IsRetrieved() const { return loaded && waiting != Store; }
 
-		typedef boost::recursive_mutex mutex_t;
+		typedef tbb::spin_mutex mutex_t;
 		mutex_t mutex;
 
 #ifdef FSN_CELL_HISTORY

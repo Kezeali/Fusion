@@ -1735,8 +1735,6 @@ namespace FusionEngine
 		auto begin = m_ActiveEntities.begin();
 		auto end = m_ActiveEntities.end();
 
-		//updateEntities(m_ActiveEntities, dt);
-
 		auto newEnd = updateEntities(begin, end, dt);
 		lock.release();
 

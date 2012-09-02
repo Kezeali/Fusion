@@ -90,8 +90,7 @@ namespace FusionEngine
 		
 		std::vector<std::shared_ptr<ISystemWorld>> m_ComponentWorlds;
 		std::vector<ISystemTask*> m_SortedTasks; // All tasks (simulation and render tasks)
-		std::vector<ISystemTask*> m_SortedSimulationTasks;
-		std::vector<ISystemTask*> m_SortedRenderTasks;
+		std::vector<ISystemTask*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
 
 		std::vector<std::unique_ptr<ISystemTask>> m_ProxyTasks; // This is to make sure they are deleted
 		std::unique_ptr<ISystemTask> m_StreamingTask;

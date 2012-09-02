@@ -372,9 +372,9 @@ namespace FusionEngine
 
 		m_Quit.reset();
 		m_Thread = boost::thread(&RegionCellArchivist::Run, this);
-//#ifdef _WIN32
-//		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
-//#endif
+#ifdef _WIN32
+		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#endif
 	}
 
 	void RegionCellArchivist::Stop()
@@ -750,8 +750,8 @@ namespace FusionEngine
 						const bool unload_when_done = toWrite.unloadWhenDone;
 						if (auto cell = cellWpt.lock()) // Make sure the queue item is valid
 						{
-							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-							if (lock)
+							Cell::mutex_t::scoped_lock lock;
+							if (lock.try_acquire(cell->mutex))
 							{
 								// Check active_entries since the Store request may be stale
 								if (cell->waiting == Cell::Store && cell->loaded)
@@ -861,8 +861,8 @@ namespace FusionEngine
 						const CellCoord_t& cell_coord = toRead.coord;
 						if (auto cell = cellWpt.lock())
 						{
-							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-							if (lock)
+							Cell::mutex_t::scoped_lock lock;
+							if (lock.try_acquire(cell->mutex))
 							{
 								// Make sure this cell hasn't been deactivated:
 								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
@@ -990,8 +990,8 @@ namespace FusionEngine
 					auto& task = *it;
 					if (auto lockedCell = task.cell.lock())
 					{
-						Cell::mutex_t::scoped_try_lock lock(lockedCell->mutex);
-						if (lock)
+						Cell::mutex_t::scoped_lock lock;
+						if (lock.try_acquire(lockedCell->mutex))
 						{
 							SendToConsole("Processing incomming cells");
 							if (lockedCell->waiting == Cell::Retrieve)
