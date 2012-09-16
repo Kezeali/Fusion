@@ -864,10 +864,11 @@ namespace FusionEngine
 							Cell::mutex_t::scoped_lock lock;
 							if (lock.try_acquire(cell->mutex))
 							{
-								// Make sure this cell hasn't been deactivated:
-								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
+								// Make sure the cell requester hasn't stopped asking for this cell.
+								//  !cell->loaded is for the situation where a cell was stored then retrieved
+								//  before the store action was executed
+								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve && !cell->loaded)
 								{
-									FSN_ASSERT(!cell->loaded);
 									try
 									{
 										// Get the cached cell data (if available)
