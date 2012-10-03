@@ -734,6 +734,7 @@ namespace FusionEngine
 				
 				if (currentCell != &m_TheVoid)
 				{
+					newCell_lock.release();
 					newCell_lock.acquire(m_TheVoid.mutex);
 					//FSN_ASSERT(newCell_lock);
 				}
