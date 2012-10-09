@@ -605,6 +605,10 @@ namespace FusionEngine
 
 			float time = CL_System::get_time() * 0.001f;
 			float dt;
+#ifdef FSN_PROFILING_ENABLED
+			float maxDt = 0.0f;
+			std::map<std::string, double> longestFrameProfile;
+#endif
 			bool quit = false;
 			auto closeSig = m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
 			while (!quit)
@@ -615,6 +619,10 @@ namespace FusionEngine
 				dt = now - time;
 				time = now;
 
+#ifdef FSN_PROFILING_ENABLED
+				{
+				FSN_PROFILE("Serial");
+#endif
 				// Update extensions
 				for (auto it = m_ActiveExtensions.begin(), end = m_ActiveExtensions.end(); it != end; ++it)
 				{
@@ -632,6 +640,10 @@ namespace FusionEngine
 				m_ResourceManager->UnloadUnreferencedResources();
 				m_ResourceManager->DeliverLoadedResources();
 
+#ifdef FSN_PROFILING_ENABLED
+				}
+#endif
+
 				// Execute only Rendering and Streaming in editmode or while connecting
 				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? (SystemType::Rendering | SystemType::Streaming) : (SystemType::Rendering | SystemType::Simulation | SystemType::Streaming));
 
@@ -640,6 +652,11 @@ namespace FusionEngine
 					m_DisplayWindow.flip(0);
 					gc.clear();
 				}
+
+#ifdef FSN_PROFILING_ENABLED
+				{
+				FSN_PROFILE("Serial");
+#endif
 
 				if (executed & SystemType::Streaming)
 				{
@@ -654,6 +671,10 @@ namespace FusionEngine
 
 				// Propagate property changes
 				m_EvesdroppingManager->GetSignalingSystem().Fire();
+
+#ifdef FSN_PROFILING_ENABLED
+				}
+#endif
 
 				if (executed & SystemType::Simulation)
 				{
@@ -677,12 +698,24 @@ namespace FusionEngine
 				Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
 				Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
 
-				m_Profiling->AddTime("ActualDT", dt);
+				const float actualDT = CL_System::get_time() * 0.001f - time;
+				m_Profiling->AddTime("ActualDT", actualDT);
 
 				// Record profiling data
 				m_Profiling->StoreTick();
+
+				if (actualDT > maxDt)
+				{
+					maxDt = actualDT;
+					longestFrameProfile = m_Profiling->GetTimes();
+				}
 #endif
 			} // while !quit
+
+			IO::PhysFSStream file("longest_frame.txt", IO::Write);
+			file.precision(10);
+			for (auto it = longestFrameProfile.begin(); it != longestFrameProfile.end(); ++it)
+				file << it->first << "\t\t\t\t" << std::fixed << it->second << std::endl;
 
 			// Shutdown
 			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)

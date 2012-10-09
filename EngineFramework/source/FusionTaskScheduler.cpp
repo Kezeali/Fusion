@@ -31,6 +31,7 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionStreamingSystem.h"
+#include "FusionProfiling.h"
 
 #include <functional>
 
@@ -226,6 +227,8 @@ namespace FusionEngine
 
 	uint8_t TaskScheduler::Execute(uint8_t what)
 	{
+		FSN_PROFILE("Executing Tasks");
+
 		auto currentTime = CL_System::get_time();
 		if (m_LastTime == 0)
 			m_LastTime = currentTime;

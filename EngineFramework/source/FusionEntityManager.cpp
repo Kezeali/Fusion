@@ -1607,6 +1607,7 @@ namespace FusionEngine
 
 	void EntityManager::ProcessActivationQueues()
 	{
+		FSN_PROFILE("ProcessActivationQueues");
 		// Process newly added components
 		{
 			std::pair<EntityPtr, ComponentPtr> toActivate;
@@ -1632,8 +1633,9 @@ namespace FusionEngine
 
 		// Process newly added entities
 		{
+			FSN_PROFILE("Add New Entities To Activate");
 			EntityPtr entityToActivate;
-			while (m_NewEntitiesToActivate.try_pop(entityToActivate))
+			for (int i = 0; i < 60 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
 			{
 				if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
 					m_StreamingManager->AddEntity(entityToActivate);
@@ -1670,8 +1672,12 @@ namespace FusionEngine
 		// Activate entities
 		if (!m_EntitiesToActivate.empty())
 		{
+			FSN_PROFILE("Attempt to Activate New Entities");
+#if FSN_PROFILING_ENABLED
+		Profiling::getSingleton().AddTime("~Entities to Activate", (double)m_EntitiesToActivate.size());
+#endif
 			auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
-			while (it != end)
+			for (int i = 0; i < 30 && it != end; ++i)
 			{
 				if (attemptToActivateEntity(*it))
 				{
@@ -1731,22 +1737,25 @@ namespace FusionEngine
 
 	void EntityManager::ProcessActiveEntities(float dt)
 	{
+		FSN_PROFILE("Process Active Entities");
 		ActiveEntitiesMutex_t::scoped_lock lock(m_ActiveEntitiesMutex, false);
-		auto begin = m_ActiveEntities.begin();
+
+#if FSN_PROFILING_ENABLED
+		Profiling::getSingleton().AddTime("~Active Entities", (double)m_ActiveEntities.size());
+#endif
+		
 		auto end = m_ActiveEntities.end();
 
-		auto newEnd = updateEntities(begin, end, dt);
-		lock.release();
+		auto newEnd = updateEntities(m_ActiveEntities.begin(), end, dt);
 
-		if (end != newEnd)
-		{
-			lock.acquire(m_ActiveEntitiesMutex);
+		// Remove entities that have become inactive
+		if (newEnd != end)
 			m_ActiveEntities.erase(newEnd, end);
-		}
 	}
 
 	void EntityManager::UpdateActiveRegions()
 	{
+		FSN_PROFILE("Process Active Cells");
 		m_StreamingManager->Update(StreamingManager::Default);
 	}
 
