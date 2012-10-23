@@ -38,7 +38,7 @@
 namespace FusionEngine
 {
 
-	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
@@ -60,7 +60,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 		{
@@ -70,7 +70,7 @@ namespace FusionEngine
 		resource->SetDataPtr(NULL);
 	}
 
-	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
@@ -92,7 +92,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 		{

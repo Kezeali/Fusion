@@ -51,16 +51,6 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
 	}
 
-	void ResourceManager::AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData)
-	{
-		if (!m_Running)
-		//m_LoaderMutex.lock();
-			m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
-		//m_LoaderMutex.unlock();
-		else
-			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
-	}
-
 	std::vector<std::string> ResourceManager::GetResourceLoaderTypes() const
 	{
 		std::vector<std::string> types;

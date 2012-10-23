@@ -78,9 +78,9 @@ namespace FusionEngine
 	};
 
 	//! Sprite resource loader callback
-	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Sprite resource unloader callback
-	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
 	class CoroutineSemaphore
 	{

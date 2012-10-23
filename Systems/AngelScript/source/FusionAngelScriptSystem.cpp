@@ -506,7 +506,7 @@ namespace FusionEngine
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
-		ResourceManager::getSingleton().AddResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource, NULL);
+		ResourceManager::getSingleton().AddResourceLoader(ResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource));
 	}
 
 	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, EntityInstantiator* obj)

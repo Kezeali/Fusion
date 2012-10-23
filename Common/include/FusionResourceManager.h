@@ -76,11 +76,13 @@ namespace FusionEngine
 
 		const CL_GraphicContext& GetGC() const;
 
-		//! Assigns the given ResourceLoader to its relavant resource type
+		//! Assigns the given ResourceLoader to its relevant resource type
 		void AddResourceLoader(const ResourceLoader& resourceLoader);
-		//! Creates a new resource loader using the given callbacks
-		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData);
 
+		//! Returns true if a loader has been added for the given resource type
+		bool HasResourceLoader(const std::string& type) const { m_ResourceLoaders.find(type) != m_ResourceLoaders.end(); }
+
+		//! Returns the list of resource types for which loaders have been added
 		std::vector<std::string> GetResourceLoaderTypes() const;
 
 		//! Starts loading resources in the background

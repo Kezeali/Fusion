@@ -47,11 +47,15 @@ namespace FusionEngine
 	public:
 		virtual ~CellDataSource() {}
 
-		virtual std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
+		typedef std::function<void (std::shared_ptr<ArchiveIStream>)> GotCellForReadingCallback;
+		typedef std::function<void (std::unique_ptr<ArchiveOStream>)> GotCellForWritingCallback;
+
+		virtual void GetCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y) = 0;
 		virtual std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y) = 0;
 
 		//! Used when compiling a map from a cell cache
-		virtual std::unique_ptr<ArchiveIStream> GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
+		virtual void GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y) = 0;
+
 		virtual CL_Rect GetUsedBounds() const = 0;
 	};
 

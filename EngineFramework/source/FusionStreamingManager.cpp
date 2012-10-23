@@ -51,9 +51,8 @@ namespace FusionEngine
 	const float StreamingManager::s_SmoothTightness = 0.1f;
 	const float StreamingManager::s_FastTightness = 0.3f;
 
-	const float s_DefaultActivationRange = 16.f;
-	const float s_DefaultCellSize = 8.f;
-	const float s_DefaultWorldSize = 200000.f;
+	const float s_DefaultActivationRange = 15.f;
+	const float s_DefaultCellSize = 5.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
 

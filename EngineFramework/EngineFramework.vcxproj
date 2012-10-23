@@ -123,6 +123,7 @@
     <ClCompile Include="source\FusionMultiEntityLoader.cpp" />
     <ClCompile Include="source\FusionP2PEntityInstantiator.cpp" />
     <ClCompile Include="source\FusionPrefabInstantiator.cpp" />
+    <ClCompile Include="source\CellArchivistSystem.cpp" />
     <ClCompile Include="source\FusionRegionCellCache.cpp" />
     <ClCompile Include="source\FusionRegionMapLoader.cpp" />
     <ClCompile Include="source\FusionRocketInterface.cpp" />
@@ -154,7 +155,9 @@
     <ClInclude Include="include\FusionMultiEntityLoader.h" />
     <ClInclude Include="include\FusionP2PEntityInstantiator.h" />
     <ClInclude Include="include\FusionPrefabInstantiator.h" />
+    <ClInclude Include="include\CellArchivistSystem.h" />
     <ClInclude Include="include\FusionRegionCellCache.h" />
+    <ClInclude Include="include\FusionRegionFile.h" />
     <ClInclude Include="include\FusionRegionMapLoader.h" />
     <ClInclude Include="include\FusionRocketInterface.h" />
     <ClInclude Include="include\FusionRocketReferenceCountable.h" />

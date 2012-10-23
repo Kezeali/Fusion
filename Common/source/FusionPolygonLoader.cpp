@@ -121,7 +121,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -147,7 +147,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

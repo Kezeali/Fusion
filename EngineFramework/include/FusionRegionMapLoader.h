@@ -40,6 +40,7 @@
 #include <boost/thread.hpp>
 #include <ClanLib/Core/System/event.h>
 #include <ClanLib/Core/IOData/iodevice.h>
+#include <memory>
 #include <unordered_set>
 #include <tuple>
 #include <tbb/concurrent_queue.h>
@@ -66,7 +67,7 @@ namespace FusionEngine
 	class RegionCellCache;
 	class ActiveEntityDirectory;
 
-	//! CellArchiver implementaion
+	//! CellArchiver implementation
 	class RegionCellArchivist : public CellArchiver, public SaveDataArchive
 	{
 	public:
@@ -141,10 +142,11 @@ namespace FusionEngine
 
 		void Stop();
 
-		std::unique_ptr<std::istream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
+		void GetCellStreamForReading(std::function<void (std::shared_ptr<std::istream>)> callback, int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<std::ostream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
 		RegionCellCache* GetCellCache() const { return m_Cache; }
+		RegionCellCache* GetEditableCellCache() const { return m_EditableCache; }
 
 		void SaveEntityLocationDB(const std::string& filename);
 
@@ -183,12 +185,19 @@ namespace FusionEngine
 				coord(other.coord),
 				unloadWhenDone(other.unloadWhenDone)
 			{}
+
+			//WriteTask(WriteTask& other)
+			//	: cell(other.cell),
+			//	coord(other.coord),
+			//	unloadWhenDone(other.unloadWhenDone)
+			//{}
 		};
 
 		struct ReadTask
 		{
 			std::weak_ptr<Cell> cell;
 			CellCoord_t coord;
+			std::shared_ptr<std::istream> cellDataStream;
 			std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>> entitiesInTransit;
 
 			ReadTask()
@@ -202,9 +211,19 @@ namespace FusionEngine
 			ReadTask(ReadTask&& other)
 				: cell(std::move(other.cell)),
 				coord(other.coord),
+				cellDataStream(std::move(other.cellDataStream)),
 				entitiesInTransit(std::move(other.entitiesInTransit))
 			{}
+
+			//ReadTask(ReadTask& other)
+			//	: cell(other.cell),
+			//	coord(other.coord),
+			//	cellDataStream(other.cellDataStream),
+			//	entitiesInTransit(other.entitiesInTransit)
+			//{}
 		};
+
+		void OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, ReadTask job);
 
 		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable);
 
@@ -263,7 +282,6 @@ namespace FusionEngine
 		EntityManager* m_EntityManager;
 		ArchetypeFactory* m_ArchetypeFactory;
 
-
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE
 		typedef tbb::concurrent_queue<WriteTask> WriteQueue_t;
@@ -275,7 +293,8 @@ namespace FusionEngine
 		typedef std::queue<std::tuple<ReadTask> ReadQueue_t;
 #endif
 		WriteQueue_t m_WriteQueue;
-		ReadQueue_t m_ReadQueue;
+		ReadQueue_t m_ReadQueueGetCellData;
+		ReadQueue_t m_ReadQueueLoadEntities;
 
 		// Cells waiting on archetypes to finish loading (put aside to not hold up the other cells)
 		std::list<ReadTask> m_IncommingCells;
@@ -283,7 +302,43 @@ namespace FusionEngine
 		//! TODO un-caps these when vc++ supports enum class
 		enum UpdateOperation { UPDATE, REMOVE };
 
-		tbb::concurrent_queue<std::tuple<ObjectID, UpdateOperation, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
+		// Data required to update an inactive object that has changed on another peer
+		struct UpdateJob
+		{
+			ObjectID id;
+			UpdateOperation operation;
+			CellCoord_t cellCoord;
+			std::shared_ptr<std::istream> existingSourceCellDataStream; // Data from disc
+			std::shared_ptr<std::istream> existingDestCellDataStream;
+			std::vector<unsigned char> incommingConData; // Data from network
+			std::vector<unsigned char> incommingOccData;
+
+			UpdateJob()
+			{}
+
+			UpdateJob(ObjectID id_, UpdateOperation operation_, const CellCoord_t& coord_, std::vector<unsigned char>&& incommingConData, std::vector<unsigned char>&& incommingOccData)
+				: id(id_),
+				operation(operation_),
+				cellCoord(coord_),
+				incommingConData(incommingConData),
+				incommingOccData(incommingOccData)
+			{}
+
+			UpdateJob(UpdateJob&& other)
+				: id(other.id),
+				operation(other.operation),
+				cellCoord(other.cellCoord),
+				existingSourceCellDataStream(std::move(other.existingSourceCellDataStream)),
+				existingDestCellDataStream(std::move(other.existingDestCellDataStream)),
+				incommingConData(std::move(other.incommingConData)),
+				incommingOccData(std::move(other.incommingOccData))
+			{}
+
+		private:
+			UpdateJob(UpdateJob&) {}
+		};
+
+		tbb::concurrent_queue<std::shared_ptr<UpdateJob>> m_ObjectUpdateQueue;
 
 		tbb::concurrent_queue<std::string> m_SaveQueue;
 		boost::mutex m_SaveToLoadMutex;

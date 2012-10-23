@@ -64,6 +64,9 @@
 #include "FusionTaskManager.h"
 #include "FusionTaskScheduler.h"
 
+//! \todo TODO: remove when RegionMapLoader is a System (so it can add the RegionFile resource loaded on initialisation)
+#include "FusionRegionFile.h"
+
 // Resource Loaders
 #include "FusionAudioLoader.h"
 #include "FusionImageLoader.h"
@@ -103,8 +106,6 @@ namespace FusionEngine
 	EngineManager::~EngineManager()
 	{
 		m_Console->UnbindCommand("cam_range");
-
-		delete ArchetypeFactoryManager::getSingletonPtr();
 	}
 
 	void EngineManager::Initialise()
@@ -473,7 +474,7 @@ namespace FusionEngine
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
 
-		new ArchetypeFactoryManager();
+		m_ArchetypeFactoryManager.reset(new ArchetypeFactoryManager());
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
 	}
 

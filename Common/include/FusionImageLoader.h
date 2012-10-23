@@ -40,21 +40,21 @@ namespace FusionEngine
 {
 
 	//! Image (pixel-buffer) resource loader callback
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Image resource unloader callback
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
 	//! Texture resource loader callback
-	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data);
+	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Texture resource unloader
-	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data);
+	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Loads a texture resource into GFX RAM
-	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, void* user_data);
+	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data);
 
 	//! Sprite resource loader callback
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Sprite resource unloader callback
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
 }
 

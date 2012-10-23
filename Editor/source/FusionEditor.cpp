@@ -2260,6 +2260,7 @@ namespace FusionEngine
 			transform->Position.Set(position);
 			transform->Angle.Set(angle);
 		}
+		entity->SynchroniseParallelEdits();
 
 		m_EntityManager->AddEntity(entity);
 

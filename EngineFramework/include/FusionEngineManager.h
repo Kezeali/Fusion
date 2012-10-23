@@ -50,6 +50,7 @@ namespace FusionEngine
 {
 
 	class ArchetypeFactory;
+	class ArchetypeFactoryManager;
 	class IComponentSystem;
 	class ComponentUniverse;
 	class ConsoleStdOutWriter;
@@ -124,6 +125,8 @@ namespace FusionEngine
 		std::string m_SaveToLoad;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
+
+		std::shared_ptr<ArchetypeFactoryManager> m_ArchetypeFactoryManager;
 
 		std::shared_ptr<RegionCellArchivist> m_CellArchivist;
 		std::shared_ptr<StreamingManager> m_StreamingManager;

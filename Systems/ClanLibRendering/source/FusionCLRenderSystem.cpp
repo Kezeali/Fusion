@@ -613,26 +613,27 @@ namespace FusionEngine
 			m_Renderer->SetupDraw(viewports.front());
 
 			// Draw cell division lines
+			static const float cellSize = 5.0f;
 			CL_Rectf area;
 			m_Renderer->CalculateScreenArea(area, viewports.front(), true);
 			area.top *= s_SimUnitsPerGameUnit; area.right *= s_SimUnitsPerGameUnit; area.bottom *= s_SimUnitsPerGameUnit; area.left *= s_SimUnitsPerGameUnit;
 			//auto center = area.get_center();
-			//auto x = std::floor(area.left / 8) * 8, y = std::floor(area.top / 8) * 8;
-			for (auto iy = std::floor(area.top / 8.f) * 8; iy < area.bottom; iy += 8)
+			//auto x = std::floor(area.left / cellSize) * cellSize, y = std::floor(area.top / cellSize) * cellSize;
+			for (auto iy = (int)std::floor(area.top / cellSize) * cellSize; iy < area.bottom; iy += cellSize)
 			{
-				for (auto ix = std::floor(area.left / 8.f) * 8; ix < area.right; ix += 8)
+				for (auto ix = (int)std::floor(area.left / cellSize) * cellSize; ix < area.right; ix += cellSize)
 				{
 					//auto x = std::floor(ix / 8) * 8, y = std::floor(iy / 8) * 8;
-					DrawSegment(Vector2(ix, iy), Vector2(ix + 8, iy), gc);
-					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + 8), gc);
+					DrawSegment(Vector2(ix, iy), Vector2(ix + cellSize, iy), gc);
+					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + cellSize), gc);
 				}
 			}
 			const auto textHeight = m_DebugFont2.get_text_size(gc, "1").height;
-			for (auto iy = std::floor(area.top / 8.f) * 8; iy < area.bottom; iy += 8)
+			for (auto iy = (int)std::floor(area.top / cellSize) * cellSize; iy < area.bottom; iy += cellSize)
 			{
-				for (auto ix = std::floor(area.left / 8.f) * 8; ix < area.right; ix += 8)
+				for (auto ix = (int)std::floor(area.left / cellSize) * cellSize; ix < area.right; ix += cellSize)
 				{
-					std::stringstream str; str << (ix / 8) << "," << (iy / 8);
+					std::stringstream str; str << (ix / cellSize) << "," << (iy / cellSize);
 					m_DebugFont2.draw_text(gc, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
 				}
 			}

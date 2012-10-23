@@ -85,6 +85,9 @@
     <ClCompile Include="source\FusionMultiEntityLoader.cpp">
       <Filter>Map\Async Loading</Filter>
     </ClCompile>
+    <ClCompile Include="source\CellArchivistSystem.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -164,6 +167,12 @@
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionActiveEntityDirectory.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRegionFile.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CellArchivistSystem.h">
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
   </ItemGroup>
