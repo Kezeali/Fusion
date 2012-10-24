@@ -305,7 +305,7 @@ namespace FusionEngine
 			// The last tuple param indicates whether the cell should be cleared (unloaded)
 			//  when the write operation is done: it checks whether this is the only reference
 			//  to the cell
-			m_WriteQueue.push(WriteTask(cell, CellCoord_t(x, y), cell.unique()));
+			m_WriteQueue.push(WriteJob(cell, CellCoord_t(x, y), cell.unique()));
 			m_NewData.set();
 			
 			//TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
@@ -328,7 +328,7 @@ namespace FusionEngine
 		if (state != Cell::Retrieve && (state != Cell::Ready || !cell->loaded))
 		{
 			AddHist(CellCoord_t(x, y), "Enqueued In");
-			m_ReadQueueGetCellData.push(ReadTask(cell, CellCoord_t(x, y)));
+			m_ReadQueueGetCellData.push(ReadJob(cell, CellCoord_t(x, y)));
 			m_NewData.set();
 		}
 		else if (cell->loaded)
@@ -529,7 +529,7 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_istream>();
 	}
 
-	void RegionCellArchivist::OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, ReadTask job)
+	void RegionCellArchivist::OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, ReadJob job)
 	{
 		job.cellDataStream = std::move(cellDataStream);
 		m_ReadQueueLoadEntities.push(job);
@@ -545,7 +545,7 @@ namespace FusionEngine
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
 
-		FSN_ASSERT_MSG(numEntries < (1 << 16), "Probably invalid data: entry count is implausible");
+		FSN_ASSERT_MSG(numEntries < 65535, "Probably invalid data: entry count is implausible");
 
 		std::vector<ObjectID> idIndex;
 
@@ -750,7 +750,7 @@ namespace FusionEngine
 
 				// Request cell data
 				{
-					ReadTask toRead;
+					ReadJob toRead;
 					while (m_ReadQueueGetCellData.try_pop(toRead))
 					{
 						const CellCoord_t& cell_coord = toRead.coord;
@@ -778,7 +778,7 @@ namespace FusionEngine
 					// Keep archetype factory resources loaded during this stage
 					ArchetypeFactoryManager::Sustain();
 
-					ReadTask toRead;
+					ReadJob toRead;
 					while (m_ReadQueueLoadEntities.try_pop(toRead))
 					{
 						std::weak_ptr<Cell>& cellWpt = toRead.cell;
@@ -945,7 +945,7 @@ namespace FusionEngine
 				}
 
 				{
-					WriteTask toWrite;
+					WriteJob toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
 					{
 						const std::weak_ptr<Cell>& cellWpt = toWrite.cell;

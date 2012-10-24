@@ -284,11 +284,9 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(IsPrimaryThread());
 
-#ifdef _WIN32
-		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
-#endif
-
-		//std::vector<ISystemTask*> primaryThreadTasksNotRun;
+//#ifdef _WIN32
+//		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+//#endif
 
 		// Run primary-thread tasks
 		for (auto it = m_PrimaryThreadSystemTasks.begin() ; it != m_PrimaryThreadSystemTasks.end(); ++it)
@@ -298,9 +296,9 @@ namespace FusionEngine
 			(*it)->Update(m_DeltaTime);
 		}
 
-#ifdef _WIN32
-		SetThreadPriority( GetCurrentThread(), THREAD_PRIORITY_NORMAL );
-#endif
+//#ifdef _WIN32
+//		SetThreadPriority( GetCurrentThread(), THREAD_PRIORITY_NORMAL );
+//#endif
 
 		m_PrimaryThreadSystemTasks.clear();
 
