@@ -12,6 +12,7 @@
 #include "FusionLogger.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
+#include "FusionProfiling.h"
 #include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionScriptManager.h"
 
@@ -240,6 +241,7 @@ namespace FusionEngine
 
 	void ResourceManager::DeliverLoadedResources()
 	{
+		FSN_PROFILE("DeliverLoadedResources");
 		ResourceDataPtr res;
 		while (m_ToDeliver.try_pop(res))
 		{
@@ -273,6 +275,7 @@ namespace FusionEngine
 
 	void ResourceManager::UnloadUnreferencedResources()
 	{
+		FSN_PROFILE("UnloadUnreferenceResources");
 		{
 			ResourceContainer* res;
 			while (m_ToUnloadUsingGC.try_pop(res))

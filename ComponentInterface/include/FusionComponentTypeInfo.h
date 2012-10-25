@@ -44,6 +44,7 @@ namespace FusionEngine
 
 	class EntityComponent;
 
+	//! Stores component type info at runtime
 	class ComponentTypeInfoCache : public Singleton<ComponentTypeInfoCache>
 	{
 	public:
@@ -52,8 +53,10 @@ namespace FusionEngine
 
 		typedef std::map<std::string, size_t> ComponentPropertiesMap_t;
 
+		//! Gets / creates component type info in the cache
 		const std::shared_ptr<ComponentPropertiesMap_t> &GetComponentTypeInfo(const EntityComponent* instance);
-
+		//! Removes all cached component type info
+		void ClearCache();
 	private:
 		tbb::concurrent_unordered_map<std::string, std::shared_ptr<ComponentPropertiesMap_t>> m_ComponentTypes;
 	};

@@ -638,8 +638,11 @@ namespace FusionEngine
 				m_NetworkManager->DispatchPackets();
 
 				// Run serial resource manager operations
-				m_ResourceManager->UnloadUnreferencedResources();
-				m_ResourceManager->DeliverLoadedResources();
+				{
+					FSN_PROFILE("ResourceManager");
+					m_ResourceManager->UnloadUnreferencedResources();
+					m_ResourceManager->DeliverLoadedResources();
+				}
 
 #ifdef FSN_PROFILING_ENABLED
 				}

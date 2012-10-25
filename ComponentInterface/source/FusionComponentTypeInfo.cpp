@@ -42,6 +42,20 @@ namespace FusionEngine
 	{
 	}
 
+	std::shared_ptr<ComponentTypeInfoCache::ComponentPropertiesMap_t> GeneratePropertyIndexMap(const EntityComponent* instance)
+	{
+		const auto& properties = instance->GetProperties();
+
+		auto propertyIndexMap = std::make_shared<ComponentTypeInfoCache::ComponentPropertiesMap_t>();
+		{
+			size_t index = 0;
+			for (auto it = properties.begin(); it != properties.end(); ++it)
+				propertyIndexMap->insert(std::make_pair(it->first, index++));
+		}
+
+		return std::move(propertyIndexMap);
+	}
+
 	const std::shared_ptr<ComponentTypeInfoCache::ComponentPropertiesMap_t> &ComponentTypeInfoCache::GetComponentTypeInfo(const EntityComponent* instance)
 	{
 		auto entry = m_ComponentTypes.find(instance->GetProfileType());
@@ -49,15 +63,13 @@ namespace FusionEngine
 			return entry->second;
 		else
 		{
-			const auto& properties = instance->GetProperties();
-			auto propertyIndexMap = std::make_shared<ComponentPropertiesMap_t>();
-			{
-				size_t index = 0;
-				for (auto it = properties.begin(); it != properties.end(); ++it)
-					propertyIndexMap->insert(std::make_pair(it->first, index++));
-			}
-			return m_ComponentTypes.insert(std::make_pair(instance->GetProfileType(), propertyIndexMap)).first->second;
+			return m_ComponentTypes.insert(std::make_pair(instance->GetProfileType(), GeneratePropertyIndexMap(instance))).first->second;
 		}
+	}
+
+	void ComponentTypeInfoCache::ClearCache()
+	{
+		m_ComponentTypes.clear();
 	}
 
 }

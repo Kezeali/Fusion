@@ -32,6 +32,7 @@
 #include "FusionAngelScriptComponent.h"
 #include "FusionEntity.h"
 #include "FusionComponentFactory.h"
+#include "FusionComponentTypeInfo.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionPaths.h"
@@ -1023,6 +1024,8 @@ namespace FusionEngine
 					rebuiltScript.component->DeserialiseContinuous(*rebuiltScript.continiousData);
 			}
 		}
+
+		ComponentTypeInfoCache::getSingleton().ClearCache();
 
 		ISystemWorld::PostSystemMessage(MessageType::NewTypes);
 	}

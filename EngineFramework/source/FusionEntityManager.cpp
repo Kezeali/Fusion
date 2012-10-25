@@ -616,6 +616,7 @@ namespace FusionEngine
 
 	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager)
 	{
+		FSN_PROFILE("ProcessNetworkQueues");
 		// TODO: OnDisconected handler (need to add a signal or something for that) that removes jitter buffer
 		if (m_UseJitterBuffer)
 			ProcessJitterBuffer();
@@ -671,7 +672,7 @@ namespace FusionEngine
 			}
 		}
 
-		// TODO: remote data from m_ToInform that has been superceeded by remote data
+		// TODO: remote data from m_ToInform that has been superseded by remote data
 
 		m_TEMPQueuedEntities.clear();
 
