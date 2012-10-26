@@ -328,6 +328,8 @@ namespace FusionEngine
 		auto& drawables = m_RenderWorld->GetDrawables();
 		auto& sprites = m_RenderWorld->GetSprites();
 
+		{
+			FSN_PROFILE("UpdateCameraPositions")
 		for (auto it = cameras.cbegin(), end = cameras.cend(); it != end; ++it)
 		{
 			auto& camera = *it;
@@ -346,6 +348,7 @@ namespace FusionEngine
 				m_RenderWorld->RemoveViewport(camera->m_Viewport);
 				camera->m_Viewport.reset();
 			}
+		}
 		}
 
 		auto depthSort = [](const boost::intrusive_ptr<IDrawable>& first, const boost::intrusive_ptr<IDrawable>& second)->bool

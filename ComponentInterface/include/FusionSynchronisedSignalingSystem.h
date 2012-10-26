@@ -252,7 +252,6 @@ namespace FusionEngine
 			//! Fires queued events
 			SerialisationMechanism Fire()
 			{
-				FSN_PROFILE("FireSignals");
 				SerialisationMechanism serialiser;
 
 				std::pair<KeyT, std::weak_ptr<GeneratorPlaceholder>> triggeredGenerator;

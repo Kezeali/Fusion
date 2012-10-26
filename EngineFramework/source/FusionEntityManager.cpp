@@ -94,20 +94,22 @@ namespace FusionEngine
 
 	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(PlayerID player)
 	{
-		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
-		if (_where != m_PlayerInputs.end())
+		if (player != 0)
 		{
-			return _where->second;
+			PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
+			if (_where != m_PlayerInputs.end())
+			{
+				return _where->second;
+			}
+			else
+			{
+				// Create an entry for the given player
+				//if (PlayerRegistry::GetPlayer(player).NetID != 0)
+				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
+			}
 		}
 		else
-		{
-			// Create an entry for the given player, if it is a valid player
-			//if (PlayerRegistry::GetPlayer(player).NetID != 0)
-			if (player != 0)
-				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
-			else
-				return PlayerInputPtr();
-		}
+			return PlayerInputPtr();
 	}
 
 	const ConsolidatedInput::PlayerInputsMap &ConsolidatedInput::GetPlayerInputs() const
@@ -480,9 +482,8 @@ namespace FusionEngine
 
 	void EntitySynchroniser::OnEntityActivated(const EntityPtr &entity)
 	{
-		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(entity->GetOwnerID());
-		if (playerInput)
-			entity->_setPlayerInput(playerInput);
+		if (entity->GetOwnerID() != 0)
+			entity->_setPlayerInput(m_PlayerInputs->GetInputsForPlayer(entity->GetOwnerID()));
 	}
 
 	void EntitySynchroniser::OnEntityDeactivated(const EntityPtr &entity)
@@ -604,7 +605,7 @@ namespace FusionEngine
 			}
 
 			// Obviously the packet might not be skipped, but if it is actually sent
-			//  it's skipped-count gets reset to zero, so the following operation will
+			//  it's skipped-count gets reset to zero, so the following update will
 			//  be over-ruled
 			entity->PacketSkipped();
 		}
@@ -1606,7 +1607,7 @@ namespace FusionEngine
 		return newEnd;
 	}
 
-	void EntityManager::ProcessActivationQueues()
+	void EntityManager::ProcessActivationQueues(float time_limit)
 	{
 		FSN_PROFILE("ProcessActivationQueues");
 		// Process newly added components
@@ -1636,7 +1637,7 @@ namespace FusionEngine
 		{
 			FSN_PROFILE("Add New Entities To Activate");
 			EntityPtr entityToActivate;
-			for (int i = 0; i < 60 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
+			for (int i = 0; i < 5 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
 			{
 				if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
 					m_StreamingManager->AddEntity(entityToActivate);
@@ -1645,7 +1646,7 @@ namespace FusionEngine
 			}
 		}
 
-		// Dectivate entities
+		// Deactivate entities
 		for (auto it = m_EntitiesToDeactivate.begin(), end = m_EntitiesToDeactivate.end(); it != end; ++it)
 		{
 			deactivateEntity(*it);
@@ -1654,7 +1655,7 @@ namespace FusionEngine
 		// Drop local references
 		for (auto it = m_EntitiesUnreferenced.begin(), end = m_EntitiesUnreferenced.end(); it != end; ++it)
 		{
-			if (!(*it)->IsMarkedToRemove()) // Mark-to-remove superceeds mark-to-deactivate
+			if (!(*it)->IsMarkedToRemove()) // Mark-to-remove supersedes mark-to-deactivate
 				dropEntity(*it);
 			else
 				removeEntity(*it);
@@ -1678,15 +1679,17 @@ namespace FusionEngine
 		Profiling::getSingleton().AddTime("~Entities to Activate", (double)m_EntitiesToActivate.size());
 #endif
 			auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
-			for (int i = 0; i < 30 && it != end; ++i)
+			for (int i = 0; i < 5 && it != end; ++i)
 			{
 				if (attemptToActivateEntity(*it))
 				{
+					FSN_PROFILE("PostActivationInitialisation");
 					//FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
 					auto& entity = (*it);
 
 					entity->StreamIn();
 					{
+						FSN_PROFILE("AddToActiveEntitiesList");
 						ActiveEntitiesMutex_t::scoped_lock lock(m_ActiveEntitiesMutex);
 						m_ActiveEntities.push_back(entity);
 					}
@@ -1713,6 +1716,7 @@ namespace FusionEngine
 		}
 		// Activate components
 		{
+			FSN_PROFILE("ActivateNewComponents");
 			auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
 			while (it != end)
 			{
@@ -1807,6 +1811,8 @@ namespace FusionEngine
 	{
 		bool allAreActive = true;
 
+		FSN_PROFILE("AttemptToActivateEntity");
+
 		//allAreActive &= entity->m_UnloadedReferencedEntities.empty();
 		//auto& refedEnts = entity->m_UnloadedReferencedEntities;
 		//for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end;)
@@ -1848,6 +1854,10 @@ namespace FusionEngine
 
 	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component)
 	{
+#ifdef FSN_PROFILING_ENABLED
+		Profiling::getSingleton().AddTime("~Activated" + component->GetType(), double(1.0));
+#endif
+		FSN_PROFILE("Activating " + component->GetType());
 		if (component->GetReadyState() == EntityComponent::NotReady)
 		{
 			component->SetReadyState(EntityComponent::Preparing);

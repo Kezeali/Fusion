@@ -124,6 +124,8 @@ namespace FusionEngine
 		tbb::spin_mutex m_LoadQueueMutex;
 		std::string m_SaveToLoad;
 
+		bool m_SaveProfilerData;
+
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
 		std::shared_ptr<ArchetypeFactoryManager> m_ArchetypeFactoryManager;
@@ -168,7 +170,6 @@ namespace FusionEngine
 
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;
-
 		void ReadOptions(const ClientOptions& options);
 
 		void RegisterScriptTypes();

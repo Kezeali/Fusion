@@ -101,7 +101,7 @@ namespace FusionEngine
 		void Load();
 
 		//! Invokes the ResourceLoadedFn (callback) for each loaded resource
-		void DeliverLoadedResources();
+		void DeliverLoadedResources(float time_limit = std::numeric_limits<float>::infinity());
 
 		//! Adds all resources that are no longer used (refcount is zero) to the ToUnload queue
 		void UnloadUnreferencedResources();

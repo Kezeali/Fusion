@@ -35,6 +35,7 @@
 #include "FusionMaths.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionPlayerRegistry.h"
+#include "FusionProfiling.h"
 #include "FusionNetworkManager.h"
 #include "FusionRakNetwork.h"
 #include "FusionNetDestinationHelpers.h"
@@ -1333,10 +1334,12 @@ namespace FusionEngine
 		const bool refreshCameras = (mode & AllCameras) != 0;
 
 		{
+			FSN_PROFILE("TryToClearTheVoid");
 			// Try to clear The Void
 			Cell::mutex_t::scoped_lock lock;
 			if (lock.try_acquire(m_TheVoid.mutex))
 			{
+				FSN_PROFILE("VoidLockedWhileClearing");
 				for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
 				{
 					auto location = ToCellLocation(it->second.x, it->second.y);
@@ -1396,6 +1399,7 @@ namespace FusionEngine
 		}
 		
 		{
+			FSN_PROFILE("AcquireCellsForRequestedEntities");
 			std::vector<ObjectID> failedRequests;
 			// Check for requested cells that have finished loading
 			for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
@@ -1446,7 +1450,7 @@ namespace FusionEngine
 				++it;
 			}
 
-			// Retry any entities that werent present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
+			// Retry any entities that weren't present in this cell anymore (they were there when the cell was requested, but were moved before it was loaded)
 			for (auto it = failedRequests.begin(), end = failedRequests.end(); it != end; ++it)
 				ActivateEntity(*it);
 		}
@@ -1468,6 +1472,7 @@ namespace FusionEngine
 		bool allActiveRangesStale = true;
 
 		{
+			FSN_PROFILE("CalculateActiveCameraRanges");
 			CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 			auto it = m_Cameras.begin();
 			while (it != m_Cameras.end())
@@ -1537,13 +1542,14 @@ namespace FusionEngine
 			}
 		} // don't need the scoped mutex lock for the cameras collection after here
 
-		// TODO: seperate activeRanges and staleActiveRanges? (processCell on activeRanges, check m_CellsBeingLoaded for cells to process on staleActiveRanges)
+		// TODO: separate activeRanges and staleActiveRanges? (processCell on activeRanges, check m_CellsBeingLoaded for cells to process on staleActiveRanges)
 
 		// This set is just used to make sure cells are processed if they finish loading after the camera that requested them stops moving (see else clause below):
 		if (!allActiveRangesStale)
 		{
 			std::list<CL_Rect> clippedInactiveRanges;
 			{
+				FSN_PROFILE("ClipInactiveCellRanges");
 				// Clip inactive ranges against all active ranges
 				std::deque<CL_Rect> toProcess(inactiveRanges.begin(), inactiveRanges.end());
 				while (!toProcess.empty())
@@ -1566,13 +1572,18 @@ namespace FusionEngine
 				}
 			}
 
+			{
+				FSN_PROFILE("SortInactiveCellRanges");
 			// Sort to improve cache performance
 			clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
 			{
 				return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);
 			});
-			// TODO: merge adjcent ranges
+			// TODO: merge adjacent ranges
+			}
 
+			{
+				FSN_PROFILE("DeactivateAllEntitiesInInactiveCells");
 			for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
 			{
 #ifdef _DEBUG
@@ -1584,7 +1595,10 @@ namespace FusionEngine
 #endif
 				deactivateCells(*it);
 			}
+			}
 
+			{
+				FSN_PROFILE("ProcessEntitiesInActiveCells");
 			processCell(s_VoidCellIndex, m_TheVoid, allLocalStreamPositions, allRemoteStreamPositions);
 
 			for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
@@ -1650,9 +1664,11 @@ namespace FusionEngine
 
 				}
 			}
+			}
 		}
 		else // All active ranges stale
 		{
+			FSN_PROFILE("LoadingCellsAfterCamerasStoppedMoving");
 			// Clear loaded cells
 			Cell::mutex_t::scoped_lock lock; // TheVoid's mutex is used to lock m_CellsBeingLoaded
 			if (lock.try_acquire(m_TheVoid.mutex))

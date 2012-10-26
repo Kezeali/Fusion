@@ -32,6 +32,7 @@
 #include "FusionBox2DComponent.h"
 #include "FusionDeltaTime.h"
 #include "FusionMaths.h"
+#include "FusionProfiling.h"
 #include "FusionBox2DContactListener.h"
 
 // TEMP: For authority contact listener:
@@ -436,6 +437,7 @@ namespace FusionEngine
 
 	void Box2DWorld::OnActivation(const ComponentPtr& component)
 	{
+		FSN_PROFILE("Box2DWorldOnActivation");
 		if (auto bodyComponent = boost::dynamic_pointer_cast<Box2DBody>(component))
 		{
 			if (bodyComponent->m_Body != nullptr)

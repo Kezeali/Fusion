@@ -1644,6 +1644,12 @@ namespace FusionEngine
 			case CL_KEY_F7:
 				m_RebuildScripts = true;
 				break;
+			case CL_KEY_F9:
+				Console::getSingleton().Interpret("prof_savetimes on");
+				break;
+			case CL_KEY_F10:
+				Console::getSingleton().Interpret("prof_savetimes off");
+				break;
 			case CL_KEY_DELETE:
 				if (ev.shift)
 					ForEachSelected([this](const EntityPtr& entity)->bool { this->AddEntityToDelete(entity); return true; });

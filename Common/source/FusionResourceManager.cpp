@@ -239,11 +239,12 @@ namespace FusionEngine
 		//asThreadCleanup();
 	}
 
-	void ResourceManager::DeliverLoadedResources()
+	void ResourceManager::DeliverLoadedResources(float time_limit)
 	{
 		FSN_PROFILE("DeliverLoadedResources");
+		auto startTime = tbb::tick_count::now();
 		ResourceDataPtr res;
-		while (m_ToDeliver.try_pop(res))
+		while (m_ToDeliver.try_pop(res) && (tbb::tick_count::now() - startTime).seconds() < time_limit)
 		{
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
@@ -251,6 +252,7 @@ namespace FusionEngine
 				auto _where = m_ResourceLoaders.find(res->GetType());
 				if (_where != m_ResourceLoaders.end())
 				{
+					FSN_PROFILE("GCLoad " + res->GetType());
 					ResourceLoader& loader = _where->second;
 					loader.gcload(res.get(), m_GC, loader.userData);
 				}
@@ -258,6 +260,7 @@ namespace FusionEngine
 
 			if (res->IsLoaded())
 			{
+				FSN_PROFILE("SigLoaded " + res->GetType());
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
 				SignalResourceLoaded(res);
