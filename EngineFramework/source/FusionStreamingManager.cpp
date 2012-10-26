@@ -526,7 +526,7 @@ namespace FusionEngine
 		}
 		// Not dropping the cell references here (which could be done by
 		//  clearing m_Cells) informs the archivist that the cells are
-		//  still in use, dispite being stored (so it wont destroy their
+		//  still in use, despite being stored (so it wont destroy their
 		//  contents when it is done.)
 
 		if (refresh_next_update)
@@ -737,7 +737,7 @@ namespace FusionEngine
 					newCell_lock.acquire(m_TheVoid.mutex);
 					//FSN_ASSERT(newCell_lock);
 				}
-				else // Don't need a new lock - already in The Void, and that cell's lock was aquired above
+				else // Don't need a new lock - already in The Void, and that cell's lock was acquired above
 					newCell_lock.release();
 			}
 			
