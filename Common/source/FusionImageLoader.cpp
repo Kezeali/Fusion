@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -62,7 +62,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -72,7 +72,7 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		LoadImageResource(resource, vdir, user_data);
 		if (resource->IsLoaded())
@@ -82,7 +82,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -98,7 +98,7 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, void* user_data)
+	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data)
 	{
 		if (!resource->IsLoaded() && resource->RequiresGC())
 		{
@@ -113,7 +113,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -153,7 +153,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

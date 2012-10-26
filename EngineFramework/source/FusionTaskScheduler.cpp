@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -31,6 +31,7 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionStreamingSystem.h"
+#include "FusionProfiling.h"
 
 #include <functional>
 
@@ -226,6 +227,8 @@ namespace FusionEngine
 
 	uint8_t TaskScheduler::Execute(uint8_t what)
 	{
+		FSN_PROFILE("Executing Tasks");
+
 		auto currentTime = CL_System::get_time();
 		if (m_LastTime == 0)
 			m_LastTime = currentTime;

@@ -150,17 +150,17 @@ namespace FusionEngine
 					// Try exact match
 					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 					{
-						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+						return generator->ConnectHandler(handler_fn);
 					}
 					// Try non-reference type match (match handler(const T& value) to signal->T or const T)
 					else if (auto generator = std::dynamic_pointer_cast<Generator<value_type>>(entry->second))
 					{
-						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+						return generator->ConnectHandler(handler_fn);
 					}
 					// Try non-const type match (match handler(const T& value) to signal->T)
 					else if (auto generator = std::dynamic_pointer_cast<Generator<naked_type>>(entry->second))
 					{
-						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+						return generator->ConnectHandler(handler_fn);
 					}
 					// Type const-ref generator match
 					//else if (auto generator = std::dynamic_pointer_cast<Generator<const_ref_type>>(entry->second))
@@ -193,7 +193,7 @@ namespace FusionEngine
 					// Try exact match
 					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
 					{
-						return std::make_shared<boost::signals2::scoped_connection>(generator->signal.connect(handler_fn));
+						return generator->ConnectHandler(handler_fn);
 					}
 					else
 					{
@@ -330,9 +330,11 @@ namespace FusionEngine
 			{
 			private:
 				Generator(const Generator& other) {}
-			public:
-				boost::signals2::signal<void (T)> signal;
+			
+				typedef boost::signals2::signal<void (T)> Signal_t;
+				std::unique_ptr<Signal_t> signal;
 
+			public:
 				Generator()
 				{}
 
@@ -349,17 +351,29 @@ namespace FusionEngine
 
 				void Fire(SerialisationMechanism& serialiser)
 				{
-					while (HasMore())
+					if (signal)
 					{
-						T v = GetEvent();
-						serialiser.WriteEvent<T>(v);
-						signal(v);
+						while (HasMore())
+						{
+							T v = GetEvent();
+							serialiser.WriteEvent<T>(v);
+							(*signal)(v);
+						}
 					}
 				}
 
 				HandlerConnection_t ConnectListener(const std::function<void ()>& listener)
 				{
-					return std::make_shared<boost::signals2::scoped_connection>( signal.connect([=](T){ listener(); }) );
+					if (!signal)
+						signal.reset(new Signal_t);
+					return std::make_shared<boost::signals2::scoped_connection>( signal->connect([=](T){ listener(); }) );
+				}
+
+				HandlerConnection_t ConnectHandler(const std::function<void (T)>& handler)
+				{
+					if (!signal)
+						signal.reset(new Signal_t);
+					return std::make_shared<boost::signals2::scoped_connection>( signal->connect(handler) );
 				}
 			};
 

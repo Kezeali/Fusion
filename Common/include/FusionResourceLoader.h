@@ -38,23 +38,24 @@
 
 #include <ClanLib/Display/Render/graphic_context.h>
 #include <ClanLib/Core/IOData/virtual_directory.h>
+#include <boost/any.hpp>
 
 namespace FusionEngine
 {
 
 	//! Fn. pointer for loading resources
-	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Fn. pointer for unloading resources
-	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Fn. pointer for loading stuff into a GC (textures)
-	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, void* userData);
+	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, boost::any user_data);
 
 	typedef std::vector< std::pair< std::string, std::string > > DepsList;
 	//! Fn. pointer - should return a list of resources that this resource needs access to
 	/*!
 	* \return True if loading of this resource can complete before dependencies are loaded
 	*/
-	typedef bool (*resource_list_prerequisites)(ResourceContainer* res, DepsList& dependencies, void* userData);
+	typedef bool (*resource_list_prerequisites)(ResourceContainer* res, DepsList& dependencies, boost::any user_data);
 
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader
@@ -63,15 +64,14 @@ namespace FusionEngine
 		resource_unload unload;
 		resource_gcload gcload;
 		resource_list_prerequisites list_prereq;
-		void *userData;
+		boost::any userData;
 		std::string type;
 
 		ResourceLoader()
 			: load(nullptr),
 			unload(nullptr),
 			gcload(nullptr),
-			list_prereq(nullptr),
-			userData(nullptr)
+			list_prereq(nullptr)
 		{
 		}
 
@@ -80,12 +80,11 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(nullptr),
-			list_prereq(nullptr),
-			userData(nullptr)
+			list_prereq(nullptr)
 		{
 		}
 
-		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, void *_userData)
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, boost::any _userData)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),
@@ -100,12 +99,11 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(gcLoadFn),
-			list_prereq(nullptr),
-			userData(nullptr)
+			list_prereq(nullptr)
 		{
 		}
 
-		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, void *_userData)
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, boost::any _userData)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),

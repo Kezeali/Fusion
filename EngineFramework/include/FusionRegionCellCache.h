@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionMapLoader
-#define H_FusionMapLoader
+#ifndef H_FusionRegionCellCache
+#define H_FusionRegionCellCache
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,11 +34,15 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionVector2.h"
 #include "FusionHashable.h"
+#include "FusionRegionFile.h"
+#include "FusionResourcePointer.h"
+#include "FusionVector2.h"
 
 #include "FusionCellCache.h"
 
+#include <array>
+#include <functional>
 #include <memory>
 #include <unordered_map>
 
@@ -46,162 +50,20 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/device/array.hpp>
-
 #include <boost/iostreams/device/file_descriptor.hpp>
+
+#include <tbb/recursive_mutex.h>
 
 namespace FusionEngine
 {
 
-	class RegionFile;
-	struct SmartArrayDevice
-	{
-		typedef std::vector<char> DataArray_t;
-		std::shared_ptr<DataArray_t> data;
-		std::streamsize position;
-
-		SmartArrayDevice()
-			: position(0),
-			data(new DataArray_t())
-		{}
-		SmartArrayDevice(const SmartArrayDevice& other)
-			: position(other.position),
-			data(other.data)
-		{}
-		SmartArrayDevice(SmartArrayDevice&& other)
-			: data(std::move(other.data)),
-			position(other.position)
-		{
-			other.position = 0;
-		}
-		virtual ~SmartArrayDevice() {}
-
-		typedef char char_type;
-		typedef boost::iostreams::seekable_device_tag category;
-
-		std::streamsize read(char_type* s, std::streamsize n);
-		std::streamsize write(const char_type* s, std::streamsize n);
-		boost::iostreams::stream_offset seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way);
-
-		//struct impl
-		//{
-		//	DataArray_t data;
-		//};
-
-		//std::shared_ptr<impl> pimpl;
-	};
-
-	struct CellBuffer : public SmartArrayDevice
-	{
-		CellBuffer(RegionFile* p)
-			: pimpl(new cell_impl(p, data))
-		{}
-		CellBuffer(const CellBuffer& other)
-			: SmartArrayDevice(other),
-			pimpl(other.pimpl)
-		{}
-		CellBuffer(CellBuffer&& other)
-			: SmartArrayDevice(std::move(other)),
-			pimpl(std::move(other.pimpl))
-		{}
-
-		struct cell_impl// : public SmartArrayDevice::impl
-		{
-			std::pair<int32_t, int32_t> cellIndex;
-			RegionFile* parent;
-			std::shared_ptr<DataArray_t> data;
-			cell_impl(RegionFile* p, std::shared_ptr<DataArray_t> d)
-				: parent(p),
-				data(d),
-				cellIndex(0, 0)
-			{}
-			~cell_impl();
-		private:
-			cell_impl(const cell_impl& other) {}
-		};
-
-		std::shared_ptr<cell_impl> pimpl;
-	};
-
-	class RegionFile
-	{
-	public:
-		RegionFile()
-			: region_width(0)
-		{}
-
-		explicit RegionFile(const std::string& filename, size_t width);
-		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width);
-
-		~RegionFile();
-
-		void init();
-
-		RegionFile(RegionFile&& other)
-			: filename(std::move(other.filename)),
-			filebuf(std::move(other.filebuf)),
-			filedesc(std::move(other.filedesc)),
-			file(std::move(other.file)),
-			cellDataLocations(std::move(other.cellDataLocations)),
-			free_sectors(std::move(other.free_sectors)),
-			region_width(other.region_width)
-		{
-		}
-
-		RegionFile& operator=(RegionFile&& other)
-		{
-			filename = std::move(other.filename);
-			filebuf = std::move(other.filebuf);
-			filedesc = std::move(other.filedesc);
-			file = std::move(other.file);
-			cellDataLocations = std::move(other.cellDataLocations);
-			free_sectors = std::move(other.free_sectors);
-			region_width = other.region_width;
-			return *this;
-		}
-
-		struct DataLocation
-		{
-			uint32_t startingSector : 24;
-			uint32_t sectorsAllocated : 8;
-
-			bool is_valid() const { return end() != 0; }
-			uint32_t end() const { return startingSector + sectorsAllocated; }
-		};
-
-		std::string filename;
-		std::unique_ptr<std::streambuf> filebuf;
-		std::unique_ptr<boost::iostreams::file_descriptor> filedesc;
-		std::unique_ptr<std::iostream> file;
-		// This could be a std::array (its a static array in the minecraft impl)
-		std::vector<DataLocation> cellDataLocations;
-		boost::dynamic_bitset<> free_sectors;
-
-		size_t region_width; // Number of cells in each direction that comprise this region
-
-		std::unique_ptr<ArchiveIStream> getInputCellData(int32_t x, int32_t y, bool inflate = true);
-		std::unique_ptr<ArchiveOStream> getOutputCellData(int32_t x, int32_t y);
-
-		void write(const std::pair<int32_t, int32_t>& i, std::vector<char>& data);
-		void write(size_t first_sector, const std::vector<char>& data);
-
-		void setCellDataLocation(const std::pair<int32_t, int32_t>& i, uint32_t startSector, uint32_t sectorsUsed);
-		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& i);
-		
-	private:
-		RegionFile(const RegionFile&) {}
-		RegionFile& operator=(const RegionFile&) {}
-	};
+	class RegionFileLoadedCallbackHandle;
 
 	//! Region-file based cell data source
 	class RegionCellCache : public CellDataSource
 	{
 	public:
-		typedef Vector2T<int32_t> CellCoord_t;
-
+		typedef Vector2T<int32_t> RegionCoord_t;
 		
 		//! CTOR
 		/*!
@@ -216,19 +78,31 @@ namespace FusionEngine
 		//! Unload held files (doesn't delete them from disk)
 		void DropCache();
 
-		//! Sets the save path to load missing regions from
-		void SetSavePath(const std::string& save_path);
+		typedef std::function<void (RegionFile*)> RegionLoadedCallback;
 
-		RegionFile& CreateRegionFile(const CellCoord_t& coord);
+		//! Clear the cache for the given file and reload it
+		void ReloadRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCoord_t& coord);
 		//! Returns a RegionFile for the given coord
-		RegionFile* GetRegionFile(const CellCoord_t& coord, bool create);
+		/*!
+		* \param[in] load_if_uncached
+		* If false, null will be returned if the region file isn't already cached
+		*/
+		void GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCoord_t& coord, bool load_if_uncached);
+
+		//! Callback handler that delivers cell data from loaded regions
+		void OnRegionFileLoaded(ResourceDataPtr& resource, const RegionCoord_t& coord);
+
+		int32_t GetRegionSize() const { return m_RegionSize; }
 
 		//! Returns the given cell data
-		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
+		void GetCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
+		//! Writes data produced by BureaucraticCellBuffer
+		void WriteCellData(std::pair<int32_t, int32_t> cellIndex, std::shared_ptr<SmartArrayDevice::DataArray_t> data);
+
 		//! Returns the compressed cell data
-		std::unique_ptr<ArchiveIStream> GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y);
+		void GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y);
 
 		//! In edit mode, the cell cache records the maximum and minimum cell coordinates
 		void SetupEditMode(bool record_bounds, CL_Rect initial_bounds = CL_Rect());
@@ -236,13 +110,16 @@ namespace FusionEngine
 		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
 	private:
-		std::unordered_map<CellCoord_t, RegionFile, boost::hash<CellCoord_t>> m_Cache;
-		std::list<CellCoord_t> m_CacheImportance;
+		std::unordered_map<RegionCoord_t, RegionFileLoadedCallbackHandle, boost::hash<RegionCoord_t>> m_CallbackHandles;
+
+		typedef std::unordered_map<RegionCoord_t, ResourcePointer<RegionFile>, boost::hash<RegionCoord_t>> CacheMap_t;
+		CacheMap_t m_Cache;
+		std::list<RegionCoord_t> m_CacheImportance;
 		size_t m_MaxLoadedFiles;
+		typedef tbb::recursive_mutex CacheMutex_t;
+		CacheMutex_t m_CacheMutex;
 
 		std::string m_CachePath;
-
-		std::string m_SavePath;
 
 		int32_t m_RegionSize;
 
@@ -250,8 +127,7 @@ namespace FusionEngine
 		CL_Rect m_Bounds;
 
 		//! Returns the region in which the given cell resides, and converts the coords to region-relative coords
-		inline CellCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;
-
+		RegionCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;
 	};
 
 }

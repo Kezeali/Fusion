@@ -215,7 +215,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -246,7 +246,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

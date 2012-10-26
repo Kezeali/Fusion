@@ -12,7 +12,7 @@
 
 namespace FusionEngine { namespace Test
 {
-	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		//ASSERT_TRUE(resource->IsLoaded());
 
@@ -24,7 +24,7 @@ namespace FusionEngine { namespace Test
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		// TODO: should the resource manager be allowed to request reloads like this?
 		//UnloadTextResource(resource, vdir, userData);

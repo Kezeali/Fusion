@@ -101,23 +101,17 @@ namespace FusionEngine
 
 	void CLSprite::Update(unsigned int, const float elapsed, const float)
 	{
-		auto onImageLoaded = [this](ResourceDataPtr data)
-		{
-			m_ImageResource.SetTarget(data);
-			redefineSprite();
-		};
-
-		auto onAnimationLoaded = [this](ResourceDataPtr data)
-		{
-			m_AnimationResource.SetTarget(data);
-			redefineSprite();
-		};
-
 		using namespace std::placeholders;
 		if (m_ReloadImage)
 		{
 			if (!m_ImagePath.empty())
 			{
+				auto onImageLoaded = [this](ResourceDataPtr data)
+				{
+					m_ImageResource.SetTarget(data);
+					redefineSprite();
+				};
+
 				m_ImageLoadConnection.disconnect();
 				m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, onImageLoaded);
 			}
@@ -134,6 +128,12 @@ namespace FusionEngine
 		{
 			if (!m_AnimationPath.empty())
 			{
+				auto onAnimationLoaded = [this](ResourceDataPtr data)
+				{
+					m_AnimationResource.SetTarget(data);
+					redefineSprite();
+				};
+
 				m_AnimationLoadConnection.disconnect();
 				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, onAnimationLoaded);
 			}

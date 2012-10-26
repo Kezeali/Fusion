@@ -207,7 +207,7 @@ namespace FusionEngine
 		//! Removes all entities in the given domain
 		void ClearDomain(EntityDomain domain_index);
 
-		void ProcessActivationQueues();
+		void ProcessActivationQueues(float time_limit = std::numeric_limits<float>::infinity());
 
 		void ProcessActiveEntities(float split);
 

@@ -12,6 +12,7 @@
 #include "FusionLogger.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
+#include "FusionProfiling.h"
 #include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionScriptManager.h"
 
@@ -46,16 +47,6 @@ namespace FusionEngine
 		if (!m_Running)
 		//m_LoaderMutex.lock();
 			m_ResourceLoaders[loader.type] = loader;
-		//m_LoaderMutex.unlock();
-		else
-			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
-	}
-
-	void ResourceManager::AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData)
-	{
-		if (!m_Running)
-		//m_LoaderMutex.lock();
-			m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
 		//m_LoaderMutex.unlock();
 		else
 			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
@@ -248,10 +239,12 @@ namespace FusionEngine
 		//asThreadCleanup();
 	}
 
-	void ResourceManager::DeliverLoadedResources()
+	void ResourceManager::DeliverLoadedResources(float time_limit)
 	{
+		FSN_PROFILE("DeliverLoadedResources");
+		auto startTime = tbb::tick_count::now();
 		ResourceDataPtr res;
-		while (m_ToDeliver.try_pop(res))
+		while (m_ToDeliver.try_pop(res) && (tbb::tick_count::now() - startTime).seconds() < time_limit)
 		{
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
@@ -259,6 +252,7 @@ namespace FusionEngine
 				auto _where = m_ResourceLoaders.find(res->GetType());
 				if (_where != m_ResourceLoaders.end())
 				{
+					FSN_PROFILE("GCLoad " + res->GetType());
 					ResourceLoader& loader = _where->second;
 					loader.gcload(res.get(), m_GC, loader.userData);
 				}
@@ -266,6 +260,7 @@ namespace FusionEngine
 
 			if (res->IsLoaded())
 			{
+				FSN_PROFILE("SigLoaded " + res->GetType());
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
 				SignalResourceLoaded(res);
@@ -283,6 +278,7 @@ namespace FusionEngine
 
 	void ResourceManager::UnloadUnreferencedResources()
 	{
+		FSN_PROFILE("UnloadUnreferenceResources");
 		{
 			ResourceContainer* res;
 			while (m_ToUnloadUsingGC.try_pop(res))

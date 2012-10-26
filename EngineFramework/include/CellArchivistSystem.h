@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionComponentTypeInfo
-#define H_FusionComponentTypeInfo
+#ifndef H_FusionCellArchivistSystem
+#define H_FusionCellArchivistSystem
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,31 +34,37 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionSingleton.h"
+#include "FusionComponentSystem.h"
 
-#include <map>
-#include <tbb/concurrent_unordered_map.h>
+#include "FusionRegionMapLoader.h"
 
 namespace FusionEngine
 {
 
-	class EntityComponent;
-
-	//! Stores component type info at runtime
-	class ComponentTypeInfoCache : public Singleton<ComponentTypeInfoCache>
+	class CellArchivistSystem : public ISystemTask
 	{
 	public:
-		ComponentTypeInfoCache();
-		~ComponentTypeInfoCache();
+		CellArchivistSystem(RegionCellArchivist* archivist)
+			: ISystemTask(nullptr),
+			m_Archivist(archivist)
+		{}
+		~CellArchivistSystem() {}
 
-		typedef std::map<std::string, size_t> ComponentPropertiesMap_t;
+		void Update(const float delta);
 
-		//! Gets / creates component type info in the cache
-		const std::shared_ptr<ComponentPropertiesMap_t> &GetComponentTypeInfo(const EntityComponent* instance);
-		//! Removes all cached component type info
-		void ClearCache();
-	private:
-		tbb::concurrent_unordered_map<std::string, std::shared_ptr<ComponentPropertiesMap_t>> m_ComponentTypes;
+		std::string GetName() const { return "CellArchivist"; }
+
+		SystemType GetTaskType() const { return SystemType::Simulation; }
+
+		PerformanceHint GetPerformanceHint() const { return ISystemTask::LongSerial; }
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return false;
+		}
+
+	protected:
+		RegionCellArchivist* m_Archivist;
 	};
 
 }

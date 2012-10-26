@@ -38,6 +38,7 @@
 #include "FusionContextMenu.h"
 #include "FusionConsole.h"
 #include "FusionConsoleStdOutWriter.h"
+#include "FusionDeltaTime.h"
 #include "FusionEngineExtension.h"
 #include "FusionEntityManager.h"
 #include "FusionEntitySynchroniser.h"
@@ -64,6 +65,9 @@
 #include "FusionTaskManager.h"
 #include "FusionTaskScheduler.h"
 
+//! \todo TODO: remove when RegionMapLoader is a System (so it can add the RegionFile resource loaded on initialisation)
+#include "FusionRegionFile.h"
+
 // Resource Loaders
 #include "FusionAudioLoader.h"
 #include "FusionImageLoader.h"
@@ -79,7 +83,8 @@ namespace FusionEngine
 	EngineManager::EngineManager(const std::vector<CL_String>& args)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
-		m_Fullscreen(false)
+		m_Fullscreen(false),
+		m_SaveProfilerData(false)
 	{
 		// Configure PhysFS
 		SetupPhysFS::configure("lastflare", "Fusion", "7z");
@@ -103,8 +108,6 @@ namespace FusionEngine
 	EngineManager::~EngineManager()
 	{
 		m_Console->UnbindCommand("cam_range");
-
-		delete ArchetypeFactoryManager::getSingletonPtr();
 	}
 
 	void EngineManager::Initialise()
@@ -228,7 +231,7 @@ namespace FusionEngine
 				return scheduler->GetFramerateLimiter() ? "FPS limited" : "FPS unlimited";
 			});
 
-			m_Console->BindCommand("benchmark", [scheduler](const std::vector<std::string>& cmdargs)->std::string
+			m_Console->BindCommand("prof_benchmark", [scheduler](const std::vector<std::string>& cmdargs)->std::string
 			{
 				if (cmdargs.size() >= 2)
 				{
@@ -236,6 +239,18 @@ namespace FusionEngine
 					scheduler->SetUnlimited(enable);
 				}
 				return "";
+			});
+
+			m_Console->BindCommand("prof_savetimes", [this](const std::vector<std::string>& cmdargs)->std::string
+			{
+				if (cmdargs.size() >= 2)
+				{
+					bool enable = cmdargs[1] == "on";
+					m_SaveProfilerData = enable;
+					return enable ? "Started saving profiling data" : "Stopped saving profiling data";
+				}
+				else
+					return "";
 			});
 
 			m_Console->BindCommand("exec", [](const std::vector<std::string>& cmdargs)->std::string
@@ -473,7 +488,7 @@ namespace FusionEngine
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
 
-		new ArchetypeFactoryManager();
+		m_ArchetypeFactoryManager.reset(new ArchetypeFactoryManager());
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
 	}
 
@@ -603,34 +618,45 @@ namespace FusionEngine
 					this->m_GUI->GetConsoleWindow()->Show();
 			});
 
-			float time = CL_System::get_time() * 0.001f;
-			float dt;
+			tbb::tick_count time = tbb::tick_count::now();
+			tbb::tick_count::interval_t dt;
+#ifdef FSN_PROFILING_ENABLED
+			float maxDt = 0.0f;
+			std::map<std::string, double> longestFrameProfile;
+			std::vector<std::map<std::string, double>> savedProfilingData;
+			savedProfilingData.reserve(1024);
+#endif
 			bool quit = false;
 			auto closeSig = m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
 			while (!quit)
 			{
 				CL_KeepAlive::process();
 
-				const float now = CL_System::get_time() * 0.001f;
+				const tbb::tick_count now = tbb::tick_count::now();
 				dt = now - time;
+				const float dtSeconds = float(dt.seconds());
 				time = now;
 
+#ifdef FSN_PROFILING_ENABLED
+				{
+				FSN_PROFILE("Serial");
+#endif
 				// Update extensions
 				for (auto it = m_ActiveExtensions.begin(), end = m_ActiveExtensions.end(); it != end; ++it)
 				{
-					(*it)->Update(time, dt);
+					(*it)->Update(float((time - tbb::tick_count()).seconds()), dtSeconds);
 					quit |= (*it)->HasRequestedQuit();
 					ProcessExtensionMessages(*it);
 				}
 				// Update GUI
-				m_GUI->Update(dt);
+				m_GUI->Update(dtSeconds);
 
-				m_InputManager->Update(dt);
+				m_InputManager->Update(dtSeconds);
 				m_NetworkManager->DispatchPackets();
 
-				// Run serial resource manager operations
-				m_ResourceManager->UnloadUnreferencedResources();
-				m_ResourceManager->DeliverLoadedResources();
+#ifdef FSN_PROFILING_ENABLED
+				}
+#endif
 
 				// Execute only Rendering and Streaming in editmode or while connecting
 				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? (SystemType::Rendering | SystemType::Streaming) : (SystemType::Rendering | SystemType::Simulation | SystemType::Streaming));
@@ -641,19 +667,41 @@ namespace FusionEngine
 					gc.clear();
 				}
 
-				if (executed & SystemType::Streaming)
+#ifdef FSN_PROFILING_ENABLED
 				{
-					m_CellArchivist->BeginTransaction();
-					// Actually activate / deactivate components
-					m_EntityManager->ProcessActivationQueues();
-					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
-					m_CellArchivist->EndTransaction();
+				FSN_PROFILE("Serial");
+#endif
 
-					m_ComponentUniverse->CheckMessages();
+				// Actually activate / deactivate components
+				{
+					const float frameTimeRemaining = DeltaTime::GetDeltaTime() - float((tbb::tick_count::now() - time).seconds()) - 0.001f;
+					m_EntityManager->ProcessActivationQueues(frameTimeRemaining);
 				}
 
+				// Run serial resource manager operations
+				{
+					const float frameTimeRemaining = DeltaTime::GetDeltaTime() -  float((tbb::tick_count::now() - time).seconds()) - 0.001f;
+					FSN_PROFILE("ResourceManager");
+					m_ResourceManager->UnloadUnreferencedResources();
+					m_ResourceManager->DeliverLoadedResources(frameTimeRemaining);
+				}
+
+				if (executed & SystemType::Streaming)
+				{
+					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
+				}
+
+				m_ComponentUniverse->CheckMessages();
+
 				// Propagate property changes
-				m_EvesdroppingManager->GetSignalingSystem().Fire();
+				{
+					FSN_PROFILE("FireSignals");
+					m_EvesdroppingManager->GetSignalingSystem().Fire();
+				}
+
+#ifdef FSN_PROFILING_ENABLED
+				}
+#endif
 
 				if (executed & SystemType::Simulation)
 				{
@@ -674,15 +722,68 @@ namespace FusionEngine
 
 #ifdef FSN_PROFILING_ENABLED
 				Profiling::getSingleton().AddTime("~Buffer size", 0.0);
-				Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
+				Profiling::getSingleton().AddTime("~Incoming Packets", 0.0);
 				Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
 
-				m_Profiling->AddTime("ActualDT", dt);
+				const float actualDT =  float((tbb::tick_count::now() - time).seconds());
+				m_Profiling->AddTime("ActualDT", actualDT);
 
 				// Record profiling data
 				m_Profiling->StoreTick();
+
+				if (actualDT > maxDt)
+				{
+					maxDt = actualDT;
+					longestFrameProfile = m_Profiling->GetTimes();
+				}
+
+				if (m_SaveProfilerData)
+				{
+					savedProfilingData.push_back(m_Profiling->GetTimes());
+				}
 #endif
 			} // while !quit
+
+#ifdef FSN_PROFILING_ENABLED
+			{
+				IO::PhysFSStream file("longest_frame.txt", IO::Write);
+				file.precision(10);
+				for (auto it = longestFrameProfile.begin(); it != longestFrameProfile.end(); ++it)
+					file << it->first << "\t\t\t\t" << std::fixed << it->second << std::endl;
+			}
+
+			if (!savedProfilingData.empty())
+			{
+				IO::PhysFSStream file("profiled_frames.txt", IO::Write);
+				file.precision(10);
+				std::set<std::string> headings;
+				for (auto it = savedProfilingData.begin(); it != savedProfilingData.end(); ++it)
+				{
+					const auto& frameProfile = *it;
+					for (auto pit = frameProfile.begin(); pit != frameProfile.end(); ++pit)
+						headings.insert(pit->first);
+				}
+				for (auto it = headings.begin(); it != headings.end(); ++it)
+				{
+					file << *it << ',';
+				}
+				file << std::endl;
+				file << std::fixed;
+				for (auto it = savedProfilingData.begin(); it != savedProfilingData.end(); ++it)
+				{
+					const auto& frameProfile = *it;
+					for (auto hit = headings.begin(); hit != headings.end(); ++hit)
+					{
+						const auto entry = frameProfile.find(*hit);
+						if (entry != frameProfile.end())
+							file << entry->second << ',';
+						else
+							file << ',';
+					}
+					file << std::endl;
+				}
+			}
+#endif
 
 			// Shutdown
 			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)

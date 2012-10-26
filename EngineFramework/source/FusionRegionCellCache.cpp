@@ -33,23 +33,91 @@
 #include "FusionLogger.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
+#include "FusionResourceManager.h"
+
+#include "FusionResource.h"
 
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
-//#include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/signals2/connection.hpp>
 
 namespace io = boost::iostreams;
 
 namespace FusionEngine
 {
-
-	static const size_t s_CellHeaderSize = sizeof(size_t) + sizeof(uint8_t); // length & version number
-	static const size_t s_MaxSectors = 1024;
-	static const size_t s_SectorSize = 4096;
 	static const uint8_t s_CellDataVersion = 1;
 
-	static std::array<char, s_SectorSize> s_EmptySectorData;
+	static std::array<char, RegionFile::s_SectorSize> s_EmptySectorData;
+
+	struct CellBuffer : public SmartArrayDevice
+	{
+		CellBuffer(RegionFile* p)
+			: pimpl(new impl(p, data))
+		{}
+		CellBuffer(const CellBuffer& other)
+			: SmartArrayDevice(other),
+			pimpl(other.pimpl)
+		{}
+		CellBuffer(CellBuffer&& other)
+			: SmartArrayDevice(std::move(other)),
+			pimpl(std::move(other.pimpl))
+		{}
+
+		struct impl
+		{
+			std::pair<int32_t, int32_t> cellIndex;
+			RegionFile* parent;
+			std::shared_ptr<DataArray_t> data;
+			impl(RegionFile* p, std::shared_ptr<DataArray_t> d)
+				: parent(p),
+				data(d),
+				cellIndex(0, 0)
+			{}
+			~impl();
+		private:
+			impl(const impl& other) {}
+		};
+
+		std::shared_ptr<impl> pimpl;
+	};
+
+	// CellBuffer employed by RegionCellCache to support scheduled asynchronous writing
+	struct BureaucraticCellBuffer : public SmartArrayDevice
+	{
+		BureaucraticCellBuffer(RegionCellCache* cellCache)
+			: pimpl(new impl(cellCache, data))
+		{}
+		BureaucraticCellBuffer(const BureaucraticCellBuffer& other)
+			: SmartArrayDevice(other),
+			pimpl(other.pimpl)
+		{}
+		BureaucraticCellBuffer(BureaucraticCellBuffer&& other)
+			: SmartArrayDevice(std::move(other)),
+			pimpl(std::move(other.pimpl))
+		{}
+
+		struct impl
+		{
+			std::pair<int32_t, int32_t> cellCoords;
+			RegionCellCache* parent;
+			std::shared_ptr<DataArray_t> data;
+			impl(RegionCellCache* p, std::shared_ptr<DataArray_t> d)
+				: parent(p),
+				data(d),
+				cellCoords(0, 0)
+			{}
+			~impl();
+		private:
+			impl(const impl& other) {}
+		};
+
+		std::shared_ptr<impl> pimpl;
+	};
 
 	std::streamsize SmartArrayDevice::read(char_type* s, std::streamsize n)
 	{
@@ -111,12 +179,21 @@ namespace FusionEngine
 			return position;
 		}
 
-	CellBuffer::cell_impl::~cell_impl()
+	CellBuffer::impl::~impl()
 	{
 		FSN_ASSERT(parent);
 		if (data)
 		{
 			parent->write(cellIndex, *data);
+		}
+	}
+
+	BureaucraticCellBuffer::impl::~impl()
+	{
+		FSN_ASSERT(parent);
+		if (data)
+		{
+			parent->WriteCellData(this->cellCoords, this->data);
 		}
 	}
 
@@ -135,11 +212,7 @@ namespace FusionEngine
 
 	RegionFile::RegionFile(const std::string& filename, size_t width)
 		: filename(filename),
-		region_width(width),
-		//filebuf(new io::stream_buffer<io::file>(filename, std::ios::in | std::ios::out | std::ios::binary)),
-		//filedesc(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary)),
-		//file(new io::stream<io::file_descriptor>(*filedesc, 0)),
-		cellDataLocations(s_MaxSectors) // Hmm
+		region_width(width)
 	{
 		if (!boost::filesystem::exists(filename))
 		{
@@ -149,7 +222,7 @@ namespace FusionEngine
 			filedesc.reset();
 		}
 		filedesc.reset(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary));
-		file.reset(new io::stream<io::file_descriptor>(*filedesc));
+		file.reset(new io::stream<io::file_descriptor>(*filedesc, 1048576));
 		init();
 	}
 
@@ -157,8 +230,7 @@ namespace FusionEngine
 		: filename("custom"),
 		region_width(width),
 		filebuf(std::move(custom_buffer)),
-		file(new std::iostream(filebuf.get())),
-		cellDataLocations(s_MaxSectors)
+		file(new std::iostream(filebuf.get()))
 	{
 		init();
 	}
@@ -212,7 +284,7 @@ namespace FusionEngine
 			auto numSectors = std::max<size_t>(length / s_SectorSize, 1);
 			free_sectors.resize(numSectors, true);
 
-			free_sectors.set(0, false); // chunk offset table
+			free_sectors.set(0, false); // sector zero is the chunk offset table (thus not free from the beginning)
 
 			if (!new_file)
 			{
@@ -309,17 +381,14 @@ namespace FusionEngine
 		namespace io = boost::iostreams;
 		// TODO: sanity checks
 
-		auto location = std::make_pair(x, y);
+		const auto location = std::make_pair(x, y);
 
 		const auto& locationData = getCellDataLocation(location);
-
-		//const auto firstSector = locationData.startingSector;
-		//const auto numSectors = locationData.sectorsAllocated;
 
 		// The data will probably be about as long as it was last time:
 		const auto predictedDataLength = locationData.sectorsAllocated * s_SectorSize;
 
-		CellBuffer device(this);
+		CellBuffer device(this); // This is unsafe. TODO: inherit form enable_shared_from_this and pass a smart ptr here (not urgent because this method isn't used ATM of writing)
 
 		device.pimpl->cellIndex = location;
 		device.data->reserve(predictedDataLength);
@@ -466,17 +535,19 @@ namespace FusionEngine
 		m_EditMode(false)
 	{
 		FSN_ASSERT(region_size > 0);
+
+		FSN_ASSERT(region_size * region_size < RegionFile::s_MaxSectors);
+
+		ResourceManager::getSingleton().AddResourceLoader(
+			ResourceLoader("MapRegion" + m_CachePath, &RegionMap::LoadMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
 	}
 
 	void RegionCellCache::DropCache()
 	{
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
 		m_Cache.clear();
 		m_CacheImportance.clear();
-	}
-
-	void RegionCellCache::SetSavePath(const std::string& save_path)
-	{
-		m_SavePath = save_path;
 	}
 
 	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)
@@ -485,44 +556,62 @@ namespace FusionEngine
 		m_Bounds = bounds;
 	}
 
-	inline RegionCellCache::CellCoord_t RegionCellCache::cellToRegionCoord(int32_t* cell_x, int32_t* cell_y) const
+	RegionCellCache::RegionCoord_t RegionCellCache::cellToRegionCoord(int32_t* cell_x, int32_t* cell_y) const
 	{
-		CellCoord_t regionCoord((int32_t)std::floor(*cell_x / (float)m_RegionSize), (int32_t)std::floor(*cell_y / (float)m_RegionSize));
+		RegionCoord_t regionCoord((int32_t)std::floor(*cell_x / (float)m_RegionSize), (int32_t)std::floor(*cell_y / (float)m_RegionSize));
 		// Figure out the location of the cell relative to the origin (0,0) point of the region
 		*cell_x = *cell_x - regionCoord.x * m_RegionSize, *cell_y = *cell_y - regionCoord.y * m_RegionSize;
 		return regionCoord;
 	}
 	
-	RegionFile& RegionCellCache::CreateRegionFile(const RegionCellCache::CellCoord_t& coord)
+	void RegionCellCache::ReloadRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord)
 	{
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
 		m_Cache.erase(coord);
-		return *GetRegionFile(coord, true);
+		GetRegionFile(loadedCallback, coord, true);
 	}
 
-	RegionFile* RegionCellCache::GetRegionFile(const RegionCellCache::CellCoord_t& coord, bool create)
+	class RegionFileLoadedCallbackHandle
 	{
-		auto result = m_Cache.find(coord);
-		if (result == m_Cache.end())
+	public:
+		RegionFileLoadedCallbackHandle()
+		{}
+		RegionFileLoadedCallbackHandle(const boost::signals2::connection& connection)
+			: m_Connection(connection)
+		{}
+
+		~RegionFileLoadedCallbackHandle()
 		{
-			if (create)
+			m_Connection.disconnect();
+		}
+		boost::signals2::connection m_Connection;
+
+		std::list<RegionCellCache::RegionLoadedCallback> m_OtherCallbacks;
+	};
+
+	void RegionCellCache::GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord, bool load_if_uncached)
+	{
+		auto entry = m_Cache.find(coord);
+		if (entry == m_Cache.end())
+		{
+			if (load_if_uncached)
 			{
 				// Add a new cache entry
 				std::stringstream str; str << coord.x << "." << coord.y;
 				std::string filename = str.str();
 				std::string filePath = m_CachePath + filename + ".celldata";
-				// Check for files in the save path before creating new ones
-				if (!m_SavePath.empty() && !boost::filesystem::exists(filePath))
-				{
-					try
-					{
-						boost::filesystem::copy_file(m_SavePath + filename, filePath, boost::filesystem::copy_option::fail_if_exists);
-					}
-					catch (boost::filesystem::filesystem_error&)
-					{}
-				}
-				// Create and/or load the region file
-				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(filePath, (size_t)m_RegionSize)));
-				RegionFile* regionFile = &newEntry->second;
+
+				// Request the region file resource
+				using namespace std::placeholders;
+				auto& callbackProxy = m_CallbackHandles[coord];
+				callbackProxy.m_Connection =
+					ResourceManager::getSingleton().GetResource("MapRegion" + m_CachePath,
+					filePath,
+					std::bind(&RegionCellCache::OnRegionFileLoaded, this, _1, coord),
+					-1000);
+				// Add the given callback to the end of the list for this region
+				callbackProxy.m_OtherCallbacks.push_back(loadedCallback);
 
 				m_CacheImportance.push_back(coord);
 
@@ -531,13 +620,12 @@ namespace FusionEngine
 				{
 					// Remove the least recently accessed file
 					m_Cache.erase(m_CacheImportance.front());
+					m_CallbackHandles.erase(m_CacheImportance.front());
 					m_CacheImportance.pop_front();
-				}				
-
-				return regionFile;
+				}
 			}
 			else
-				return nullptr;
+				loadedCallback(nullptr);
 		}
 		else
 		{
@@ -545,76 +633,130 @@ namespace FusionEngine
 			m_CacheImportance.remove(coord);
 			m_CacheImportance.push_back(coord);
 
-			return &result->second;
+			return loadedCallback(entry->second.Get());
 		}
 	}
 
-	std::unique_ptr<ArchiveIStream> RegionCellCache::GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y)
+	void RegionCellCache::OnRegionFileLoaded(ResourceDataPtr& resource, const RegionCoord_t& coord)
 	{
-		try
-		{
-			CellCoord_t regionCoord = cellToRegionCoord(&cell_x, &cell_y);
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
-			auto region = GetRegionFile(regionCoord, false);
-
-			if (region)
-			{
-				return region->getInputCellData(cell_x, cell_y, false);
-			}
-
-			return std::unique_ptr<ArchiveIStream>();
-		}
-		catch (boost::filesystem::filesystem_error& ex)
-		{
-			AddLogEntry(ex.what());
-			return std::unique_ptr<ArchiveIStream>();
-		}
+		auto newEntry = m_Cache.insert(std::make_pair(coord, ResourcePointer<RegionFile>(resource)));
+		RegionFile* regionFile = newEntry.first->second.Get();
+		
+		// Fulfill all the requests for this region file
+		auto& callbackProxy = m_CallbackHandles[coord];
+		for (auto it = callbackProxy.m_OtherCallbacks.begin(); it != callbackProxy.m_OtherCallbacks.end(); ++it)
+			(*it)(regionFile);
 	}
 
-	std::unique_ptr<ArchiveIStream> RegionCellCache::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
+	void RegionCellCache::GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y)
 	{
-		try
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
+		const auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
+
+		GetRegionFile([callback, cell_x, cell_y](RegionFile* regionFile)
 		{
-			CellCoord_t regionCoord = cellToRegionCoord(&cell_x, &cell_y);
-
-			auto region = GetRegionFile(regionCoord, true);
-
-			if (region)
+			if (regionFile)
 			{
-				return region->getInputCellData(cell_x, cell_y);
+				callback(regionFile->getInputCellData(cell_x, cell_y, false));
 			}
+		}, regionCoord, false);
+	}
 
-			return std::unique_ptr<ArchiveIStream>();
-		}
-		catch (boost::filesystem::filesystem_error& ex)
+	void RegionCellCache::GetCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y)
+	{
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
+		const auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
+
+		GetRegionFile([callback, cell_x, cell_y](RegionFile* regionFile)
 		{
-			AddLogEntry(ex.what());
-			return std::unique_ptr<ArchiveIStream>();
-		}
+			if (regionFile)
+			{
+				callback(regionFile->getInputCellData(cell_x, cell_y));
+			}
+		}, regionCoord, true);
 	}
 
 	std::unique_ptr<ArchiveOStream> RegionCellCache::GetCellStreamForWriting(int32_t cell_x, int32_t cell_y)
 	{
-		try
+		// Expand the bounds (edit mode)
+		if (m_EditMode)
 		{
-			// Expand the bounds (edit mode)
-			if (m_EditMode)
+			m_Bounds.left = std::min(m_Bounds.left, cell_x);
+			m_Bounds.right = std::max(m_Bounds.right, cell_x);
+			m_Bounds.top = std::min(m_Bounds.top, cell_y);
+			m_Bounds.bottom = std::max(m_Bounds.bottom, cell_y);
+		}
+
+		const size_t predictedDataLength = RegionFile::s_SectorSize;
+
+		BureaucraticCellBuffer device(this);
+
+		// Note that this is the world-relative cell_x and y coords, not the region relative
+		//  ones (that would be obtained using cellToRegionCoord()) because WriteCellData
+		//  needs to use this info to retrieve the region file to write.
+		device.pimpl->cellCoords = std::make_pair(cell_x, cell_y);
+		device.data->reserve(predictedDataLength);
+
+		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
+		stream->push(io::zlib_compressor());
+		stream->push(device);
+		return stream;
+	}
+
+	void RegionCellCache::WriteCellData(std::pair<int32_t, int32_t> cellIndex, std::shared_ptr<SmartArrayDevice::DataArray_t> data)
+	{
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
+		const auto regionCoord = cellToRegionCoord(&cellIndex.first, &cellIndex.second);
+
+		GetRegionFile([cellIndex, data](RegionFile* regionFile)
+		{
+			FSN_ASSERT(regionFile);
+			regionFile->write(cellIndex, *data);
+		}, regionCoord, true);
+	}
+
+	namespace RegionMap
+	{
+		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+		{
+			if (resource->IsLoaded())
 			{
-				m_Bounds.left = std::min(m_Bounds.left, cell_x);
-				m_Bounds.right = std::max(m_Bounds.right, cell_x);
-				m_Bounds.top = std::min(m_Bounds.top, cell_y);
-				m_Bounds.bottom = std::max(m_Bounds.bottom, cell_y);
+				delete static_cast<RegionFile*>(resource->GetDataPtr());
 			}
 
-			auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
-
-			auto regionFile = GetRegionFile(regionCoord, true); FSN_ASSERT(regionFile);
-			return regionFile->getOutputCellData(cell_x, cell_y);
+			try
+			{
+				auto regionSize = boost::any_cast<int32_t>(&user_data);
+				if (regionSize)
+				{
+					RegionFile* regionFile = new RegionFile(resource->GetPath(), (size_t)(*regionSize));
+					resource->SetDataPtr(regionFile);
+					resource->setLoaded(true);
+				}
+			}
+			catch (boost::filesystem::filesystem_error& ex)
+			{
+				FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
+			}
+			catch (Exception&)
+			{
+				throw;
+			}
 		}
-		catch (boost::filesystem::filesystem_error& ex)
+
+		void UnloadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 		{
-			AddLogEntry(ex.what());
-			return std::unique_ptr<ArchiveOStream>();
+			if (resource->IsLoaded())
+			{
+				resource->setLoaded(false);
+				delete static_cast<RegionFile*>(resource->GetDataPtr());
+			}
+			resource->SetDataPtr(nullptr);
 		}
 	}
 

@@ -210,7 +210,7 @@ namespace FusionEngine
 		data.Archetype->StreamIn();
 	}
 
-	void LoadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -240,7 +240,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

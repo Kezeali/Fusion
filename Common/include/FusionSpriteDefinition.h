@@ -71,9 +71,9 @@ namespace FusionEngine
 	};
 
 	//! SpriteAnimation resource loader callback
-	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! SpriteAnimation resource unloader callback
-	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	
 	//! Sprite factory
 	/*!

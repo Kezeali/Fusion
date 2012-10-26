@@ -271,38 +271,38 @@ namespace FusionEngine
 
 		std::vector<std::pair<uint32_t, uint32_t>> cellDataLocations(numCells);
 
-		{
-			// Buffer for copying data out of the cache files
-			std::vector<char> buffer(4096);
+		//{
+		//	// Buffer for copying data out of the cache files
+		//	std::vector<char> buffer(4096);
 
-			for (int32_t y = minY; y <= maxY; ++y)
-			{
-				for (int32_t x = minX; x <= maxX; ++x)
-				{
-					auto cellData = cell_cache->GetRawCellStreamForReading(x, y);
+		//	for (int32_t y = minY; y <= maxY; ++y)
+		//	{
+		//		for (int32_t x = minX; x <= maxX; ++x)
+		//		{
+		//			auto cellData = cell_cache->GetRawCellStreamForReading(x, y);
 
-					// Convert the X,Y grid location to a 1-D array index
-					const size_t i = (y - minY) * cellsAcross + (x - minX);
-					FSN_ASSERT(i < numCells);
+		//			// Convert the X,Y grid location to a 1-D array index
+		//			const size_t i = (y - minY) * cellsAcross + (x - minX);
+		//			FSN_ASSERT(i < numCells);
 
-					if (cellData)
-					{
-						auto& cellDataLocation = cellDataLocations[i];
-						cellDataLocation.first = uint32_t(fileStream.tellp());
+		//			if (cellData)
+		//			{
+		//				auto& cellDataLocation = cellDataLocations[i];
+		//				cellDataLocation.first = uint32_t(fileStream.tellp());
 
-						int bytesRead = 0;
-						while (!cellData->eof())
-						{
-							cellData->read(buffer.data(), buffer.size());
-							if (cellData->gcount() > 0)
-								fileStream.write(buffer.data(), cellData->gcount());
-						}
+		//				int bytesRead = 0;
+		//				while (!cellData->eof())
+		//				{
+		//					cellData->read(buffer.data(), buffer.size());
+		//					if (cellData->gcount() > 0)
+		//						fileStream.write(buffer.data(), cellData->gcount());
+		//				}
 
-						cellDataLocation.second = uint32_t(fileStream.tellp()) - cellDataLocation.first;
-					}
-				}
-			}
-		}
+		//				cellDataLocation.second = uint32_t(fileStream.tellp()) - cellDataLocation.first;
+		//			}
+		//		}
+		//	}
+		//}
 
 		// Store the position of this section to write later
 		uint32_t nonStreamingEntitiesLocation = 0;

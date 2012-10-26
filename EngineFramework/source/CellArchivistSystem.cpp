@@ -25,42 +25,16 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionComponentTypeInfo
-#define H_FusionComponentTypeInfo
+#include "PrecompiledHeaders.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
-
-#include "FusionPrerequisites.h"
-
-#include "FusionSingleton.h"
-
-#include <map>
-#include <tbb/concurrent_unordered_map.h>
+#include "CellArchivistSystem.h"
 
 namespace FusionEngine
 {
 
-	class EntityComponent;
-
-	//! Stores component type info at runtime
-	class ComponentTypeInfoCache : public Singleton<ComponentTypeInfoCache>
+	void CellArchivistSystem::Update(const float delta)
 	{
-	public:
-		ComponentTypeInfoCache();
-		~ComponentTypeInfoCache();
-
-		typedef std::map<std::string, size_t> ComponentPropertiesMap_t;
-
-		//! Gets / creates component type info in the cache
-		const std::shared_ptr<ComponentPropertiesMap_t> &GetComponentTypeInfo(const EntityComponent* instance);
-		//! Removes all cached component type info
-		void ClearCache();
-	private:
-		tbb::concurrent_unordered_map<std::string, std::shared_ptr<ComponentPropertiesMap_t>> m_ComponentTypes;
-	};
+		m_Archivist->Run();
+	}
 
 }
-
-#endif
