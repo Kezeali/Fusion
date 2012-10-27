@@ -164,7 +164,7 @@ TEST_F(resource_manager_f, startStopThread)
 TEST_F(resource_manager_f, addLoaders)
 {
 	// Add a loader
-	ASSERT_NO_THROW(manager->AddResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource, nullptr));
+	ASSERT_NO_THROW(manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource)));
 	// Replace the loader
 	ASSERT_NO_THROW(manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource)));
 	// Fail to add a loader while the thread is running
