@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2009-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -1637,7 +1637,7 @@ namespace FusionEngine
 		{
 			FSN_PROFILE("Add New Entities To Activate");
 			EntityPtr entityToActivate;
-			for (int i = 0; i < 5 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
+			for (int i = 0; i < 4 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
 			{
 				if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
 					m_StreamingManager->AddEntity(entityToActivate);
@@ -1679,7 +1679,7 @@ namespace FusionEngine
 		Profiling::getSingleton().AddTime("~Entities to Activate", (double)m_EntitiesToActivate.size());
 #endif
 			auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
-			for (int i = 0; i < 5 && it != end; ++i)
+			for (int i = 0; i < 4 && it != end; ++i)
 			{
 				if (attemptToActivateEntity(*it))
 				{
@@ -1878,11 +1878,6 @@ namespace FusionEngine
 		return false;
 	}
 	
-	void EntityManager::activateEntity(const EntityPtr &entity)
-	{
-		FSN_ASSERT_FAIL("Not implemented");
-	}
-
 	void EntityManager::deactivateEntity(const EntityPtr& entity)
 	{
 		entity->StreamOut();

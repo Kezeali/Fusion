@@ -78,14 +78,16 @@ namespace FusionEngine
 
 	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
 		: ISystemWorld(system),
-		m_CameraManager(camera_sync),
 		m_PhysWorld(nullptr),
 		m_PhysDebugDrawEnabled(false),
-		m_DebugTextEnabled(false)
+		m_DebugTextEnabled(false),
+		m_CameraManager(camera_sync)
 	{
 		m_Renderer = new Renderer(window.get_gc());
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
 		m_GUITask = new CLRenderGUITask(this, window, m_Renderer);
+
+		m_SpriteDefinitionCache = std::make_shared<SpriteDefinitionCache>();
 
 		Console::getSingleton().BindCommand("phys_debug_draw", [this](const std::vector<std::string>& params)->std::string
 		{
@@ -379,38 +381,38 @@ namespace FusionEngine
 		{
 			FSN_PROFILE("Animate");
 			float animationDt = std::min(DeltaTime::GetDeltaTime(), DeltaTime::GetActualDeltaTime());
-#define FSN_CLRENDER_PARALLEL_UPDATE
 
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-			//tbb::atomic<bool> outOfOrder;
-			//outOfOrder = false;
 			tbb::parallel_for(tbb::blocked_range<size_t>(0, sprites.size()), [&](const tbb::blocked_range<size_t>& r)
 			{
 				for (auto i = r.begin(), end = r.end(); i != end; ++i)
 				{
 					auto& sprite = sprites[i];
-#else
-			//bool outOfOrder = false;
-			for (auto it = sprites.begin(); it != sprites.end(); ++it)
-			{
-				auto& sprite = *it;
-#endif
-				sprite->Update(DeltaTime::GetTick(), animationDt, DeltaTime::GetInterpolationAlpha());
 
-				//#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-				//			if (!outOfOrder && i != r.begin() && !depthSort(drawables[i - 1], drawable))
-				//				outOfOrder = true;
-				//#else
-				//			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), drawable))
-				//				outOfOrder = true;
-				//#endif
-			}
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+					sprite->Update(DeltaTime::GetTick(), animationDt, DeltaTime::GetInterpolationAlpha());
+				}
 			});
-#endif
 		}
 
-		//if (outOfOrder)
+		//{
+		//	FSN_PROFILE("CreateNewSprites");
+		//	CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		//	tbb::parallel_for(tbb::blocked_range<size_t>(0, sprites.size()), [&sprites, &gc](const tbb::blocked_range<size_t>& r)
+		//	{
+		//		for (auto i = r.begin(), end = r.end(); i != end; ++i)
+		//		{
+		//			auto& sprite = sprites[i];
+		//			
+		//			sprite->CreateSpriteIfNecessary(gc);
+		//		}
+		//	});
+
+		//	//for (auto it = sprites.begin(); it != sprites.end(); ++it)
+		//	//{
+		//	//	const auto& sprite = *it;
+		//	//	sprite->CreateSpriteIfNecessary(gc);
+		//	//}
+		//}
+
 		{
 			FSN_PROFILE("Depth Sort");
 			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);

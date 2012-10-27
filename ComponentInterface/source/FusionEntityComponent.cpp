@@ -31,6 +31,7 @@
 
 #include "FusionComponentProperty.h"
 #include "FusionComponentTypeInfo.h"
+#include "FusionProfiling.h"
 #include "FusionPropertySignalingSystem.h"
 
 #include "FusionComponentFactory.h"
@@ -57,6 +58,7 @@ namespace FusionEngine
 
 	boost::intrusive_ptr<ComponentProperty> EntityComponent::AddProperty(const std::string& name, IComponentProperty* impl)
 	{
+		//FSN_PROFILE("AddProperty");
 #ifdef _DEBUG
 		auto isContainer = [impl](const std::pair<std::string, PropertyPtr>& existing)->bool { return existing.second->GetImpl() == impl; };
 		FSN_ASSERT(std::find_if(m_Properties.begin(), m_Properties.end(), isContainer) == m_Properties.end());
@@ -79,6 +81,7 @@ namespace FusionEngine
 
 	void EntityComponent::SynchronisePropertiesNow()
 	{
+		//FSN_PROFILE("SynchronisePropertiesNow");
 		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
 		{
 			it->second->Synchronise();

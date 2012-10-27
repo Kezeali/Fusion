@@ -46,11 +46,14 @@
 
 #include <boost/thread/mutex.hpp>
 
+#include "FusionSingleton.h"
+#include <tbb/concurrent_hash_map.h>
+
 namespace FusionEngine
 {
 
 	class SpriteAnimation;
-	class SpriteDefinition2;
+	class SpriteDefinition;
 
 	class IDrawable : public EntityComponent
 	{
@@ -68,6 +71,15 @@ namespace FusionEngine
 
 		virtual bool HasAABB() const { return false; }
 		virtual CL_Rectf GetAABB() { return CL_Rectf(); }
+	};
+
+	class SpriteDefinitionCache : Singleton<SpriteDefinitionCache>
+	{
+	public:
+		static std::shared_ptr<SpriteDefinition> GetSpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+
+		typedef tbb::concurrent_hash_map<std::pair<std::string, std::string>, std::weak_ptr<SpriteDefinition>> SpriteDefinitionMap_t;
+		SpriteDefinitionMap_t m_SpriteDefinitions;
 	};
 
 	class CLSprite : public IDrawable, public ISprite
@@ -119,6 +131,9 @@ namespace FusionEngine
 		
 		// IDrawable
 		void Draw(CL_GraphicContext& gc, const Vector2& offset);
+
+		void CreateSpriteIfNecessary(CL_GraphicContext& gc);
+
 		void Update(unsigned int tick, const float elapsed, const float alpha);
 		//void Interpolate(const float alpha);
 
@@ -204,7 +219,8 @@ namespace FusionEngine
 		ResourcePointer<SpriteAnimation> m_AnimationResource;
 
 		void redefineSprite();
-		std::unique_ptr<SpriteDefinition2> m_SpriteDef;
+		//std::unique_ptr<SpriteDefinition> m_SpriteDef;
+		std::shared_ptr<SpriteDefinition> m_SpriteDef;
 		CL_Sprite m_Sprite;
 
 		int m_AnimationFrame; // Calculated whenever Update is called

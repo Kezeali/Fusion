@@ -256,14 +256,69 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	SpriteDefinition2::SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
+	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* res, DepsList& dependencies, boost::any user_data)
+	{
+		const auto& path = res->GetPath();
+		const auto animationPathOffset = path.find('|');
+		if (animationPathOffset != std::string::npos)
+		{
+			dependencies.push_back(std::make_pair("TEXTURE", path.substr(0, animationPathOffset)));
+			dependencies.push_back(std::make_pair("ANIMATION", path.substr(animationPathOffset + 1)));
+		}
+		else
+			dependencies.push_back(std::make_pair("TEXTURE", path));
+	}
+
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		if (resource->IsLoaded())
+		{
+			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
+		}
+
+		ResourcePointer<CL_Texture> texture;
+		ResourcePointer<SpriteAnimation> animation;
+
+		const auto& deps = resource->GetDependencies();
+		for (auto it = deps.begin(); it != deps.end(); ++it)
+		{
+			const auto& dep = *it;
+			if (dep->GetType() == "TEXTURE")
+				texture.SetTarget(dep);
+			else if (dep->GetType() == "ANIMATION")
+				animation.SetTarget(dep);
+		}
+
+		SpriteDefinition* def = new SpriteDefinition(texture, animation);
+		resource->SetDataPtr(def);
+		resource->setLoaded(true);
+	}
+
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		if (resource->IsLoaded())
+		{
+			resource->setLoaded(false);
+			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
+		}
+
+		resource->SetDataPtr(nullptr);
+	}
+
+	SpriteDefinition::SpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
 		: m_Texture(texture),
 		m_Animation(animation)
 	{
 		GenerateDescription();
 	}
 
-	void SpriteDefinition2::GenerateDescription()
+	SpriteDefinition::~SpriteDefinition()
+	{
+		if (m_UnusedCallback)
+			m_UnusedCallback();
+	}
+
+	void SpriteDefinition::GenerateDescription()
 	{
 		if (m_Texture.IsLoaded() && !m_Texture.Get()->is_null())
 		{
@@ -289,7 +344,7 @@ namespace FusionEngine
 		}
 	}
 
-	CL_Sprite SpriteDefinition2::CreateSprite(CL_GraphicContext &gc)
+	CL_Sprite SpriteDefinition::CreateSprite(CL_GraphicContext &gc)
 	{
 		CL_Sprite sprite(gc, m_Description);
 		if (m_Animation.IsLoaded())
@@ -307,7 +362,7 @@ namespace FusionEngine
 		return sprite;
 	}
 
-	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir)
+	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir)
 	{
 		ticpp::Document document = OpenXml(filepath, vdir);
 		CL_String workingDirectory = vdir.get_path() + CL_PathHelp::get_basepath(filepath.c_str(), CL_PathHelp::path_type_virtual);
@@ -318,7 +373,7 @@ namespace FusionEngine
 		def.LoadXml(CL_StringHelp::text_to_local8( workingDirectory ), document, vdir);
 	}
 
-	SpriteDefinition::SpriteDefinition()
+	LegacySpriteDefinition::LegacySpriteDefinition()
 		: m_Users(0),
 		m_ScaleX(1.f), m_ScaleY(1.f),
 		m_BaseAngle(0.f, cl_radians),
@@ -331,12 +386,12 @@ namespace FusionEngine
 	{
 	}
 
-	SpriteDefinition::~SpriteDefinition()
+	LegacySpriteDefinition::~LegacySpriteDefinition()
 	{
 		ClearImageData();
 	}
 
-	void SpriteDefinition::LoadXml(const std::string &working_directory, const ticpp::Document& document, CL_VirtualDirectory &dir)
+	void LegacySpriteDefinition::LoadXml(const std::string &working_directory, const ticpp::Document& document, CL_VirtualDirectory &dir)
 	{
 		m_WorkingDirectory = working_directory;
 
@@ -406,7 +461,7 @@ namespace FusionEngine
 		}
 	}
 
-	CL_Sprite SpriteDefinition::CreateSprite(CL_GraphicContext &gc)
+	CL_Sprite LegacySpriteDefinition::CreateSprite(CL_GraphicContext &gc)
 	{
 		CL_Sprite sprite(gc, m_Description);
 
@@ -436,7 +491,7 @@ namespace FusionEngine
 		return sprite;
 	}
 
-	void SpriteDefinition::SpriteReleased()
+	void LegacySpriteDefinition::SpriteReleased()
 	{
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
 		if (--m_Users == 0)
@@ -444,7 +499,7 @@ namespace FusionEngine
 #endif
 	}
 
-	void SpriteDefinition::ClearImageData()
+	void LegacySpriteDefinition::ClearImageData()
 	{
 		// Drop all refs to frame pixelbuffers
 		for (ImageArray::iterator it = m_Images.begin(), end = m_Images.end(); it != end; ++it)
@@ -453,13 +508,13 @@ namespace FusionEngine
 		}
 	}
 
-	void SpriteDefinition::addImage(const SpriteDefinition::Image &image)
+	void LegacySpriteDefinition::addImage(const LegacySpriteDefinition::Image &image)
 	{
 		m_ImageFiles.insert(image.filename);
 		m_Images.push_back(image);
 	}
 
-	void SpriteDefinition::addImage(const std::string &filename)
+	void LegacySpriteDefinition::addImage(const std::string &filename)
 	{
 		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
 
@@ -471,7 +526,7 @@ namespace FusionEngine
 		m_ImageFiles.insert(expandedPath);
 	}
 
-	void SpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, int width, int height, int xarray, int yarray, int array_skipframes, int xspacing, int yspacing)
+	void LegacySpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, int width, int height, int xarray, int yarray, int array_skipframes, int xspacing, int yspacing)
 	{
 		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
 
@@ -497,7 +552,7 @@ namespace FusionEngine
 		m_ImageFiles.insert(expandedPath);
 	}
 
-	void SpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, float trans_limit, bool free)
+	void LegacySpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, float trans_limit, bool free)
 	{
 		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
 
@@ -516,13 +571,13 @@ namespace FusionEngine
 		m_ImageFiles.insert(expandedPath);
 	}
 
-	bool SpriteDefinition::exists(const std::string &filename)
+	bool LegacySpriteDefinition::exists(const std::string &filename)
 	{
 		std::string ex = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
 		return PHYSFS_exists(ex.c_str()) != 0;
 	}
 
-	void SpriteDefinition::loadImageElements(ticpp::Element *root)
+	void LegacySpriteDefinition::loadImageElements(ticpp::Element *root)
 	{
 		ticpp::Element *element = root->FirstChildElement();
 		while (element != nullptr)
@@ -730,7 +785,7 @@ namespace FusionEngine
 		return default_;
 	}
 
-	void SpriteDefinition::loadMoreOptions(ticpp::Element *root)
+	void LegacySpriteDefinition::loadMoreOptions(ticpp::Element *root)
 	{
 		// Load play options	
 		ticpp::Element *element = root->FirstChildElement();

@@ -75,8 +75,9 @@ namespace FusionEngine
 
 		CL_DisplayWindow m_DisplayWindow;
 		CameraSynchroniser* m_CameraSynchroniser;
-		
 	};
+	
+	class SpriteDefinitionCache;
 
 	//! ClanLib Renderer
 	class CLRenderWorld : public ISystemWorld
@@ -135,6 +136,8 @@ namespace FusionEngine
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
 
 		std::multimap<ViewportPtr, std::weak_ptr<CLRenderExtension>> m_Extensions;
+
+		std::shared_ptr<SpriteDefinitionCache> m_SpriteDefinitionCache;
 
 		bool m_DebugTextEnabled;
 

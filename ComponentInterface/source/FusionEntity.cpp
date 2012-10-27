@@ -33,6 +33,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionTransformComponent.h"
 #include "FusionPlayerInput.h"
+#include "FusionProfiling.h"
 #include "FusionResourceManager.h"
 #include "FusionStreamedResourceUser.h"
 #include "FusionNetworkManager.h"
@@ -340,6 +341,7 @@ namespace FusionEngine
 
 	void Entity::OnComponentActivated(const ComponentPtr& component)
 	{
+		FSN_PROFILE("OnComponentActivated");
 		tbb::spin_rw_mutex::scoped_lock(m_ComponentsMutex, false);
 
 		// Notify all other components of the new component, and notify the new component of the existing components

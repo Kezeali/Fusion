@@ -113,30 +113,14 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
-			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
+			delete static_cast<LegacySpriteDefinition*>(resource->GetDataPtr());
 		}
 
-		//if (!resource->HasQuickLoadData())
-		//{
-		//	SpriteDefinition *def = new SpriteDefinition();
-		//	try
-		//	{
-		//		LoadSpriteDefinition(*def, resource->GetPath(), vdir);
-		//		resource->SetQuickLoadDataPtr(def);
-		//		resource->_setHasQuickLoadData(true);
-		//	}
-		//	catch (FileSystemException& ex)
-		//	{
-		//		delete def;
-		//		FSN_EXCEPT(ExCode::IO, "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
-		//	}
-		//}
-
-		SpriteDefinition* def = new SpriteDefinition();
+		LegacySpriteDefinition* def = new LegacySpriteDefinition();
 		try
 		{
 			LoadSpriteDefinition(*def, resource->GetPath(), vdir);
@@ -153,19 +137,13 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
 
-			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
-
-			//if (resource->HasQuickLoadData())
-			//{
-			//	SpriteDefinition *def = static_cast<SpriteDefinition*>( resource->GetQuickLoadDataPtr() );
-			//	def->SpriteReleased();
-			//}
+			delete static_cast<LegacySpriteDefinition*>(resource->GetDataPtr());
 		}
 
 		resource->SetDataPtr(nullptr);

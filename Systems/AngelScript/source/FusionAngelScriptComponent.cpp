@@ -32,6 +32,7 @@
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
 #include "FusionComponentProperty.h"
+#include "FusionProfiling.h"
 
 #include "FusionB2ContactListenerASScript.h"
 
@@ -346,6 +347,7 @@ namespace FusionEngine
 
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 		{
+			FSN_PROFILE("ScriptPropAquireSignalGenerator");
 			//if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
 			//{
 			//	switch (m_TypeId)

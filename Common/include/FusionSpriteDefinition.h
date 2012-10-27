@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include <ClanLib/display.h>
+#include "FusionResourceLoader.h"
 #include "FusionResourcePointer.h"
 #include "FusionXML.h"
 
@@ -79,10 +80,11 @@ namespace FusionEngine
 	/*!
 	* Used to create CL_Sprite objects from given texture and animation resources
 	*/
-	class SpriteDefinition2
+	class SpriteDefinition
 	{
 	public:
-		SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+		SpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+		~SpriteDefinition();
 
 		void GenerateDescription();
 
@@ -92,10 +94,19 @@ namespace FusionEngine
 		ResourcePointer<SpriteAnimation> m_Animation;
 
 		CL_SpriteDescription m_Description;
+
+		std::function<void (void)> m_UnusedCallback;
 	};
 
+	//! SpriteDefinition resource prereqs loader callback
+	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	//! SpriteDefinition resource loader callback
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	//! SpriteDefinition resource unloader callback
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+
 	//! Used when loading sprite files
-	class SpriteDefinition
+	class LegacySpriteDefinition
 	{
 	public:
 		typedef std::unordered_set<std::string> FilenameSet;
@@ -136,8 +147,8 @@ namespace FusionEngine
 
 		typedef std::vector<Image> ImageArray;
 	public:
-		SpriteDefinition();
-		~SpriteDefinition();
+		LegacySpriteDefinition();
+		~LegacySpriteDefinition();
 
 		//! Load the given XML document
 		void LoadXml(const std::string &working_directory, const ticpp::Document &document, CL_VirtualDirectory &dir);
@@ -216,7 +227,7 @@ namespace FusionEngine
 	};
 
 	//! Loads the given files into a SpriteDefinition
-	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir);
+	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir);
 
 }
 

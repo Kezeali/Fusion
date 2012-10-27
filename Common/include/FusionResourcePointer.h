@@ -134,7 +134,7 @@ namespace FusionEngine
 			return static_cast<const T*>( m_Resource->GetDataPtr() );
 		}
 
-		void SetTarget(ResourceDataPtr &resource)
+		void SetTarget(const ResourceDataPtr &resource)
 		{
 			m_Resource = resource;
 		}

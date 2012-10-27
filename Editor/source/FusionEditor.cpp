@@ -1733,12 +1733,19 @@ namespace FusionEngine
 				}
 				return;
 			}
-			
+
+			// TODO: if Caller gets destroyed without being called an exception is fired: investigate
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
 			if (caller)
 			{
 				Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
 				TranslateScreenToWorld(&pos.x, &pos.y);
+
+				// Fix the selection rectangle
+				if (m_SelectionRectangle.bottom < m_SelectionRectangle.top)
+					std::swap(m_SelectionRectangle.top, m_SelectionRectangle.bottom);
+				if (m_SelectionRectangle.right < m_SelectionRectangle.left)
+					std::swap(m_SelectionRectangle.left, m_SelectionRectangle.right);
 
 				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
 				{

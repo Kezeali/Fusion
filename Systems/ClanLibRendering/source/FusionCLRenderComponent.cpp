@@ -85,6 +85,35 @@ namespace FusionEngine
 		//m_DepthChangeConnection.disconnect();
 	}
 
+	std::shared_ptr<SpriteDefinition> SpriteDefinitionCache::GetSpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
+	{
+		std::shared_ptr<SpriteDefinition> spriteDefinition;
+
+		if (texture.IsLoaded())
+		{
+			const auto key = std::make_pair(texture.GetTarget()->GetPath(), animation.IsLoaded() ? animation.GetTarget()->GetPath() : "");
+
+			auto& defMap = getSingleton().m_SpriteDefinitions;
+
+			SpriteDefinitionCache::SpriteDefinitionMap_t::accessor accessor;
+			if (defMap.insert(accessor, key))
+			{
+				spriteDefinition = std::make_shared<SpriteDefinition>(texture, animation);
+				spriteDefinition->m_UnusedCallback = [key]()
+				{
+					auto& defMap = getSingleton().m_SpriteDefinitions;
+					defMap.erase(key);
+				};
+
+				accessor->second = spriteDefinition;
+			}
+			else
+				spriteDefinition = accessor->second.lock();
+		}
+
+		return spriteDefinition;
+	}
+
 	void CLSprite::redefineSprite()
 	{
 		// This checks if m_AnimationLoadConnection is connected because if it is this method will
@@ -92,7 +121,8 @@ namespace FusionEngine
 		//  resource path simply hasn't been set.
 		if (m_ImageResource.IsLoaded() && (m_AnimationResource.IsLoaded() || !m_AnimationLoadConnection.connected()))
 		{
-			m_SpriteDef.reset(new SpriteDefinition2(m_ImageResource, m_AnimationResource));
+			//m_SpriteDef.reset(new SpriteDefinition(m_ImageResource, m_AnimationResource));
+			m_SpriteDef = SpriteDefinitionCache::GetSpriteDefinition(m_ImageResource, m_AnimationResource);
 			m_RecreateSprite = true;
 		}
 		if (!m_ImageResource.IsLoaded() && !m_AnimationResource.IsLoaded())
@@ -109,7 +139,8 @@ namespace FusionEngine
 				auto onImageLoaded = [this](ResourceDataPtr data)
 				{
 					m_ImageResource.SetTarget(data);
-					redefineSprite();
+					m_RecreateSprite = true;
+					//redefineSprite();
 				};
 
 				m_ImageLoadConnection.disconnect();
@@ -131,7 +162,8 @@ namespace FusionEngine
 				auto onAnimationLoaded = [this](ResourceDataPtr data)
 				{
 					m_AnimationResource.SetTarget(data);
-					redefineSprite();
+					m_RecreateSprite = true;
+					//redefineSprite();
 				};
 
 				m_AnimationLoadConnection.disconnect();
@@ -145,6 +177,9 @@ namespace FusionEngine
 			}
 			m_ReloadAnimation = false;
 		}
+
+		if (m_RecreateSprite && !m_SpriteDef)
+			redefineSprite();
 
 		m_DeltaTime = elapsed;
 		m_ElapsedTime = 0.f;
@@ -226,7 +261,7 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
+	void CLSprite::CreateSpriteIfNecessary(CL_GraphicContext& gc)
 	{
 		if (m_RecreateSprite && m_SpriteDef)
 		{
@@ -247,6 +282,12 @@ namespace FusionEngine
 
 			m_RecreateSprite = false;
 		}
+	}
+
+	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
+	{
+		CreateSpriteIfNecessary(gc);
+
 		if (!m_Sprite.is_null())
 		{
 //#ifdef _DEBUG

@@ -52,9 +52,9 @@ namespace FusionEngine
 	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data);
 
 	//! Sprite resource loader callback
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Sprite resource unloader callback
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
 }
 
