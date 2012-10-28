@@ -134,6 +134,10 @@ namespace FusionEngine
 
 		void CreateSpriteIfNecessary(CL_GraphicContext& gc);
 
+		void DefineSpriteIfNecessary();
+
+		bool RequiresSpriteDefinition() const { return m_RecreateSprite && !m_SpriteDef; }
+
 		void Update(unsigned int tick, const float elapsed, const float alpha);
 		//void Interpolate(const float alpha);
 

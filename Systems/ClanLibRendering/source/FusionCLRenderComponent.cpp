@@ -101,8 +101,8 @@ namespace FusionEngine
 				spriteDefinition = std::make_shared<SpriteDefinition>(texture, animation);
 				spriteDefinition->m_UnusedCallback = [key]()
 				{
-					auto& defMap = getSingleton().m_SpriteDefinitions;
-					defMap.erase(key);
+					if (getSingletonPtr())
+						getSingleton().m_SpriteDefinitions.erase(key);
 				};
 
 				accessor->second = spriteDefinition;
@@ -129,7 +129,7 @@ namespace FusionEngine
 			AddLogEntry("CLSprite: Seems like a sprite resource failed to load. Image: " + m_ImagePath + " Animation: " + m_AnimationPath);
 	}
 
-	void CLSprite::Update(unsigned int, const float elapsed, const float)
+	void CLSprite::DefineSpriteIfNecessary()
 	{
 		using namespace std::placeholders;
 		if (m_ReloadImage)
@@ -180,6 +180,11 @@ namespace FusionEngine
 
 		if (m_RecreateSprite && !m_SpriteDef)
 			redefineSprite();
+	}
+
+	void CLSprite::Update(unsigned int, const float elapsed, const float)
+	{
+		DefineSpriteIfNecessary();
 
 		m_DeltaTime = elapsed;
 		m_ElapsedTime = 0.f;

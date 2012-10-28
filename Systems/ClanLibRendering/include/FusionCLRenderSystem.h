@@ -108,6 +108,8 @@ namespace FusionEngine
 		std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<CLSprite>>& GetSprites() { return m_Sprites; }
 
+		std::vector<boost::intrusive_ptr<CLSprite>>& GetSpritesToDefine() { return m_SpritesToDefine; }
+
 		std::vector<boost::intrusive_ptr<StreamingCamera>>& GetCameras() { return m_Cameras; }
 
 		static void Register(asIScriptEngine* engine);
@@ -130,6 +132,8 @@ namespace FusionEngine
 		std::vector<boost::intrusive_ptr<CLSprite>> m_Sprites;
 
 		std::vector<boost::intrusive_ptr<StreamingCamera>> m_Cameras;
+
+		std::vector<boost::intrusive_ptr<CLSprite>> m_SpritesToDefine;
 
 		boost::mutex m_ViewportMutex;
 		std::vector<ViewportPtr> m_Viewports;

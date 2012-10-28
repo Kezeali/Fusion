@@ -353,31 +353,6 @@ namespace FusionEngine
 		}
 		}
 
-		auto depthSort = [](const boost::intrusive_ptr<IDrawable>& first, const boost::intrusive_ptr<IDrawable>& second)->bool
-		{
-			if (first->GetParent() == second->GetParent())
-			{
-				if (first->GetLocalDepth() < second->GetLocalDepth())
-					return true;
-			}
-			else if (first->GetEntityDepth() == second->GetEntityDepth())
-			{
-				auto firstPos = first->GetPosition();
-				auto secondPos = second->GetPosition();
-				if (firstPos.y == secondPos.y)
-				{
-					if (first->GetParent() < second->GetParent())
-						return true;
-				}
-				else if (firstPos.y < secondPos.y)
-					return true;
-			}
-			else if (first->GetEntityDepth() < second->GetEntityDepth())
-				return true;
-
-			return false;
-		};
-
 		{
 			FSN_PROFILE("Animate");
 			float animationDt = std::min(DeltaTime::GetDeltaTime(), DeltaTime::GetActualDeltaTime());
@@ -394,15 +369,21 @@ namespace FusionEngine
 		}
 
 		//{
-		//	FSN_PROFILE("CreateNewSprites");
-		//	CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		//	tbb::parallel_for(tbb::blocked_range<size_t>(0, sprites.size()), [&sprites, &gc](const tbb::blocked_range<size_t>& r)
+		//	FSN_PROFILE("DefineNewSprites");
+		//	auto& spritesToDefine = m_RenderWorld->GetSpritesToDefine();
+		//	for (auto it = sprites.begin(); it != sprites.end(); ++it)
+		//	{
+		//		const auto& sprite = *it;
+		//		if (sprite->RequiresSpriteDefinition())
+		//			m_RenderWorld->GetSpritesToDefine().push_back(sprite);
+		//	}
+		//	tbb::parallel_for(tbb::blocked_range<size_t>(0, std::min(spritesToDefine.size(), 10u)), [&spritesToDefine](const tbb::blocked_range<size_t>& r)
 		//	{
 		//		for (auto i = r.begin(), end = r.end(); i != end; ++i)
 		//		{
-		//			auto& sprite = sprites[i];
+		//			auto& sprite = spritesToDefine[i];
 		//			
-		//			sprite->CreateSpriteIfNecessary(gc);
+		//			sprite->DefineSpriteIfNecessary();
 		//		}
 		//	});
 
@@ -415,7 +396,30 @@ namespace FusionEngine
 
 		{
 			FSN_PROFILE("Depth Sort");
-			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
+			tbb::parallel_sort(drawables.begin(), drawables.end(), [](const boost::intrusive_ptr<IDrawable>& first, const boost::intrusive_ptr<IDrawable>& second)->bool
+			{
+				if (first->GetParent() == second->GetParent())
+				{
+					if (first->GetLocalDepth() < second->GetLocalDepth())
+						return true;
+				}
+				else if (first->GetEntityDepth() == second->GetEntityDepth())
+				{
+					auto firstPos = first->GetPosition();
+					auto secondPos = second->GetPosition();
+					if (firstPos.y == secondPos.y)
+					{
+						if (first->GetParent() < second->GetParent())
+							return true;
+					}
+					else if (firstPos.y < secondPos.y)
+						return true;
+				}
+				else if (first->GetEntityDepth() < second->GetEntityDepth())
+					return true;
+
+				return false;
+			});
 		}
 
 		Draw();

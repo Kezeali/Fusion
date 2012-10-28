@@ -261,19 +261,33 @@ namespace FusionEngine
 			if (res->IsLoaded())
 			{
 				FSN_PROFILE("SigLoaded " + res->GetType());
-				res->SigLoaded(res);
-				res->SigLoaded.disconnect_all_slots();
-				SignalResourceLoaded(res);
+#ifdef FSN_PROFILING_ENABLED
+				Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), res->SigLoaded->num_slots());
+#endif
+				(*res->SigLoaded)(res);
+				std::shared_ptr<ResourceContainer::LoadedSignal> sigLoaded;
+				while (res->SigLoadedExt.try_pop(sigLoaded) && (tbb::tick_count::now() - startTime).seconds() < time_limit)
+				{
+#ifdef FSN_PROFILING_ENABLED
+					Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), sigLoaded->num_slots());
+#endif
+					(*sigLoaded)(res);
+					sigLoaded->disconnect_all_slots();
+				}
+				
+				if (res->SigLoadedExt.empty())
+					SignalResourceLoaded(res);
+				else
+					m_ToDeliver.push(res); // If there are more listeners to signal, do so later
 			}
 			else
 			{
-				// TODO:
-				//res->SigFailed(res);
-				res->SigLoaded.disconnect_all_slots();
+				// TODO: notify listeners of failure (perhaps like this)
+				//res->SigLoaded(res);
+				res->SigLoaded->disconnect_all_slots();
+				res->SigLoadedExt.clear();
 			}
 		}
-		//while (notLoaded.try_pop(res))
-		//	m_ToDeliver.push(res);
 	}
 
 	void ResourceManager::UnloadUnreferencedResources()
@@ -296,7 +310,8 @@ namespace FusionEngine
 		ResourceDataPtr res;
 		while (m_ToDeliver.try_pop(res))
 		{
-			res->SigLoaded.disconnect_all_slots();
+			res->SigLoaded->disconnect_all_slots();
+			res->SigLoadedExt.clear();
 		}
 	}
 
@@ -319,7 +334,16 @@ namespace FusionEngine
 		else // is QueuedToUnload || !Loaded
 		{
 			if (on_load_callback)
-				onLoadConnection = resource->SigLoaded.connect(on_load_callback);
+			{
+				if (resource->SigLoaded->num_slots() > 32)
+				{
+					// Create a new signal so that notifications can be delayed
+					auto newSignal = std::make_shared<ResourceContainer::LoadedSignal>();
+					std::swap(resource->SigLoaded, newSignal);
+					resource->SigLoadedExt.push(newSignal);
+				}
+				onLoadConnection = resource->SigLoaded->connect(on_load_callback);
+			}
 
 			if (!resource->setQueuedToLoad(true))
 			{

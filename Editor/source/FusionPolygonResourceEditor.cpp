@@ -121,7 +121,7 @@ namespace FusionEngine
 			auto oldData = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
 			m_Resource->SetDataPtr(m_EditedShape.release());
 			delete oldData;
-			m_Resource->SigReLoaded(m_Resource);
+			//m_Resource->SigReLoaded(m_Resource);
 			m_Resource.reset();
 		}
 		m_DoneEditing = true;

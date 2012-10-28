@@ -1574,7 +1574,7 @@ namespace FusionEngine
 
 			{
 				FSN_PROFILE("SortInactiveCellRanges");
-			// Sort to improve cache performance
+			// Sort to improve iteration speed
 			clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
 			{
 				return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);

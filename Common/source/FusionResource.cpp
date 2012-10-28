@@ -50,7 +50,8 @@ namespace FusionEngine
 	ResourceContainer::ResourceContainer()
 		: m_Type(""),
 		m_Path(""),
-		m_RequiresGC(false)
+		m_RequiresGC(false),
+		SigLoaded(std::make_shared<LoadedSignal>())
 	{
 		m_Data = nullptr;
 		m_RefCount = 0;
@@ -62,7 +63,8 @@ namespace FusionEngine
 	ResourceContainer::ResourceContainer(const std::string& type, const std::string& path, void* ptr)
 		: m_Type(type),
 		m_Path(path),
-		m_RequiresGC(false)
+		m_RequiresGC(false),
+		SigLoaded(std::make_shared<LoadedSignal>())
 	{
 		m_Data = nullptr;
 		m_RefCount = 0;
@@ -76,7 +78,7 @@ namespace FusionEngine
 #ifdef _DEBUG
 		if (m_Loaded || m_Data != nullptr)
 		{
-			SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - Resource Data leaked.");
+			SendToConsole("Resource '" + m_Path + "' may not have been properly deallocated before deletion - Resource Data leaked.");
 		}
 #endif
 	}

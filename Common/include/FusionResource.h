@@ -37,9 +37,10 @@
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/signals2/signal.hpp>
 
-#include <tbb/atomic.h>
-
 #include <functional>
+
+#include <tbb/atomic.h>
+#include "tbb/concurrent_queue.h"
 
 
 namespace FusionEngine
@@ -80,8 +81,10 @@ namespace FusionEngine
 
 	public:
 		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
-		LoadedSignal SigLoaded;
-		LoadedSignal SigReLoaded;
+		// When there is lots of listeners, more signals are spawned so they don't all have to be notified within one frame
+		tbb::concurrent_queue<std::shared_ptr<LoadedSignal>> SigLoadedExt;
+		std::shared_ptr<LoadedSignal> SigLoaded;
+		//LoadedSignal SigReLoaded;
 		typedef std::function<void (ResourceDataPtr)> LoadedFn;
 
 		typedef std::function<void (ResourceContainer*)> ReleasedFn;
@@ -151,7 +154,7 @@ namespace FusionEngine
 		//! Returns the current number of references (including the ResourceManager's reference)
 		long ReferenceCount() const;
 
-		//! Retures true if the given resource is not used (i.e. only referenced by the manager)
+		//! Returns true if the given resource is not used (i.e. only referenced by the manager)
 		bool Unused() const { return ReferenceCount() == 1; }
 
 	};
