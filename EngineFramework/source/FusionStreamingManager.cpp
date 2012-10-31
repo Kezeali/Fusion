@@ -1634,6 +1634,9 @@ namespace FusionEngine
 									auto result = m_Cells.insert(_where, std::make_pair(std::move(expectedLocation), std::move(newCell)));
 									it = result;
 
+#ifdef FSN_PROFILING_ENABLED
+									it->second->timeRequested = tbb::tick_count::now();
+#endif
 									AddHist(expectedLocation, "Retrieved due to entering range");
 									
 									m_CellsBeingLoaded.insert(*it);
@@ -1649,6 +1652,11 @@ namespace FusionEngine
 							{
 								// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 								processCell(it->first, *cell, streamPositions, remotePositions);
+#ifdef FSN_PROFILING_ENABLED
+								const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
+								std::stringstream str; str << "[" << ix << "," << iy << "] " << loadTime.seconds();
+								AddLogEntry("cell_load_times", str.str());
+#endif
 							}
 							// Failsafe (in case this cell was indexed while in some broken state)
 							else if (cell->waiting != Cell::Retrieve)
@@ -1681,6 +1689,12 @@ namespace FusionEngine
 						processCell(it->first, *cell, allLocalStreamPositions, allRemoteStreamPositions);
 						it = m_CellsBeingLoaded.erase(it);
 						end = m_CellsBeingLoaded.end();
+
+#ifdef FSN_PROFILING_ENABLED
+						const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
+						std::stringstream str; str << "[" << it->first.x << "," << it->first.y << "] " << loadTime.seconds();
+						AddLogEntry("cell_load_times", str.str());
+#endif
 					}
 					else
 						++it;

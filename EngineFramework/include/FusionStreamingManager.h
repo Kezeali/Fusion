@@ -170,6 +170,8 @@ namespace FusionEngine
 		typedef tbb::spin_mutex mutex_t;
 		mutex_t mutex;
 
+		tbb::tick_count timeRequested;
+
 #ifdef FSN_CELL_HISTORY
 		mutex_t historyMutex;
 		std::vector<std::string> history;
