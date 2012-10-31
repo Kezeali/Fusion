@@ -1610,6 +1610,9 @@ namespace FusionEngine
 	void EntityManager::ProcessActivationQueues(float time_limit)
 	{
 		FSN_PROFILE("ProcessActivationQueues");
+
+		auto startTime = tbb::tick_count::now(); // Used to limit execution time
+
 		// Process newly added components
 		{
 			std::pair<EntityPtr, ComponentPtr> toActivate;
@@ -1637,7 +1640,7 @@ namespace FusionEngine
 		{
 			FSN_PROFILE("Add New Entities To Activate");
 			EntityPtr entityToActivate;
-			for (int i = 0; i < 4 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
+			for (int i = 0; i < 5 && m_NewEntitiesToActivate.try_pop(entityToActivate); ++i)
 			{
 				if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
 					m_StreamingManager->AddEntity(entityToActivate);
@@ -1679,8 +1682,15 @@ namespace FusionEngine
 		Profiling::getSingleton().AddTime("~Entities to Activate", (double)m_EntitiesToActivate.size());
 #endif
 			auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
-			for (int i = 0; i < 4 && it != end; ++i)
+#ifdef _DEBUG
+			bool first = true;
+			while ((first || (tbb::tick_count::now() - startTime).seconds() < time_limit) && it != end)
 			{
+				first = false;
+#else
+			while ((tbb::tick_count::now() - startTime).seconds() < time_limit && it != end)
+			{
+#endif
 				if (attemptToActivateEntity(*it))
 				{
 					FSN_PROFILE("PostActivationInitialisation");

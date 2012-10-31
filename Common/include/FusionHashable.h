@@ -127,6 +127,14 @@ namespace FusionEngine
 	}
 }
 
+namespace tbb
+{
+	static size_t tbb_hasher(const FusionEngine::Vector2T<int32_t>& value)
+	{
+		return FusionEngine::hash_value(value);
+	}
+}
+
 namespace std {
 	//namespace tr1 {
 	template <>

@@ -198,6 +198,7 @@ namespace FusionEngine
 				{
 					try
 					{
+						logfile->AddEntry("Loading " + toLoadData.resource->GetPath(), LOG_INFO);
 						// Dependency tree can be no deeper than 6 (just an artificial way to detect circular
 						//  trees, since having an actual resource with that much abstraction is unlikely)
 						loadResourceAndDeps(toLoadData.resource, 6);
@@ -225,7 +226,15 @@ namespace FusionEngine
 				{
 					if (res->Unused())
 					{
-						unloadResource(res);
+						try
+						{
+							logfile->AddEntry("Unloading " + res->GetPath(), LOG_INFO);
+							unloadResource(res);
+						}
+						catch (FileSystemException& ex)
+						{
+							logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
+						}
 					}
 					res->setQueuedToUnload(false);
 				}
@@ -244,7 +253,7 @@ namespace FusionEngine
 		FSN_PROFILE("DeliverLoadedResources");
 		auto startTime = tbb::tick_count::now();
 		ResourceDataPtr res;
-		while (m_ToDeliver.try_pop(res) && (tbb::tick_count::now() - startTime).seconds() < time_limit)
+		while ((tbb::tick_count::now() - startTime).seconds() < time_limit && m_ToDeliver.try_pop(res))
 		{
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
@@ -265,14 +274,14 @@ namespace FusionEngine
 				Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), res->SigLoaded->num_slots());
 #endif
 				(*res->SigLoaded)(res);
+				res->SigLoaded->disconnect_all_slots();
 				std::shared_ptr<ResourceContainer::LoadedSignal> sigLoaded;
-				while (res->SigLoadedExt.try_pop(sigLoaded) && (tbb::tick_count::now() - startTime).seconds() < time_limit)
+				while ((tbb::tick_count::now() - startTime).seconds() < time_limit && res->SigLoadedExt.try_pop(sigLoaded))
 				{
 #ifdef FSN_PROFILING_ENABLED
 					Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), sigLoaded->num_slots());
 #endif
 					(*sigLoaded)(res);
-					sigLoaded->disconnect_all_slots();
 				}
 				
 				if (res->SigLoadedExt.empty())

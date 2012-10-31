@@ -544,7 +544,7 @@ namespace FusionEngine
 
 	void RegionCellCache::DropCache()
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
 		m_Cache.clear();
 		m_CacheImportance.clear();
@@ -566,9 +566,10 @@ namespace FusionEngine
 	
 	void RegionCellCache::ReloadRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord)
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
-		m_Cache.erase(coord);
+		//m_Cache.erase(coord);
+		m_Cache[coord].Release();
 		GetRegionFile(loadedCallback, coord, true);
 	}
 
@@ -602,24 +603,33 @@ namespace FusionEngine
 				std::string filename = str.str();
 				std::string filePath = m_CachePath + filename + ".celldata";
 
+				CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
 				// Request the region file resource
 				using namespace std::placeholders;
-				auto& callbackProxy = m_CallbackHandles[coord];
-				callbackProxy.m_Connection =
-					ResourceManager::getSingleton().GetResource("MapRegion" + m_CachePath,
-					filePath,
-					std::bind(&RegionCellCache::OnRegionFileLoaded, this, _1, coord),
-					-1000);
+				CallbackHandles_t::accessor accessor;
+				if (m_CallbackHandles.insert(accessor, coord))
+				{
+					AddLogEntry("cells_loaded", "** Requested " + filePath);
+					FSN_ASSERT(!accessor->second.m_Connection.connected(), "What??!");
+					accessor->second.m_Connection =
+						ResourceManager::getSingleton().GetResource("MapRegion" + m_CachePath,
+						filePath,
+						std::bind(&RegionCellCache::OnRegionFileLoaded, this, _1, coord),
+						-1000);
+				}
 				// Add the given callback to the end of the list for this region
-				callbackProxy.m_OtherCallbacks.push_back(loadedCallback);
+				accessor->second.m_OtherCallbacks.push_back(loadedCallback);
 
 				m_CacheImportance.push_back(coord);
 
 				FSN_ASSERT(m_MaxLoadedFiles > 0);
-				if (m_Cache.size() > m_MaxLoadedFiles)
+				if (m_CallbackHandles.size() > m_MaxLoadedFiles)
 				{
+					AddLogEntry("cells_loaded", "** Dropped " + filePath);
 					// Remove the least recently accessed file
-					m_Cache.erase(m_CacheImportance.front());
+					//m_Cache.erase(m_CacheImportance.front());
+					m_Cache[m_CacheImportance.front()].Release();
 					m_CallbackHandles.erase(m_CacheImportance.front());
 					m_CacheImportance.pop_front();
 				}
@@ -629,6 +639,7 @@ namespace FusionEngine
 		}
 		else
 		{
+			CacheMutex_t::scoped_lock lock(m_CacheMutex);
 			// Make the existing entry more important
 			m_CacheImportance.remove(coord);
 			m_CacheImportance.push_back(coord);
@@ -639,20 +650,31 @@ namespace FusionEngine
 
 	void RegionCellCache::OnRegionFileLoaded(ResourceDataPtr& resource, const RegionCoord_t& coord)
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
-		auto newEntry = m_Cache.insert(std::make_pair(coord, ResourcePointer<RegionFile>(resource)));
-		RegionFile* regionFile = newEntry.first->second.Get();
-		
+		auto resourcePointer = m_Cache[coord] = ResourcePointer<RegionFile>(resource);
+		RegionFile* regionFile = resourcePointer.Get();
+
+		std::stringstream str; str << coord.x << "," << coord.y;
+		AddLogEntry("cells_loaded", "<RegionFileLoaded [" + str.str() + "]>");
+
 		// Fulfill all the requests for this region file
-		auto& callbackProxy = m_CallbackHandles[coord];
-		for (auto it = callbackProxy.m_OtherCallbacks.begin(); it != callbackProxy.m_OtherCallbacks.end(); ++it)
-			(*it)(regionFile);
+		CallbackHandles_t::const_accessor accessor;
+		if (m_CallbackHandles.find(accessor, coord))
+		{
+			auto& callbackProxy = accessor->second;
+			for (auto it = callbackProxy.m_OtherCallbacks.begin(); it != callbackProxy.m_OtherCallbacks.end(); ++it)
+			{
+				(*it)(regionFile);
+			}
+		}
+
+		AddLogEntry("cells_loaded", "</RegionFileLoaded[" + str.str() + "]>");
 	}
 
 	void RegionCellCache::GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y)
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
 		const auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
 
@@ -667,7 +689,7 @@ namespace FusionEngine
 
 	void RegionCellCache::GetCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y)
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
 		const auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
 
@@ -709,7 +731,7 @@ namespace FusionEngine
 
 	void RegionCellCache::WriteCellData(std::pair<int32_t, int32_t> cellIndex, std::shared_ptr<SmartArrayDevice::DataArray_t> data)
 	{
-		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
 		const auto regionCoord = cellToRegionCoord(&cellIndex.first, &cellIndex.second);
 

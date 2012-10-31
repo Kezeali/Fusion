@@ -64,14 +64,6 @@
 
 namespace bio = boost::iostreams;
 
-namespace tbb
-{
-	size_t tbb_hasher(const FusionEngine::RegionCellArchivist::CellCoord_t& value)
-	{
-		return FusionEngine::hash_value(value);
-	}
-}
-
 namespace FusionEngine
 {
 
@@ -531,6 +523,9 @@ namespace FusionEngine
 
 	void RegionCellArchivist::OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, ReadJob job)
 	{
+		std::stringstream str; str << job.coord.x << "," << job.coord.y;
+		AddLogEntry("cells_loaded", "  Got [" + str.str() + "]");
+		AddHist(job.coord, "Got cell data stream");
 		job.cellDataStream = std::move(cellDataStream);
 		m_ReadQueueLoadEntities.push(job);
 	}
@@ -754,6 +749,8 @@ namespace FusionEngine
 					while (m_ReadQueueGetCellData.try_pop(toRead))
 					{
 						const CellCoord_t& cell_coord = toRead.coord;
+
+						AddHist(cell_coord, "Getting cell data stream");
 
 						using namespace std::placeholders;
 						// Request the cached cell data (if available)

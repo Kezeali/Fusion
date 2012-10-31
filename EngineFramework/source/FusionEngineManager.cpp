@@ -680,9 +680,12 @@ namespace FusionEngine
 
 				// Run serial resource manager operations
 				{
-					const float frameTimeRemaining = DeltaTime::GetDeltaTime() -  float((tbb::tick_count::now() - time).seconds()) - 0.001f;
+					const float frameTimeRemaining = DeltaTime::GetDeltaTime() - float((tbb::tick_count::now() - time).seconds()) - 0.001f;
 					FSN_PROFILE("ResourceManager");
-					m_ResourceManager->UnloadUnreferencedResources();
+#ifndef _DEBUG
+					if (frameTimeRemaining > 0.0f)
+#endif
+						m_ResourceManager->UnloadUnreferencedResources();
 					m_ResourceManager->DeliverLoadedResources(frameTimeRemaining);
 				}
 

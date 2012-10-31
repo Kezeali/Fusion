@@ -53,6 +53,8 @@
 #include <boost/iostreams/device/file_descriptor.hpp>
 
 #include <tbb/recursive_mutex.h>
+#include "tbb/concurrent_hash_map.h"
+#include "tbb/concurrent_unordered_map.h"
 
 namespace FusionEngine
 {
@@ -110,13 +112,14 @@ namespace FusionEngine
 		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
 	private:
-		std::unordered_map<RegionCoord_t, RegionFileLoadedCallbackHandle, boost::hash<RegionCoord_t>> m_CallbackHandles;
+		typedef tbb::concurrent_hash_map<RegionCoord_t, RegionFileLoadedCallbackHandle> CallbackHandles_t;
+		CallbackHandles_t m_CallbackHandles;
 
-		typedef std::unordered_map<RegionCoord_t, ResourcePointer<RegionFile>, boost::hash<RegionCoord_t>> CacheMap_t;
+		typedef tbb::concurrent_unordered_map<RegionCoord_t, ResourcePointer<RegionFile>, boost::hash<RegionCoord_t>> CacheMap_t;
 		CacheMap_t m_Cache;
 		std::list<RegionCoord_t> m_CacheImportance;
 		size_t m_MaxLoadedFiles;
-		typedef tbb::recursive_mutex CacheMutex_t;
+		typedef tbb::spin_mutex CacheMutex_t;
 		CacheMutex_t m_CacheMutex;
 
 		std::string m_CachePath;
