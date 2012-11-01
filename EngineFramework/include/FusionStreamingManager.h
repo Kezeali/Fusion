@@ -170,7 +170,10 @@ namespace FusionEngine
 		typedef tbb::spin_mutex mutex_t;
 		mutex_t mutex;
 
+#ifdef FSN_PROFILING_ENABLED
+		bool loadTimeRecorded;
 		tbb::tick_count timeRequested;
+#endif
 
 #ifdef FSN_CELL_HISTORY
 		mutex_t historyMutex;

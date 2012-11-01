@@ -1636,6 +1636,7 @@ namespace FusionEngine
 
 #ifdef FSN_PROFILING_ENABLED
 									it->second->timeRequested = tbb::tick_count::now();
+									it->second->loadTimeRecorded = false;
 #endif
 									AddHist(expectedLocation, "Retrieved due to entering range");
 									
@@ -1653,9 +1654,13 @@ namespace FusionEngine
 								// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 								processCell(it->first, *cell, streamPositions, remotePositions);
 #ifdef FSN_PROFILING_ENABLED
-								const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
-								std::stringstream str; str << "[" << ix << "," << iy << "] " << loadTime.seconds();
-								AddLogEntry("cell_load_times", str.str());
+								if (cell->loadTimeRecorded)
+								{
+									cell->loadTimeRecorded = true;
+									const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
+									std::stringstream str; str << "[" << ix << "," << iy << "] " << loadTime.seconds();
+									AddLogEntry("cell_load_times", str.str());
+								}
 #endif
 							}
 							// Failsafe (in case this cell was indexed while in some broken state)

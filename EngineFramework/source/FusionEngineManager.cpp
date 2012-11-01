@@ -621,7 +621,8 @@ namespace FusionEngine
 			tbb::tick_count time = tbb::tick_count::now();
 			tbb::tick_count::interval_t dt;
 #ifdef FSN_PROFILING_ENABLED
-			float maxDt = 0.0f;
+			std::uint64_t frame = 0;
+			double maxDt = 0.0f;
 			std::map<std::string, double> longestFrameProfile;
 			std::vector<std::map<std::string, double>> savedProfilingData;
 			savedProfilingData.reserve(1024);
@@ -728,8 +729,11 @@ namespace FusionEngine
 				Profiling::getSingleton().AddTime("~Incoming Packets", 0.0);
 				Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
 
-				const float actualDT =  float((tbb::tick_count::now() - time).seconds());
-				m_Profiling->AddTime("ActualDT", actualDT);
+				const double actualDT =  (tbb::tick_count::now() - time).seconds();
+				m_Profiling->AddTime("$ActualDT", actualDT);
+
+				m_Profiling->AddTime("!Frame", (double)frame++);
+				m_Profiling->AddTime("#Tick", (double)DeltaTime::GetTick());
 
 				// Record profiling data
 				m_Profiling->StoreTick();
