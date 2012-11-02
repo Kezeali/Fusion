@@ -196,6 +196,13 @@ namespace FusionEngine
 				ResourceToLoadData toLoadData;
 				while (m_ToLoad.try_pop(toLoadData))
 				{
+					// In GetResource, if IsQueuedToUnload is true, IsQueuedToLoad is checked and
+					//  and if it isn't set this resource is re-enqueued to load
+					//  So QueuedToUnload is set to false here to avoid this unnecessary
+					//  re-enquation (which turns out to happen quite often without this
+					//  workaround)
+					toLoadData.resource->setQueuedToUnload(false);
+
 					try
 					{
 						logfile->AddEntry("Loading " + toLoadData.resource->GetPath(), LOG_INFO);
@@ -210,12 +217,6 @@ namespace FusionEngine
 					}
 
 					toLoadData.resource->setQueuedToLoad(false);
-					// In GetResource, if IsQueuedToUnload is true, IsQueuedToLoad is checked and
-					//  and if it isn't set this resource is re-enqueued to load
-					//  So QueuedToUnload is set to false here to avoid this unnecessary
-					//  re-enquation (which turns out to happen quite often without this
-					//  workaround)
-					toLoadData.resource->setQueuedToUnload(false);
 
 					// Push this on to the outgoing queue (even if it failed to load)
 					m_ToDeliver.push(toLoadData.resource);
@@ -360,7 +361,7 @@ namespace FusionEngine
 				onLoadConnection = resource->SigLoaded->connect(on_load_callback);
 			}
 
-			if (!resource->setQueuedToLoad(true))
+			if (!resource->setQueuedToLoad(true) && !resource->IsLoaded()) // IsLoaded is checked again in case the resource was loaded between here and the previous check
 			{
 				AddLogEntry("ResourceRequests", "Requested " + resource->GetPath(), LOG_INFO);
 				m_ToLoad.push(ResourceToLoadData(priority, resource));
