@@ -57,7 +57,6 @@ namespace FusionEngine
 
 	Logger::~Logger()
 	{
-		CL_MutexSection lock(&m_LogsMutex);
 		// Make sure we are disconnected from the console
 		DisableConsoleLogging();
 		// Remove all logs
@@ -89,8 +88,8 @@ namespace FusionEngine
 		if (tag == g_LogConsole) // This would cause a feedback loop
 			return;
 
-		LogList::iterator _where = m_Logs.find(tag);
-		if (_where != m_Logs.end())
+		LogList::const_accessor accessor;
+		if (m_Logs.find(accessor, tag))
 		{
 			if (activate)
 			{
@@ -99,11 +98,11 @@ namespace FusionEngine
 					return; // Can't add a console-logfile if the console doesn't exist :P
 
 				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
-				_where->second->AttachLogFile(logFile);
+				accessor->second->AttachLogFile(logFile);
 			}
 			else
 			{
-				_where->second->DetachLogFile("console");
+				accessor->second->DetachLogFile("console");
 			}
 		}
 	}
@@ -113,17 +112,17 @@ namespace FusionEngine
 		if (tag == g_LogConsole) 
 			return;
 
-		LogList::iterator _where = m_Logs.find(tag);
-		if (_where != m_Logs.end())
+		LogList::const_accessor accessor;
+		if (m_Logs.find(accessor, tag))
 		{
 			if (file)
 			{
 				Log::LogFilePtr logFile(new PhysFSLogFile());
-				_where->second->AttachLogFile(logFile);
+				accessor->second->AttachLogFile(logFile);
 			}
 			else if (!file)
 			{
-				_where->second->DetachLogFile("physfs");
+				accessor->second->DetachLogFile("physfs");
 			}
 
 			// tag must not be g_LogConsole: Can't make the console a target
@@ -136,29 +135,29 @@ namespace FusionEngine
 					return; // Can't add a console-logfile if the console doesn't exist :P
 
 				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
-				_where->second->AttachLogFile(logFile);
+				accessor->second->AttachLogFile(logFile);
 			}
 			else if (!console)
 			{
-				_where->second->DetachLogFile("console");
+				accessor->second->DetachLogFile("console");
 			}
 		}
 	}
 
 	bool Logger::IsLoggingToConsole(const std::string &tag)
 	{
-		LogList::iterator _where = m_Logs.find(tag);
-		if (_where != m_Logs.end())
-			return _where->second->HasLogFileType("console");
+		LogList::const_accessor accessor;
+		if (m_Logs.find(accessor, tag))
+			return accessor->second->HasLogFileType("console");
 		else
 			return false;
 	}
 
 	bool Logger::IsLoggingToFile(const std::string &tag)
 	{
-		LogList::iterator _where = m_Logs.find(tag);
-		if (_where != m_Logs.end())
-			return _where->second->HasLogFileType("physfs");
+		LogList::const_accessor accessor;
+		if (m_Logs.find(accessor, tag))
+			return accessor->second->HasLogFileType("physfs");
 		else
 			return false;
 	}
@@ -232,27 +231,27 @@ namespace FusionEngine
 
 	void Logger::RemoveLog(const std::string& tag)
 	{
-		CL_MutexSection lock(&m_LogsMutex);
 		m_Logs.erase(tag);
 	}
 
 
 	void Logger::RemoveLog(LogPtr log)
 	{
-		CL_MutexSection lock(&m_LogsMutex);
 		m_Logs.erase(log->GetTag());
 	}
 
 	LogPtr Logger::GetLog(const std::string& tag, CreationMode creation_mode, LogSeverity threshold_if_new)
 	{
-		CL_MutexSection lock(&m_LogsMutex);
-		LogList::iterator it = m_Logs.find(tag);
 		if (creation_mode != ReplaceIfExist)
 		{
-			if (it != m_Logs.end())
-				return it->second;
+			LogList::const_accessor accessor;
+			if (m_Logs.find(accessor, tag))
+				return accessor->second;
 			else if (creation_mode == CreateIfNotExist)
+			{
+				accessor.release();
 				return OpenLog(tag, threshold_if_new == LOG_DEFAULT ? GetDefaultThreshold() : threshold_if_new);
+			}
 			else
 				return LogPtr();
 		}
@@ -288,11 +287,9 @@ namespace FusionEngine
 
 	LogPtr Logger::openLog(const std::string& tag)
 	{
-		CL_MutexSection lock(&m_LogsMutex);
-
-		LogList::iterator it = m_Logs.find(tag);
-		if (it != m_Logs.end())
-			return it->second;
+		LogList::accessor accerssor;
+		if (!m_Logs.insert(accerssor, tag))
+			return accerssor->second;
 		
 		else
 		{
@@ -318,7 +315,7 @@ namespace FusionEngine
 			}
 
 			// Add this log to the list
-			m_Logs[tag] = log;
+			accerssor->second = log;
 
 			return log;
 		}
@@ -344,17 +341,6 @@ namespace FusionEngine
 				<< std::setw(2) << std::setfill('0') << pTime->tm_mon +1
 				<< std::setw(2) << std::setfill('0') << pTime->tm_mday
 				<< "." << m_Ext;
-
-			//filename.flush();
-
-			// The unsafe way to do it
-			//char temp[1024];
-			//sprintf(temp,
-			//	"%s-%04d%02d%02d.%s",
-			//	tag, pTime->tm_year, pTime->tm_mon +1, pTime->tm_mday, m_Ext);
-			//filename += temp;
-
-			//filename += name.str();
 		}
 		else
 		{

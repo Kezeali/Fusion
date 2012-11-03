@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2011 Fusion Project Team
+*  Copyright (c) 2006-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -41,6 +41,8 @@
 #include "FusionException.h"
 #include "FusionLog.h"
 
+#include <tbb/concurrent_hash_map.h>
+
 namespace FusionEngine
 {
 
@@ -58,18 +60,12 @@ namespace FusionEngine
 	* Manages logfiles.
 	*
 	* \remarks
-	* Many of the methods in the class are basically for convinience, since
-	* Log objects can be interacted with directly. OpenLog is (if I recall correctly)
+	* Many of the methods in the class are basically for convenience, since
+	* Log objects can be interacted with directly. OpenLog is, probably,
 	* the only Logger method you *need* to use.
-	*
-	* \todo Make Logger threadsafe
 	*/
 	class Logger : public Singleton<Logger>
 	{
-	public:
-		//! Maps tags to LogFiles
-		typedef std::unordered_map<std::string, LogPtr> LogList;
-
 	public:
 		//! Constructor
 		Logger();
@@ -77,7 +73,6 @@ namespace FusionEngine
 		//! Destructor
 		~Logger();
 
-	public:
 		//! Console logging prints all console messages to a log.
 		/*!
 		* This writes all messages added to the console to a log, as
@@ -132,7 +127,7 @@ namespace FusionEngine
 		*/
 		LogPtr OpenLog(const std::string& tag, LogSeverity threshold);
 
-		enum CreationMode { ReturnNull, CreateIfNotExist, ReplaceIfExist };
+		enum CreationMode { ReturnNullIfNotExist, CreateIfNotExist, ReplaceIfExist };
 
 		//! Gets the log corresponding to the given tag.
 		/*!
@@ -186,13 +181,13 @@ namespace FusionEngine
 		bool m_DefaultTarget_File;
 		bool m_DefaultTarget_Console;
 
-		CL_Mutex m_LogsMutex;
+		//! Maps tags to LogFiles
+		typedef tbb::concurrent_hash_map<std::string, LogPtr> LogList;
 
 		LogList m_Logs;
 
 		boost::signals2::connection m_ConsoleNewLine;
 
-	protected:
 		//! Opens a logfile (creates it if it doesn't exist)
 		/*!
 		* Always returns a FusionEngine#Log. Throws an exception otherwise.

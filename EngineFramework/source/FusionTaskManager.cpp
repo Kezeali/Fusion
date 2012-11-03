@@ -307,29 +307,35 @@ namespace FusionEngine
 		{
 			m_SystemTasksRoot->wait_for_all();
 		}
+		catch (tbb::captured_exception& e)
+		{
+			AddLogEntry(std::string(e.name()) + e.what(), LOG_CRITICAL);
+			SendToConsole(e.what());
+			throw e;
+		}
 		catch (tbb::bad_last_alloc& e)
 		{
-			AddLogEntry(e.what());
+			AddLogEntry(e.what(), LOG_CRITICAL);
 			throw e;
 		}
 		catch (tbb::improper_lock& e)
 		{
-			AddLogEntry(e.what());
+			AddLogEntry(e.what(), LOG_CRITICAL);
 			throw e;
 		}
 		catch (tbb::invalid_multiple_scheduling& e)
 		{
-			AddLogEntry(e.what());
+			AddLogEntry(e.what(), LOG_CRITICAL);
 			throw e;
 		}
 		catch (tbb::missing_wait& e)
 		{
-			AddLogEntry(e.what());
+			AddLogEntry(e.what(), LOG_CRITICAL);
 			throw e;
 		}
 		catch (std::exception e)
 		{
-			AddLogEntry(e.what());
+			AddLogEntry(e.what(), LOG_CRITICAL);
 			SendToConsole(e.what());
 			throw e;
 		}
