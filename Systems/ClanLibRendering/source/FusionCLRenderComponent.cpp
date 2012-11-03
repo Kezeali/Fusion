@@ -231,7 +231,7 @@ namespace FusionEngine
 				// update animation
 				m_Sprite.update(int(elapsed * 1000));
 
-				if (m_Sprite.is_finished() != Playing.Get())
+				if (m_Sprite.is_finished() == Playing.Get())
 					Playing.MarkChanged();
 				if (m_Sprite.is_finished() != AnimationFinished.Get())
 					AnimationFinished.MarkChanged();
