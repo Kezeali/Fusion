@@ -40,7 +40,7 @@ namespace FusionEngine
 	{
 	}
 
-	void Profiling::AddTime(const std::string& label, double seconds)
+	void Profiling::AddTime(const std::string& label, const double seconds)
 	{
 #ifdef FSN_TBB_AVAILABLE
 		m_IncomingTimes.push(std::make_pair(label, seconds));
@@ -50,9 +50,14 @@ namespace FusionEngine
 #endif
 	}
 
-	void Profiling::AddTime(const std::string& label, uint32_t miliseconds)
+	void Profiling::AddTime(const std::string& label, const uint32_t miliseconds)
 	{
 		AddTime(label, double(miliseconds) * 0.001);
+	}
+
+	void Profiling::AddStat(const std::string& label, const double seconds)
+	{
+		AddTime("@" + label, seconds);
 	}
 
 	double Profiling::GetTime(const std::string& label) const
@@ -70,6 +75,8 @@ namespace FusionEngine
 		m_ScopeLabel.clear();
 		m_TimesLastTick.clear();
 
+		std::map<std::string, size_t> numValues;
+
 		std::pair<std::string, double> entry;
 #ifdef FSN_TBB_AVAILABLE
 		while (m_IncomingTimes.try_pop(entry))
@@ -81,10 +88,15 @@ namespace FusionEngine
 			entry = m_IncomingTimes.front();
 			m_IncomingTimes.pop_front();
 #endif
-			auto result = m_TimesLastTick.insert(entry);
+			auto result = m_TimesLastTick.insert(std::move(entry));
+			FSN_ASSERT(!result.first->first.empty());
+			if (result.first->first[0] == '@')
+				++numValues[result.first->first];
 			if (!result.second) // Add time to existing labels:
 				result.first->second += entry.second;
 		}
+		for (auto it = numValues.begin(); it != numValues.end(); ++it)
+			m_TimesLastTick[it->first] /= it->second;
 	}
 
 	Profiler::Profiler(const std::string& label)

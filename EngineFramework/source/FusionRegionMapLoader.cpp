@@ -604,7 +604,7 @@ namespace FusionEngine
 					it->first->ResetArchetypeAgent();
 			}
 
-			AddHist(coord, "Loaded");
+			AddHist(coord, "Loaded", conveniently_locked_cell->objects.size());
 			conveniently_locked_cell->loaded = true;
 			conveniently_locked_cell->waiting = Cell::Ready;
 
@@ -750,23 +750,29 @@ namespace FusionEngine
 					{
 						const CellCoord_t& cell_coord = toRead.coord;
 
-						AddHist(cell_coord, "Getting cell data stream");
-
-						using namespace std::placeholders;
-						// Request the cached cell data (if available)
-						if (!m_EditMode)
+						const auto cell = toRead.cell.lock();
+						if (cell && cell->waiting == Cell::Retrieve && !cell->loaded)
 						{
-							GetCellStreamForReading(
-								std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, _1, toRead),
-								cell_coord.x, cell_coord.y);
+							AddHist(cell_coord, "Getting cell data stream");
+
+							using namespace std::placeholders;
+							// Request the cached cell data (if available)
+							if (!m_EditMode)
+							{
+								GetCellStreamForReading(
+									std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, _1, toRead),
+									cell_coord.x, cell_coord.y);
+							}
+							else
+							{
+								// Use the editable data cache in edit mode (the other cache is informally write-only to in this mode)
+								m_EditableCache->GetCellStreamForReading(
+									std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, _1, toRead),
+									cell_coord.x, cell_coord.y);
+							}
 						}
 						else
-						{
-							// Use the editable data cache in edit mode (the other cache is informally write-only to in this mode)
-							m_EditableCache->GetCellStreamForReading(
-								std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, _1, toRead),
-								cell_coord.x, cell_coord.y);
-						}
+							AddHist(cell_coord, "Aborting cell data stream retrieval (request canceled / already loaded)");
 					}
 				}
 
@@ -832,7 +838,7 @@ namespace FusionEngine
 											auto& file = *filePtr;
 											if (m_EditMode)
 											{
-												// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incomming data
+												// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incoming data
 												//  (we don't need to know this length to actually load the data):
 #ifdef _DEBUG
 												IO::Streams::CellStreamReader reader(&file);
@@ -857,13 +863,19 @@ namespace FusionEngine
 
 											AddHist(cell_coord, "Loading (waiting for any archetypes)");
 
-											ProcessIncommingEntities(cell_coord, toRead.entitiesInTransit, cell);
-											// If there isn't any archetypes to load, the cell will be available immediately,
-											//  otherwise it will have to be processed later:
-											if (!toRead.entitiesInTransit.empty())
+											// Try to process all the entities in the cell. If there isn't any archetypes to load,
+											//  the cell will be available immediately, otherwise it will have to be processed later:
+											if (!ProcessIncommingEntities(cell_coord, toRead.entitiesInTransit, cell))
+											{
+												// Enqueue the cell to process again later
 												m_IncommingCells.push_back(toRead);
+												goto endload; // cell not ready yet, skip marking it as such
+											}
 											else
+											{
+												// No archetypes, cell done loading
 												AddHist(cell_coord, "Note: No Archetypes");
+											}
 										}
 										else
 										{
@@ -886,9 +898,11 @@ namespace FusionEngine
 										//readsToRetry.push_back(toRead);
 									}
 								}
+								else
+									AddHist(cell_coord, "Cell load aborted: already loaded or request canceled");
+								// Cell finished loading or failed to load and is ready for other operations
 								cell->waiting = Cell::Ready;
 								readyCells.push_back(cell_coord);
-								//cell->mutex.unlock();
 							}
 							else
 							{
@@ -902,6 +916,7 @@ namespace FusionEngine
 						}
 					}
 
+					endload:
 					ArchetypeFactoryManager::EndSustain();
 				}
 
@@ -917,7 +932,10 @@ namespace FusionEngine
 							if (lockedCell->waiting == Cell::Retrieve)
 							{
 								if (ProcessIncommingEntities(task.coord, task.entitiesInTransit, lockedCell))
+								{
+									readyCells.push_back(task.coord);
 									it = m_IncommingCells.erase(it);
+								}
 								else
 									++it;
 							}
@@ -1015,11 +1033,12 @@ namespace FusionEngine
 								{
 									std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
 									SendToConsole("Cell write canceled: " + str.str());
+									AddHist(cell_coord, "Write canceled");
 									//writesToRetry.push_back(toWrite);
 								}
+								// The cell was written or the write was canceled - the cell is now "ready" for other operations
 								cell->waiting = Cell::Ready;
 								readyCells.push_back(cell_coord);
-								//cell->mutex.unlock();
 							}
 							else
 							{
@@ -1221,7 +1240,17 @@ namespace FusionEngine
 				//if (lock)
 				{
 					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
-						m_CellsBeingProcessed.erase(*it);
+					{
+						CellsBeingProcessedMap_t::const_accessor accessor;
+						if (m_CellsBeingProcessed.find(accessor, *it))
+						{
+							AddHist(*it, "Cell operation finished, archivist dropping ref. Refs remaining", accessor->second.use_count() - 1);
+							if (accessor->second->waiting == Cell::Ready)
+								m_CellsBeingProcessed.erase(accessor);
+						}
+						else
+							AddHist(*it, "Cell operation finished, but archivist wasn't longer holding a ref. anyway???");
+					}
 				}
 			}
 			readyCells.clear();

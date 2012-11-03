@@ -71,14 +71,20 @@ namespace FusionEngine
 		//! Destructor
 		~Profiling();
 
-		void AddTime(const std::string& label, double seconds);
-		void AddTime(const std::string& label, std::uint32_t miliseconds);
+		//! A time or other value. Entries with labels will be added together at the end of the frame.
+		void AddTime(const std::string& label, const double seconds);
+		//! Convenience: converts miliseconds to seconds and calls the other overload
+		void AddTime(const std::string& label, const std::uint32_t miliseconds);
 
-		//! Returns the accumulated time recoreded under the given label during the last tick
+		//! Averaged over the frame
+		void AddStat(const std::string& label, const double seconds);
+
+		//! Returns the accumulated time recorded under the given label during the last tick
 		double GetTime(const std::string& label) const;
 		//! Returns the accumulated times recorded during the last tick
 		std::map<std::string, double> GetTimes() const;
 
+		//! Stores the times / stats recorded since the last time this method was called and clears them
 		void StoreTick();
 
 		std::string PushThreadScopeLabel(const std::string& suffix)

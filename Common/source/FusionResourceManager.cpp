@@ -278,7 +278,7 @@ namespace FusionEngine
 			{
 				FSN_PROFILE("SigLoaded " + res->GetType());
 #ifdef FSN_PROFILING_ENABLED
-				Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), res->SigLoaded->num_slots());
+				Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), double(res->SigLoaded->num_slots()));
 #endif
 				(*res->SigLoaded)(res);
 				res->SigLoaded->disconnect_all_slots();
@@ -286,7 +286,7 @@ namespace FusionEngine
 				while ((tbb::tick_count::now() - startTime).seconds() < time_limit && res->SigLoadedExt.try_pop(sigLoaded))
 				{
 #ifdef FSN_PROFILING_ENABLED
-					Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), sigLoaded->num_slots());
+					Profiling::getSingleton().AddTime("~SigLoaded " + res->GetType(), double(sigLoaded->num_slots()));
 #endif
 					(*sigLoaded)(res);
 				}
@@ -540,12 +540,14 @@ namespace FusionEngine
 		if (!m_Clearing)
 		{
 			AddLogEntry("ResourceRequests", "---Unused " + resource->GetPath(), LOG_INFO);
-			resource->setQueuedToUnload(true);
-			if (!resource->RequiresGC())
-				m_ToUnload.push(resource);
-			else
-				m_ToUnloadUsingGC.push(resource);
-			resource->NoReferences = ResourceContainer::ReleasedFn();
+			if (!resource->setQueuedToUnload(true))
+			{
+				if (!resource->RequiresGC())
+					m_ToUnload.push(resource);
+				else
+					m_ToUnloadUsingGC.push(resource);
+				resource->NoReferences = ResourceContainer::ReleasedFn();
+			}
 		}
 	}
 

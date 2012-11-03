@@ -611,7 +611,7 @@ namespace FusionEngine
 				if (m_CallbackHandles.insert(accessor, coord))
 				{
 					AddLogEntry("cells_loaded", "** Requested " + filePath);
-					FSN_ASSERT(!accessor->second.m_Connection.connected(), "What??!");
+					FSN_ASSERT_MSG(!accessor->second.m_Connection.connected(), "What??!");
 					accessor->second.m_Connection =
 						ResourceManager::getSingleton().GetResource("MapRegion" + m_CachePath,
 						filePath,

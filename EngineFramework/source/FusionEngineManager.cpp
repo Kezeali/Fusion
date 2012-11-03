@@ -764,22 +764,36 @@ namespace FusionEngine
 				IO::PhysFSStream file("profiled_frames.txt", IO::Write);
 				file.precision(10);
 				std::set<std::string> headings;
-				for (auto it = savedProfilingData.begin(); it != savedProfilingData.end(); ++it)
+				std::map<std::string, double> maxValues;
+				for (auto it = savedProfilingData.cbegin(); it != savedProfilingData.cend(); ++it)
 				{
 					const auto& frameProfile = *it;
-					for (auto pit = frameProfile.begin(); pit != frameProfile.end(); ++pit)
+					for (auto pit = frameProfile.cbegin(); pit != frameProfile.cend(); ++pit)
+					{
 						headings.insert(pit->first);
+						// Find the max value for each per-frame counter
+						if (!pit->first.empty() && pit->first[0] == '~')
+							maxValues[pit->first] = std::max(maxValues[pit->first], pit->second);
+					}
 				}
-				for (auto it = headings.begin(); it != headings.end(); ++it)
+				// Convert per-frame counters into percentages
+				for (auto it = savedProfilingData.begin(); it != savedProfilingData.end(); ++it)
+				{
+					auto& frameProfile = *it;
+					for (auto pit = frameProfile.begin(); pit != frameProfile.end(); ++pit)
+						if (!pit->first.empty() && pit->first[0] == '~')
+							pit->second = maxValues[pit->first];
+				}
+				for (auto it = headings.cbegin(); it != headings.cend(); ++it)
 				{
 					file << *it << ',';
 				}
 				file << std::endl;
 				file << std::fixed;
-				for (auto it = savedProfilingData.begin(); it != savedProfilingData.end(); ++it)
+				for (auto it = savedProfilingData.cbegin(); it != savedProfilingData.cend(); ++it)
 				{
 					const auto& frameProfile = *it;
-					for (auto hit = headings.begin(); hit != headings.end(); ++hit)
+					for (auto hit = headings.cbegin(); hit != headings.cend(); ++hit)
 					{
 						const auto entry = frameProfile.find(*hit);
 						if (entry != frameProfile.end())
