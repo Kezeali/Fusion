@@ -52,7 +52,7 @@ namespace FusionEngine
 	const float StreamingManager::s_SmoothTightness = 0.1f;
 	const float StreamingManager::s_FastTightness = 0.3f;
 
-	const float s_DefaultActivationRange = 15.f;
+	const float s_DefaultActivationRange = 20.f;
 	const float s_DefaultCellSize = 5.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
@@ -61,7 +61,7 @@ namespace FusionEngine
 
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
-#define FSN_CELL_LOG
+//#define FSN_CELL_LOG
 
 	// TODO: make this a preprocessor macro that reduces to nothing when FSN_CELL_LOG is false (so params don't get evaluated)
 	void AddHist(const CellHandle& loc, const std::string& l, unsigned int n = -1)
@@ -553,6 +553,8 @@ namespace FusionEngine
 		Cell::mutex_t::scoped_lock lock;
 		if (lock.try_acquire(cell->mutex) && cell->IsLoaded())
 		{
+			AddHist(cellIndex, "Entity added");
+
 			entity->SetStreamingCellIndex(cellIndex);
 
 #ifdef STREAMING_USEMAP
@@ -709,7 +711,7 @@ namespace FusionEngine
 		// Move the object, updating the current cell if necessary
 		CellHandle newCellLocation = ToCellLocation(new_x, new_y);
 		Cell* newCell = RetrieveCell(newCellLocation).get();
-		FSN_ASSERT( newCell );
+		FSN_ASSERT(newCell);
 		if (currentCell == newCell)
 		{
 			// Common case: same cell (just update the stored position)
@@ -724,7 +726,8 @@ namespace FusionEngine
 		else
 		{
 			Cell::mutex_t::scoped_lock newCell_lock;
-			if (!newCell_lock.try_acquire(newCell->mutex) || !newCell->IsLoaded())
+			const bool lockAcquired = newCell_lock.try_acquire(newCell->mutex);
+			if (!lockAcquired || !newCell->IsLoaded())
 			{
 				// Since the target cell isn't ready, move the entity into The Void (temporarily)
 				newCell = &m_TheVoid;
@@ -732,14 +735,15 @@ namespace FusionEngine
 
 				move = true;
 				
+				// Release the lock on the new cell if it was acquired (The Void's lock applies now)
+				if (lockAcquired)
+					newCell_lock.release();
+				// Don't need a new lock if the entity is already in The Void, as that cell's lock was acquired above
 				if (currentCell != &m_TheVoid)
 				{
-					newCell_lock.release();
 					newCell_lock.acquire(m_TheVoid.mutex);
 					//FSN_ASSERT(newCell_lock);
 				}
-				else // Don't need a new lock - already in The Void, and that cell's lock was acquired above
-					newCell_lock.release();
 			}
 			
 			{
@@ -1368,6 +1372,8 @@ namespace FusionEngine
 							actualCell->objects.push_back( std::move(*it) );
 							auto& newEntry = actualCell->objects.back().second;
 
+							AddHist(location, "Added entity that was held in The Void");
+
 							if (newEntry.active)
 								actualCell->EntryReferenced();
 							else if (!actualCell->IsActive())
@@ -1384,7 +1390,7 @@ namespace FusionEngine
 								end = m_TheVoid.objects.end();
 								if (newEntry.active)
 								{
-									AddHist(s_VoidCellIndex, "Entry transferred to correct cell:");
+									AddHist(s_VoidCellIndex, "Entry transferred to correct cell");
 									m_TheVoid.EntryUnreferenced();
 								}
 							}
@@ -1654,14 +1660,16 @@ namespace FusionEngine
 								// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 								processCell(it->first, *cell, streamPositions, remotePositions);
 #ifdef FSN_PROFILING_ENABLED
-								if (cell->loadTimeRecorded)
+								if (!cell->loadTimeRecorded)
 								{
 									cell->loadTimeRecorded = true;
 									const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
 									std::stringstream str; str << "[" << ix << "," << iy << "] " << loadTime.seconds();
 									AddLogEntry("cell_load_times", str.str());
+									Profiling::getSingleton().AddStat("AvgCellLoadTime", loadTime.seconds());
 								}
 #endif
+								m_CellsBeingLoaded.erase(it->first);
 							}
 							// Failsafe (in case this cell was indexed while in some broken state)
 							else if (cell->waiting != Cell::Retrieve)
@@ -1686,20 +1694,23 @@ namespace FusionEngine
 			Cell::mutex_t::scoped_lock lock; // TheVoid's mutex is used to lock m_CellsBeingLoaded
 			if (lock.try_acquire(m_TheVoid.mutex))
 			{
-				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+				FSN_PROFILE("VoidMutexLocked");
+				int i = 0;
+				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end && i < 10; ++i)
 				{
 					auto cell = it->second;
 					if (cell->IsLoaded())
 					{
 						processCell(it->first, *cell, allLocalStreamPositions, allRemoteStreamPositions);
-						it = m_CellsBeingLoaded.erase(it);
-						end = m_CellsBeingLoaded.end();
 
 #ifdef FSN_PROFILING_ENABLED
 						const auto loadTime = tbb::tick_count::now() - cell->timeRequested;
 						std::stringstream str; str << "[" << it->first.x << "," << it->first.y << "] " << loadTime.seconds();
 						AddLogEntry("cell_load_times", str.str());
 #endif
+
+						it = m_CellsBeingLoaded.erase(it);
+						end = m_CellsBeingLoaded.end();
 					}
 					else
 						++it;
