@@ -59,6 +59,8 @@ namespace FusionEngine
 
 	static const float s_DefaultPollArchiveInterval = 0.25f;
 
+	static const unsigned int s_MaxCellsProcessedPerFrameWhenCameraStationary = 50;
+
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
 //#define FSN_CELL_LOG
@@ -1695,8 +1697,8 @@ namespace FusionEngine
 			if (lock.try_acquire(m_TheVoid.mutex))
 			{
 				FSN_PROFILE("VoidMutexLocked");
-				int i = 0;
-				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end && i < 10; ++i)
+				unsigned int cellsProcessed = 0;
+				for (auto it = m_CellsBeingLoaded.begin(); it != m_CellsBeingLoaded.end() && cellsProcessed < s_MaxCellsProcessedPerFrameWhenCameraStationary; ++cellsProcessed)
 				{
 					auto cell = it->second;
 					if (cell->IsLoaded())
@@ -1710,7 +1712,6 @@ namespace FusionEngine
 #endif
 
 						it = m_CellsBeingLoaded.erase(it);
-						end = m_CellsBeingLoaded.end();
 					}
 					else
 						++it;

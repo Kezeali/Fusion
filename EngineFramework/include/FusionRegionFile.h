@@ -49,8 +49,6 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <boost/iostreams/device/file_descriptor.hpp>
-
 namespace FusionEngine
 {
 
@@ -91,43 +89,50 @@ namespace FusionEngine
 		//std::shared_ptr<impl> pimpl;
 	};
 
+	//! Region file (contains compressed cell data in a mini filesystem)
 	class RegionFile
 	{
 	public:
+		//! Default CTOR
 		RegionFile()
 			: region_width(0)
 		{}
 
+		//! File path CTOR
 		explicit RegionFile(const std::string& filename, size_t width);
-		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width);
+		//! Custom read-only file buffer CTOR
+		explicit RegionFile(std::unique_ptr<std::istream>&& read_only_file, size_t width);
 
+		//! Destructor
 		~RegionFile();
 
+		//! Init
 		void init();
 
+		//! Move CTOR
 		RegionFile(RegionFile&& other)
 			: filename(std::move(other.filename)),
-			filebuf(std::move(other.filebuf)),
-			filedesc(std::move(other.filedesc)),
 			file(std::move(other.file)),
+			regionData(std::move(other.regionData)),
 			cellDataLocations(std::move(other.cellDataLocations)),
 			free_sectors(std::move(other.free_sectors)),
 			region_width(other.region_width)
 		{
 		}
 
+		//! Move assignment
 		RegionFile& operator=(RegionFile&& other)
 		{
 			filename = std::move(other.filename);
-			filebuf = std::move(other.filebuf);
-			filedesc = std::move(other.filedesc);
 			file = std::move(other.file);
+			regionData = std::move(other.regionData);
 			cellDataLocations = std::move(other.cellDataLocations);
 			free_sectors = std::move(other.free_sectors);
 			region_width = other.region_width;
 			return *this;
 		}
 
+		//! Data location struct (represents a piece of the filesystem index)
 		struct DataLocation
 		{
 			uint32_t startingSector : 24;
@@ -147,25 +152,34 @@ namespace FusionEngine
 		static const size_t s_SectorSize = 4096;
 
 		std::string filename;
-		std::unique_ptr<std::streambuf> filebuf;
-		std::unique_ptr<boost::iostreams::file_descriptor> filedesc;
+		std::array<char, s_MaxSectors * s_SectorSize> regionData; // The data is fully loaded out of the file on construction, writes are fed back in periodically
 		std::unique_ptr<std::iostream> file;
 		std::array<DataLocation, s_MaxSectors> cellDataLocations;
 		boost::dynamic_bitset<> free_sectors;
 
 		size_t region_width; // Number of cells in each direction that comprise this region
 
+		//! Gets a stream for reading data for the given cell (co-ords relative to the region)
 		std::unique_ptr<ArchiveIStream> getInputCellData(int32_t x, int32_t y, bool inflate = true);
+		//! Gets a stream for writing data to the given cell (co-ords relative to the region)
+		/*!
+		* Not used at the moment: see 
+		*/
 		std::unique_ptr<ArchiveOStream> getOutputCellData(int32_t x, int32_t y);
 
+		//! Writes data for the given cell (co-ords relative to the region)
 		void write(const std::pair<int32_t, int32_t>& i, std::vector<char>& data);
+		//! Writes data to the given sector
 		void write(size_t first_sector, const std::vector<char>& data);
 
 		void setCellDataLocation(const std::pair<int32_t, int32_t>& i, uint32_t startSector, uint32_t sectorsUsed);
 		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& i);
 		
 	private:
+		// non-copyableness
+		//! Private copy constructor (class is non-copyable)
 		RegionFile(const RegionFile&) {}
+		//! Private copy assignment op (class is non-copyable)
 		RegionFile& operator=(const RegionFile&) {}
 	};
 

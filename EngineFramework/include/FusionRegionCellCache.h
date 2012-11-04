@@ -50,8 +50,6 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <boost/iostreams/device/file_descriptor.hpp>
-
 #include <tbb/recursive_mutex.h>
 #include "tbb/concurrent_hash_map.h"
 #include "tbb/concurrent_unordered_map.h"

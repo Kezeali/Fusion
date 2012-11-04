@@ -197,7 +197,7 @@ namespace FusionEngine
 		}
 	}
 
-	static inline size_t fileLength(std::iostream& file)
+	static inline size_t fileLength(std::istream& file)
 	{
 		if (file.eof())
 			file.clear();
@@ -214,29 +214,50 @@ namespace FusionEngine
 		: filename(filename),
 		region_width(width)
 	{
+		std::unique_ptr<boost::iostreams::file_descriptor> filedesc;
+
 		if (!boost::filesystem::exists(filename))
 		{
+			// Create the file (creating an in | out stream for a file that doesn't exist will fail)
 			filedesc.reset(new io::file_descriptor(filename, std::ios::out | std::ios::binary));
 			file.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
 			file.reset();
 			filedesc.reset();
 		}
 		filedesc.reset(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary));
-		file.reset(new io::stream<io::file_descriptor>(*filedesc, 1048576));
+		file.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
+
+		const auto length = fileLength(*file);
+		file->read(regionData.data(), length);
+		file.reset(new io::stream<io::array>(regionData.data(), length));
+
+		FSN_ASSERT(fileLength(*file) == length);
+
 		init();
 	}
 
-	RegionFile::RegionFile(std::unique_ptr<std::streambuf>&& custom_buffer, size_t width)
-		: filename("custom"),
-		region_width(width),
-		filebuf(std::move(custom_buffer)),
-		file(new std::iostream(filebuf.get()))
+	RegionFile::RegionFile(std::unique_ptr<std::istream>&& read_only_file, size_t width)
+		: region_width(width)
 	{
+		const auto length = fileLength(*read_only_file);
+		read_only_file->read(regionData.data(), length);
+		file.reset(new io::stream<io::array>(regionData.data(), length));
+
 		init();
 	}
 
 	RegionFile::~RegionFile()
 	{
+		// Write the region to disk (if it wasn't loaded read-only)
+		if (!filename.empty())
+		{
+			std::unique_ptr<boost::iostreams::file_descriptor> filedesc(new io::file_descriptor(filename, std::ios::out | std::ios::binary));
+			std::unique_ptr<std::iostream> outFile;
+			outFile.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
+			outFile->write(regionData.data(), fileLength(*file));
+			outFile.reset();
+			filedesc.reset();
+		}
 	}
 
 	void RegionFile::init()
@@ -338,6 +359,8 @@ namespace FusionEngine
 			//AddLogEntry("There was no cell data for [" + str.str() + "] in the cache", LOG_INFO);
 			return std::unique_ptr<ArchiveIStream>();
 		}
+
+		FSN_ASSERT(locationData.is_valid());
 
 		const auto dataBegin = firstSector * s_SectorSize;
 
@@ -513,6 +536,8 @@ namespace FusionEngine
 		//file->seekp(x + y * region_width * sizeof(DataLocation), std::ios::beg);
 		if (file->seekp(pos))
 			writer.Write(data);
+		const auto p = file->tellp();
+		const auto expectedp = pos + std::streamoff(sizeof(data));
 		FSN_ASSERT(file->tellp() == (pos + std::streamoff(sizeof(data))));
 	}
 

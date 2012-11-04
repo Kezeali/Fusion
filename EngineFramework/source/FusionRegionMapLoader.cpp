@@ -50,6 +50,7 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
 
 #include <numeric>
 
