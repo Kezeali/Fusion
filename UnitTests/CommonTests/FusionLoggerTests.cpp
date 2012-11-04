@@ -26,7 +26,7 @@ TEST_F(logger_f, initialisesLogsCorrectly)
 {
 	logger->SetDefaultThreshold(LOG_INFO);
 
-	auto log1 = logger->GetLog("Log1", Logger::ReturnNull);
+	auto log1 = logger->GetLog("Log1", Logger::ReturnNullIfNotExist);
 	ASSERT_FALSE((bool)log1);
 
 	log1 = logger->GetLog("TestLog1");
