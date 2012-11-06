@@ -80,11 +80,11 @@ namespace FusionEngine { namespace Inspectors
 
 	void SpriteInspector::InitUI()
 	{
-		AddTextInput("Image",
+		AddProperty("ImagePath", AddTextInput("Image",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->ImagePath.Set(path); }),
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); }),
 			35
-			);
+			));
 
 		AddProperty("AnimationPath", AddTextInput("Animation",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->AnimationPath.Set(path); }),
@@ -92,61 +92,63 @@ namespace FusionEngine { namespace Inspectors
 			35
 			));
 
-		// Alignment
 		std::vector<std::string> originOptions;
 		for (int i = 0; i < 9; ++i)
 			originOptions.push_back(OriginToString((CL_Origin)i));
-		AddSelectInput("AlignmentOrigin",
+
+		// Alignment
+		AddProperty("AlignmentOrigin", AddSelectInput("AlignmentOrigin",
 			originOptions,
 			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(StringToOrigin(str)); }),
-			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); }));
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); })
+			));
 
-		AddTextInput("AlignmentOffset",
+		AddProperty("AlignmentOffset", AddTextInput("AlignmentOffset",
 			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(x, component->AlignmentOffset.Get().y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().x; })
-			);
-		AddTextInput("",
+			));
+		AddProperty("AlignmentOffset", AddTextInput("",
 			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->AlignmentOffset.Set(Vector2i(component->AlignmentOffset.Get().x, y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AlignmentOffset.Get().y; })
-			);
+			));
 
 		// Rotation Hotspot
-		AddSelectInput("RotationOrigin",
+		AddProperty("RotationOrigin", AddSelectInput("RotationOrigin",
 			originOptions,
 			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->RotationOrigin.Set(StringToOrigin(str)); }),
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->RotationOrigin.Get()); })
-			);
+			));
 
-		AddTextInput("RotationOffset",
+		AddProperty("RotationOffset", AddTextInput("RotationOffset",
 			IntSetter_t([](int x, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(x, component->RotationOffset.Get().y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().x; })
-			);
-		AddTextInput("",
+			));
+		AddProperty("RotationOffset", AddTextInput("",
 			IntSetter_t([](int y, ComponentIPtr<ISprite> component) { component->RotationOffset.Set(Vector2i(component->RotationOffset.Get().x, y)); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->RotationOffset.Get().y; })
-			);
+			));
 
 		// Base-Angle
-		AddTextInput("BaseAngle",
+		AddProperty("BaseAngle", AddTextInput("BaseAngle",
 			FloatSetter_t([](float angle, ComponentIPtr<ISprite> component) { component->BaseAngle.Set(angle); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->BaseAngle.Get(); })
-			);
+			));
 
 		// Scale
-		AddTextInput("Scale",
+		AddProperty("Scale", AddTextInput("Scale",
 			FloatSetter_t([](float x, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(x, component->Scale.Get().y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().x; })
-			);
-		AddTextInput("",
+			));
+		AddProperty("", AddTextInput("",
 			FloatSetter_t([](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; })
-			);
+			));
 		
 		// Animation frame
-		AddTextInput("AnimationFrame",
+		AddProperty("AnimationFrame", AddTextInput("AnimationFrame",
 			IntSetter_t([](int frame, ComponentIPtr<ISprite> component) { component->AnimationFrame.Set(frame); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AnimationFrame.Get(); })
-			);
+			));
 	}
 
 } }

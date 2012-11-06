@@ -1690,8 +1690,16 @@ namespace FusionEngine
 			{
 				if (!ev.shift)
 				{
-					auto entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
-					m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc1", entity);
+					if (!m_EditorOverlay->m_Selected.empty())
+					{
+						auto entity = *m_EditorOverlay->m_Selected.begin();
+						m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc_" + entity->GetName(), entity);
+					}
+					else
+					{
+						auto entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+						m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc1", entity);
+					}
 				}
 				else
 				{
