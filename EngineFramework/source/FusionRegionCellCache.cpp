@@ -157,27 +157,27 @@ namespace FusionEngine
 		return n;
 	}
 	boost::iostreams::stream_offset SmartArrayDevice::seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way)
-		{
-			using namespace std;
-			using namespace boost::iostreams;
-			// Determine new value of pos_
-			stream_offset next;
-			if (way == ios_base::beg)
-				next = off;
-			else if (way == ios_base::cur)
-				next = position + off;
-			else if (way == ios_base::end)
-				next = data->size() + off - 1;
-			else
-				throw ios_base::failure("bad seek direction");
+	{
+		using namespace std;
+		using namespace boost::iostreams;
+		// Determine new value of pos_
+		stream_offset next;
+		if (way == ios_base::beg)
+			next = off;
+		else if (way == ios_base::cur)
+			next = position + off;
+		else if (way == ios_base::end)
+			next = data->size() + off;
+		else
+			throw ios_base::failure("bad seek direction");
 
-			// Check for errors
-			if (next < 0 || next >= data->size())
-				throw ios_base::failure("bad seek offset");
+		// Check for errors
+		if (next < 0 || next > data->size())
+			throw ios_base::failure("bad seek offset");
 
-			position = next;
-			return position;
-		}
+		position = next;
+		return position;
+	}
 
 	CellBuffer::impl::~impl()
 	{
@@ -227,11 +227,7 @@ namespace FusionEngine
 		filedesc.reset(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary));
 		file.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
 
-		const auto length = fileLength(*file);
-		file->read(regionData.data(), length);
-		file.reset(new io::stream<io::array>(regionData.data(), length));
-
-		FSN_ASSERT(fileLength(*file) == length);
+		loadRegionData(std::move(file));
 
 		init();
 	}
@@ -239,9 +235,7 @@ namespace FusionEngine
 	RegionFile::RegionFile(std::unique_ptr<std::istream>&& read_only_file, size_t width)
 		: region_width(width)
 	{
-		const auto length = fileLength(*read_only_file);
-		read_only_file->read(regionData.data(), length);
-		file.reset(new io::stream<io::array>(regionData.data(), length));
+		loadRegionData(std::move(read_only_file));
 
 		init();
 	}
@@ -254,10 +248,34 @@ namespace FusionEngine
 			std::unique_ptr<boost::iostreams::file_descriptor> filedesc(new io::file_descriptor(filename, std::ios::out | std::ios::binary));
 			std::unique_ptr<std::iostream> outFile;
 			outFile.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
-			outFile->write(regionData.data(), fileLength(*file));
+			outFile->write(regionData->data(), regionData->size());
 			outFile.reset();
 			filedesc.reset();
 		}
+	}
+
+	void RegionFile::loadRegionData(std::unique_ptr<std::istream> source)
+	{
+		const auto length = fileLength(*source);
+
+		// Generate the container into which the region file will be loaded
+		regionData = std::make_shared<SmartArrayDevice::DataArray_t>(length);
+		regionData->reserve(RegionFile::s_SectorSize * RegionFile::s_MaxSectors);
+
+		// Create the device to access the container as if it is a file
+		SmartArrayDevice device(regionData);
+
+		// Read the data from the source into the container
+		source->read(regionData->data(), length);
+
+		// Generate the stream so that the device can be read/written as an std::iostream
+		auto stream = new io::filtering_stream<SmartArrayDevice::category>();
+		stream->push(device);
+
+		FSN_ASSERT(fileLength(*stream) == length);
+
+		// Pass the stream to the file smart pointer
+		file = std::unique_ptr<std::iostream>(std::move(stream));
 	}
 
 	void RegionFile::init()
@@ -378,6 +396,10 @@ namespace FusionEngine
 		}
 
 		const auto dataVersion = reader.ReadValue<uint8_t>();
+
+		// When there is a changes to the cell data, add conversion for old data here
+		if (dataVersion != s_CellDataVersion)
+			FSN_EXCEPT(FileTypeException, "Incorrect cell data type");
 
 		// Decompress the data
 		//if (inflate)

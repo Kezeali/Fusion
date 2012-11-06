@@ -62,6 +62,10 @@ namespace FusionEngine
 			: position(0),
 			data(new DataArray_t())
 		{}
+		explicit SmartArrayDevice(std::shared_ptr<DataArray_t> data)
+			: position(0),
+			data(data)
+		{}
 		SmartArrayDevice(const SmartArrayDevice& other)
 			: position(other.position),
 			data(other.data)
@@ -109,6 +113,9 @@ namespace FusionEngine
 		//! Init
 		void init();
 
+		//! Load region data from provided source into memory
+		void loadRegionData(std::unique_ptr<std::istream> source);
+
 		//! Move CTOR
 		RegionFile(RegionFile&& other)
 			: filename(std::move(other.filename)),
@@ -152,7 +159,7 @@ namespace FusionEngine
 		static const size_t s_SectorSize = 4096;
 
 		std::string filename;
-		std::array<char, s_MaxSectors * s_SectorSize> regionData; // The data is fully loaded out of the file on construction, writes are fed back in periodically
+		std::shared_ptr<SmartArrayDevice::DataArray_t> regionData; // The data is fully loaded out of the file on construction, writes are fed back in periodically
 		std::unique_ptr<std::iostream> file;
 		std::array<DataLocation, s_MaxSectors> cellDataLocations;
 		boost::dynamic_bitset<> free_sectors;
