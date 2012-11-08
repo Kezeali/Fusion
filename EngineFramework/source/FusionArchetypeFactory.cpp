@@ -162,31 +162,50 @@ namespace FusionEngine
 
 	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
 	{
-		EntityPtr entity;
-		{
-			boost::mutex::scoped_lock lock(m_Mutex);
+		boost::mutex::scoped_lock lock(m_Mutex);
 
-			const ArchetypeData& data = m_ArchetypeData;
+		EntityPtr entity = makeInstance(factory, pos, angle);
+		linkInstance(entity);
 
-			// Since archetypes aren't updated regularly, make sure the properties are up to date (so they can be cloned accurately)
-			data.Archetype->SynchroniseParallelEdits();
-			entity = data.Archetype->Clone(factory);
-
-			auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator);
-			// Set up signal handlers
-			{
-				using namespace std::placeholders;
-				agent->m_ChangeConnection = data.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), _1));
-				agent->m_ComponentAddedConnection = data.Agent->SignalAddComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentAdded, agent.get(), _1, _2, _3));
-				agent->m_ComponentRemovedConnection = data.Agent->SignalRemoveComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentRemoved, agent.get(), _1));
-			}
-
-			entity->SetArchetypeAgent(agent);
-
-			entity->SetPosition(pos);
-			entity->SetAngle(angle);
-		}
 		return std::move(entity);
+	}
+
+	EntityPtr ArchetypeFactory::MakeUnlinkedInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
+	{
+		boost::mutex::scoped_lock lock(m_Mutex);
+
+		return makeInstance(factory, pos, angle);
+	}
+
+	EntityPtr ArchetypeFactory::makeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
+	{
+		const auto& data = m_ArchetypeData;
+
+		// Since archetypes aren't updated regularly, make sure the properties are up to date (so they can be cloned accurately)
+		data.Archetype->SynchroniseParallelEdits();
+		EntityPtr entity = data.Archetype->Clone(factory);
+
+		entity->SetArchetype(m_TypeName);
+
+		entity->SetPosition(pos);
+		entity->SetAngle(angle);
+
+		return std::move(entity);
+	}
+
+	void ArchetypeFactory::linkInstance(const EntityPtr& entity) const
+	{
+		const auto& data = m_ArchetypeData;
+
+		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator);
+		// Set up signal handlers
+		{
+			using namespace std::placeholders;
+			agent->m_ChangeConnection = data.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), _1));
+			agent->m_ComponentAddedConnection = data.Agent->SignalAddComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentAdded, agent.get(), _1, _2, _3));
+			agent->m_ComponentRemovedConnection = data.Agent->SignalRemoveComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentRemoved, agent.get(), _1));
+		}
+		entity->SetArchetypeAgent(agent);
 	}
 
 	void ArchetypeFactory::DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type, const EntityPtr& entity)

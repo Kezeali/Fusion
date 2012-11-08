@@ -727,11 +727,15 @@ namespace FusionEngine
 			{
 				// Process quick-save queue
 				{
+					m_Cache->Sustain();
+					m_EditableCache->Sustain();
 					std::string saveName;
 					while (m_SaveQueue.try_pop(saveName))
 					{
 						PerformSave(saveName);
 					}
+					m_Cache->EndSustain();
+					m_EditableCache->EndSustain();
 				}
 
 				std::list<WriteQueue_t::value_type> writesToRetry;
@@ -1053,7 +1057,8 @@ namespace FusionEngine
 						}
 
 						// Check for read requests (only write one cell at a time when there are read requests queued)
-						if (!m_ReadQueueGetCellData.empty() || !m_ReadQueueLoadEntities.empty())
+						//  eventId 0 is m_Quit (don't let reads preempt writes when quiting / saving)
+						if (eventId != 0 && (!m_ReadQueueGetCellData.empty() || !m_ReadQueueLoadEntities.empty()))
 						{
 							m_NewData.set();
 							break;

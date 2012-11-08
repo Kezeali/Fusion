@@ -98,7 +98,7 @@ namespace FusionEngine
 			{
 				FSN_EXCEPT(FileTypeException, "Attempted to load unknown resource type '" + resource->GetType() + "'");
 			}
-			ResourceLoader& loader = _where->second;
+			ActiveResourceLoader& loader = _where->second;
 
 			if (loader.list_prereq != nullptr)
 			{
@@ -236,7 +236,13 @@ namespace FusionEngine
 						try
 						{
 							logfile->AddEntry("Unloading " + res->GetPath(), LOG_INFO);
-							unloadResource(res);
+							if (!unloadResource(res))
+							{
+								logfile->AddEntry("Unload paused on resource type " + res->GetType() + ". Will unload later.", LOG_TRIVIAL);
+								m_ToUnload.push(res);
+								m_ToUnloadEvent.set();
+								continue;
+							}
 						}
 						catch (FileSystemException& ex)
 						{
@@ -269,7 +275,7 @@ namespace FusionEngine
 				if (_where != m_ResourceLoaders.end())
 				{
 					FSN_PROFILE("GCLoad " + res->GetType());
-					ResourceLoader& loader = _where->second;
+					ActiveResourceLoader& loader = _where->second;
 					loader.gcload(res.get(), m_GC, loader.userData);
 				}
 			}
@@ -390,11 +396,23 @@ namespace FusionEngine
 		// There may still be ResourcePointers holding shared_ptrs to the
 		//  ResourceContainers held in m_Resources, but they will simply
 		//  be invalidated by the previous step. In any case, the following
-		//  step means all ResourceContainers will be deleated ASAP.
+		//  step means all ResourceContainers will be deleted ASAP.
 		m_Resources.clear();
 		//CL_MutexSection lock(&m_UnreferencedMutex);
 		//m_Unreferenced.clear();
 		m_Clearing = false;
+	}
+
+	void ResourceManager::PauseUnload(const std::string& resource_type)
+	{
+		auto& resourceLoader = m_ResourceLoaders[resource_type];
+		resourceLoader.activeOperations = resourceLoader.activeOperations ^ ActiveResourceLoader::ActiveOperation::Unload;
+	}
+
+	void ResourceManager::ResumeUnload(const std::string& resource_type)
+	{
+		auto& resourceLoader = m_ResourceLoaders[resource_type];
+		resourceLoader.activeOperations = resourceLoader.activeOperations | ActiveResourceLoader::ActiveOperation::Unload;
 	}
 
 	bool ResourceManager::VerifyResources(const bool allow_queued) const
@@ -593,7 +611,7 @@ namespace FusionEngine
 			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the load function
-			ResourceLoader &loader = _where->second;
+			ActiveResourceLoader& loader = _where->second;
 			loader.load(resource.get(), vdir, loader.userData);
 		}
 	}
@@ -605,7 +623,7 @@ namespace FusionEngine
 			unloadResource(_where->second);
 	}
 
-	void ResourceManager::unloadResource(const ResourceDataPtr& resource)
+	bool ResourceManager::unloadResource(const ResourceDataPtr& resource)
 	{
 		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 
@@ -616,9 +634,13 @@ namespace FusionEngine
 			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the load function
-			ResourceLoader &loader = _where->second;
-			loader.unload(resource.get(), vdir, loader.userData);
+			ActiveResourceLoader& loader = _where->second;
+			if (loader.activeOperations & ActiveResourceLoader::ActiveOperation::Unload)
+				loader.unload(resource.get(), vdir, loader.userData);
+			else
+				return false;
 		}
+		return true;
 	}
 
 }

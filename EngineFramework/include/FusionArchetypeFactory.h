@@ -117,8 +117,17 @@ namespace FusionEngine
 
 		const EntityPtr& GetArchetype() const { return m_ArchetypeData.Archetype; }
 
-		//! Makes the given entity an instance of the given archetype
+		//! Makes an instance of the given archetype
 		EntityPtr MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
+		//! Makes an unlinked instance of the given archetype
+		/*!
+		* An unlinked instance is simply a clone of the archetype definition. Linked instances
+		* change as the archetype entity changes.
+		*
+		* \remarks
+		* Linked instances with become unlinked if the factory is unloaded.
+		*/
+		EntityPtr MakeUnlinkedInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
 
 		//! Defines the given archetype using the given entity
 		void DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity);
@@ -132,6 +141,9 @@ namespace FusionEngine
 		mutable boost::mutex m_Mutex;
 
 		EntityInstantiator* m_ComponentInstantiator;
+
+		EntityPtr makeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
+		void linkInstance(const EntityPtr& instance) const;
 	};
 
 	//! Archetype resource loader callback

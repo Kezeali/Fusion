@@ -1204,7 +1204,8 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
 
-			EntityPtr entity = archetype_factory->MakeInstance(factory, position, angle);
+			EntityPtr entity =
+				editable ? archetype_factory->MakeInstance(factory, position, angle) : archetype_factory->MakeUnlinkedInstance(factory, position, angle);
 
 			// Deserialise the archetype agent
 			{

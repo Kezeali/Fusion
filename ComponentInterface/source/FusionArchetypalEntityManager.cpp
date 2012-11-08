@@ -71,6 +71,14 @@ namespace FusionEngine
 	{
 	}
 
+	IInstanceAgent* ArchetypalEntityManager::Clone(const EntityPtr& entity) const
+	{
+		IInstanceAgent* clone = new ArchetypalEntityManager(entity, m_Profile, m_ComponentInstantiator);
+		RakNet::BitStream stream;
+		Serialise(stream);
+		clone->Deserialise(stream);
+	}
+
 	void ArchetypalEntityManager::ComponentAddedToInstance(const ComponentPtr& component)
 	{
 		m_NonArchetypalComponents.insert(component);
@@ -151,7 +159,7 @@ namespace FusionEngine
 		PerformPropertyOverrides();
 	}
 
-	void ArchetypalEntityManager::Serialise(RakNet::BitStream& stream)
+	void ArchetypalEntityManager::Serialise(RakNet::BitStream& stream) const
 	{
 		// Write IDs of removed components
 		{

@@ -789,6 +789,16 @@ namespace FusionEngine
 		}, regionCoord, true);
 	}
 
+	void RegionCellCache::Sustain()
+	{
+		ResourceManager::getSingleton().PauseUnload("MapRegion" + m_CachePath);
+	}
+
+	void RegionCellCache::EndSustain()
+	{
+		ResourceManager::getSingleton().ResumeUnload("MapRegion" + m_CachePath);
+	}
+
 	namespace RegionMap
 	{
 		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)

@@ -1119,23 +1119,14 @@ namespace FusionEngine
 	{
 		int iy = inactiveRange.top;
 		int ix = inactiveRange.left;
-		//unsigned int i = iy * m_XCellCount + ix;
-		//unsigned int stride = m_XCellCount - ( inactiveRange.right - inactiveRange.left + 1 );
 
 		auto it = m_Cells.find(CellHandle(ix, iy));
 
 		for (; iy <= inactiveRange.bottom; ++iy)
 		{
-			//FSN_ASSERT( iy >= 0 );
-			//FSN_ASSERT( iy < m_YCellCount );
 			for (ix = inactiveRange.left; ix <= inactiveRange.right; ++ix)
 			{
-				//FSN_ASSERT( ix >= 0 );
-				//FSN_ASSERT( ix < m_XCellCount );
-				//FSN_ASSERT( i == iy * m_XCellCount + ix );
-				//Cell* cell = m_Cells[i++];
-
-				// NOTE: this is simmilar to the code in Update, but it DOESN'T insert a new
+				// NOTE: this is similar to the code in Update, but it DOESN'T insert a new
 				//  cell if the expected cell is missing:
 				// Check that the next stored cell is the next cell expected in the sequence...
 				if (it == m_Cells.end() || it->first.x != ix || it->first.y != iy)
@@ -1711,6 +1702,10 @@ namespace FusionEngine
 						AddLogEntry("cell_load_times", str.str());
 #endif
 
+						it = m_CellsBeingLoaded.erase(it);
+					}
+					else if (!cell->inRange)
+					{
 						it = m_CellsBeingLoaded.erase(it);
 					}
 					else

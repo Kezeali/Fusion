@@ -72,7 +72,7 @@ namespace FusionEngine
 
 		virtual void RemoveOverride(const std::string& property_name) = 0;
 
-		virtual void Serialise(RakNet::BitStream& stream) = 0;
+		virtual void Serialise(RakNet::BitStream& stream) const = 0;
 		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 	};
 
@@ -117,7 +117,7 @@ namespace FusionEngine
 		void OnSerialisedDataChanged(RakNet::BitStream& data);
 
 		//! Save the local overrides
-		void Serialise(RakNet::BitStream& stream);
+		void Serialise(RakNet::BitStream& stream) const;
 		//! Load the local overrides
 		void Deserialise(RakNet::BitStream& stream);
 
@@ -146,7 +146,7 @@ namespace FusionEngine
 
 		// Add / remove components that exist in the definition but not the instance and vice versa
 		void PerformComponentOperations(const std::list<std::tuple<std::string, std::string, std::unique_ptr<RakNet::BitStream>>>& added, const std::list<std::pair<Archetypes::ComponentID_t, EntityComponent*>>& removed);
-		// Deserialises overriden properties
+		// Deserialises overridden properties
 		void PerformPropertyOverrides();
 
 		void AddPropertyListeners(const ComponentPtr& component);

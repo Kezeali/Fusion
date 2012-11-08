@@ -386,24 +386,26 @@ namespace FusionEngine
 
 	EntityPtr Entity::Clone(ComponentFactory* factory) const
 	{
-		auto entity = std::make_shared<Entity>(GetManager(), m_Transform.p->Clone(factory));
-
-		entity->SetOwnerID(GetOwnerID());
-		entity->SetTerrain(IsTerrain());
-
-		entity->SetArchetype(GetArchetype());
-		// TODO: clone the agent
-		//entity->SetArchetypeAgent(GetArchetypeAgent());
-		// Note: ArchetypeDefinitionAgent is intentionally not copied, since
-		//  the cloned entity doesn't define the archetype (duh)
-
-		// Copy the rest of the components (transform is added by the ctor)
-		for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+		if (!IsArchetypal())
 		{
-			if (dynamic_cast<ITransform*>(it->get()) != m_Transform.get())
-				entity->AddComponent((*it)->Clone(factory), (*it)->GetIdentifier());
+			auto entity = std::make_shared<Entity>(GetManager(), m_Transform.p->Clone(factory));
+
+			entity->SetOwnerID(GetOwnerID());
+			entity->SetTerrain(IsTerrain());
+
+			// Note: ArchetypeDefinitionAgent is intentionally not copied, since
+			//  the cloned entity doesn't define the archetype (duh)
+
+			// Copy the rest of the components (transform is added by the ctor)
+			for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+			{
+				if (dynamic_cast<ITransform*>(it->get()) != m_Transform.get())
+					entity->AddComponent((*it)->Clone(factory), (*it)->GetIdentifier());
+			}
+			return std::move(entity);
 		}
-		return entity;
+		else
+			FSN_EXCEPT(NotImplementedException, "Can't clone archetypal entities");
 	}
 
 	void Entity::SynchroniseParallelEdits()

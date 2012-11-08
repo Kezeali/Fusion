@@ -131,6 +131,11 @@ namespace FusionEngine
 		*/
 		void DeleteAllResources(CL_GraphicContext &gc);
 
+		//! Prevent resources of the given type from unloading, even if they are unused
+		void PauseUnload(const std::string& resource_type);
+		//! Allow resources of the given type to unload (counterpart to PauseUnload)
+		void ResumeUnload(const std::string& resource_type);
+
 		//! Make sure resources with references are loaded, and resources without aren't
 		/*
 		* \param allow_queued
@@ -164,15 +169,70 @@ namespace FusionEngine
 		void _resourceUnreferenced(ResourceContainer *resource);
 
 	private:
+		//! Resource loader with extra data used by the ResourceManager
+		/*!
+		* ActiveResourceLoader removes the type field (that is stored as the
+		* key for the resource loaders map) and adds the activeOperations field
+		*/
+		struct ActiveResourceLoader
+		{
+			resource_load load;
+			resource_unload unload;
+			resource_gcload gcload;
+			resource_list_prerequisites list_prereq;
+			boost::any userData;
+			enum ActiveOperation : uint8_t { None = 0x00, Load = 0x01, Unload = 0x02 };
+			tbb::atomic<uint8_t> activeOperations;
+
+			ActiveResourceLoader()
+			{
+				activeOperations = ActiveOperation::Load | ActiveOperation::Unload;
+			}
+
+			ActiveResourceLoader(const ResourceLoader& definition)
+				: load(definition.load),
+				unload(definition.unload),
+				gcload(definition.gcload),
+				list_prereq(definition.list_prereq),
+				userData(definition.userData)
+			{
+				activeOperations = ActiveOperation::Load | ActiveOperation::Unload;
+			}
+
+			ActiveResourceLoader(const ActiveResourceLoader& other)
+				: load(other.load),
+				unload(other.unload),
+				gcload(other.gcload),
+				list_prereq(other.list_prereq),
+				userData(other.userData)
+			{
+				activeOperations = other.activeOperations;
+			}
+
+			ActiveResourceLoader& operator= (const ActiveResourceLoader& other)
+			{
+				load = other.load;
+				unload = other.unload;
+				gcload = other.gcload;
+				list_prereq = other.list_prereq;
+				userData = other.userData;
+				activeOperations = other.activeOperations;
+				return *this;
+			}
+		};
+
 		//! ResourceLoader pointer
-		typedef std::shared_ptr<ResourceLoader> ResourceLoaderSpt;
+		typedef std::shared_ptr<ActiveResourceLoader> ResourceLoaderSpt;
+		//! Maps Resource types to ResourceLoader factory methods
+		typedef std::unordered_map<std::string, ActiveResourceLoader> ResourceLoaderMap;
+
 		//! Maps ResourceTag keys to Resource ptrs
 		typedef tbb::concurrent_unordered_map<std::string, ResourceDataPtr> ResourceMap;
-		//! Maps Resource types to ResourceLoader factory methods
-		typedef std::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
 		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceQueue;
 		typedef tbb::concurrent_unordered_set<ResourceContainer*> UnreferencedResourceSet;
+
+		typedef tbb::concurrent_unordered_set<std::string> PausedResources;
 
 		struct ResourceToLoadData
 		{
@@ -225,7 +285,7 @@ namespace FusionEngine
 		// Resources
 		ResourceMap m_Resources;
 
-		CL_Mutex m_UnreferencedMutex;
+		//CL_Mutex m_UnreferencedMutex;
 		
 		UnreferencedResourceSet m_Unreferenced;
 
@@ -246,7 +306,7 @@ namespace FusionEngine
 		void loadResourceAndDeps(const ResourceDataPtr& resource, unsigned int depth_limit);
 
 		void getAndUnloadResource(const std::string &path);
-		void unloadResource(const ResourceDataPtr& resource);
+		bool unloadResource(const ResourceDataPtr& resource);
 	};
 
 }

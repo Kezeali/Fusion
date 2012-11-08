@@ -109,6 +109,9 @@ namespace FusionEngine
 		//! Gets the recorded bounds of the cache (max/min coords of cells accessed this session)
 		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
+		void Sustain();
+		void EndSustain();
+
 	private:
 		typedef tbb::concurrent_hash_map<RegionCoord_t, RegionFileLoadedCallbackHandle> CallbackHandles_t;
 		CallbackHandles_t m_CallbackHandles;
