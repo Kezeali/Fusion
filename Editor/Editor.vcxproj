@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\FusionArchetypeResourceEditor.h" />
     <ClInclude Include="include\FusionASScriptInspector.h" />
     <ClInclude Include="include\FusionCircleShapeInspector.h" />
     <ClInclude Include="include\FusionComponentInspector.h" />
@@ -127,6 +128,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="source\FusionArchetypeResourceEditor.cpp" />
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionCircleShapeInspector.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />

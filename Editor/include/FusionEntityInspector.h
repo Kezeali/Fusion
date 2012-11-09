@@ -62,15 +62,21 @@ namespace FusionEngine { namespace Inspectors
 		~ElementEntityInspector()
 		{
 			SendToConsole("Closed inspector");
+			if (m_CloseCallback)
+				m_CloseCallback();
 		}
 
 		void SetEntity(const EntityPtr& entity);
+
+		void SetCloseCallback(const std::function<void (void)>& fn) { m_CloseCallback = fn; }
 
 		typedef std::function<void (std::string, const EntityPtr& entity)> StringSetter_t;
 		typedef std::function<std::string (const EntityPtr& entity)> StringGetter_t;
 
 	private:
 		EntityPtr m_Entity;
+
+		std::function<void (void)> m_CloseCallback;
 
 		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> apply_button;
 

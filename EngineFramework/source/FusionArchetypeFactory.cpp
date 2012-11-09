@@ -77,7 +77,14 @@ namespace FusionEngine
 	};
 
 	ArchetypeFactoryManager::ArchetypeFactoryManager()
-		: m_ResourceSustainer(new SimpleResourceSustainer())
+		: m_ResourceSustainer(new SimpleResourceSustainer()),
+		m_Instantiator(nullptr)
+	{
+	}
+
+	ArchetypeFactoryManager::ArchetypeFactoryManager(EntityInstantiator* instantiator)
+		: m_ResourceSustainer(new SimpleResourceSustainer()),
+		m_Instantiator(instantiator)
 	{
 	}
 
@@ -124,8 +131,15 @@ namespace FusionEngine
 			m_Volatile.pop_front();
 	}
 
-	ArchetypeFactory::ArchetypeFactory(EntityInstantiator* instantiator)
-		: m_ComponentInstantiator(instantiator)
+	ArchetypeFactory::ArchetypeFactory()
+		: m_ComponentInstantiator(nullptr),
+		m_ResourceContainer(nullptr)
+	{
+	}
+
+	ArchetypeFactory::ArchetypeFactory(EntityInstantiator* instantiator, ResourceContainer* resource)
+		: m_ComponentInstantiator(instantiator),
+		m_ResourceContainer(resource)
 	{
 	}
 
@@ -197,7 +211,7 @@ namespace FusionEngine
 	{
 		const auto& data = m_ArchetypeData;
 
-		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator);
+		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator, m_ResourceContainer != nullptr ? ResourceDataPtr(m_ResourceContainer) : ResourceDataPtr());
 		// Set up signal handlers
 		{
 			using namespace std::placeholders;
@@ -236,7 +250,12 @@ namespace FusionEngine
 			delete static_cast<ArchetypeFactory*>(resource->GetDataPtr());
 		}
 
-		ArchetypeFactory* factory = new ArchetypeFactory(nullptr);
+		ArchetypeFactory* factory;
+		if (ArchetypeFactoryManager::GetInstantiator()) // provide stuff for modifying definitions in edit mode
+			factory = new ArchetypeFactory(ArchetypeFactoryManager::GetInstantiator(), resource);
+		else
+			factory = new ArchetypeFactory();
+
 		try
 		{
 			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
@@ -254,7 +273,7 @@ namespace FusionEngine
 		}
 		resource->SetDataPtr(factory);
 
-		ArchetypeFactoryManager::getSingleton().StoreFactory(resource);
+		ArchetypeFactoryManager::StoreFactory(resource);
 
 		resource->setLoaded(true);
 	}

@@ -31,6 +31,7 @@
 
 #include "FusionArchetypeFactory.h"
 #include "FusionArchetypalEntityManager.h"
+#include "FusionArchetypeResourceEditor.h"
 #include "FusionCamera.h"
 #include "FusionCellCache.h"
 #include "FusionComponentFactory.h"
@@ -700,6 +701,15 @@ namespace FusionEngine
 			});
 			//using namespace std::placeholders;
 			//polygonResourceEditor->SetPolygonToolExecutor(std::bind(&EditorPolygonTool::Start, m_PolygonTool, _1, _2, EditorPolygonTool::Freeform));
+		}
+
+		{
+			auto archetypeResourceEditor = std::make_shared<ArchetypeResourceEditor>();
+			m_ResourceEditors["ArchetypeFactory"] = archetypeResourceEditor;
+			archetypeResourceEditor->SetEntityInspectorExecutor([this](const EntityPtr& entity, const ArchetypeResourceEditor::OpenEntityInspectorCallback_t& done_cb)
+			{
+				this->CreatePropertiesWindow(entity);
+			});
 		}
 
 		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
@@ -1690,22 +1700,35 @@ namespace FusionEngine
 			{
 				if (!ev.shift)
 				{
+					EntityPtr entity;
 					if (!m_EditorOverlay->m_Selected.empty())
 					{
-						auto entity = *m_EditorOverlay->m_Selected.begin();
-						m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc_" + entity->GetName(), entity);
+						entity = *m_EditorOverlay->m_Selected.begin();
 					}
 					else
 					{
-						auto entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
-						m_ArchetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), "arc1", entity);
+						entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+						//entity->SetName(m_EntityManager->GenerateName(entity));
 					}
+
+					std::string archetypeName = entity->GetName() + ".archetype";
+
+					std::shared_ptr<ArchetypeFactory> archetypeFactory = std::make_shared<ArchetypeFactory>();
+					archetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), archetypeName, entity);
+
+					IO::PhysFSStream archetypeFile("/Data/" + archetypeName);
+					archetypeFactory->Save(archetypeFile);
 				}
 				else
 				{
-					auto arc = m_ArchetypeFactory->GetArchetype();
-					arc->SynchroniseParallelEdits();
-					CreatePropertiesWindow(arc);
+					std::string archetype_name;
+
+					DoWithArchetypeFactory(archetype_name, [this](const ResourcePointer<ArchetypeFactory>& archetypeFactory)
+					{
+						auto arc = archetypeFactory->GetArchetype();
+						arc->SynchroniseParallelEdits();
+						CreatePropertiesWindow(arc);
+					});
 				}
 
 				return;
@@ -1713,32 +1736,38 @@ namespace FusionEngine
 
 			if (ev.id == CL_KEY_9)
 			{
-				Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
-				TranslateScreenToWorld(&pos.x, &pos.y);
-				Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
+				Vector2 worldPos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
+				TranslateScreenToWorld(&worldPos.x, worldPos.y);
+				Vector2 simPos(ToSimUnits(worldPos.x), ToSimUnits(worldPos.y));
 
-				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+				const std::string archetype_name;
+
+				DoWithArchetypeFactory(archetype_name, [this, worldPos, simPos, randomAngle](const ResourcePointer<ArchetypeFactory>& archetype_factory)
 				{
-					for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
-						for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
-						{
-							Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
+					Vector2 pos(worldPos);
+					if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+					{
+						for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
+							for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
+							{
+								Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
 
-							float angle = 0.f;
-							if (randomAngle)
-								angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
+								float angle = 0.f;
+								if (randomAngle)
+									angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
 
-							auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
-							m_EntityManager->AddEntity(entity);
+								auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
+								m_EntityManager->AddEntity(entity);
 
-							SendToConsole("Instanciate " + boost::lexical_cast<std::string>(pos.x));
-						}
-				}
-				else
-				{
-					auto entity = m_ArchetypeFactory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
-					m_EntityManager->AddEntity(entity);
-				}
+								SendToConsole("Instanciate " + boost::lexical_cast<std::string>(pos.x));
+							}
+					}
+					else
+					{
+						auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
+						m_EntityManager->AddEntity(entity);
+					}
+				});
 				return;
 			}
 
@@ -2179,6 +2208,19 @@ namespace FusionEngine
 		}
 	}
 
+	void Editor::DoWithArchetypeFactory(const std::string& archetype_name, std::function<bool (const ResourcePointer<ArchetypeFactory>&)> fn)
+	{
+		if (m_ArchetypeFactoryLoadConnections.empty())
+			m_NextFactoryId = 0;
+
+		m_ArchetypeFactoryLoadConnections[m_NextFactoryId++] = std::make_shared<boost::signals2::scoped_connection>(
+			ResourceManager::getSingleton().GetResource(
+			"ArchetypeFactory", archetype_name, [fn](ResourceDataPtr& resource)
+		{
+			fn(ResourcePointer<ArchetypeFactory>(resource));
+		}));
+	}
+
 	CL_Rectf Editor::GetBBOfSelected()
 	{
 		CL_Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
@@ -2383,11 +2425,8 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> entities;
 
-		ArchetypeFactory* archetypeFactory;
-
-		InspectorGenerator(Rocket::Core::ElementDocument* doc_, ArchetypeFactory* archetypeFactory_)
-			: doc(doc_),
-			archetypeFactory(archetypeFactory_)
+		InspectorGenerator(Rocket::Core::ElementDocument* doc_)
+			: doc(doc_)
 		{
 			FSN_ASSERT(doc);
 
@@ -2478,7 +2517,7 @@ namespace FusionEngine
 		}
 	};
 
-	void Editor::InitInspectorGenerator(InspectorGenerator& generator)
+	void Editor::InitInspectorGenerator(InspectorGenerator& generator, const std::function<void (void)>& close_callback)
 	{
 		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
 		{
@@ -2513,16 +2552,18 @@ namespace FusionEngine
 		{
 			this->m_EntityInstantiator->RemoveComponent(entity, component);
 		});
+
+		generator.entity_inspector->SetCloseCallback(close_callback);
 	}
 
-	void Editor::CreatePropertiesWindow(const EntityPtr& entity)
+	void Editor::CreatePropertiesWindow(const EntityPtr& entity, const std::function<void (void)>& close_callback)
 	{
 		std::vector<EntityPtr> e;
 		e.push_back(entity);
-		CreatePropertiesWindow(e);
+		CreatePropertiesWindow(e, close_callback);
 	}
 
-	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities)
+	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback)
 	{
 		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
 		//{
@@ -2532,8 +2573,8 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc, m_ArchetypeFactory.get());
-		InitInspectorGenerator(generator);
+		InspectorGenerator generator(doc);
+		InitInspectorGenerator(generator, close_callback);
 
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
@@ -2553,8 +2594,8 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc, m_ArchetypeFactory.get());
-		InitInspectorGenerator(generator);
+		InspectorGenerator generator(doc);
+		InitInspectorGenerator(generator, std::function<void (void)>());
 
 		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });
 		generator.Generate();

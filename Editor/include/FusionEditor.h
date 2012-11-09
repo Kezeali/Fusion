@@ -34,9 +34,11 @@
 
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
+#include "FusionResourcePointer.h"
 
 #include <angelscript.h>
 #include <boost/intrusive_ptr.hpp>
+#include <boost/signals2/connection.hpp>
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
 #include <array>
@@ -114,8 +116,7 @@ namespace FusionEngine
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
 		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
-		void SetArchetypeFactory(const std::shared_ptr<ArchetypeFactory>& factory) { m_ArchetypeFactory = factory; }
-		// TODO: ? interface MapLoader with Save and Load methods
+		// TODO: ? abstract class MapLoader with Save and Load methods
 		void SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader);
 		void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) { m_StreamingManager = manager; }
 		void SetWorldSaver(WorldSaver* saver) { m_Saver = saver; }
@@ -175,7 +176,9 @@ namespace FusionEngine
 		std::shared_ptr<ComponentFactory> m_ComponentFactory;
 		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
 		std::shared_ptr<EntityManager> m_EntityManager;
-		std::shared_ptr<ArchetypeFactory> m_ArchetypeFactory;
+
+		int m_NextFactoryId;
+		std::unordered_map<int, std::shared_ptr<boost::signals2::scoped_connection>> m_ArchetypeFactoryLoadConnections;
 
 		WorldSaver* m_Saver;
 		std::shared_ptr<SaveDataArchive> m_DataArchiver;
@@ -292,14 +295,16 @@ namespace FusionEngine
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
 
+		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<bool (const ResourcePointer<ArchetypeFactory>&)> fn);
+
 		CL_Rectf GetBBOfSelected();
 
 		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
 
-		void InitInspectorGenerator(InspectorGenerator& generator);
+		void InitInspectorGenerator(InspectorGenerator& generator, const std::function<void (void)>& close_callback);
 
-		void CreatePropertiesWindow(const EntityPtr& entity);
-		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities);
+		void CreatePropertiesWindow(const EntityPtr& entity, const std::function<void (void)>& close_callback = std::function<void (void)>());
+		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback = std::function<void (void)>());
 		void CreatePropertiesWindowForSelected();
 
 		void RegisterScriptType(asIScriptEngine* engine);

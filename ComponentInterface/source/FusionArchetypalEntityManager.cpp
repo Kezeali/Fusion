@@ -44,9 +44,10 @@
 namespace FusionEngine
 {
 
-	ArchetypalEntityManager::ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator)
+	ArchetypalEntityManager::ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator, const ResourceDataPtr& resource)
 		: m_Profile(definition),
-		m_ComponentInstantiator(instantiator)
+		m_ComponentInstantiator(instantiator),
+		m_Resource(resource)
 	{
 		m_ManagedEntity = entity;
 
@@ -71,13 +72,13 @@ namespace FusionEngine
 	{
 	}
 
-	IInstanceAgent* ArchetypalEntityManager::Clone(const EntityPtr& entity) const
-	{
-		IInstanceAgent* clone = new ArchetypalEntityManager(entity, m_Profile, m_ComponentInstantiator);
-		RakNet::BitStream stream;
-		Serialise(stream);
-		clone->Deserialise(stream);
-	}
+	//IInstanceAgent* ArchetypalEntityManager::Clone(const EntityPtr& entity) const
+	//{
+	//	IInstanceAgent* clone = new ArchetypalEntityManager(entity, m_Profile, m_ComponentInstantiator);
+	//	RakNet::BitStream stream;
+	//	Serialise(stream);
+	//	clone->Deserialise(stream);
+	//}
 
 	void ArchetypalEntityManager::ComponentAddedToInstance(const ComponentPtr& component)
 	{

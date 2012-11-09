@@ -188,7 +188,7 @@ namespace FusionEngine
 			m_EntityManager.reset(new EntityManager(m_InputManager.get(), m_EntitySynchroniser.get(), m_StreamingManager.get(), m_ComponentUniverse.get(), m_CellArchivist.get()));
 			m_EntityInstantiator.reset(new P2PEntityInstantiator(m_ComponentUniverse.get(), m_EntityManager.get()));
 
-			m_ArchetypeFactory.reset(new ArchetypeFactory(m_EntityInstantiator.get()));
+			m_ArchetypeFactoryManager.reset(new ArchetypeFactoryManager(m_EntityInstantiator.get()));
 
 			m_MapLoader.reset(new GameMapLoader());
 
@@ -209,6 +209,7 @@ namespace FusionEngine
 			if (options->GetOption("max_frameskip", &maxFrameskip) && maxFrameskip >= 0)
 				m_Scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
 #endif
+
 			auto streamingManager = m_StreamingManager.get(); // Note that this is intentionally not a smart-ptr, because the console command shouldn't keep this object alive!
 			m_Console->BindCommand("cam_range", [streamingManager](const std::vector<std::string>& cmdargs)->std::string
 			{
@@ -488,7 +489,6 @@ namespace FusionEngine
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
 
-		m_ArchetypeFactoryManager.reset(new ArchetypeFactoryManager());
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
 	}
 

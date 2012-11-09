@@ -32,6 +32,7 @@
 
 #include "FusionTypes.h"
 #include "FusionPropertySignalingSystem.h"
+#include "FusionResource.h"
 #include "FusionSynchronisedSignalingSystem.h"
 
 #include <BitStream.h>
@@ -94,7 +95,7 @@ namespace FusionEngine
 	class ArchetypalEntityManager : public IInstanceAgent
 	{
 	public:
-		ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator);
+		ArchetypalEntityManager(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& definition, EntityInstantiator* instantiator, const ResourceDataPtr& resource);
 		virtual ~ArchetypalEntityManager();
 
 		void ComponentAddedToInstance(const ComponentPtr& component);
@@ -139,6 +140,8 @@ namespace FusionEngine
 		boost::signals2::connection m_ComponentRemovedConnection;
 
 		EntityInstantiator* m_ComponentInstantiator;
+
+		ResourceDataPtr m_Resource;
 
 		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
 

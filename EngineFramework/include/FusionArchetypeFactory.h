@@ -73,12 +73,19 @@ namespace FusionEngine
 	{
 	public:
 		ArchetypeFactoryManager();
+		ArchetypeFactoryManager(EntityInstantiator* instantiator);
 
 		static void Sustain();
 		static void EndSustain();
 		static void StoreFactory(const ResourceDataPtr& resource);
+
+		//! Returns true if instances should be linked to definitions (so that changes are tracked)
+		static bool IsInstanceLinkingEnabled() { return getSingleton().m_Instantiator != nullptr; }
+
+		static EntityInstantiator* GetInstantiator() { return getSingleton().m_Instantiator; }
 	private:
 		std::unique_ptr<ResourceSustainer> m_ResourceSustainer;
+		EntityInstantiator* m_Instantiator;
 	};
 
 	//! Data that defines the type of entity that a given factory can instantiate
@@ -101,13 +108,18 @@ namespace FusionEngine
 	class ArchetypeFactory
 	{
 	public:
+		//! Default CTOR
+		ArchetypeFactory();
 		//! CTOR
 		/*!
 		* \param instantiator
 		* The component instantiator which should be used to add components to live archetype instances. Only needed
 		* in edit mode.
+		*
+		* \param resource
+		* This factory's resource container, so it can be kept alive by archetype instances
 		*/
-		ArchetypeFactory(EntityInstantiator* instantiator);
+		ArchetypeFactory(EntityInstantiator* instantiator, ResourceContainer* resource);
 		~ArchetypeFactory();
 
 		void SetEditable(bool value) { m_Editable = value; }
@@ -132,6 +144,8 @@ namespace FusionEngine
 		//! Defines the given archetype using the given entity
 		void DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type_id, const EntityPtr& entity);
 
+		boost::signals2::connection AddChangeListener(const std::function<void (void)>& listener);
+
 	private:
 		std::string m_TypeName;
 		ArchetypeData m_ArchetypeData;
@@ -141,6 +155,8 @@ namespace FusionEngine
 		mutable boost::mutex m_Mutex;
 
 		EntityInstantiator* m_ComponentInstantiator;
+
+		ResourceContainer* m_ResourceContainer;
 
 		EntityPtr makeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const;
 		void linkInstance(const EntityPtr& instance) const;
