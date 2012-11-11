@@ -1,0 +1,17 @@
+<rml>
+	<head>
+		<title>background</title>
+		<style>
+			body
+			{
+			width: 100%;
+			height: 100%;
+			background-color: rgba(80, 80, 120, 40);
+			z-index: bottom;
+			}
+		</style>
+		<script src="editor_background.as" />
+	</head>
+	<body ondragdrop="%this:OnDragDrop(event);">
+	</body>
+</rml>
