@@ -72,8 +72,8 @@ namespace FusionEngine
 	class ArchetypeFactoryManager : public Singleton<ArchetypeFactoryManager>
 	{
 	public:
-		ArchetypeFactoryManager();
-		ArchetypeFactoryManager(EntityInstantiator* instantiator);
+		ArchetypeFactoryManager(ComponentFactory* factory, EntityManager* manager);
+		ArchetypeFactoryManager(ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator);
 
 		static void Sustain();
 		static void EndSustain();
@@ -83,8 +83,12 @@ namespace FusionEngine
 		static bool IsInstanceLinkingEnabled() { return getSingleton().m_Instantiator != nullptr; }
 
 		static EntityInstantiator* GetInstantiator() { return getSingleton().m_Instantiator; }
+		static ComponentFactory* GetComponentFactory() { return getSingleton().m_ComponentFactory; }
+		static EntityManager* GetEntityManager() { return getSingleton().m_EntityManager; }
 	private:
 		std::unique_ptr<ResourceSustainer> m_ResourceSustainer;
+		ComponentFactory* m_ComponentFactory;
+		EntityManager* m_EntityManager;
 		EntityInstantiator* m_Instantiator;
 	};
 
@@ -125,7 +129,7 @@ namespace FusionEngine
 		void SetEditable(bool value) { m_Editable = value; }
 
 		void Save(std::ostream& stream);
-		void Load(std::istream& stream);
+		void Load(std::istream& stream, ComponentFactory* factory, EntityManager* manager);
 
 		const EntityPtr& GetArchetype() const { return m_ArchetypeData.Archetype; }
 

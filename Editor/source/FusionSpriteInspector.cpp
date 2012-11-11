@@ -139,7 +139,7 @@ namespace FusionEngine { namespace Inspectors
 			FloatSetter_t([](float x, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(x, component->Scale.Get().y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().x; })
 			));
-		AddProperty("", AddTextInput("",
+		AddProperty("Scale", AddTextInput("",
 			FloatSetter_t([](float y, ComponentIPtr<ISprite> component) { component->Scale.Set(Vector2(component->Scale.Get().x, y)); }),
 			FloatGetter_t([](ComponentIPtr<ISprite> component) { return component->Scale.Get().y; })
 			));

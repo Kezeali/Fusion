@@ -536,11 +536,142 @@ namespace FusionEngine
 		}
 	};
 
+	class DockedWindowManager
+	{
+	public:
+		DockedWindowManager(Editor* editor)
+			: m_Listener(editor)
+		{
+			// TODO: add an OnResize method (called by the editor's OnWindowResize handler)
+			//  that updates the docked window sizes to relative to the window (requires another
+			//  setting for each window defining their resize mode - static, relative, fill edge)
+		}
+
+		~DockedWindowManager()
+		{
+		}
+
+		enum Side
+		{
+			Left,
+			Top,
+			Right,
+			Bottom
+		};
+
+		void AddWindow(Rocket::Core::ElementDocument* window, Side dock_side)
+		{
+			m_Listener.AddWindow(window, dock_side);
+		}
+
+		void RemoveWindow(Rocket::Core::ElementDocument* window)
+		{
+			m_Listener.RemoveWindow(window);
+		}
+
+	private:
+		class EventListener : public Rocket::Core::EventListener
+		{
+		public:
+			EventListener(Editor* editor)
+				: m_Editor(editor)
+			{
+				m_Editor->GetGUIContext()->AddEventListener("resize", this);
+			}
+
+			~EventListener()
+			{
+				if (m_Editor->GetGUIContext())
+					m_Editor->GetGUIContext()->RemoveEventListener("resize", this);
+
+				auto attached = m_AttachedDocuments;
+				m_AttachedDocuments.clear();
+				for (auto it = attached.begin(); it != attached.end(); ++it)
+				{
+					it->first->RemoveEventListener("close", this);
+					it->first->RemoveEventListener("hide", this);
+					it->first->RemoveEventListener("resize", this);
+				}
+			}
+
+			void AddWindow(Rocket::Core::ElementDocument* window, DockedWindowManager::Side dock_side)
+			{
+				auto r = m_AttachedDocuments.insert(std::make_pair(window, dock_side));
+				FSN_ASSERT(r.second); // don't allow duplicates
+
+				window->AddEventListener("close", this);
+				window->AddEventListener("hide", this);
+				window->AddEventListener("resize", this);
+			}
+
+			void RemoveWindow(Rocket::Core::ElementDocument* window)
+			{
+				window->RemoveEventListener("close", this);
+				window->RemoveEventListener("hide", this);
+				window->RemoveEventListener("resize", this);
+				m_AttachedDocuments.erase(window);
+			}
+
+			void ShrinkArea(boost::intrusive_ptr<Rocket::Core::ElementDocument> document, DockedWindowManager::Side side)
+			{
+				switch (side)
+				{
+				case DockedWindowManager::Left:
+					m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
+					break;
+				case DockedWindowManager::Top:
+					m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
+					break;
+				case DockedWindowManager::Right:
+					m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
+					break;
+				case DockedWindowManager::Bottom:
+					m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
+					break;
+				};
+			}
+
+			void ProcessEvent(Rocket::Core::Event& ev)
+			{
+				FSN_ASSERT(m_Editor);
+
+				if (ev == "resize" || ev == "hide" || ev == "close")
+				{
+					m_Area.left = m_Area.top = 0.f;
+					m_Area.right = m_Area.bottom = 1.f;
+
+					for (auto it = m_AttachedDocuments.begin(); it != m_AttachedDocuments.end(); ++it)
+					{
+						if (it->first->IsVisible())
+							ShrinkArea(it->first, it->second);
+					}
+
+					m_Editor->GetViewport()->SetArea(m_Area);
+				}
+			}
+
+			void OnDetach(Rocket::Core::Element* element)
+			{
+				if (auto window = dynamic_cast<Rocket::Core::ElementDocument*>(element))
+					m_AttachedDocuments.erase(window);
+			}
+
+			Editor* m_Editor;
+
+			CL_Rectf m_Area;
+
+			std::map<Rocket::Core::ElementDocument*, DockedWindowManager::Side> m_AttachedDocuments;
+		};
+
+		EventListener m_Listener;
+	};
+
 	inline bool MouseOverUI(Rocket::Core::Context* context)
 	{
 		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
 		{
-			if (context->GetDocument(i)->IsPseudoClassSet("hover"))
+			auto doc = context->GetDocument(i);
+			if (doc->GetTitle() != "background" && doc->IsPseudoClassSet("hover"))
 				return true;
 		}
 		if (GUI::getSingleton().GetConsoleWindow()->IsPseudoClassSet("hover"))
@@ -706,9 +837,9 @@ namespace FusionEngine
 		{
 			auto archetypeResourceEditor = std::make_shared<ArchetypeResourceEditor>();
 			m_ResourceEditors["ArchetypeFactory"] = archetypeResourceEditor;
-			archetypeResourceEditor->SetEntityInspectorExecutor([this](const EntityPtr& entity, const ArchetypeResourceEditor::OpenEntityInspectorCallback_t& done_cb)
+			archetypeResourceEditor->SetEntityInspectorExecutor([this](const EntityPtr& entity, const std::function<void (void)>& done_cb)
 			{
-				this->CreatePropertiesWindow(entity);
+				this->CreatePropertiesWindow(entity, done_cb);
 			});
 		}
 
@@ -818,11 +949,23 @@ namespace FusionEngine
 
 		m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
 		m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
+
+		m_DockedWindows = std::make_shared<DockedWindowManager>(this);
+
+		m_Background = m_GUIContext->LoadDocument("core/gui/editor_background.rml");
+		m_Background->RemoveReference();
+
+		m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
+		m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
+
+		m_Background->Show();
 	}
 
 	void Editor::Deactivate()
 	{
 		m_Active = false;
+
+		m_Background.reset();
 
 		m_EditorOverlay->m_EditCam.reset();
 
@@ -853,6 +996,7 @@ namespace FusionEngine
 		m_MouseDownSlot = m_DisplayWindow.get_ic().get_mouse().sig_key_down().connect(this, &Editor::OnMouseDown);
 		m_MouseUpSlot = m_DisplayWindow.get_ic().get_mouse().sig_key_up().connect(this, &Editor::OnMouseUp);
 		m_MouseMoveSlot = m_DisplayWindow.get_ic().get_mouse().sig_pointer_move().connect(this, &Editor::OnMouseMove);
+		m_WindowResizeSlot = m_DisplayWindow.sig_resize().connect(this, &Editor::OnWindowResize);
 	}
 
 	void Editor::SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader)
@@ -1172,141 +1316,13 @@ namespace FusionEngine
 		std::set<Rocket::Core::Element*> m_AttachedElements;
 	};
 
-	class DockedWindowManager
-	{
-	public:
-		DockedWindowManager(Editor* editor)
-			: m_Listener(editor)
-		{
-		}
-
-		~DockedWindowManager()
-		{
-		}
-
-		enum Side
-		{
-			Left,
-			Top,
-			Right,
-			Bottom
-		};
-
-		void AddWindow(Rocket::Core::ElementDocument* window, Side dock_side)
-		{
-			m_Listener.AddWindow(window, dock_side);
-		}
-
-		void RemoveWindow(Rocket::Core::ElementDocument* window)
-		{
-			m_Listener.RemoveWindow(window);
-		}
-
-	private:
-		class EventListener : public Rocket::Core::EventListener
-		{
-		public:
-			EventListener(Editor* editor)
-				: m_Editor(editor)
-			{
-				m_Editor->GetGUIContext()->AddEventListener("resize", this);
-			}
-
-			~EventListener()
-			{
-				if (m_Editor->GetGUIContext())
-					m_Editor->GetGUIContext()->RemoveEventListener("resize", this);
-
-				auto attached = m_AttachedDocuments;
-				m_AttachedDocuments.clear();
-				for (auto it = attached.begin(); it != attached.end(); ++it)
-				{
-					it->first->RemoveEventListener("close", this);
-					it->first->RemoveEventListener("hide", this);
-					it->first->RemoveEventListener("resize", this);
-				}
-			}
-
-			void AddWindow(Rocket::Core::ElementDocument* window, DockedWindowManager::Side dock_side)
-			{
-				auto r = m_AttachedDocuments.insert(std::make_pair(window, dock_side));
-				FSN_ASSERT(r.second); // don't allow duplicates
-
-				window->AddEventListener("close", this);
-				window->AddEventListener("hide", this);
-				window->AddEventListener("resize", this);
-			}
-
-			void RemoveWindow(Rocket::Core::ElementDocument* window)
-			{
-				window->RemoveEventListener("close", this);
-				window->RemoveEventListener("hide", this);
-				window->RemoveEventListener("resize", this);
-				m_AttachedDocuments.erase(window);
-			}
-
-			void ShrinkArea(boost::intrusive_ptr<Rocket::Core::ElementDocument> document, DockedWindowManager::Side side)
-			{
-				switch (side)
-				{
-				case DockedWindowManager::Left:
-					m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
-					break;
-				case DockedWindowManager::Top:
-					m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
-					break;
-				case DockedWindowManager::Right:
-					m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
-					break;
-				case DockedWindowManager::Bottom:
-					m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
-					break;
-				};
-			}
-
-			void ProcessEvent(Rocket::Core::Event& ev)
-			{
-				FSN_ASSERT(m_Editor);
-
-				if (ev == "resize" || ev == "hide" || ev == "close")
-				{
-					m_Area.left = m_Area.top = 0.f;
-					m_Area.right = m_Area.bottom = 1.f;
-
-					for (auto it = m_AttachedDocuments.begin(); it != m_AttachedDocuments.end(); ++it)
-					{
-						if (it->first->IsVisible())
-							ShrinkArea(it->first, it->second);
-					}
-
-					m_Editor->GetViewport()->SetArea(m_Area);
-				}
-			}
-
-			void OnDetach(Rocket::Core::Element* element)
-			{
-				if (auto window = dynamic_cast<Rocket::Core::ElementDocument*>(element))
-					m_AttachedDocuments.erase(window);
-			}
-
-			Editor* m_Editor;
-
-			CL_Rectf m_Area;
-
-			std::map<Rocket::Core::ElementDocument*, DockedWindowManager::Side> m_AttachedDocuments;
-		};
-
-		EventListener m_Listener;
-	};
-
 	void Editor::ShowResourceBrowser()
 	{
 		if (!m_ResourceBrowser)
 		{
-			m_ResourceBrowser = m_GUIContext->LoadDocument("/core/gui/resource_browser.rml");
+			m_ResourceBrowser = m_GUIContext->LoadDocument("core/gui/resource_browser.rml");
 			m_ResourceBrowser->RemoveReference();
 
-			m_DockedWindows = std::make_shared<DockedWindowManager>(this);
 			m_DockedWindows->AddWindow(m_ResourceBrowser.get(), DockedWindowManager::Left);
 		}
 		if (m_ResourceBrowser)
@@ -1716,58 +1732,10 @@ namespace FusionEngine
 					std::shared_ptr<ArchetypeFactory> archetypeFactory = std::make_shared<ArchetypeFactory>();
 					archetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), archetypeName, entity);
 
-					IO::PhysFSStream archetypeFile("/Data/" + archetypeName);
+					IO::PhysFSStream archetypeFile("/Data/" + archetypeName, IO::OpenMode::Write);
 					archetypeFactory->Save(archetypeFile);
 				}
-				else
-				{
-					std::string archetype_name;
 
-					DoWithArchetypeFactory(archetype_name, [this](const ResourcePointer<ArchetypeFactory>& archetypeFactory)
-					{
-						auto arc = archetypeFactory->GetArchetype();
-						arc->SynchroniseParallelEdits();
-						CreatePropertiesWindow(arc);
-					});
-				}
-
-				return;
-			}
-
-			if (ev.id == CL_KEY_9)
-			{
-				Vector2 worldPos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
-				TranslateScreenToWorld(&worldPos.x, worldPos.y);
-				Vector2 simPos(ToSimUnits(worldPos.x), ToSimUnits(worldPos.y));
-
-				const std::string archetype_name;
-
-				DoWithArchetypeFactory(archetype_name, [this, worldPos, simPos, randomAngle](const ResourcePointer<ArchetypeFactory>& archetype_factory)
-				{
-					Vector2 pos(worldPos);
-					if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
-					{
-						for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
-							for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
-							{
-								Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
-
-								float angle = 0.f;
-								if (randomAngle)
-									angle = 2.f * s_pi * (rand() / (float)RAND_MAX);
-
-								auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
-								m_EntityManager->AddEntity(entity);
-
-								SendToConsole("Instanciate " + boost::lexical_cast<std::string>(pos.x));
-							}
-					}
-					else
-					{
-						auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, 0.0f);
-						m_EntityManager->AddEntity(entity);
-					}
-				});
 				return;
 			}
 
@@ -2022,6 +1990,15 @@ namespace FusionEngine
 		m_EditorOverlay->SetOffset(mouseInWorld - m_DragFrom);
 	}
 
+	void Editor::OnWindowResize(int x, int y)
+	{
+		if (m_Active)
+		{
+			m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
+			m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
+		}
+	}
+
 	void ClearCtxMenu(MenuItem *menu)
 	{
 		menu->RemoveAllChildren();
@@ -2208,7 +2185,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::DoWithArchetypeFactory(const std::string& archetype_name, std::function<bool (const ResourcePointer<ArchetypeFactory>&)> fn)
+	void Editor::DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn)
 	{
 		if (m_ArchetypeFactoryLoadConnections.empty())
 			m_NextFactoryId = 0;
@@ -2347,6 +2324,33 @@ namespace FusionEngine
 	void Editor::AddEntityToDelete(const EntityPtr& entity)
 	{
 		m_ToDelete.push_back(entity);
+	}
+
+	void Editor::CreateArchetypeInstance(const std::string& archetype_name, const Vector2& position, float angle)
+	{
+		DoWithArchetypeFactory(archetype_name, [this, position, angle](const ResourcePointer<ArchetypeFactory>& archetype_factory)
+		{
+			Vector2 p(position);
+			if (m_SelectionRectangle.contains(CL_Vec2f(p.x, p.y)))
+			{
+				for (p.y = m_SelectionRectangle.top; p.y < m_SelectionRectangle.bottom; p.y += 100)
+					for (p.x = m_SelectionRectangle.left; p.x < m_SelectionRectangle.right; p.x += 100)
+					{
+						Vector2 simPos(ToSimUnits(p.x), ToSimUnits(p.y));
+
+						auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, angle);
+						m_EntityManager->AddEntity(entity);
+
+						SendToConsole("Instantiate " + boost::lexical_cast<std::string>(p.x));
+					}
+			}
+			else
+			{
+				Vector2 simPos(ToSimUnits(p.x), ToSimUnits(p.y));
+				auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, angle);
+				m_EntityManager->AddEntity(entity);
+			}
+		});
 	}
 
 	void Editor::CopySelectedEntities()
@@ -2609,6 +2613,7 @@ namespace FusionEngine
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
 		r = engine->RegisterObjectMethod("Editor", "Entity CreateEntity(const string &in, const Vector &in, float, bool, bool)", asMETHOD(Editor, CreateEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "void createArchetypeInstance(const string &in, const Vector &in, float)", asMETHOD(Editor, CreateArchetypeInstance), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "bool isResourceEditable(const string &in) const", asMETHOD(Editor, IsResourceEditable), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "void startResourceEditor(const string &in)", asMETHOD(Editor, StartResourceEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "bool goToEntity(const Entity &in)", asMETHOD(Editor, GoToEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);

@@ -56,6 +56,8 @@ namespace FusionEngine
 			Profile(const std::string& name);
 			~Profile();
 
+			const std::string& GetName() const { return m_Name; }
+
 			void Load(std::istream& data);
 			void Save(std::ostream& data);
 

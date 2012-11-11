@@ -192,6 +192,7 @@ namespace FusionEngine
 		CL_Slot m_MouseDownSlot;
 		CL_Slot m_MouseUpSlot;
 		CL_Slot m_MouseMoveSlot;
+		CL_Slot m_WindowResizeSlot;
 
 		bool m_RebuildScripts;
 		bool m_CompileMap;
@@ -223,6 +224,8 @@ namespace FusionEngine
 		std::map<std::string, std::shared_ptr<ResourceEditor>> m_ResourceEditors;
 		
 		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
+
+		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_Background;
 
 		Vector2 m_CamVelocity;
 
@@ -265,6 +268,8 @@ namespace FusionEngine
 		void DeleteEntity(const EntityPtr& entity);
 		void AddEntityToDelete(const EntityPtr& entity);
 
+		void CreateArchetypeInstance(const std::string& archetype_name, const Vector2& pos, float angle);
+
 		void CopySelectedEntities();
 		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
 
@@ -281,6 +286,8 @@ namespace FusionEngine
 
 		void OnMouseMove_Move(const CL_InputEvent& ev);
 
+		void OnWindowResize(int x, int y);
+
 		void ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities);
 
 		bool TranslateScreenToWorld(float* x, float* y) const;
@@ -295,7 +302,7 @@ namespace FusionEngine
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
 
-		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<bool (const ResourcePointer<ArchetypeFactory>&)> fn);
+		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn);
 
 		CL_Rectf GetBBOfSelected();
 
@@ -308,7 +315,6 @@ namespace FusionEngine
 		void CreatePropertiesWindowForSelected();
 
 		void RegisterScriptType(asIScriptEngine* engine);
-
 	};
 
 }

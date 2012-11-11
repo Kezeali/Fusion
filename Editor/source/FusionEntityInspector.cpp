@@ -157,6 +157,7 @@ namespace FusionEngine { namespace Inspectors
 		attributes.Set("type", "text");
 		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
 		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		attributes.Set("enter_event", true);
 		attributes.Set("value", "");
 		if (size <= 0)
 			attributes.Set("size", 10);
@@ -257,6 +258,9 @@ namespace FusionEngine { namespace Inspectors
 					auto& inputData = entry->second;
 					if (inputData.set_callback)
 						inputData.set_callback(inputData.ui_element->GetValue().CString(), m_Entity);
+
+					if (ev == "enter")
+						entry->first->Blur();
 				}
 			}
 		}

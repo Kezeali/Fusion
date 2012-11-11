@@ -77,11 +77,23 @@ namespace FusionEngine
 					componentData.identifier = reader.ReadString();
 					componentData.type = reader.ReadString();
 
+					size_t propIndex = 0;
+
 					auto numProperties = reader.ReadValue<std::size_t>();
 					componentData.properties.resize(numProperties);
 					for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
 					{
 						pit->id = reader.ReadValue<Archetypes::PropertyID_t>();
+						pit->name = reader.ReadString();
+
+						ReversePropertyData revPropertyData;
+						revPropertyData.component_id = archComponentId;
+						revPropertyData.component_type = componentData.type;
+						revPropertyData.component_identifier = componentData.identifier;
+						revPropertyData.name = pit->name;
+						revPropertyData.index = propIndex++;
+
+						m_Properties.insert(std::make_pair(pit->id, revPropertyData));
 					}
 				}
 			}
@@ -94,7 +106,6 @@ namespace FusionEngine
 		void Profile::Save(std::ostream& stream)
 		{
 			IO::Streams::CellStreamWriter writer(&stream);
-			FSN_ASSERT(Archetypes::s_ArchetypeFileVersion == 1);
 			writer.Write(Archetypes::s_ArchetypeFileVersion);
 			writer.WriteString(m_Name);
 
@@ -115,6 +126,7 @@ namespace FusionEngine
 				for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
 				{
 					writer.Write(pit->id);
+					writer.WriteString(pit->name);
 				}
 			}
 		}
@@ -157,6 +169,7 @@ namespace FusionEngine
 				{
 					ComponentData::PropertyData propda;
 					propda.id = propId;
+					propda.name = prop.first;
 					comda.properties.push_back(propda);
 				}
 

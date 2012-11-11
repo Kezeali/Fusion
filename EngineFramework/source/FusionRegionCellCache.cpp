@@ -791,12 +791,14 @@ namespace FusionEngine
 
 	void RegionCellCache::Sustain()
 	{
-		ResourceManager::getSingleton().PauseUnload("MapRegion" + m_CachePath);
+		if (ResourceManager::getSingletonPtr())
+			ResourceManager::getSingleton().PauseUnload("MapRegion" + m_CachePath);
 	}
 
 	void RegionCellCache::EndSustain()
 	{
-		ResourceManager::getSingleton().ResumeUnload("MapRegion" + m_CachePath);
+		if (ResourceManager::getSingletonPtr())
+			ResourceManager::getSingleton().ResumeUnload("MapRegion" + m_CachePath);
 	}
 
 	namespace RegionMap

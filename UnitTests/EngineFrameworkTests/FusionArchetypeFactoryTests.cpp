@@ -24,7 +24,7 @@ struct archetype_f : public testing::Test
 	virtual void SetUp()
 	{
 		manager.reset(new EngineManager(args));
-		ASSERT_NO_THROW(factory.reset(new ArchetypeFactory(nullptr)));
+		ASSERT_NO_THROW(factory.reset(new ArchetypeFactory()));
 	}
 	virtual void TearDown()
 	{

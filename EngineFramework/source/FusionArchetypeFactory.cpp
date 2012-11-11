@@ -76,14 +76,18 @@ namespace FusionEngine
 		size_t m_VolitileCapacity;
 	};
 
-	ArchetypeFactoryManager::ArchetypeFactoryManager()
+	ArchetypeFactoryManager::ArchetypeFactoryManager(ComponentFactory* factory, EntityManager* manager)
 		: m_ResourceSustainer(new SimpleResourceSustainer()),
+		m_ComponentFactory(factory),
+		m_EntityManager(manager),
 		m_Instantiator(nullptr)
 	{
 	}
 
-	ArchetypeFactoryManager::ArchetypeFactoryManager(EntityInstantiator* instantiator)
+	ArchetypeFactoryManager::ArchetypeFactoryManager(ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		: m_ResourceSustainer(new SimpleResourceSustainer()),
+		m_ComponentFactory(factory),
+		m_EntityManager(manager),
 		m_Instantiator(instantiator)
 	{
 	}
@@ -159,7 +163,7 @@ namespace FusionEngine
 		m_ArchetypeData.Profile->Save(stream);
 	}
 
-	void ArchetypeFactory::Load(std::istream& stream)
+	void ArchetypeFactory::Load(std::istream& stream, ComponentFactory* factory, EntityManager* manager)
 	{
 		boost::mutex::scoped_lock lock(m_Mutex);
 
@@ -167,11 +171,20 @@ namespace FusionEngine
 		reader.Read(m_Editable);
 
 		// Load the archetype definition entity
-		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntityImmeadiate(stream, false, 0, m_Editable, nullptr, nullptr, m_ComponentInstantiator);
-		m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
+		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntityImmeadiate(stream, false, 0, m_Editable, factory, manager, m_ComponentInstantiator);
+		//m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
 		// Load the profile
 		m_ArchetypeData.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
 		m_ArchetypeData.Profile->Load(stream);
+		m_TypeName = m_ArchetypeData.Profile->GetName();
+
+		std::map<ComponentPtr, Archetypes::ComponentID_t> componentIds;
+		for (auto it = m_ArchetypeData.Archetype->GetComponents().begin(); it != m_ArchetypeData.Archetype->GetComponents().end(); ++it)
+		{
+			//componetIds.insert(std::make_pair(*it, 
+		}
+
+		m_ArchetypeData.Agent = std::make_shared<ArchetypeDefinitionAgent>(m_ArchetypeData.Archetype, m_ArchetypeData.Profile, std::move(componentIds));
 	}
 
 	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
@@ -259,7 +272,7 @@ namespace FusionEngine
 		try
 		{
 			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
-			factory->Load(IO::CLStream(dev));
+			factory->Load(IO::CLStream(dev), ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
 		}
 		catch (CL_Exception& ex)
 		{

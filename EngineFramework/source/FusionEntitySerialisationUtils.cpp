@@ -931,12 +931,10 @@ namespace FusionEngine
 
 			out.Write(entity->IsTerrain());
 
-			bool archetypal = entity->IsArchetypal();
-
-			// Write an archetypal entity
+			const bool archetypal = entity->IsArchetypal();
 			if (archetypal)
 			{
-				// Write the identifier
+				// Write the archetype identifier
 				out.WriteString(entity->GetArchetype());
 			}
 			else
@@ -946,7 +944,7 @@ namespace FusionEngine
 			size_t numComponents = components.size() - 1; // - transform
 
 			// Synchronise all the properties of each component to make sure the most recent state is
-			//  saved (important when, for example, an entity is loaded and immeadiately saved without
+			//  saved (important when, for example, an entity is loaded and immediately saved without
 			//  ever being activated)
 			for (auto it = components.begin(); it != components.end(); ++it)
 				(*it)->SynchronisePropertiesNow();
@@ -1068,6 +1066,10 @@ namespace FusionEngine
 
 		std::shared_ptr<EntityFuture> LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
+			FSN_ASSERT(factory);
+			FSN_ASSERT(manager);
+			FSN_ASSERT(instantiator);
+
 			CellStreamReader in(&instr);
 
 			// Load entity info
@@ -1111,6 +1113,9 @@ namespace FusionEngine
 
 		EntityPtr LoadUniqueEntity(ICellStream& instr, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
+			FSN_ASSERT(factory);
+			FSN_ASSERT(manager);
+
 			CellStreamReader in(&instr);
 
 			ComponentPtr transform;
@@ -1185,6 +1190,10 @@ namespace FusionEngine
 
 		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
+			FSN_ASSERT(archetype_factory);
+			FSN_ASSERT(factory);
+			FSN_ASSERT(manager);
+
 			CellStreamReader in(&instr);
 
 			Vector2 position;

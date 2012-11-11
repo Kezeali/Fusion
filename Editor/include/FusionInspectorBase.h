@@ -804,8 +804,8 @@ namespace FusionEngine { namespace Inspectors
 			}
 			else if (isTextboxElem && ev == "blur")
 			{
-				// TODO: make it an setable option whether un-focusing an input resets or commits the changed value
-				//  (could default to commiting once undo/redo for properties is implemented tho)
+				// TODO: make it an settable option whether un-focusing an input resets or commits the changed value
+				//  (could default to committing once undo/redo for properties is implemented tho)
 				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
 				if (entry != m_Inputs.end())
 				{
