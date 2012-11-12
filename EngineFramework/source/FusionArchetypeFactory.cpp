@@ -160,7 +160,7 @@ namespace FusionEngine
 
 		EntitySerialisationUtils::SaveEntity(stream, m_ArchetypeData.Archetype, false, m_Editable);
 
-		m_ArchetypeData.Profile->Save(stream);
+		m_ArchetypeData.Profile->Save(stream, m_ArchetypeData.Archetype);
 	}
 
 	void ArchetypeFactory::Load(std::istream& stream, ComponentFactory* factory, EntityManager* manager)
@@ -173,18 +173,15 @@ namespace FusionEngine
 		// Load the archetype definition entity
 		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntityImmeadiate(stream, false, 0, m_Editable, factory, manager, m_ComponentInstantiator);
 		//m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
+		
 		// Load the profile
 		m_ArchetypeData.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
-		m_ArchetypeData.Profile->Load(stream);
+		m_ArchetypeData.Profile->Load(stream, m_ArchetypeData.Archetype);
+
 		m_TypeName = m_ArchetypeData.Profile->GetName();
 
-		std::map<ComponentPtr, Archetypes::ComponentID_t> componentIds;
-		for (auto it = m_ArchetypeData.Archetype->GetComponents().begin(); it != m_ArchetypeData.Archetype->GetComponents().end(); ++it)
-		{
-			//componetIds.insert(std::make_pair(*it, 
-		}
-
-		m_ArchetypeData.Agent = std::make_shared<ArchetypeDefinitionAgent>(m_ArchetypeData.Archetype, m_ArchetypeData.Profile, std::move(componentIds));
+		// Create a new definition agent
+		m_ArchetypeData.Agent = std::make_shared<ArchetypeDefinitionAgent>(m_ArchetypeData.Archetype, m_ArchetypeData.Profile);
 	}
 
 	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
@@ -247,9 +244,9 @@ namespace FusionEngine
 		data.Archetype->SetArchetype(m_TypeName);
 		// Generate the type definition
 		data.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
-		auto componentIds = data.Profile->Define(data.Archetype);
+		data.Profile->Define(data.Archetype);
 		// Create and apply the definition agent
-		data.Agent = std::make_shared<ArchetypeDefinitionAgent>(data.Archetype, data.Profile, std::move(componentIds));
+		data.Agent = std::make_shared<ArchetypeDefinitionAgent>(data.Archetype, data.Profile);
 		data.Archetype->SetArchetypeDefinitionAgent(data.Agent);
 
 		// TODO: add archetypes to the entity manager or something to maintain them

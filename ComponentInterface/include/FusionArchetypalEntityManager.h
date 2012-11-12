@@ -52,9 +52,6 @@ namespace FusionEngine
 	
 	namespace Archetypes
 	{
-		typedef std::uint32_t PropertyID_t;
-		typedef std::uint16_t ComponentID_t;
-
 		class Profile;
 	}
 
@@ -164,7 +161,7 @@ namespace FusionEngine
 	class ArchetypeDefinitionAgent : public IDefinitionAgent
 	{
 	public:
-		ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile, std::map<ComponentPtr, Archetypes::ComponentID_t> ids);
+		ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile);
 		virtual ~ArchetypeDefinitionAgent() {}
 
 		//! Save the local overrides
@@ -187,9 +184,6 @@ namespace FusionEngine
 		std::weak_ptr<Entity> m_DefinitionEntity;
 
 		std::shared_ptr<Archetypes::Profile> m_Profile;
-
-		// This seems dumb, and should probably be refactored (perhaps store the ID in the component itself?)
-		std::map<ComponentPtr, Archetypes::ComponentID_t> m_ComponentIdMap;
 
 		std::unordered_map<PropertyID, SyncSig::HandlerConnection_t> m_PropertyListenerConnections;
 

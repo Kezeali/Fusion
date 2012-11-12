@@ -387,10 +387,9 @@ namespace FusionEngine
 		}
 	}
 
-	ArchetypeDefinitionAgent::ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile, std::map<ComponentPtr, Archetypes::ComponentID_t> ids)
+	ArchetypeDefinitionAgent::ArchetypeDefinitionAgent(const EntityPtr& entity, const std::shared_ptr<Archetypes::Profile>& profile)
 		: m_DefinitionEntity(entity),
-		m_Profile(profile),
-		m_ComponentIdMap(ids)
+		m_Profile(profile)
 	{
 		// Add property listeners to push changes
 		auto& components = entity->GetComponents();
@@ -411,7 +410,7 @@ namespace FusionEngine
 	void ArchetypeDefinitionAgent::ComponentAdded(const ComponentPtr& component)
 	{
 		auto id = m_Profile->AddComponent(component);
-		m_ComponentIdMap[component] = id;
+		FSN_ASSERT(component->GetArchetypeID() == id); // To make sure I don't accidentally remove the line that sets this value in Profile::AddComponent
 
 		AddPropertyListeners(component);
 
@@ -420,12 +419,8 @@ namespace FusionEngine
 
 	void ArchetypeDefinitionAgent::ComponentRemoved(const ComponentPtr& component)
 	{
-		auto entry = m_ComponentIdMap.find(component);
-		if (entry != m_ComponentIdMap.end())
-		{
-			m_Profile->RemoveComponent(entry->second);
-			SignalRemoveComponent(entry->second);
-		}
+		m_Profile->RemoveComponent(component->GetArchetypeID());
+		SignalRemoveComponent(component->GetArchetypeID());
 	}
 
 	void ArchetypeDefinitionAgent::PushState()

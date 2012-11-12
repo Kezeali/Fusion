@@ -58,10 +58,10 @@ namespace FusionEngine
 
 			const std::string& GetName() const { return m_Name; }
 
-			void Load(std::istream& data);
-			void Save(std::ostream& data);
+			void Load(std::istream& data, const EntityPtr& definition);
+			void Save(std::ostream& data, const EntityPtr& definition);
 
-			std::map<ComponentPtr, ComponentID_t> Define(const EntityPtr& definition);
+			void Define(const EntityPtr& definition);
 
 			ComponentID_t AddComponent(const ComponentPtr& component);
 			void RemoveComponent(ComponentID_t component);

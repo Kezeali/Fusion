@@ -51,7 +51,7 @@ namespace FusionEngine
 		{
 		}
 
-		void Profile::Load(std::istream& stream)
+		void Profile::Load(std::istream& stream, const EntityPtr& definition)
 		{
 			IO::Streams::CellStreamReader reader(&stream);
 		
@@ -67,7 +67,13 @@ namespace FusionEngine
 				reader.Read(m_NextComId);
 				reader.Read(m_NextPropId);
 
+				const auto& definitionComponents = definition->GetComponents();
+
 				auto numComponents = reader.ReadValue<std::size_t>();
+
+				if (numComponents != definitionComponents.size())
+					FSN_EXCEPT(InvalidArgumentException, "Incorrect number of components given in archetype profile");
+
 				for (size_t i = 0; i < numComponents; ++i)
 				{
 					auto archComponentId = reader.ReadValue<Archetypes::ComponentID_t>();
@@ -95,6 +101,8 @@ namespace FusionEngine
 
 						m_Properties.insert(std::make_pair(pit->id, revPropertyData));
 					}
+
+					definitionComponents[i]->SetArchetypeID(archComponentId);
 				}
 			}
 			else // unknown version
@@ -103,8 +111,13 @@ namespace FusionEngine
 			}
 		}
 
-		void Profile::Save(std::ostream& stream)
+		void Profile::Save(std::ostream& stream, const EntityPtr& definition)
 		{
+			const auto& definitionComponents = definition->GetComponents();
+
+			if (definitionComponents.size() != m_Components.size())
+				FSN_EXCEPT(InvalidArgumentException, "The archetype definition provided doesn't have the same number of components as this profile");
+
 			IO::Streams::CellStreamWriter writer(&stream);
 			writer.Write(Archetypes::s_ArchetypeFileVersion);
 			writer.WriteString(m_Name);
@@ -113,38 +126,40 @@ namespace FusionEngine
 			writer.Write(m_NextPropId);
 
 			writer.WriteAs<std::size_t>(m_Components.size());
-			for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+			//for (auto it = m_Components.cbegin(); it != m_Components.cend(); ++it)
+			// Write the archetype IDs in the order that the components appear in the definition entity
+			for (auto it = definitionComponents.cbegin(); it != definitionComponents.cend(); ++it)
 			{
-				writer.Write(it->first);
-
-				const auto& componentData = it->second;
-
-				writer.WriteString(componentData.identifier);
-				writer.WriteString(componentData.type);
-
-				writer.WriteAs<std::size_t>(componentData.properties.size());
-				for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
+				auto profileEntry = m_Components.find((*it)->GetArchetypeID());
+				if (profileEntry != m_Components.end())
 				{
-					writer.Write(pit->id);
-					writer.WriteString(pit->name);
+					writer.Write(profileEntry->first);
+
+					const auto& componentData = profileEntry->second;
+
+					writer.WriteString(componentData.identifier);
+					writer.WriteString(componentData.type);
+
+					writer.WriteAs<std::size_t>(componentData.properties.size());
+					for (auto pit = componentData.properties.begin(); pit != componentData.properties.end(); ++pit)
+					{
+						writer.Write(pit->id);
+						writer.WriteString(pit->name);
+					}
 				}
 			}
 		}
 
-		std::map<ComponentPtr, ComponentID_t> Profile::Define(const EntityPtr& definition)
+		void Profile::Define(const EntityPtr& definition)
 		{
-			std::map<ComponentPtr, ComponentID_t> resultHackityHack;
-
 			m_Components.clear();
 
 			const auto& components = definition->GetComponents();
 			for (auto it = components.begin(); it != components.end(); ++it)
 			{
 				const auto& component = *it;
-				resultHackityHack[component] = AddComponent(component);
+				AddComponent(component);
 			}
-
-			return std::move(resultHackityHack);
 		}
 
 		ComponentID_t Profile::AddComponent(const ComponentPtr& component)
@@ -183,6 +198,9 @@ namespace FusionEngine
 					m_Properties[propId] = propda;
 				}
 			}
+
+			// Store the ID in the component itself for reverse lookup
+			component->SetArchetypeID(comId);
 
 			return comId;
 		}

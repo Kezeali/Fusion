@@ -56,6 +56,13 @@ namespace FusionEngine
 
 	typedef boost::intrusive_ptr<EntityComponent> ComponentPtr;
 
+	namespace Archetypes
+	{
+		typedef std::uint32_t PropertyID_t;
+		typedef std::uint16_t ComponentID_t;
+	}
+
+
 	//! Log pointer
 	typedef std::shared_ptr<Log> LogPtr;
 	typedef std::shared_ptr<Module> ModulePtr;

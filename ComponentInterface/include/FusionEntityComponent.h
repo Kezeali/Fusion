@@ -176,9 +176,10 @@ namespace FusionEngine
 	class EntityComponent : public RefCounted
 	{
 	public:
-		//! Cotr
+		//! Ctor
 		EntityComponent()
 			: RefCounted(0),
+			m_ArchetypeId(std::numeric_limits<Archetypes::ComponentID_t>::max()),
 			m_InterfacesInitialised(false),
 			m_LastContinuousProperty(nullptr),
 			m_LastOccasionalProperty(nullptr)
@@ -210,6 +211,11 @@ namespace FusionEngine
 
 		void SetIdentifier(const std::string& identifier) { m_Identifier = identifier; }
 		const std::string& GetIdentifier() const { return m_Identifier; }
+
+		//! Sets the archetype-id that refers to this component (if it is part of an archetype)
+		void SetArchetypeID(Archetypes::ComponentID_t id) { m_ArchetypeId = id; }
+		//! Gets the archetype-id that refers to this component (if it is part of an archetype)
+		Archetypes::ComponentID_t GetArchetypeID() const { return m_ArchetypeId; }
 
 		virtual std::string GetType() const = 0;
 
@@ -287,6 +293,8 @@ namespace FusionEngine
 	private:
 		Entity* m_Parent;
 		std::string m_Identifier; // How this component is identified within the entity
+
+		Archetypes::ComponentID_t m_ArchetypeId; // Identifies this component if it is part of an arch definition
 
 		tbb::atomic<ReadyState> m_Ready;
 
