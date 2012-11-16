@@ -37,6 +37,7 @@
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
 #include "FusionThreadSafeProperty.h"
+#include "FusionViewport.h"
 
 #include <ClanLib/Display/2D/color.h>
 
@@ -45,10 +46,6 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		//ThreadSafeProperty<Vector2> Offset;
-		//ThreadSafeProperty<int> LocalDepth;
-		//ThreadSafeProperty<bool> Interpolate;
-
 		FSN_COIFACE_PROPS(IRenderCom,
 			((FSN_GET_SET)(Offset)(Vector2))
 			((FSN_GET_SET)(LocalDepth)(int)) )
@@ -89,45 +86,6 @@ namespace FusionEngine
 			((FSN_GET_SET)(AnimationFrame)(int))
 			((FSN_IS_SET)(Playing)(bool))
 			((FSN_IS_SET)(Looping)(bool)) )
-
-		/*FSN_COIFACE_CTOR(ISprite,
-			((FSN_GET_SET)(ImagePath))
-			((FSN_GET_SET)(AnimationPath))
-
-			((FSN_GET_SET)(AlignmentOrigin))
-			((FSN_GET_SET)(AlignmentOffset))
-			((FSN_GET_SET)(RotationOrigin))
-			((FSN_GET_SET)(RotationOffset))
-
-			((FSN_GET_SET)(Colour))
-			((FSN_GET_SET)(Alpha))
-			((FSN_GET_SET)(Scale))
-			((FSN_GET_SET)(BaseAngle))
-
-			((FSN_IS)(AnimationFinished))
-			
-			((FSN_GET_SET)(AnimationFrame))
-			((FSN_IS_SET)(Playing))
-			((FSN_IS_SET)(Looping)) )
-
-		ThreadSafeProperty<std::string> ImagePath;
-		ThreadSafeProperty<std::string> AnimationPath;
-
-		ThreadSafeProperty<CL_Origin> AlignmentOrigin;
-		ThreadSafeProperty<Vector2i> AlignmentOffset;
-		ThreadSafeProperty<CL_Origin> RotationOrigin;
-		ThreadSafeProperty<Vector2i> RotationOffset;
-		ThreadSafeProperty<CL_Colorf> Colour;
-		ThreadSafeProperty<float> Alpha;
-		ThreadSafeProperty<Vector2> Scale;
-		ThreadSafeProperty<float> BaseAngle;
-
-		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
-
-		ThreadSafeProperty<int> AnimationFrame;
-
-		ThreadSafeProperty<bool> Playing;
-		ThreadSafeProperty<bool> Looping;*/
 
 		virtual void Finish() = 0;
 
@@ -193,12 +151,7 @@ namespace FusionEngine
 			((FSN_GET_SET)(ViewportRect)(CL_Rectf))
 			((FSN_IS_SET)(AngleEnabled)(bool)) )
 
-		//ThreadSafeProperty<SyncTypes> SyncType;
-
-		//ThreadSafeProperty<bool> ViewportEnabled;
-		//ThreadSafeProperty<CL_Rectf> ViewportRect;
-
-		//ThreadSafeProperty<bool> AngleEnabled;
+		virtual ViewportPtr GetViewport() const = 0;
 
 	private:
 		virtual void SetSyncType(SyncTypes value) = 0;

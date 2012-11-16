@@ -2608,6 +2608,11 @@ namespace FusionEngine
 		doc->RemoveReference();
 	}
 
+	ViewportPtr Editor_GetViewport(const std::string& name, Editor* obj)
+	{
+		return obj->GetViewport();
+	}
+
 	void Editor::RegisterScriptType(asIScriptEngine* engine)
 	{
 		int r;
@@ -2617,6 +2622,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Editor", "bool isResourceEditable(const string &in) const", asMETHOD(Editor, IsResourceEditable), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "void startResourceEditor(const string &in)", asMETHOD(Editor, StartResourceEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "bool goToEntity(const Entity &in)", asMETHOD(Editor, GoToEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "Viewport getViewport(const string &in)", asFUNCTION(Editor_GetViewport), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 }

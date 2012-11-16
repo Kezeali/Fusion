@@ -1,6 +1,8 @@
 void OnDragDrop(Event@ event)
 {
 	Element@ dragElement = event.GetParameterAsElement(rString('drag_element'));
+	int posx = event.GetParameter("mouse_x", int(0));
+	int posy = event.GetParameter("mouse_y", int(0));
 
 	ElementList elements;
 	dragElement.GetElementsByTagName(elements, rString("fileinfo"));
@@ -8,6 +10,7 @@ void OnDragDrop(Event@ event)
 	{
 		Element@ fileInfo = elements[0];
 		string textval = fileInfo.GetAttribute(rString("path"), rString());
-		editor.createArchetypeInstance(textval, Vector(), 0.0);
+		Vector worldPosition = editor.getViewport("main").ScreenToWorld(Vector(float(posx), float(posy)));
+		editor.createArchetypeInstance(textval, worldPosition, 0.0);
 	}
 }

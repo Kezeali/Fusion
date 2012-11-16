@@ -74,6 +74,8 @@ namespace FusionEngine
 
 		void SetCamera(const CameraPtr& camera);
 
+		ViewportPtr GetViewport() const { return m_Viewport; }
+
 	private:
 		void SetPosition(const Vector2& value);
 		Vector2 GetPosition() const;

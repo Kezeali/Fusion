@@ -362,6 +362,8 @@ namespace FusionEngine
 
 			auto compressor = RakNet::StringCompressor::Instance();
 
+			auto lock = entity->GetComponentLock(false);
+
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
@@ -407,6 +409,8 @@ namespace FusionEngine
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
 			auto stringCompressor = RakNet::StringCompressor::Instance();
+
+			auto lock = entity->GetComponentLock(false);
 
 			ComponentPtr transform;
 			{
@@ -492,6 +496,8 @@ namespace FusionEngine
 
 			auto compressor = RakNet::StringCompressor::Instance();
 
+			auto lock = entity->GetComponentLock(false);
+
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
@@ -574,6 +580,8 @@ namespace FusionEngine
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
 			auto stringCompressor = RakNet::StringCompressor::Instance();
+
+			auto lock = entity->GetComponentLock(false);
 
 			auto& existingComponents = entity->GetComponents();
 
@@ -939,6 +947,8 @@ namespace FusionEngine
 			}
 			else
 				out.WriteString("");
+
+			auto lock = entity->GetComponentLock(false);
 
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform

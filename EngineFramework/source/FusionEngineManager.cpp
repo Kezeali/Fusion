@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -55,6 +55,8 @@
 #include "FusionProfiling.h"
 #include "FusionRakNetwork.h"
 #include "FusionRegionMapLoader.h"
+#include "FusionRender2DComponent.h"
+#include "FusionRenderer.h"
 #include "FusionResourceManager.h"
 #include "FusionScriptedConsoleCommand.h"
 #include "FusionScriptInputEvent.h"
@@ -423,6 +425,31 @@ namespace FusionEngine
 		return m_PlayerManager->RequestNewPlayer();
 	}
 
+	Vector2 Viewport_ScreenToWorld(Vector2 position, ViewportPtr* obj)
+	{
+		CL_Rectf worldArea, screenArea;
+		Renderer::CalculateScreenArea(EngineManager::getSingleton().GetDisplayWindow().get_gc(), worldArea, *obj, true);
+		Renderer::CalculateScreenArea(EngineManager::getSingleton().GetDisplayWindow().get_gc(), screenArea, *obj, false);
+
+		const bool withinViewport = position.x >= screenArea.left && position.y >= screenArea.top;
+		position.x -= screenArea.left, position.y -= screenArea.top;
+
+		auto camera = (*obj)->GetCamera();
+		if (camera)
+		{
+			position.x *= (1 / camera->GetZoom());
+			position.y *= (1 / camera->GetZoom());
+		}
+		position.x += worldArea.left, position.y += worldArea.top;
+
+		return position;
+	}
+
+	Vector2 ICamera_ScreenToWorld(Vector2 position, ICamera* obj)
+	{
+		return Viewport_ScreenToWorld(position, &obj->GetViewport());
+	}
+
 	void EngineManager::RegisterScriptTypes()
 	{
 		auto engine = m_ScriptManager->GetEnginePtr();
@@ -467,11 +494,16 @@ namespace FusionEngine
 		ISprite_RegisterScriptInterface(engine);
 		IScript_RegisterScriptInterface(engine);
 		ICamera_RegisterScriptInterface(engine);
+		// Hey, look what I do to make future me's life easier
+		engine->RegisterObjectMethod("ICamera", "Vector ScreenToWorld(Vector position)", asFUNCTION(ICamera_ScreenToWorld), asCALL_CDECL_OBJLAST);
 
 		Entity::Register(engine);
 		P2PEntityInstantiator::Register(engine);
 		
 		Camera::Register(engine);
+		Viewport::Register(engine);
+		engine->RegisterObjectMethod("Viewport", "Vector ScreenToWorld(Vector position)", asFUNCTION(Viewport_ScreenToWorld), asCALL_CDECL_OBJLAST);
+
 		StreamingManager::Register(engine);
 	}
 

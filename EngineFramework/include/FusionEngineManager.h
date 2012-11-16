@@ -33,6 +33,7 @@
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
 
+#include "FusionSingleton.h"
 #include "FusionWorldSaver.h"
 
 #include <ClanLib/core.h> // For CL_String (bleh)
@@ -73,7 +74,7 @@ namespace FusionEngine
 	void BootUp();
 
 	//! EngineManager
-	class EngineManager : public WorldSaver
+	class EngineManager : public WorldSaver, public Singleton<EngineManager>
 	{
 	public:
 		//! CTOR
@@ -95,9 +96,9 @@ namespace FusionEngine
 
 		void Run();
 
-		//! Saves immeadiately
+		//! Saves immediately
 		void Save(const std::string& name, bool quick = false);
-		//! Load immeadiately
+		//! Load immediately
 		void Load(const std::string& name);
 
 		void EnqueueSave(const std::string& name, bool quick = false);

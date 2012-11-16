@@ -431,6 +431,8 @@ namespace FusionEngine
 			std::vector<std::uint32_t> checksums;
 			EntitySerialisationUtils::SerialiseContinuous(stream, entity, EntitySerialisationUtils::All);
 			EntitySerialisationUtils::SerialiseOccasional(stream, checksums, entity, EntitySerialisationUtils::All);
+			//std::stringstream stream;
+			//EntitySerialisationUtils::SaveEntity(stream, entity, false, true);
 			SignalChange(stream);
 		}
 	}

@@ -49,6 +49,7 @@ namespace FusionEngine
 
 	typedef std::basic_istream<char> ICellStream;
 	typedef std::basic_ostream<char> OCellStream;
+	typedef std::basic_iostream<char> IOCellStream;
 
 	class ArchetypeFactory;
 	

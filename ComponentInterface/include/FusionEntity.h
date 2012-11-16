@@ -258,6 +258,11 @@ namespace FusionEngine
 
 		const ComInterfaceMap& GetInterfaces() const;
 
+		std::unique_ptr<tbb::spin_rw_mutex::scoped_lock> GetComponentLock(bool write)
+		{
+			return std::unique_ptr<tbb::spin_rw_mutex::scoped_lock>(new tbb::spin_rw_mutex::scoped_lock(m_ComponentsMutex, write));
+		}
+
 		//! Create a new copy of this entity
 		EntityPtr Clone(ComponentFactory* factory) const;
 

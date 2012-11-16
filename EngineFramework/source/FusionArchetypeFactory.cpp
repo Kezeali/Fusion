@@ -179,9 +179,11 @@ namespace FusionEngine
 		m_ArchetypeData.Profile->Load(stream, m_ArchetypeData.Archetype);
 
 		m_TypeName = m_ArchetypeData.Profile->GetName();
+		m_ArchetypeData.Archetype->SetName(m_TypeName);
 
 		// Create a new definition agent
 		m_ArchetypeData.Agent = std::make_shared<ArchetypeDefinitionAgent>(m_ArchetypeData.Archetype, m_ArchetypeData.Profile);
+		m_ArchetypeData.Archetype->SetArchetypeDefinitionAgent(m_ArchetypeData.Agent);
 	}
 
 	EntityPtr ArchetypeFactory::MakeInstance(ComponentFactory* factory, const Vector2& pos, float angle) const
@@ -242,6 +244,7 @@ namespace FusionEngine
 		// Generate the archetype by cloning the given entity
 		data.Archetype = entity->Clone(factory);
 		data.Archetype->SetArchetype(m_TypeName);
+		data.Archetype->SetName(m_TypeName);
 		// Generate the type definition
 		data.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
 		data.Profile->Define(data.Archetype);
