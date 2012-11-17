@@ -179,7 +179,7 @@ namespace FusionEngine
 		m_ArchetypeData.Profile->Load(stream, m_ArchetypeData.Archetype);
 
 		m_TypeName = m_ArchetypeData.Profile->GetName();
-		m_ArchetypeData.Archetype->SetName(m_TypeName);
+		m_ArchetypeData.Archetype->SetArchetype(m_TypeName);
 
 		// Create a new definition agent
 		m_ArchetypeData.Agent = std::make_shared<ArchetypeDefinitionAgent>(m_ArchetypeData.Archetype, m_ArchetypeData.Profile);
