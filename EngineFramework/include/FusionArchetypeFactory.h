@@ -129,7 +129,7 @@ namespace FusionEngine
 		void SetEditable(bool value) { m_Editable = value; }
 
 		void Save(std::ostream& stream);
-		void Load(std::istream& stream, ComponentFactory* factory, EntityManager* manager);
+		void Load(std::unique_ptr<std::istream> stream, ComponentFactory* factory, EntityManager* manager);
 
 		const EntityPtr& GetArchetype() const { return m_ArchetypeData.Archetype; }
 

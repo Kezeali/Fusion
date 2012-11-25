@@ -48,7 +48,7 @@ namespace FusionEngine
 		virtual ~CellDataSource() {}
 
 		typedef std::function<void (std::shared_ptr<ArchiveIStream>)> GotCellForReadingCallback;
-		typedef std::function<void (std::unique_ptr<ArchiveOStream>)> GotCellForWritingCallback;
+		//typedef std::function<void (std::shared_ptr<ArchiveOStream>)> GotCellForWritingCallback;
 
 		virtual void GetCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y) = 0;
 		virtual std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y) = 0;

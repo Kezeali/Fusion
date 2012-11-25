@@ -215,19 +215,18 @@ namespace FusionEngine
 				entitiesInTransit(std::move(other.entitiesInTransit))
 			{}
 
-			//ReadJob(ReadJob& other)
-			//	: cell(other.cell),
-			//	coord(other.coord),
-			//	cellDataStream(other.cellDataStream),
-			//	entitiesInTransit(other.entitiesInTransit)
-			//{}
+		//private:
+		//	ReadJob(const ReadJob& other)
+		//	{}
+		//	ReadJob& operator=(const ReadJob&)
+		//	{}
 		};
 
-		void OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, ReadJob job);
+		void OnGotCellStreamForReading(std::shared_ptr<std::istream>&& cellDataStream, std::shared_ptr<ReadJob> job);
 
-		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(ICellStream& file, bool includes_id, ObjectID id, const bool editable);
+		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const bool editable);
 
-		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, ICellStream& file, bool data_includes_ids, const bool editable = false);
+		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, std::shared_ptr<ICellStream> file, bool data_includes_ids, const bool editable = false);
 
 		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable = false);
 
@@ -285,7 +284,7 @@ namespace FusionEngine
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE
 		typedef tbb::concurrent_queue<WriteJob> WriteQueue_t;
-		typedef tbb::concurrent_queue<ReadJob> ReadQueue_t;
+		typedef tbb::concurrent_queue<std::shared_ptr<ReadJob>> ReadQueue_t;
 #else
 		boost::mutex m_WriteQueueMutex;
 		boost::mutex m_ReadQueueMutex;
@@ -297,7 +296,7 @@ namespace FusionEngine
 		ReadQueue_t m_ReadQueueLoadEntities;
 
 		// Cells waiting on archetypes to finish loading (put aside to not hold up the other cells)
-		std::list<ReadJob> m_IncommingCells;
+		std::list<std::shared_ptr<ReadJob>> m_IncommingCells;
 
 		//! TODO un-caps these when vc++ supports enum class
 		enum UpdateOperation { UPDATE, REMOVE };

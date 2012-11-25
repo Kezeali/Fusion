@@ -1012,36 +1012,45 @@ namespace FusionEngine
 		public:
 			DoNothingEntityFuture(const EntityPtr& entity) : m_Entity(entity) {}
 
-			EntityPtr get() { return m_Entity; }
+			EntityPtr get() { return std::move(m_Entity); }
+
+			std::pair<EntityPtr, std::unique_ptr<ICellStream>> get_more() { return std::make_pair(std::move(m_Entity), std::move(m_Stream)); }
 
 			bool is_ready() const { return true; }
 
 		private:
 			EntityPtr m_Entity;
+			std::unique_ptr<ICellStream> m_Stream;
 		};
 
 		class ArchetypalEntityFuture : public EntityFuture
 		{
 		public:
-			ArchetypalEntityFuture(const std::string& archetype_id, const std::function<EntityPtr (const ResourceDataPtr&)>& finalise);
+			ArchetypalEntityFuture(std::shared_ptr<ICellStream>&& cell_data_stream, const std::string& archetype_id, const std::function<EntityPtr (const std::shared_ptr<ICellStream>&, const ResourceDataPtr&)>& finalise);
 
 			void OnArchetypeLoaded(ResourceDataPtr resource);
 
-			EntityPtr get();
+			EntityPtr get_entity();
+
+			std::shared_ptr<ICellStream> get_file();
+
+			std::pair<EntityPtr, std::shared_ptr<ICellStream>> get();
 
 			bool is_ready() const;
 
 		private:
 			ResourceDataPtr m_Resource;
-			std::function<EntityPtr (const ResourceDataPtr&)> m_FinaliseFn;
+			std::shared_ptr<ICellStream> m_Stream;
+			std::function<EntityPtr (const std::unique_ptr<ICellStream>&, const ResourceDataPtr&)> m_FinaliseFn;
 
 			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
 
 			CL_Event m_GotResult;
 		};
 
-		ArchetypalEntityFuture::ArchetypalEntityFuture(const std::string& archetype_id, const std::function<EntityPtr (const ResourceDataPtr&)>& finalise)
-			: m_FinaliseFn(finalise),
+		ArchetypalEntityFuture::ArchetypalEntityFuture(std::shared_ptr<ICellStream>&& cell_data_stream, const std::string& archetype_id, const std::function<EntityPtr (const std::unique_ptr<ICellStream>&, const ResourceDataPtr&)>& finalise)
+			: m_Stream(std::move(cell_data_stream)),
+			m_FinaliseFn(finalise),
 			m_GotResult(true, false)
 		{
 			m_ResourceLoaderCnx = std::make_shared<boost::signals2::scoped_connection>(
@@ -1054,14 +1063,34 @@ namespace FusionEngine
 			m_GotResult.set();
 		}
 
-		EntityPtr ArchetypalEntityFuture::get()
+		EntityPtr ArchetypalEntityFuture::get_entity()
 		{
 			CL_Event::wait(m_GotResult);
 
 			if (m_Resource)
-				return m_FinaliseFn(m_Resource);
+				return m_FinaliseFn(m_Stream, m_Resource);
 			else
 				return EntityPtr();
+		}
+
+		std::shared_ptr<ICellStream> ArchetypalEntityFuture::get_file()
+		{
+			CL_Event::wait(m_GotResult);
+
+			if (m_Resource)
+				return std::move(m_Stream);
+			else
+				return std::move(m_Stream);
+		}
+
+		std::pair<EntityPtr, std::shared_ptr<ICellStream>> ArchetypalEntityFuture::get()
+		{
+			CL_Event::wait(m_GotResult);
+
+			if (m_Resource)
+				return std::make_pair(m_FinaliseFn(m_Stream, m_Resource), std::move(m_Stream));
+			else
+				return std::make_pair(EntityPtr(), std::move(m_Stream));
 		}
 
 		bool ArchetypalEntityFuture::is_ready() const
@@ -1069,18 +1098,18 @@ namespace FusionEngine
 			return (bool)m_Resource;
 		}
 
-		EntityPtr LoadEntityImmeadiate(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser)
+		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser)
 		{
-			return LoadEntity(in, id_included, override_id, editable, factory, manager, synchroniser)->get();
+			return LoadEntity(std::move(in), id_included, override_id, editable, factory, manager, synchroniser)->get();
 		}
 
-		std::shared_ptr<EntityFuture> LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			FSN_ASSERT(factory);
 			FSN_ASSERT(manager);
 			FSN_ASSERT(instantiator);
 
-			CellStreamReader in(&instr);
+			CellStreamReader in(instr.get());
 
 			// Load entity info
 			ObjectID id = 0;
@@ -1109,15 +1138,16 @@ namespace FusionEngine
 
 			if (isArchetypal)
 			{
-				return std::make_shared<ArchetypalEntityFuture>(archetypeId, [&](const ResourceDataPtr& resource)->EntityPtr
+				return std::make_shared<ArchetypalEntityFuture>(std::move(instr), archetypeId,
+					[id, owner, name, terrain, editable, factory, manager, instantiator](const std::unique_ptr<ICellStream>& stream, const ResourceDataPtr& resource)->EntityPtr
 				{
 					auto archetypeFactory = static_cast<ArchetypeFactory*>(resource->GetDataPtr());
-					return LoadArchetypalEntity(instr, archetypeFactory, id, owner, name, terrain, editable, factory, manager, instantiator);
+					return LoadArchetypalEntity(*stream, archetypeFactory, id, owner, name, terrain, editable, factory, manager, instantiator);
 				});
 			}
 			else
 			{
-				return std::make_shared<DoNothingEntityFuture>(LoadUniqueEntity(instr, id, owner, name, terrain, editable, factory, manager, instantiator));
+				return std::make_shared<DoNothingEntityFuture>(LoadUniqueEntity(*instr, id, owner, name, terrain, editable, factory, manager, instantiator));
 			}
 		}
 

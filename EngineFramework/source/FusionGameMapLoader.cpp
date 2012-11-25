@@ -175,17 +175,22 @@ namespace FusionEngine
 		std::vector<char> buf(m_NonStreamingEntitiesDataLength);
 		if (m_File.read(buf.data(), m_NonStreamingEntitiesDataLength) == m_NonStreamingEntitiesDataLength)
 		{
-			io::filtering_istream inflateStream;
-			inflateStream.push(io::zlib_decompressor());
-			inflateStream.push(io::array_source(buf.data(), buf.size()));
-
-			IO::Streams::CellStreamReader reader(&inflateStream);
+			std::unique_ptr<std::istream> stream;
+			{
+				auto inflateStream = new io::filtering_istream();
+				inflateStream->push(io::zlib_decompressor());
+				inflateStream->push(io::array_source(buf.data(), buf.size()));
+				stream.reset(inflateStream);
+			}
+			IO::Streams::CellStreamReader reader(stream.get());
 
 			size_t numPseudoEnts;
 			numPseudoEnts = reader.ReadValue<size_t>();
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntityImmeadiate(inflateStream, false, 0, false, factory, entityManager, instantiator);
+				EntityPtr entity;
+				auto result = LoadEntityImmeadiate(std::move(stream), false, 0, false, factory, entityManager, instantiator);
+				entity = result.first; stream = std::move(result.second);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
 			}
@@ -195,12 +200,14 @@ namespace FusionEngine
 				numSynchedEnts = reader.ReadValue<size_t>();
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntityImmeadiate(inflateStream, true, 0, false, factory, entityManager, instantiator);
+					EntityPtr entity;
+					auto result = LoadEntityImmeadiate(std::move(stream), true, 0, false, factory, entityManager, instantiator);
+					entity = result.first; stream = std::move(result.second);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}
 
-				instantiator->LoadState(inflateStream);
+				instantiator->LoadState(*stream);
 			}
 		}
 	}

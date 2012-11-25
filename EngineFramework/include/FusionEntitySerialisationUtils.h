@@ -96,7 +96,11 @@ namespace FusionEngine
 			virtual ~EntityFuture() {}
 
 			//! Waits for the value to be available, then returns it
-			virtual EntityPtr get() = 0;
+			virtual EntityPtr get_entity() = 0;
+
+			virtual std::shared_ptr<ICellStream> get_file() = 0;
+
+			virtual std::pair<EntityPtr, std::shared_ptr<ICellStream>> get() = 0;
 
 			//! Returns true if the return value is available
 			virtual bool is_ready() const = 0;
@@ -104,10 +108,10 @@ namespace FusionEngine
 
 		//! Save an entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
-		//! Load an entity (checks for archetypes)
-		std::shared_ptr<EntityFuture> LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		//! Load an entity... eventually (checks for archetypes)
+		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		//! Load an entity RIGHT NOW
-		EntityPtr LoadEntityImmeadiate(ICellStream& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		
 		//! Load a non-archetypal entity
 		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);

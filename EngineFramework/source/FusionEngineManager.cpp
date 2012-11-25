@@ -380,7 +380,7 @@ namespace FusionEngine
 
 			SendToConsole("Loading: Non-streaming entities (from data-file)...");
 			if (auto file = m_CellArchivist->LoadDataFile("non_streaming_entities"))
-				m_EntityManager->LoadNonStreamingEntities(*file, m_ArchetypeFactory.get(), m_EntityInstantiator.get());
+				m_EntityManager->LoadNonStreamingEntities(std::move(file), m_ArchetypeFactory.get(), m_EntityInstantiator.get());
 
 			m_CellArchivist->Start();
 

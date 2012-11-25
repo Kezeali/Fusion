@@ -114,7 +114,7 @@ namespace FusionEngine
 		void LoadActiveEntities(std::istream& stream);
 
 		void SaveNonStreamingEntities(std::ostream& stream, bool editable = false);
-		void LoadNonStreamingEntities(std::istream& stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable = false);
+		void LoadNonStreamingEntities(std::unique_ptr<std::istream> stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable = false);
 		//! Saves data used to restore pointers between entities
 		void SaveCurrentReferenceData();
 

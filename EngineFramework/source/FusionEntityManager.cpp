@@ -1094,9 +1094,9 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::LoadNonStreamingEntities(std::istream& stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable)
+	void EntityManager::LoadNonStreamingEntities(std::unique_ptr<std::istream> stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable)
 	{
-		IO::Streams::CellStreamReader reader(&stream);
+		IO::Streams::CellStreamReader reader(stream.get());
 
 		m_LoadedNonStreamedEntities.clear();
 
@@ -1104,7 +1104,8 @@ namespace FusionEngine
 		numEnts = reader.ReadValue<size_t>();
 		for (size_t i = 0; i < numEnts; ++i)
 		{
-			auto entity = LoadEntityImmeadiate(stream, true, 0, editable, m_Universe, this, instantiator);
+			EntityPtr entity;
+			std::tie(entity, stream) = LoadEntityImmeadiate(std::move(stream), true, 0, editable, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 			m_LoadedNonStreamedEntities.push_back(entity);

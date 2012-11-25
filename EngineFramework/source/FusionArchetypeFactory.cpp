@@ -163,20 +163,20 @@ namespace FusionEngine
 		m_ArchetypeData.Profile->Save(stream, m_ArchetypeData.Archetype);
 	}
 
-	void ArchetypeFactory::Load(std::istream& stream, ComponentFactory* factory, EntityManager* manager)
+	void ArchetypeFactory::Load(std::unique_ptr<std::istream> stream, ComponentFactory* factory, EntityManager* manager)
 	{
 		boost::mutex::scoped_lock lock(m_Mutex);
 
-		IO::Streams::CellStreamReader reader(&stream);
+		IO::Streams::CellStreamReader reader(stream.get());
 		reader.Read(m_Editable);
 
 		// Load the archetype definition entity
-		m_ArchetypeData.Archetype = EntitySerialisationUtils::LoadEntityImmeadiate(stream, false, 0, m_Editable, factory, manager, m_ComponentInstantiator);
+		std::tie(m_ArchetypeData.Archetype, stream) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(stream), false, 0, m_Editable, factory, manager, m_ComponentInstantiator);
 		//m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
 		
 		// Load the profile
 		m_ArchetypeData.Profile = std::make_shared<Archetypes::Profile>(m_TypeName);
-		m_ArchetypeData.Profile->Load(stream, m_ArchetypeData.Archetype);
+		m_ArchetypeData.Profile->Load(*stream, m_ArchetypeData.Archetype);
 
 		m_TypeName = m_ArchetypeData.Profile->GetName();
 		m_ArchetypeData.Archetype->SetArchetype(m_TypeName);
@@ -272,7 +272,7 @@ namespace FusionEngine
 		try
 		{
 			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
-			factory->Load(IO::CLStream(dev), ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
+			factory->Load(std::unique_ptr<IO::CLStream>(new IO::CLStream(dev)), ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
 		}
 		catch (CL_Exception& ex)
 		{
