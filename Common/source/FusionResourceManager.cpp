@@ -231,23 +231,32 @@ namespace FusionEngine
 				ResourceContainer* res;
 				while (m_ToUnload.try_pop(res))
 				{
-					if (res->Unused())
+					if (!res->IsQueuedToLoad())
 					{
-						try
+						if (res->Unused())
 						{
-							logfile->AddEntry("Unloading " + res->GetPath(), LOG_INFO);
-							if (!unloadResource(res))
+							try
 							{
-								logfile->AddEntry("Unload paused on resource type " + res->GetType() + ". Will unload later.", LOG_TRIVIAL);
-								m_ToUnload.push(res);
-								m_ToUnloadEvent.set();
-								continue;
+								logfile->AddEntry("Unloading " + res->GetPath(), LOG_INFO);
+								if (!unloadResource(res))
+								{
+									logfile->AddEntry("Unload paused on resource type " + res->GetType() + ". Will unload later.", LOG_TRIVIAL);
+									m_ToUnload.push(res);
+									m_ToUnloadEvent.set();
+									continue;
+								}
+							}
+							catch (FileSystemException& ex)
+							{
+								logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
 							}
 						}
-						catch (FileSystemException& ex)
-						{
-							logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
-						}
+					}
+					else
+					{
+						logfile->AddEntry("Accidentally unloaded " + res->GetPath() + ", reloading", LOG_NORMAL);
+						m_ToLoad.push(ResourceToLoadData(0, res));
+						m_ToLoadEvent.set();
 					}
 					res->setQueuedToUnload(false);
 				}
@@ -367,11 +376,15 @@ namespace FusionEngine
 				onLoadConnection = resource->SigLoaded->connect(on_load_callback);
 			}
 
-			if (!resource->setQueuedToLoad(true) && !resource->IsLoaded()) // IsLoaded is checked again in case the resource was loaded between here and the previous check
+			if (!resource->setQueuedToLoad(true))
 			{
-				AddLogEntry("ResourceRequests", "Requested " + resource->GetPath(), LOG_INFO);
-				m_ToLoad.push(ResourceToLoadData(priority, resource));
-				m_ToLoadEvent.set();
+				// IsLoaded is checked again in case the resource was loaded between here and the previous check
+				if (!resource->IsLoaded() || resource->IsQueuedToUnload())
+				{
+					AddLogEntry("ResourceRequests", "Requested " + resource->GetPath(), LOG_INFO);
+					m_ToLoad.push(ResourceToLoadData(priority, resource));
+					m_ToLoadEvent.set();
+				}
 			}
 		}
 

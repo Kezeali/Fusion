@@ -7,52 +7,30 @@
 #include "FusionResourcePointer.h"
 
 #include "FusionLogger.h"
+#include "FusionProfiling.h"
 
 #include <gtest/gtest.h>
 
+class resource_manager_f;
+
 namespace FusionEngine { namespace Test
 {
-	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
-	{
-		//ASSERT_TRUE(resource->IsLoaded());
-
-		if (resource->IsLoaded())
-		{
-			resource->setLoaded(false);
-			delete static_cast<std::string*>(resource->GetDataPtr());
-		}
-		resource->SetDataPtr(nullptr);
-	}
-
-	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
-	{
-		// TODO: should the resource manager be allowed to request reloads like this?
-		//UnloadTextResource(resource, vdir, userData);
-		// ... or should this be a valid assertion?
-		ASSERT_FALSE(resource->IsLoaded());
-
-		auto content = new std::string();
-		try
-		{
-			auto file = vdir.open_file_read(resource->GetPath());
-			content->resize(file.get_size());
-			file.read(&(*content)[0], content->length());
-		}
-		catch (CL_Exception& e)
-		{
-			FSN_EXCEPT(FileSystemException, "Failed to load test resource: " + std::string(e.what()));
-		}
-
-		resource->SetDataPtr(content);
-		resource->setLoaded(true);
-	}
-
-} }
+	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+}}
 	
 using namespace FusionEngine;
 
 class resource_manager_f : public testing::Test
 {
+public:
+	std::string GetFile(std::string path)
+	{
+		auto entry = files.find(path);
+		if (entry != files.end())
+			return *entry;
+		FSN_EXCEPT(FileNotFoundException, "File not found");
+	}
 protected:
 	resource_manager_f()
 		: gc(),
@@ -66,15 +44,22 @@ protected:
 	virtual void SetUp()
 	{
 		logger = std::make_shared<Logger>();
+		logger->SetDefaultThreshold(LOG_INFO);
+		profiling = std::make_shared<Profiling>();
 		manager = std::make_shared<ResourceManager>(gc);
 
-		std::stringstream str;
-		n.resize(1024);
-		for (size_t i = 0; i < 1024; ++i)
+		if (n.empty())
 		{
-			str << i;
-			n[i] = str.str();
-			str.str("");
+			std::stringstream str;
+			n.resize(1024);
+			for (size_t i = 0; i < 1024; ++i)
+			{
+				str << i;
+				n[i] = str.str();
+				str.str("");
+
+				files.insert("resource" + n[i] + ".txt");
+			}
 		}
 	}
 	virtual void TearDown()
@@ -86,7 +71,7 @@ protected:
 
 	void AddStandardLoaders()
 	{
-		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(ResourceLoader("IMAGE", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource)));
+		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(ResourceLoader("TestResource", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource, boost::any(this))));
 	}
 
 	void AttemptActualLoad(bool next = true)
@@ -118,7 +103,7 @@ protected:
 	class ResourceHelper
 	{
 	public:
-		ResourceHelper() {}
+		ResourceHelper(std::string path) : pathSoYouKnowWhatBroke(path) {}
 		virtual ~ResourceHelper()
 		{
 			loadConnection.disconnect();
@@ -126,11 +111,18 @@ protected:
 
 		static std::shared_ptr<ResourceHelper> Load(const std::shared_ptr<ResourceManager>& manager, const std::string& path)
 		{
-			auto helper = std::make_shared<ResourceHelper>();
+			auto helper = std::make_shared<ResourceHelper>(path);
 			std::weak_ptr<ResourceHelper> helperRef = helper;
-			helper->loadConnection = manager->GetResource("IMAGE", path, [helperRef](ResourceDataPtr resource) { if (auto h = helperRef.lock()) h->resource = resource; });
+			helper->loadConnection = manager->GetResource("TestResource", path, [helperRef](ResourceDataPtr resource)
+			{
+				if (auto h = helperRef.lock())
+				{
+					h->resource = resource;
+				}
+			});
 			return helper;
 		}
+		std::string pathSoYouKnowWhatBroke;
 		boost::signals2::connection loadConnection;
 		ResourceDataPtr resource;
 	};
@@ -140,10 +132,78 @@ protected:
 	std::vector<std::string> n;
 	size_t currentN;
 
+	std::set<std::string> files;
+
 	std::shared_ptr<ResourceManager> manager;
 	CL_GraphicContext gc;
 	std::shared_ptr<Logger> logger;
+	std::shared_ptr<Profiling> profiling;
 };
+
+namespace FusionEngine { namespace Test
+{
+	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		//ASSERT_TRUE(resource->IsLoaded());
+
+		if (resource->IsLoaded())
+		{
+			resource->setLoaded(false);
+			delete static_cast<std::string*>(resource->GetDataPtr());
+		}
+		resource->SetDataPtr(nullptr);
+	}
+
+	void LoadFakeTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		// TODO: should the resource manager be allowed to request reloads like this?
+		//UnloadTextResource(resource, vdir, userData);
+		// ... or should this be a valid assertion?
+		ASSERT_FALSE(resource->IsLoaded());
+
+		auto content = new std::string();
+		try
+		{
+			if (!user_data.empty())
+			{
+				auto resourceManager = boost::any_cast<resource_manager_f*>(user_data);
+				*content = resourceManager->GetFile(resource->GetPath());
+			}
+
+			resource->SetDataPtr(content);
+			resource->setLoaded(true);
+		}
+		catch (Exception& ex)
+		{
+			delete content;
+			FSN_EXCEPT(FileSystemException, "Failed to load test resource: " + std::string(ex.what()));
+		}
+	}
+
+	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		// TODO: should the resource manager be allowed to request reloads like this?
+		//UnloadTextResource(resource, vdir, userData);
+		// ... or should this be a valid assertion?
+		ASSERT_FALSE(resource->IsLoaded());
+
+		auto content = new std::string();
+		try
+		{
+			auto file = vdir.open_file_read(resource->GetPath());
+			content->resize(file.get_size());
+			file.read(&(*content)[0], content->length());
+
+			resource->SetDataPtr(content);
+			resource->setLoaded(true);
+		}
+		catch (CL_Exception& e)
+		{
+			delete content;
+			FSN_EXCEPT(FileSystemException, "Failed to load test resource: " + std::string(e.what()));
+		}
+	}
+}}
 
 TEST_F(resource_manager_f, startStopThread)
 {
