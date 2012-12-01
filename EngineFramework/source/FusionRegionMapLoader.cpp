@@ -795,10 +795,11 @@ namespace FusionEngine
 						IO::Streams::CellStreamReader reader(cellDataStream.get());
 						std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
 
-						std::vector<char> buffer(unsynchedDataLength);
-						cellDataStream->read(buffer.data(), unsynchedDataLength);
-						auto pseudoDataStream = std::make_shared<std::stringstream>();
-						pseudoDataStream->write(buffer.data(), unsynchedDataLength);
+						// TODO: (or not) Could create a second buffer for the pseudo data, then load it all at once into a new subjob (like the map file)
+						//std::vector<char> buffer(unsynchedDataLength);
+						//cellDataStream->read(buffer.data(), unsynchedDataLength);
+						//auto pseudoDataStream = std::make_shared<std::stringstream>();
+						//pseudoDataStream->write(buffer.data(), unsynchedDataLength);
 
 						std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(cellCoord, *cellDataStream, false, EditableBinary); // This is edit mode, so editable data
 
