@@ -155,6 +155,8 @@ namespace FusionEngine { namespace Inspectors
 		};
 		std::map<std::string, PropertySubscriptionData> m_Properties;
 
+		bool m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope;
+
 		void SetComponents(const std::vector<ComponentPtr>& components);
 		void ReleaseComponents();
 
@@ -402,7 +404,8 @@ namespace FusionEngine { namespace Inspectors
 
 	template <class ComponentT>
 	GenericInspector<ComponentT>::GenericInspector(const Rocket::Core::String& tag)
-		: ComponentInspector(tag)
+		: ComponentInspector(tag),
+		m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope(false)
 	{
 		//InitUI();
 	}
@@ -788,13 +791,17 @@ namespace FusionEngine { namespace Inspectors
 					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 					{
 						boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
-						// Enable prefab override
-						Entity* entity = it->p->GetParent();
-						FSN_ASSERT(entity);
-						if (entity->GetArchetypeAgent())
+
+						if (!m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope)
 						{
-							for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
-								entity->GetArchetypeAgent()->AutoOverride(*nameIt, true);
+							// Enable prefab override
+							Entity* entity = it->p->GetParent();
+							FSN_ASSERT(entity);
+							if (entity->GetArchetypeAgent())
+							{
+								for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
+									entity->GetArchetypeAgent()->AutoOverride(*nameIt, true);
+							}
 						}
 					}
 
@@ -980,6 +987,8 @@ namespace FusionEngine { namespace Inspectors
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::RefreshUIForProp(const std::string& name)
 	{
+		m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope = true;
+
 		auto entry = m_Properties.find(name);
 		if (entry != m_Properties.end())
 		{
@@ -1001,11 +1010,15 @@ namespace FusionEngine { namespace Inspectors
 				first = false;
 			}
 		}
+
+		m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope = false;
 	}
 
 	template <class ComponentT>
 	void GenericInspector<ComponentT>::ResetUIValues()
 	{
+		m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope = true;
+
 		for (auto it = m_Inputs.begin(), end = m_Inputs.end(); it != end; ++it)
 			boost::apply_visitor(ClearUIVisitor(), it->second.ui_element);
 
@@ -1021,6 +1034,8 @@ namespace FusionEngine { namespace Inspectors
 
 			first = false;
 		}
+
+		m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope = false;
 	}
 
 } }
