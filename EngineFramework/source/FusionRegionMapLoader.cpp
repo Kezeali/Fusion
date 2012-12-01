@@ -568,35 +568,34 @@ namespace FusionEngine
 	{
 		std::list<EntityPtr> loaded_entities;
 
-		FSN_ASSERT(file);
+		FSN_ASSERT(incomming_entity || file);
 
 		// Read as many entities as possible before hitting one that requires other resources (e.g. archetype factories)
 		while (progress < num_entities)
 		{
+			++progress;
+
 			incomming_entity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
+			FSN_ASSERT(incomming_entity);
 			if (incomming_entity->is_ready())
 			{
+				loaded_entities.push_back(incomming_entity->get_entity());
 				file = incomming_entity->get_file();
 				FSN_ASSERT(file);
-				loaded_entities.push_back(incomming_entity->get_entity());
 
 				incomming_entity.reset();
-
-				++progress;
 			}
 			else
 				break;
 		}
 
-		if (incomming_entity->is_ready())
+		if (incomming_entity && incomming_entity->is_ready())
 		{
+			loaded_entities.push_back(incomming_entity->get_entity());
 			file = incomming_entity->get_file();
 			FSN_ASSERT(file);
-			loaded_entities.push_back(incomming_entity->get_entity());
 
 			incomming_entity.reset();
-
-			++progress;
 		}
 
 		// Add the loaded entities to the cell
@@ -616,7 +615,7 @@ namespace FusionEngine
 		loaded_entities.clear();
 
 		// After all the entities are constructed:
-		if (progress == num_entities && !incomming_entity)
+		if (progress >= num_entities && !incomming_entity)
 		{
 			// Remove the archetype agent if edit-mode is disabled
 			if (!m_EditMode)
@@ -784,7 +783,7 @@ namespace FusionEngine
 							job->thereIsSyncedDataToReadNext = uncached;
 						}
 						else if (uncached)
-							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, false, FastBinary);
+							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, true, FastBinary);
 
 						// Enqueue the map data load job if there is anything to load for this map cell
 						if (job->mapSubjob->entitiesExpected > 0)
@@ -886,6 +885,7 @@ namespace FusionEngine
 			job->thereIsSyncedDataToReadNext = false;
 
 			std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(job->coord, *job->cellDataStream, true, job->dataStyle);
+			job->entitiesReadSoFar = 0;
 		}
 
 		return done;
@@ -1032,7 +1032,11 @@ namespace FusionEngine
 								catch (Exception& ex)
 								{
 									AddHist(job->coord, "Failed to load entity data: " + ex.ToString());
-									++it;
+
+									lockedCell->waiting = Cell::Ready;
+									readyCells.push_back(job->coord);
+
+									it = m_IncommingCells.erase(it);
 								}
 							}
 							else

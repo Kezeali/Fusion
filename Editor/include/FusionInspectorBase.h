@@ -834,10 +834,11 @@ namespace FusionEngine { namespace Inspectors
 						{
 							Entity* entity = it->p->GetParent();
 							FSN_ASSERT(entity);
-							if (entity->GetArchetypeAgent())
+							if (auto agent = entity->GetArchetypeAgent())
 							{
 								for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
-									entity->GetArchetypeAgent()->RemoveOverride(*nameIt);
+									agent->RemoveOverride(*nameIt);
+								agent->PerformOverrides();
 							}
 						}
 					}

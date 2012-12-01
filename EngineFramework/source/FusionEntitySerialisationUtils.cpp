@@ -1090,7 +1090,10 @@ namespace FusionEngine
 			CL_Event::wait(m_GotResult);
 
 			if (m_Resource)
-				return std::make_pair(m_FinaliseFn(m_Stream, m_Resource), std::move(m_Stream));
+			{
+				auto entity = m_FinaliseFn(m_Stream, m_Resource);
+				return std::make_pair(std::move(entity), std::move(m_Stream));
+			}
 			else
 				return std::make_pair(EntityPtr(), std::move(m_Stream));
 		}
