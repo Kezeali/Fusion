@@ -175,7 +175,7 @@ namespace FusionEngine
 		std::vector<char> buf(m_NonStreamingEntitiesDataLength);
 		if (m_File.read(buf.data(), m_NonStreamingEntitiesDataLength) == m_NonStreamingEntitiesDataLength)
 		{
-			std::unique_ptr<std::istream> stream;
+			std::shared_ptr<std::istream> stream;
 			{
 				auto inflateStream = new io::filtering_istream();
 				inflateStream->push(io::zlib_decompressor());
@@ -189,7 +189,7 @@ namespace FusionEngine
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
 				EntityPtr entity;
-				auto result = LoadEntityImmeadiate(std::move(stream), false, 0, false, factory, entityManager, instantiator);
+				auto result = LoadEntityImmeadiate(std::move(stream), false, 0, FastBinary, factory, entityManager, instantiator);
 				entity = result.first; stream = std::move(result.second);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
@@ -201,7 +201,7 @@ namespace FusionEngine
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
 					EntityPtr entity;
-					auto result = LoadEntityImmeadiate(std::move(stream), true, 0, false, factory, entityManager, instantiator);
+					auto result = LoadEntityImmeadiate(std::move(stream), true, 0, FastBinary, factory, entityManager, instantiator);
 					entity = result.first; stream = std::move(result.second);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
@@ -332,7 +332,7 @@ namespace FusionEngine
 			{
 				auto& entity = *it;
 
-				SaveEntity(compressingStream, entity, false, false);
+				SaveEntity(compressingStream, entity, false, FastBinary);
 			}
 			numEnts = nonStreamingEntitiesSynched.size();
 			nonsWriter.Write(numEnts);
@@ -340,7 +340,7 @@ namespace FusionEngine
 			{
 				auto& entity = *it;
 
-				SaveEntity(compressingStream, entity, true, false);
+				SaveEntity(compressingStream, entity, true, FastBinary);
 			}
 
 			instantiator->SaveState(compressingStream);

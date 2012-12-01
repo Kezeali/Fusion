@@ -2372,7 +2372,7 @@ namespace FusionEngine
 					writer.Write(pos.y);
 					writer.Write(transform->Angle.Get());
 				}
-				EntitySerialisationUtils::SaveEntity(*file, entity, true, true);
+				EntitySerialisationUtils::SaveEntity(*file, entity, true, EntitySerialisationUtils::EditableBinary);
 				return true;
 			});
 		}
@@ -2382,8 +2382,10 @@ namespace FusionEngine
 
 	void Editor::PasteEntities(const Vector2& offset, float base_angle)
 	{
-		if (auto file = m_DataArchiver->LoadDataFile("editor.entity_clipboard"))
+		if (auto selfishFile = m_DataArchiver->LoadDataFile("editor.entity_clipboard"))
 		{
+			std::shared_ptr<std::istream> file(std::move(selfishFile));
+
 			Vector2 simOffset(ToSimUnits(offset.x), ToSimUnits(offset.y));
 
 			IO::Streams::CellStreamReader reader(file.get());
@@ -2398,7 +2400,8 @@ namespace FusionEngine
 					reader.Read(entityAngle);
 				}
 
-				auto entity = EntitySerialisationUtils::LoadEntityImmeadiate(*file, true, 0, true, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+				EntityPtr entity;
+				std::tie(entity, file) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(file), true, 0, EntitySerialisationUtils::EditableBinary, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
 
 				if (entity->GetID())
 					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());

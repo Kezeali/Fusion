@@ -522,7 +522,7 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_istream>();
 	}
 
-	void RegionCellArchivist::OnGotCellStreamForReading(std::shared_ptr<std::istream>&& cellDataStream, std::shared_ptr<ReadJob> job)
+	void RegionCellArchivist::OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, std::shared_ptr<ReadJob> job)
 	{
 		std::stringstream str; str << job->coord.x << "," << job->coord.y;
 		AddLogEntry("cells_loaded", "  Got [" + str.str() + "]");
@@ -531,40 +531,45 @@ namespace FusionEngine
 		m_ReadQueueLoadEntities.push(job);
 	}
 
-	std::shared_ptr<EntitySerialisationUtils::EntityFuture> RegionCellArchivist::LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const bool editable)
+	std::shared_ptr<EntitySerialisationUtils::EntityFuture> RegionCellArchivist::LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
-		return EntitySerialisationUtils::LoadEntity(std::move(file), includes_id, id, editable, m_Factory, m_EntityManager, m_Instantiator);
+		return EntitySerialisationUtils::LoadEntity(std::move(file), includes_id, id, data_style, m_Factory, m_EntityManager, m_Instantiator);
 	}
 
-	size_t RegionCellArchivist::LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, std::shared_ptr<ICellStream> file, bool data_includes_ids, const bool editable)
+	std::pair<size_t, std::vector<ObjectID>> RegionCellArchivist::ReadCellIntro(const CellCoord_t& coord, ICellStream& file, bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle)
 	{
 		size_t numEntries;
-		file->read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
+		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
 
 		FSN_ASSERT_MSG(numEntries < 65535, "Probably invalid data: entry count is implausible");
 
-		std::vector<ObjectID> idIndex;
+		std::vector<ObjectID> ids;
 
 		if (data_includes_ids)
 		{
 			/*const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
 			std::vector<char> bleh(headerSize);
 			file.read(bleh.data(), headerSize);*/
-			IO::Streams::CellStreamReader reader(file.get());
+			IO::Streams::CellStreamReader reader(&file);
 			for (size_t i = 0; i < numEntries; ++i)
 			{
 				ObjectID id;
 				//std::streamoff bleh;
 				reader.Read(id);
 				//reader.Read(bleh);
-				idIndex.push_back(id);
+				ids.push_back(id);
 			}
 		}
 
-		// Read entity data
-		for (size_t n = 0; n < numEntries; ++n)
+		return std::make_pair(numEntries, ids);
+	}
+
+	std::tuple<bool, size_t, std::shared_ptr<ICellStream>> RegionCellArchivist::ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style)
+	{
+		// Read as many entities as possible before hitting one that requires other resources (e.g. archetype factories)
+		for (progress = 0; progress < num_entities; ++progress)
 		{
-			auto incommingEntity = LoadEntity(std::move(file), false, data_includes_ids ? idIndex[n] : 0, editable);
+			auto incommingEntity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
 			incomming_entities.push_back(incommingEntity);
 			if (incommingEntity->is_ready())
 				file = incommingEntity->get_file();
@@ -572,18 +577,14 @@ namespace FusionEngine
 				break;
 		}
 
-		return numEntries;
-	}
-
-	bool RegionCellArchivist::ProcessIncommingEntities(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::shared_ptr<Cell>& conveniently_locked_cell)
-	{
 		for (auto it = incomming_entities.begin(); it != incomming_entities.end();)
 		{
 			const auto& future = *it;
 
 			if (future->is_ready())
 			{
-				auto entity = future->get();
+				EntityPtr entity;
+				std::tie(entity, file) = future->get();
 
 				Vector2 pos = entity->GetPosition();
 				// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
@@ -601,7 +602,7 @@ namespace FusionEngine
 		}
 
 		// When all the entities are constructed:
-		if (incomming_entities.empty())
+		if (progress == num_entities && incomming_entities.empty())
 		{
 			// Remove the archetype agent if edit-mode is disabled
 			if (!m_EditMode)
@@ -614,14 +615,19 @@ namespace FusionEngine
 			conveniently_locked_cell->loaded = true;
 			conveniently_locked_cell->waiting = Cell::Ready;
 
-			return true;
+			return std::make_tuple(true, progress, std::move(file));
 		}
 
-		return false;
+		return std::make_tuple(false, progress, std::move(file));
+	}
+
+	void RegionCellArchivist::WriteCellIntro(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
+	{
+		using namespace EntitySerialisationUtils;
 	}
 
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void RegionCellArchivist::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable)
+	void RegionCellArchivist::WriteCellData(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -663,7 +669,7 @@ namespace FusionEngine
 					beginPos = counter.count();
 				}
 
-				SaveEntity(file, it->first, false, editable);
+				SaveEntity(file, it->first, false, data_style);
 
 				if (entSynched)
 				{
@@ -677,7 +683,7 @@ namespace FusionEngine
 		}
 
 		// Write the header if this is ID'd ("synched") data
-		if (synched && !editable)
+		if (synched && data_style == FastBinary)
 		{
 			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
 			{
@@ -689,29 +695,188 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionCellArchivist::WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable)
+	void RegionCellArchivist::WriteCellDataForEditMode(const std::unique_ptr<std::ostream>& file, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
-		if (filePtr && *filePtr)
+		if (file && *file)
 		{
-			auto& file = *filePtr;
-
-			// Need a seekable stream, so write to a temp. one
+			// Need write the length of the data written up front, so a temp stream is needed
 			std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
 			std::streampos start = tempStream.tellp();
+
 			// Write un-synched entity data (written to cache since this is edit mode)
-			WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false, editable);
+			WriteCellData(*file, cell_coord, cell.get(), numPseudo, false, data_style);
+
 			std::streamsize dataLength = tempStream.tellp() - start;
 
-			WriteCell(tempStream, cell_coord, cell.get(), numSynched, true, editable);
+			WriteCellData(*file, cell_coord, cell.get(), numSynched, true, data_style);
 
 			// Write to the file-stream
-			IO::Streams::CellStreamWriter writer(&file);
+			IO::Streams::CellStreamWriter writer(file.get());
 			writer.Write(dataLength);
 
-			file << tempStream.rdbuf();
+			// Finally, write to the actual file
+			(*file) << tempStream.rdbuf();
 		}
 		else
 			FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
+	}
+
+	void RegionCellArchivist::StartJob(const std::shared_ptr<ReadJob>& job, const std::shared_ptr<Cell>& a_cell_that_is_locked)
+	{
+		using namespace EntitySerialisationUtils;
+
+		auto cellCoord = job->coord;
+#ifdef _DEBUG
+		if (a_cell_that_is_locked->waiting == Cell::Ready)
+		{
+			std::stringstream str; str << cellCoord.x << "," << cellCoord.y;
+			SendToConsole("A loaded cell was pointlessly re-enqueued for loading [" + str.str() + "]");
+		}
+#endif
+		// Make sure the cell requester hasn't stopped asking for this cell.
+		//  !cell->loaded is for the situation where a cell was stored then retrieved
+		//  before the store action was executed
+		if (a_cell_that_is_locked->active_entries == 0 && a_cell_that_is_locked->waiting == Cell::Retrieve && !a_cell_that_is_locked->loaded)
+		{
+			try
+			{
+				auto cellDataStream = std::move(job->cellDataStream);
+
+				// Last param makes the method load synched entities from the map if the cache file isn't available:
+				if (m_Map)
+				{
+					// Load synched entities if this cell is un-cached (hasn't been loaded before)
+					const bool uncached = !cellDataStream;//m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
+
+					auto data = m_Map->GetRegionData(cellCoord.x, cellCoord.y, uncached);
+
+					if (!data.empty())
+					{
+						std::unique_ptr<bio::filtering_istream> inflateStream(new bio::filtering_istream());
+						inflateStream->push(bio::zlib_decompressor());
+						inflateStream->push(bio::array_source(data.data(), data.size()));
+
+						IO::Streams::CellStreamReader reader(inflateStream.get());
+						auto pseudoEntityDataLength = reader.ReadValue<std::streamsize>();
+
+						// Create the sub-job for loading this map cell
+						job->mapSubjob = std::make_shared<ReadJob>(a_cell_that_is_locked, cellCoord);
+						job->mapSubjob->dataStyle = FastBinary; // Map data is always FastBinary
+
+						job->mapSubjob->cellDataStream = std::move(inflateStream);
+
+						// Read pseudo-entities
+						if (pseudoEntityDataLength > 0)
+						{
+							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, false, FastBinary);
+							// Remember that there are synced-entities to read next if this cell is uncached:
+							job->thereIsSyncedDataToReadNext = uncached;
+						}
+						else if (uncached)
+							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, false, FastBinary);
+
+						// Enqueue the map data load job if there is anything to load for this map cell
+						if (job->mapSubjob->entitiesExpected > 0)
+							m_IncommingCells.push_back(std::move(job->mapSubjob));
+					}
+				}
+
+				// Load normal data
+				if (cellDataStream && *cellDataStream && !cellDataStream->eof())
+				{
+					// Set the data-style to expect for this job (will be used when the actual entity data is read)
+					job->dataStyle = m_EditMode ? EditableBinary : FastBinary;
+
+					// In edit-mode unsynched entities are also written to the cache; they will be read first
+					if (m_EditMode)
+					{
+						// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incoming data
+						//  (we don't need to know this length to actually load the data):
+						IO::Streams::CellStreamReader reader(cellDataStream.get());
+						std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
+
+						std::vector<char> buffer(unsynchedDataLength);
+						cellDataStream->read(buffer.data(), unsynchedDataLength);
+						auto pseudoDataStream = std::make_shared<std::stringstream>();
+						pseudoDataStream->write(buffer.data(), unsynchedDataLength);
+
+						std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(cellCoord, *cellDataStream, false, EditableBinary); // This is edit mode, so editable data
+
+						// Remember to read the synced-entity data, too:
+						job->thereIsSyncedDataToReadNext = true;
+					}
+					else
+						std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(cellCoord, *cellDataStream, true, FastBinary); // FastBinary since this isn't edit mode
+
+					//std::stringstream str; str << i;
+					//SendToConsole("Cell " + str.str() + " streamed in");
+
+					AddHist(cellCoord, "Loading (waiting for any archetypes)");
+
+					// Try to process all the entities in the cell. If there isn't any archetypes to load,
+					//  the cell will be available immediately, otherwise it will have to be processed later:
+					bool done = false;
+					//std::tie(done, job->entitiesReadSoFar, job->cellDataStream) =
+					//	ContinueReadingCell(cellCoord, cell, job->entitiesExpected, job->entitiesReadSoFar, job->entitiesInTransit, job->ids, job->cellDataStream, m_EditMode ? EditableBinary : FastBinary);
+					if (!done)
+					{
+						// Enqueue the cell to process again later
+						m_IncommingCells.push_back(job);
+						return;
+					}
+					else
+					{
+						// No archetypes, cell done loading
+						AddHist(cellCoord, "Note: No Archetypes");
+					}
+				}
+				else
+				{
+					a_cell_that_is_locked->loaded = true; // No data to load
+					AddHist(cellCoord, "Loaded (no data)");
+				}
+			}
+			catch (std::exception& e)
+			{
+				std::string message("Exception while streaming in cell: ");
+				message += e.what();
+				AddHist(cellCoord, message);
+				AddLogEntry(message);
+			}
+			catch (...)
+			{
+				AddLogEntry("Unknown exception while streaming in cell");
+			}
+		}
+		else
+			AddHist(cellCoord, "Cell load aborted: already loaded or request canceled");
+
+		// Cell finished loading or failed to load and is ready for other operations
+		a_cell_that_is_locked->waiting = Cell::Ready;
+	}
+
+	bool RegionCellArchivist::ContinueJob(const std::shared_ptr<ReadJob>& job, const std::shared_ptr<Cell>& the_cell_that_locks)
+	{
+		bool done = false;
+
+		std::tie(done, job->entitiesReadSoFar, job->cellDataStream) = ContinueReadingCell(
+			job->coord, the_cell_that_locks,
+			job->entitiesExpected, job->entitiesReadSoFar,
+			job->entitiesInTransit,
+			job->ids, std::move(job->cellDataStream),
+			job->dataStyle);
+
+		if (done && job->thereIsSyncedDataToReadNext) // but wait, there's more
+		{
+			if (!job->cellDataStream)
+				FSN_EXCEPT(FileSystemException, "This shit done broke");
+
+			done = false;
+
+			std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(job->coord, *job->cellDataStream, true, job->dataStyle);
+		}
+
+		return done;
 	}
 
 	void RegionCellArchivist::Run()
@@ -795,144 +960,35 @@ namespace FusionEngine
 					while (m_ReadQueueLoadEntities.try_pop(toRead))
 					{
 						std::weak_ptr<Cell>& cellWpt = toRead->cell;
-						const CellCoord_t& cell_coord = toRead->coord;
+						const CellCoord_t& cellCoord = toRead->coord;
 						if (auto cell = cellWpt.lock())
 						{
 							Cell::mutex_t::scoped_lock lock;
 							if (lock.try_acquire(cell->mutex))
 							{
-#ifdef _DEBUG
-								if (cell->waiting == Cell::Ready)
-								{
-									std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-									SendToConsole("A loaded cell was pointlessly re-enqueued for loading [" + str.str() + "]");
-								}
-#endif
-								// Make sure the cell requester hasn't stopped asking for this cell.
-								//  !cell->loaded is for the situation where a cell was stored then retrieved
-								//  before the store action was executed
-								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve && !cell->loaded)
-								{
-									try
-									{
-										auto cellDataStream = std::move(toRead->cellDataStream);
-
-										// Last param makes the method load synched entities from the map if the cache file isn't available:
-										if (m_Map)
-										{
-											// Load synched entities if this cell is un-cached (hasn't been loaded before)
-											const bool uncached = !cellDataStream;//m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
-
-											auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
-
-											if (!data.empty())
-											{
-												std::unique_ptr<bio::filtering_istream> inflateStream(new bio::filtering_istream());
-												inflateStream->push(bio::zlib_decompressor());
-												inflateStream->push(bio::array_source(data.data(), data.size()));
-
-												IO::Streams::CellStreamReader reader(inflateStream.get());
-												// This value is the length of the pseudo-entity data (TODO: read this in GetRegionData and only return the data after this length if uncached is false)
-												auto mapDataLength = reader.ReadValue<std::streamsize>();
-
-												if (mapDataLength > 0)
-													LoadEntitiesFromCellData(cell_coord, toRead->entitiesInTransit, std::move(inflateStream), false);
-												if (uncached)
-													LoadEntitiesFromCellData(cell_coord, toRead->entitiesInTransit, std::move(inflateStream), true);
-											}
-										}
-
-										// Load normal data
-										if (cellDataStream && *cellDataStream && !cellDataStream->eof())
-										{
-											if (m_EditMode)
-											{
-												// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incoming data
-												//  (we don't need to know this length to actually load the data):
-#ifdef _DEBUG
-												IO::Streams::CellStreamReader reader(cellDataStream.get());
-												std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
-												//std::streampos startRead = file.tellg();
-#else
-												IO::Streams::CellStreamReader reader(&file);
-												reader.ReadValue<std::streamsize>();
-												//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
-#endif
-												LoadEntitiesFromCellData(cell_coord, toRead->entitiesInTransit, std::move(cellDataStream), false, m_EditMode); // In edit-mode unsynched entities are also written to the cache
-#ifdef _DEBUG
-												// Make sure all the data was read
-												// TODO: in Release builds: skip to the end if it wasn't all read?
-												//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
-#endif
-											}
-											LoadEntitiesFromCellData(cell_coord, toRead->entitiesInTransit, std::move(cellDataStream), true, m_EditMode);
-
-											//std::stringstream str; str << i;
-											//SendToConsole("Cell " + str.str() + " streamed in");
-
-											AddHist(cell_coord, "Loading (waiting for any archetypes)");
-
-											// Try to process all the entities in the cell. If there isn't any archetypes to load,
-											//  the cell will be available immediately, otherwise it will have to be processed later:
-											if (!ProcessIncommingEntities(cell_coord, toRead->entitiesInTransit, cell))
-											{
-												// Enqueue the cell to process again later
-												m_IncommingCells.push_back(toRead);
-												goto endload; // cell not ready yet, skip marking it as such
-											}
-											else
-											{
-												// No archetypes, cell done loading
-												AddHist(cell_coord, "Note: No Archetypes");
-											}
-										}
-										else
-										{
-											cell->loaded = true; // No data to load
-											AddHist(cell_coord, "Loaded (no data)");
-										}
-									}
-									catch (std::exception& e)
-									{
-										std::string message("Exception while streaming in cell: ");
-										message += e.what();
-										AddHist(cell_coord, message);
-										AddLogEntry(message);
-									}
-									catch (...)
-									{
-										AddLogEntry("Unknown exception while streaming in cell");
-										//std::stringstream str; str << i;
-										//SendToConsole("Exception streaming in cell " + str.str());
-										//readsToRetry.push_back(toRead);
-									}
-								}
-								else
-									AddHist(cell_coord, "Cell load aborted: already loaded or request canceled");
-								// Cell finished loading or failed to load and is ready for other operations
-								cell->waiting = Cell::Ready;
-								readyCells.push_back(cell_coord);
+								StartJob(toRead, cell);
+								if (cell->waiting == Cell::Ready) // Sometimes there isn't much to do, and the job finishes immediately
+									readyCells.push_back(cellCoord);
 							}
 							else
 							{
 #ifdef _DEBUG
-								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+								std::stringstream str; str << cellCoord.x << "," << cellCoord.y;
 								SendToConsole("Retrying read on cell [" + str.str() + "]");
 #endif
-								AddHist(cell_coord, "Cell locked (will retry read later)");
+								AddHist(cellCoord, "Cell locked (will retry read later)");
 								readsToRetry.push_back(toRead);
 							}
 						}
 					}
 
-					endload:
 					ArchetypeFactoryManager::EndSustain();
 				}
 
 				for (auto it = m_IncommingCells.begin(); it != m_IncommingCells.end();)
 				{
-					auto& task = *it;
-					if (auto lockedCell = task->cell.lock())
+					auto& job = *it;
+					if (auto lockedCell = job->cell.lock())
 					{
 						Cell::mutex_t::scoped_lock lock;
 						if (lock.try_acquire(lockedCell->mutex))
@@ -940,19 +996,33 @@ namespace FusionEngine
 							SendToConsole("Processing incoming cells");
 							if (lockedCell->waiting == Cell::Retrieve)
 							{
-								if (ProcessIncommingEntities(task->coord, task->entitiesInTransit, lockedCell))
+								try
 								{
-									readyCells.push_back(task->coord);
-									it = m_IncommingCells.erase(it);
+									bool done = ContinueJob(job, lockedCell);
+									// The map is a separate file so it can be processed in parallel (while the psuedo-entity / synced entity subsections of each cell must be processed serially)
+									bool mapDone = job->mapSubjob ? ContinueJob(job->mapSubjob, lockedCell) : true;
+	
+									// Note that at this point it is possible for job->cellDataStream to be null (if it is still held by an entity-in-transit)
+	
+									if (mapDone && done)
+									{
+										readyCells.push_back(job->coord);
+										it = m_IncommingCells.erase(it);
+									}
+									else
+										++it;
 								}
-								else
+								catch (Exception& ex)
+								{
+									AddHist(job->coord, "Failed to load entity data: " + ex.ToString());
 									++it;
+								}
 							}
 							else
 							{
-								// If the requester asked to store the cell, it was never loaded so it can simply be marked ready
+								// The requester asked to store the cell, but it was never loaded so it can simply be marked ready
 								lockedCell->waiting = Cell::Ready;
-								readyCells.push_back(task->coord);
+								readyCells.push_back(job->coord);
 							}
 						}
 					}
@@ -1005,16 +1075,16 @@ namespace FusionEngine
 											// The editable cache is used when saving / loading map data in the editor
 											//  (it contains additional information to make it more robust when dealing
 											//  with component script changes, etc.)
-											WriteEditModeData(m_EditableCache->GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, true);
+											WriteCellDataForEditMode(m_EditableCache->GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, EntitySerialisationUtils::EditableBinary);
 											// The normal cache is saved also so that this data can be used when compiling the map
-											WriteEditModeData(GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, false);
+											WriteCellDataForEditMode(GetCellStreamForWriting(cell_coord.x, cell_coord.y), cell_coord, cell, numPseudo, numSynched, EntitySerialisationUtils::FastBinary);
 										}
 										else // Not EditMode
 										{
 											auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
 											// Need a seekable stream, so write to a temp. one
 											//std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-											WriteCell(*filePtr, cell_coord, cell.get(), numSynched, true);
+											WriteCellData(*filePtr, cell_coord, cell.get(), numSynched, true, EntitySerialisationUtils::FastBinary);
 											//*filePtr << tempStream.rdbuf();
 										}
 

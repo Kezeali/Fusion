@@ -131,7 +131,7 @@ namespace FusionEngine
 
 		//! Removes the given entity
 		void RemoveEntity(const EntityPtr &entity);
-		//! Removes the entity with the givcen name
+		//! Removes the entity with the given name
 		void RemoveEntityNamed(const std::string &name);
 		//! Removes the entity with the given ID
 		void RemoveEntityById(ObjectID id);

@@ -197,21 +197,43 @@ namespace FusionEngine
 		{
 			std::weak_ptr<Cell> cell;
 			CellCoord_t coord;
+			EntitySerialisationUtils::SerialisedDataStyle dataStyle;
 			std::shared_ptr<std::istream> cellDataStream;
+			std::vector<ObjectID> ids;
+			size_t entitiesExpected;
+			size_t entitiesReadSoFar; // The count in cell.objects isn't used because some entities may (hope not) fail to instantiate
+			bool thereIsSyncedDataToReadNext;
 			std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>> entitiesInTransit;
 
+			// map data comes in a separate cell that can be loaded in parallel, but the cell
+			//  isn't done loading until the map is loaded, so the map job has to be tied to the main cell job
+			std::shared_ptr<ReadJob> mapSubjob;
+			
 			ReadJob()
+				: dataStyle(EntitySerialisationUtils::FastBinary),
+				entitiesExpected(0),
+				entitiesReadSoFar(0),
+				thereIsSyncedDataToReadNext(false)
 			{}
 
 			ReadJob(const std::weak_ptr<Cell>& cell_, const CellCoord_t& coord_)
 				: cell(cell_),
-				coord(coord_)
+				coord(coord_),
+				dataStyle(EntitySerialisationUtils::FastBinary),
+				entitiesExpected(0),
+				entitiesReadSoFar(0),
+				thereIsSyncedDataToReadNext(false)
 			{}
 
 			ReadJob(ReadJob&& other)
 				: cell(std::move(other.cell)),
 				coord(other.coord),
+				dataStyle(other.dataStyle),
 				cellDataStream(std::move(other.cellDataStream)),
+				ids(std::move(other.ids)),
+				entitiesExpected(other.entitiesExpected),
+				entitiesReadSoFar(other.entitiesReadSoFar),
+				thereIsSyncedDataToReadNext(other.thereIsSyncedDataToReadNext),
 				entitiesInTransit(std::move(other.entitiesInTransit))
 			{}
 
@@ -222,20 +244,24 @@ namespace FusionEngine
 		//	{}
 		};
 
-		void OnGotCellStreamForReading(std::shared_ptr<std::istream>&& cellDataStream, std::shared_ptr<ReadJob> job);
+		void OnGotCellStreamForReading(std::shared_ptr<std::istream> cellDataStream, std::shared_ptr<ReadJob> job);
 
-		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const bool editable);
-
-		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, std::shared_ptr<ICellStream> file, bool data_includes_ids, const bool editable = false);
-
-		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const bool editable = false);
-
-		void WriteEditModeData(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, bool editable);
+		std::shared_ptr<EntitySerialisationUtils::EntityFuture> LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 
 		void Run();
 
 	private:
-		bool ProcessIncommingEntities(const CellCoord_t& coord, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::shared_ptr<Cell>& conveniently_locked_cell);
+		void StartJob(const std::shared_ptr<ReadJob>& job, const std::shared_ptr<Cell>& a_cell_that_is_locked);
+		bool ContinueJob(const std::shared_ptr<ReadJob>& job, const std::shared_ptr<Cell>& the_cell_that_locks);
+
+		void WriteCellIntro(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+		void WriteCellData(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+
+		void WriteCellDataForEditMode(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+
+		// Reads the number of entities, and optional IDs from the cell data
+		std::pair<size_t, std::vector<ObjectID>> ReadCellIntro(const CellCoord_t& coord, ICellStream& file, const bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+		std::tuple<bool, size_t, std::shared_ptr<ICellStream>> ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;

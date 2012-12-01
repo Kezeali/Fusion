@@ -814,13 +814,13 @@ namespace FusionEngine
 			}
 		}
 
-		void WriteComponent(OCellStream& outstr, EntityComponent* component, bool editable)
+		void WriteComponent(OCellStream& outstr, EntityComponent* component, SerialisedDataStyle data_style)
 		{
 			FSN_ASSERT(component);
 
 			CellStreamWriter out(&outstr);
 
-			if (!editable)
+			if (data_style == FastBinary)
 			{
 				RakNet::BitStream stream;
 				component->SerialiseContinuous(stream);
@@ -856,13 +856,13 @@ namespace FusionEngine
 			}
 		}
 
-		void ReadComponent(ICellStream& instr, EntityComponent* component, bool editable)
+		void ReadComponent(ICellStream& instr, EntityComponent* component, SerialisedDataStyle data_style)
 		{
 			FSN_ASSERT(component);
 
 			CellStreamReader in(&instr);
 
-			if (!editable)
+			if (data_style == FastBinary)
 			{
 				const auto conDataLen = in.ReadValue<RakNet::BitSize_t>();
 				std::vector<char> data(conDataLen);
@@ -920,7 +920,7 @@ namespace FusionEngine
 		//	out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 		//}
 
-		void SaveEntity(OCellStream& outstr, EntityPtr entity, bool id_included, bool editable)
+		void SaveEntity(OCellStream& outstr, EntityPtr entity, bool id_included, SerialisedDataStyle data_style)
 		{
 			CellStreamWriter out(&outstr);
 
@@ -984,7 +984,7 @@ namespace FusionEngine
 			// Write a unique entity
 			else
 			{
-				WriteComponent(outstr, tfComponent, editable);
+				WriteComponent(outstr, tfComponent, data_style);
 			
 				out.Write(numComponents);
 				for (auto it = components.begin(), end = components.end(); it != end; ++it)
@@ -1001,7 +1001,7 @@ namespace FusionEngine
 					auto& component = *it;
 					if (component.get() != tfComponent)
 					{
-						WriteComponent(outstr, component.get(), editable);
+						WriteComponent(outstr, component.get(), data_style);
 					}
 				}
 			}
@@ -1010,17 +1010,19 @@ namespace FusionEngine
 		class DoNothingEntityFuture : public EntityFuture
 		{
 		public:
-			DoNothingEntityFuture(const EntityPtr& entity) : m_Entity(entity) {}
+			DoNothingEntityFuture(std::shared_ptr<ICellStream>&& file, const EntityPtr& entity) : m_Stream(file), m_Entity(entity) {}
 
-			EntityPtr get() { return std::move(m_Entity); }
+			EntityPtr get_entity() { return std::move(m_Entity); }
 
-			std::pair<EntityPtr, std::unique_ptr<ICellStream>> get_more() { return std::make_pair(std::move(m_Entity), std::move(m_Stream)); }
+			std::shared_ptr<ICellStream> get_file() { return std::move(m_Stream); }
+
+			std::pair<EntityPtr, std::shared_ptr<ICellStream>> get() { return std::make_pair(std::move(m_Entity), std::move(m_Stream)); }
 
 			bool is_ready() const { return true; }
 
 		private:
+			std::shared_ptr<ICellStream> m_Stream;
 			EntityPtr m_Entity;
-			std::unique_ptr<ICellStream> m_Stream;
 		};
 
 		class ArchetypalEntityFuture : public EntityFuture
@@ -1041,14 +1043,14 @@ namespace FusionEngine
 		private:
 			ResourceDataPtr m_Resource;
 			std::shared_ptr<ICellStream> m_Stream;
-			std::function<EntityPtr (const std::unique_ptr<ICellStream>&, const ResourceDataPtr&)> m_FinaliseFn;
+			std::function<EntityPtr (const std::shared_ptr<ICellStream>&, const ResourceDataPtr&)> m_FinaliseFn;
 
 			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
 
 			CL_Event m_GotResult;
 		};
 
-		ArchetypalEntityFuture::ArchetypalEntityFuture(std::shared_ptr<ICellStream>&& cell_data_stream, const std::string& archetype_id, const std::function<EntityPtr (const std::unique_ptr<ICellStream>&, const ResourceDataPtr&)>& finalise)
+		ArchetypalEntityFuture::ArchetypalEntityFuture(std::shared_ptr<ICellStream>&& cell_data_stream, const std::string& archetype_id, const std::function<EntityPtr (const std::shared_ptr<ICellStream>&, const ResourceDataPtr&)>& finalise)
 			: m_Stream(std::move(cell_data_stream)),
 			m_FinaliseFn(finalise),
 			m_GotResult(true, false)
@@ -1098,12 +1100,12 @@ namespace FusionEngine
 			return (bool)m_Resource;
 		}
 
-		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser)
+		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser)
 		{
-			return LoadEntity(std::move(in), id_included, override_id, editable, factory, manager, synchroniser)->get();
+			return LoadEntity(std::move(in), id_included, override_id, data_style, factory, manager, synchroniser)->get();
 		}
 
-		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& instr, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& instr, bool id_included, ObjectID override_id, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			FSN_ASSERT(factory);
 			FSN_ASSERT(manager);
@@ -1139,19 +1141,19 @@ namespace FusionEngine
 			if (isArchetypal)
 			{
 				return std::make_shared<ArchetypalEntityFuture>(std::move(instr), archetypeId,
-					[id, owner, name, terrain, editable, factory, manager, instantiator](const std::unique_ptr<ICellStream>& stream, const ResourceDataPtr& resource)->EntityPtr
+					[id, owner, name, terrain, data_style, factory, manager, instantiator](const std::shared_ptr<ICellStream>& stream, const ResourceDataPtr& resource)->EntityPtr
 				{
 					auto archetypeFactory = static_cast<ArchetypeFactory*>(resource->GetDataPtr());
-					return LoadArchetypalEntity(*stream, archetypeFactory, id, owner, name, terrain, editable, factory, manager, instantiator);
+					return LoadArchetypalEntity(*stream, archetypeFactory, id, owner, name, terrain, data_style, factory, manager, instantiator);
 				});
 			}
 			else
 			{
-				return std::make_shared<DoNothingEntityFuture>(LoadUniqueEntity(*instr, id, owner, name, terrain, editable, factory, manager, instantiator));
+				return std::make_shared<DoNothingEntityFuture>(std::move(instr), LoadUniqueEntity(*instr, id, owner, name, terrain, data_style, factory, manager, instantiator));
 			}
 		}
 
-		EntityPtr LoadUniqueEntity(ICellStream& instr, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadUniqueEntity(ICellStream& instr, ObjectID id, PlayerID owner, const std::string& name, bool terrain, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			FSN_ASSERT(factory);
 			FSN_ASSERT(manager);
@@ -1194,7 +1196,7 @@ namespace FusionEngine
 			entity->SetTerrain(terrain);
 
 			// Read the rest of the transform data, now that the component has been initialised (by adding it to the entity)
-			ReadComponent(instr, transform.get(), editable);
+			ReadComponent(instr, transform.get(), data_style);
 
 			//transform->SynchronisePropertiesNow();
 
@@ -1221,14 +1223,14 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					ReadComponent(instr, component.get(), editable);
+					ReadComponent(instr, component.get(), data_style);
 				}
 			}
 
 			return entity;
 		}
 
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator)
 		{
 			FSN_ASSERT(archetype_factory);
 			FSN_ASSERT(factory);
@@ -1253,8 +1255,11 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
 
+			// HACK: kind of, in that this assumes FastBinary style means this is being loaded in play mode, and EditableBinary / HumanReadable mean that this entity will be used by the editor
+			//  Link/unlinked mode should be a setting in ArchetypeFactoryManager, so that the archetype factories can be created with that parameter and then any instances
+			//  they make can be correctly set up.
 			EntityPtr entity =
-				editable ? archetype_factory->MakeInstance(factory, position, angle) : archetype_factory->MakeUnlinkedInstance(factory, position, angle);
+				data_style != FastBinary ? archetype_factory->MakeInstance(factory, position, angle) : archetype_factory->MakeUnlinkedInstance(factory, position, angle);
 
 			// Deserialise the archetype agent
 			{

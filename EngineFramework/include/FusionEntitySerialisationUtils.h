@@ -53,9 +53,16 @@ namespace FusionEngine
 
 	class ArchetypeFactory;
 	
+	// One confusing thing here is that there are separate methods for serialising to a network stream vs to a file, even though the underlying methods
+	//  for serialising individual components are the same. This should be rectified at some point, but luckily the methods are quite simple so this
+	//  is still (generally) maintainable as it is.
+
 	namespace EntitySerialisationUtils
 	{
 		enum SerialiseMode { Changes, All };
+
+		// HumanReadable isn't implemented
+		enum SerialisedDataStyle { FastBinary, EditableBinary, HumanReadable };
 
 		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, SerialiseMode mode);
 		EntityPtr DeserialiseEntity(RakNet::BitStream& in, ComponentFactory* factory, EntityManager* manager);
@@ -80,8 +87,8 @@ namespace FusionEngine
 		//! Reads length data written by WriteStateWithLength()
 		RakNet::BitSize_t ReadStateLength(RakNet::BitStream& in);
 
-		void WriteComponent(OCellStream& out, EntityComponent* component, bool editable);
-		void ReadComponent(ICellStream& in, EntityComponent* component, bool editable);
+		void WriteComponent(OCellStream& outstr, EntityComponent* component, SerialisedDataStyle data_style);
+		void ReadComponent(ICellStream& instr, EntityComponent* component, SerialisedDataStyle data_style);
 
 		//! Merge inactive entity data
 		std::streamsize MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
@@ -107,16 +114,16 @@ namespace FusionEngine
 		};
 
 		//! Save an entity
-		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, bool editable);
+		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included, SerialisedDataStyle data_style);
 		//! Load an entity... eventually (checks for archetypes)
-		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		std::shared_ptr<EntityFuture> LoadEntity(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		//! Load an entity RIGHT NOW
-		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		std::pair<EntityPtr, std::shared_ptr<ICellStream>> LoadEntityImmeadiate(std::shared_ptr<ICellStream>&& in, bool id_included, ObjectID override_id, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		
 		//! Load a non-archetypal entity
-		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
+		EntityPtr LoadUniqueEntity(ICellStream& in, ObjectID id, PlayerID owner, const std::string& name, bool terrain, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* synchroniser);
 		//! Load an archetypal entity
-		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, bool editable, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator);
+		EntityPtr LoadArchetypalEntity(ICellStream& instr, ArchetypeFactory* archetype_factory, ObjectID id, PlayerID owner, const std::string& name, bool terrain, SerialisedDataStyle data_style, ComponentFactory* factory, EntityManager* manager, EntityInstantiator* instantiator);
 	}
 
 }

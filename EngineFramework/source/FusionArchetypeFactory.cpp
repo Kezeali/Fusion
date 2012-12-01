@@ -158,12 +158,12 @@ namespace FusionEngine
 		IO::Streams::CellStreamWriter writer(&stream);
 		writer.Write(m_Editable);
 
-		EntitySerialisationUtils::SaveEntity(stream, m_ArchetypeData.Archetype, false, m_Editable);
+		EntitySerialisationUtils::SaveEntity(stream, m_ArchetypeData.Archetype, false, m_Editable ? EntitySerialisationUtils::EditableBinary : EntitySerialisationUtils::FastBinary);
 
 		m_ArchetypeData.Profile->Save(stream, m_ArchetypeData.Archetype);
 	}
 
-	void ArchetypeFactory::Load(std::unique_ptr<std::istream> stream, ComponentFactory* factory, EntityManager* manager)
+	void ArchetypeFactory::Load(std::shared_ptr<std::istream> stream, ComponentFactory* factory, EntityManager* manager)
 	{
 		boost::mutex::scoped_lock lock(m_Mutex);
 
@@ -171,7 +171,7 @@ namespace FusionEngine
 		reader.Read(m_Editable);
 
 		// Load the archetype definition entity
-		std::tie(m_ArchetypeData.Archetype, stream) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(stream), false, 0, m_Editable, factory, manager, m_ComponentInstantiator);
+		std::tie(m_ArchetypeData.Archetype, stream) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(stream), false, 0, m_Editable ? EntitySerialisationUtils::EditableBinary : EntitySerialisationUtils::FastBinary, factory, manager, m_ComponentInstantiator);
 		//m_TypeName = m_ArchetypeData.Archetype->GetArchetype(); // get the type name
 		
 		// Load the profile
@@ -216,6 +216,9 @@ namespace FusionEngine
 		entity->SetPosition(pos);
 		entity->SetAngle(angle);
 
+		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator, m_ResourceContainer != nullptr ? ResourceDataPtr(m_ResourceContainer) : ResourceDataPtr());
+		entity->SetArchetypeAgent(agent);
+
 		return std::move(entity);
 	}
 
@@ -223,15 +226,14 @@ namespace FusionEngine
 	{
 		const auto& data = m_ArchetypeData;
 
-		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator, m_ResourceContainer != nullptr ? ResourceDataPtr(m_ResourceContainer) : ResourceDataPtr());
 		// Set up signal handlers
+		if (auto agent = std::dynamic_pointer_cast<ArchetypalEntityManager>(entity->GetArchetypeAgent()))
 		{
 			using namespace std::placeholders;
 			agent->m_ChangeConnection = data.Agent->SignalChange.connect(std::bind(&ArchetypalEntityManager::OnSerialisedDataChanged, agent.get(), _1));
 			agent->m_ComponentAddedConnection = data.Agent->SignalAddComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentAdded, agent.get(), _1, _2, _3));
 			agent->m_ComponentRemovedConnection = data.Agent->SignalRemoveComponent.connect(std::bind(&ArchetypalEntityManager::OnComponentRemoved, agent.get(), _1));
 		}
-		entity->SetArchetypeAgent(agent);
 	}
 
 	void ArchetypeFactory::DefineArchetypeFromEntity(ComponentFactory* factory, const std::string& type, const EntityPtr& entity)
@@ -252,7 +254,7 @@ namespace FusionEngine
 		data.Agent = std::make_shared<ArchetypeDefinitionAgent>(data.Archetype, data.Profile);
 		data.Archetype->SetArchetypeDefinitionAgent(data.Agent);
 
-		// TODO: add archetypes to the entity manager or something to maintain them
+		// TODO: add archetypes to the entity manager or something to maintain them (stream in, sync props)
 		data.Archetype->StreamIn();
 	}
 

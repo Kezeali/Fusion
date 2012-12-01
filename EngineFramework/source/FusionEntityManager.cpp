@@ -1090,13 +1090,15 @@ namespace FusionEngine
 		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
 		{
 			const auto& entity = *it;
-			SaveEntity(stream, entity, true, editable);
+			SaveEntity(stream, entity, true, editable ? EditableBinary : FastBinary);
 		}
 	}
 
 	void EntityManager::LoadNonStreamingEntities(std::unique_ptr<std::istream> stream, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator, bool editable)
 	{
-		IO::Streams::CellStreamReader reader(stream.get());
+		std::shared_ptr<std::istream> sharingIsCaring(std::move(stream));
+
+		IO::Streams::CellStreamReader reader(sharingIsCaring.get());
 
 		m_LoadedNonStreamedEntities.clear();
 
@@ -1105,7 +1107,7 @@ namespace FusionEngine
 		for (size_t i = 0; i < numEnts; ++i)
 		{
 			EntityPtr entity;
-			std::tie(entity, stream) = LoadEntityImmeadiate(std::move(stream), true, 0, editable, m_Universe, this, instantiator);
+			std::tie(entity, sharingIsCaring) = LoadEntityImmeadiate(std::move(sharingIsCaring), true, 0, editable ? EditableBinary : FastBinary, m_Universe, this, instantiator);
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 			m_LoadedNonStreamedEntities.push_back(entity);
