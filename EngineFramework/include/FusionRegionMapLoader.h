@@ -203,7 +203,7 @@ namespace FusionEngine
 			size_t entitiesExpected;
 			size_t entitiesReadSoFar; // The count in cell.objects isn't used because some entities may (hope not) fail to instantiate
 			bool thereIsSyncedDataToReadNext;
-			std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>> entitiesInTransit;
+			std::shared_ptr<EntitySerialisationUtils::EntityFuture> entityInTransit;
 
 			// map data comes in a separate cell that can be loaded in parallel, but the cell
 			//  isn't done loading until the map is loaded, so the map job has to be tied to the main cell job
@@ -234,7 +234,7 @@ namespace FusionEngine
 				entitiesExpected(other.entitiesExpected),
 				entitiesReadSoFar(other.entitiesReadSoFar),
 				thereIsSyncedDataToReadNext(other.thereIsSyncedDataToReadNext),
-				entitiesInTransit(std::move(other.entitiesInTransit))
+				entityInTransit(std::move(other.entityInTransit))
 			{}
 
 		//private:
@@ -261,7 +261,7 @@ namespace FusionEngine
 
 		// Reads the number of entities, and optional IDs from the cell data
 		std::pair<size_t, std::vector<ObjectID>> ReadCellIntro(const CellCoord_t& coord, ICellStream& file, const bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle data_style);
-		std::tuple<bool, size_t, std::shared_ptr<ICellStream>> ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+		std::tuple<bool, size_t, std::shared_ptr<ICellStream>> ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::shared_ptr<EntitySerialisationUtils::EntityFuture>& incomming_entity, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;

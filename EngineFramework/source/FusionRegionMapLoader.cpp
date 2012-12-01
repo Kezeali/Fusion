@@ -564,45 +564,59 @@ namespace FusionEngine
 		return std::make_pair(numEntries, ids);
 	}
 
-	std::tuple<bool, size_t, std::shared_ptr<ICellStream>> RegionCellArchivist::ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::list<std::shared_ptr<EntitySerialisationUtils::EntityFuture>>& incomming_entities, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style)
+	std::tuple<bool, size_t, std::shared_ptr<ICellStream>> RegionCellArchivist::ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::shared_ptr<EntitySerialisationUtils::EntityFuture>& incomming_entity, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
+		std::list<EntityPtr> loaded_entities;
+
+		FSN_ASSERT(file);
+
 		// Read as many entities as possible before hitting one that requires other resources (e.g. archetype factories)
-		for (progress = 0; progress < num_entities; ++progress)
+		while (progress < num_entities)
 		{
-			auto incommingEntity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
-			incomming_entities.push_back(incommingEntity);
-			if (incommingEntity->is_ready())
-				file = incommingEntity->get_file();
+			incomming_entity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
+			if (incomming_entity->is_ready())
+			{
+				file = incomming_entity->get_file();
+				FSN_ASSERT(file);
+				loaded_entities.push_back(incomming_entity->get_entity());
+
+				incomming_entity.reset();
+
+				++progress;
+			}
 			else
 				break;
 		}
 
-		for (auto it = incomming_entities.begin(); it != incomming_entities.end();)
+		if (incomming_entity->is_ready())
 		{
-			const auto& future = *it;
+			file = incomming_entity->get_file();
+			FSN_ASSERT(file);
+			loaded_entities.push_back(incomming_entity->get_entity());
 
-			if (future->is_ready())
-			{
-				EntityPtr entity;
-				std::tie(entity, file) = future->get();
+			incomming_entity.reset();
 
-				Vector2 pos = entity->GetPosition();
-				// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
-				CellEntry entry;
-				entry.x = pos.x; entry.y = pos.y;
-
-				entity->SetStreamingCellIndex(coord);
-
-				conveniently_locked_cell->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
-
-				it = incomming_entities.erase(it);
-			}
-			else
-				++it;
+			++progress;
 		}
 
-		// When all the entities are constructed:
-		if (progress == num_entities && incomming_entities.empty())
+		// Add the loaded entities to the cell
+		for (auto it = loaded_entities.begin(); it != loaded_entities.end(); ++it)
+		{
+			const auto& entity = *it;
+
+			Vector2 pos = entity->GetPosition();
+			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
+			CellEntry entry;
+			entry.x = pos.x; entry.y = pos.y;
+
+			entity->SetStreamingCellIndex(coord);
+
+			conveniently_locked_cell->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
+		}
+		loaded_entities.clear();
+
+		// After all the entities are constructed:
+		if (progress == num_entities && !incomming_entity)
 		{
 			// Remove the archetype agent if edit-mode is disabled
 			if (!m_EditMode)
@@ -611,14 +625,11 @@ namespace FusionEngine
 					it->first->ResetArchetypeAgent();
 			}
 
-			AddHist(coord, "Loaded", conveniently_locked_cell->objects.size());
-			conveniently_locked_cell->loaded = true;
-			conveniently_locked_cell->waiting = Cell::Ready;
-
+			FSN_ASSERT(file);
 			return std::make_tuple(true, progress, std::move(file));
 		}
 
-		return std::make_tuple(false, progress, std::move(file));
+		return std::make_tuple(false, progress, std::shared_ptr<ICellStream>());
 	}
 
 	void RegionCellArchivist::WriteCellIntro(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
@@ -740,7 +751,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				auto cellDataStream = std::move(job->cellDataStream);
+				auto& cellDataStream = job->cellDataStream;
 
 				// Last param makes the method load synched entities from the map if the cache file isn't available:
 				if (m_Map)
@@ -817,8 +828,7 @@ namespace FusionEngine
 					// Try to process all the entities in the cell. If there isn't any archetypes to load,
 					//  the cell will be available immediately, otherwise it will have to be processed later:
 					bool done = false;
-					//std::tie(done, job->entitiesReadSoFar, job->cellDataStream) =
-					//	ContinueReadingCell(cellCoord, cell, job->entitiesExpected, job->entitiesReadSoFar, job->entitiesInTransit, job->ids, job->cellDataStream, m_EditMode ? EditableBinary : FastBinary);
+					//done = ContinueJob(job, a_cell_that_is_locked);
 					if (!done)
 					{
 						// Enqueue the cell to process again later
@@ -863,7 +873,7 @@ namespace FusionEngine
 		std::tie(done, job->entitiesReadSoFar, job->cellDataStream) = ContinueReadingCell(
 			job->coord, the_cell_that_locks,
 			job->entitiesExpected, job->entitiesReadSoFar,
-			job->entitiesInTransit,
+			job->entityInTransit,
 			job->ids, std::move(job->cellDataStream),
 			job->dataStyle);
 
@@ -873,6 +883,7 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "This shit done broke");
 
 			done = false;
+			job->thereIsSyncedDataToReadNext = false;
 
 			std::tie(job->entitiesExpected, job->ids) = ReadCellIntro(job->coord, *job->cellDataStream, true, job->dataStyle);
 		}
@@ -1000,14 +1011,19 @@ namespace FusionEngine
 								try
 								{
 									bool done = ContinueJob(job, lockedCell);
-									// The map is a separate file so it can be processed in parallel (while the psuedo-entity / synced entity subsections of each cell must be processed serially)
+									// The map is a separate file so it can be processed in parallel (while the pseudo-entity / synced entity subsections of each cell must be processed serially)
 									bool mapDone = job->mapSubjob ? ContinueJob(job->mapSubjob, lockedCell) : true;
 	
 									// Note that at this point it is possible for job->cellDataStream to be null (if it is still held by an entity-in-transit)
 	
 									if (mapDone && done)
 									{
+										AddHist(job->coord, "Loaded", lockedCell->objects.size());
+										lockedCell->loaded = true;
+										lockedCell->waiting = Cell::Ready;
+
 										readyCells.push_back(job->coord);
+
 										it = m_IncommingCells.erase(it);
 									}
 									else
@@ -1024,6 +1040,8 @@ namespace FusionEngine
 								// The requester asked to store the cell, but it was never loaded so it can simply be marked ready
 								lockedCell->waiting = Cell::Ready;
 								readyCells.push_back(job->coord);
+
+								it = m_IncommingCells.erase(it);
 							}
 						}
 					}
