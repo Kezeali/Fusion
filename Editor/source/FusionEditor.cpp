@@ -1170,8 +1170,24 @@ namespace FusionEngine
 					offset = Vector2(ToRenderUnits(c.x), ToRenderUnits(c.y));
 				}
 
-				auto editor = editorEntry->second;
-				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
+				boost::filesystem::path pathRelativeToData;
+				boost::filesystem::path filepath(filename);
+				auto dataIsAt = std::find(filepath.begin(), filepath.end(), "Data");
+				if (dataIsAt != filepath.end())
+				{
+					for (++dataIsAt; dataIsAt != filepath.end(); ++dataIsAt)
+						pathRelativeToData /= *dataIsAt;
+				}
+				else
+					pathRelativeToData = filepath;
+
+				if (!pathRelativeToData.empty())
+				{
+					auto editor = editorEntry->second;
+					ResourceManager::getSingleton().GetResource(type, pathRelativeToData.generic_string(), [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
+				}
+				else
+					SendToConsole(filename + " is not a valid resource path");
 			}
 			else
 				SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");

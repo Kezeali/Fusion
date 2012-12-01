@@ -70,6 +70,9 @@ namespace FusionEngine
 
 	ArchetypalEntityManager::~ArchetypalEntityManager()
 	{
+		m_ChangeConnection.disconnect();
+		m_ComponentAddedConnection.disconnect();
+		m_ComponentRemovedConnection.disconnect();
 	}
 
 	//IInstanceAgent* ArchetypalEntityManager::Clone(const EntityPtr& entity) const
