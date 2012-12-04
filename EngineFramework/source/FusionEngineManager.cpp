@@ -89,10 +89,9 @@ namespace FusionEngine
 		m_SaveProfilerData(false)
 	{
 		// Configure PhysFS
-		SetupPhysFS::configure("lastflare", "Fusion", "7z");
-		if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
+		SetupPhysFS::configure("lastflare", "Fusion", "zip");
+		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
 			SendToConsole("Default resource path could not be located");
-		SetupPhysFS::mount_archives(s_PackagesPath, "", "zip", false);
 
 		// Clear cache
 		//SetupPhysFS::clear_temp();

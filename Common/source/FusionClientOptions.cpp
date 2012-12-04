@@ -134,7 +134,7 @@ namespace FusionEngine
 				// Copy the default config file
 				try
 				{
-					PhysFSHelp::copy_file("default-" + filename, filename);
+					PhysFSHelp::copy_file("Data/default-" + filename, filename);
 
 					// Parse the xml
 					doc = OpenXml_PhysFS(filename);

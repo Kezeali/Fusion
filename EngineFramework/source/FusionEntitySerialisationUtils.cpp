@@ -1258,11 +1258,9 @@ namespace FusionEngine
 				FSN_EXCEPT(FileSystemException, "Failed to load archetype: missing position data");
 			}
 
-			// HACK: kind of, in that this assumes FastBinary style means this is being loaded in play mode, and EditableBinary / HumanReadable mean that this entity will be used by the editor
-			//  Link/unlinked mode should be a setting in ArchetypeFactoryManager, so that the archetype factories can be created with that parameter and then any instances
-			//  they make can be correctly set up.
-			EntityPtr entity =
-				data_style != FastBinary ? archetype_factory->MakeInstance(factory, position, angle) : archetype_factory->MakeUnlinkedInstance(factory, position, angle);
+			EntityPtr entity = ArchetypeFactoryManager::IsInstanceLinkingEnabled()
+				? archetype_factory->MakeInstance(factory, position, angle)
+				: archetype_factory->MakeUnlinkedInstance(factory, position, angle);
 
 			// Deserialise the archetype agent
 			{

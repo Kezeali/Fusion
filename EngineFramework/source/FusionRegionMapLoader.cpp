@@ -570,26 +570,28 @@ namespace FusionEngine
 
 		FSN_ASSERT(incomming_entity || file);
 
-		// Read as many entities as possible before hitting one that requires other resources (e.g. archetype factories)
-		while (progress < num_entities)
+		if (!incomming_entity)
 		{
-			++progress;
-
-			incomming_entity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
-			FSN_ASSERT(incomming_entity);
-			if (incomming_entity->is_ready())
+			// Read as many entities as possible before hitting one that requires other resources (e.g. archetype factories)
+			while (progress < num_entities)
 			{
-				loaded_entities.push_back(incomming_entity->get_entity());
-				file = incomming_entity->get_file();
-				FSN_ASSERT(file);
+				++progress;
 
-				incomming_entity.reset();
+				incomming_entity = LoadEntity(std::move(file), false, !ids.empty() ? ids[progress] : 0, data_style);
+				FSN_ASSERT(incomming_entity);
+				if (incomming_entity->is_ready())
+				{
+					loaded_entities.push_back(incomming_entity->get_entity());
+					file = incomming_entity->get_file();
+					FSN_ASSERT(file);
+
+					incomming_entity.reset();
+				}
+				else
+					break;
 			}
-			else
-				break;
 		}
-
-		if (incomming_entity && incomming_entity->is_ready())
+		else if (incomming_entity->is_ready())
 		{
 			loaded_entities.push_back(incomming_entity->get_entity());
 			file = incomming_entity->get_file();
@@ -709,23 +711,26 @@ namespace FusionEngine
 	{
 		if (file && *file)
 		{
-			// Need write the length of the data written up front, so a temp stream is needed
-			std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-			std::streampos start = tempStream.tellp();
+			{
+				// Need write the length of the data written up front, so a temp stream is needed
+				std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+				std::streampos start = tempStream.tellp();
 
-			// Write un-synched entity data (written to cache since this is edit mode)
-			WriteCellData(*file, cell_coord, cell.get(), numPseudo, false, data_style);
+				// Write un-synched entity data (written to cache since this is edit mode)
+				WriteCellData(tempStream, cell_coord, cell.get(), numPseudo, false, data_style);
 
-			std::streamsize dataLength = tempStream.tellp() - start;
+				std::streamsize dataLength = tempStream.tellp() - start;
 
+				// Write the length of the psuedo-entity data
+				IO::Streams::CellStreamWriter writer(file.get());
+				writer.Write(dataLength);
+
+				// Write the pseudo-entity data from the temp stream to the actual output file
+				(*file) << tempStream.rdbuf();
+			}
+
+			// Write the non-pseudo-entity data
 			WriteCellData(*file, cell_coord, cell.get(), numSynched, true, data_style);
-
-			// Write to the file-stream
-			IO::Streams::CellStreamWriter writer(file.get());
-			writer.Write(dataLength);
-
-			// Finally, write to the actual file
-			(*file) << tempStream.rdbuf();
 		}
 		else
 			FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");

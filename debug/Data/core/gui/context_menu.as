@@ -85,7 +85,7 @@ class ContextMenu : IEventListener
 		m_Id = id;
 		m_Position = position;
 
-		@m_MenuDoc = gui.getContext().LoadDocument(rString("core/gui/context_menu.rml"));
+		@m_MenuDoc = gui.getContext().LoadDocument(rString("Data/core/gui/context_menu.rml"));
 		if (m_MenuDoc !is null)
 		{
 			m_MenuDoc.SetId(id);

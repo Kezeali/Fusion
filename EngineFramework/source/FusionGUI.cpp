@@ -407,7 +407,7 @@ namespace FusionEngine
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
-		LoadFonts("core/gui/fonts/");
+		LoadFonts("Data/core/gui/fonts/");
 
 		ElementSelectableDataGrid::RegisterElement();
 		m_DataFormatters.push_back(std::make_shared<ExpandButtonFormatter>());
@@ -422,9 +422,9 @@ namespace FusionEngine
 		m_Contexts["world"] = std::make_shared<GUIContext>("world", ic, Vector2i(gc.get_width(), gc.get_height()), false);
 		auto& screenCtx = m_Contexts["screen"] = std::make_shared<GUIContext>("screen", ic, Vector2i(gc.get_width(), gc.get_height()));
 
-		if (auto c = screenCtx->m_Context->LoadMouseCursor("core/gui/cursor.rml"))
+		if (auto c = screenCtx->m_Context->LoadMouseCursor("Data/core/gui/cursor.rml"))
 			c->RemoveReference();
-		if (auto c = screenCtx->m_Context->LoadMouseCursor("core/gui/cursor-move.rml"))
+		if (auto c = screenCtx->m_Context->LoadMouseCursor("Data/core/gui/cursor-move.rml"))
 			c->RemoveReference();
 
 		m_MessageBoxMaker.reset(new MessageBoxMaker(screenCtx->m_Context));
@@ -724,7 +724,7 @@ namespace FusionEngine
 		{
 			Rocket::AngelScript::InitialiseModule(event.manager->GetEnginePtr(), event.module_name);
 
-			event.manager->AddFile("core/gui/console.as", event.module_name);
+			event.manager->AddFile("Data/core/gui/console.as", event.module_name);
 		}
 		else if (event.type == BuildModuleEvent::PostBuild)
 		{
@@ -733,7 +733,7 @@ namespace FusionEngine
 			{
 				// Create the Console window (a window where console commands can be entered)
 				module->GetCaller("void InitialiseConsole()")(); // register the element type
-				m_ConsoleDocument = GetContext()->LoadDocument("core/gui/console.rml");
+				m_ConsoleDocument = GetContext()->LoadDocument("Data/core/gui/console.rml");
 			}
 			catch (ScriptUtils::Exception &ex)
 			{

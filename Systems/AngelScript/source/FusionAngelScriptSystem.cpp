@@ -881,7 +881,7 @@ namespace FusionEngine
 
 		std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>> scriptsToBuild;
 
-		const std::string basePath = "Scripts";
+		const std::string basePath = "Data/Scripts";
 		char **files = PHYSFS_enumerateFiles(basePath.c_str());
 		for (auto it = files; *it != 0; ++it)
 		{

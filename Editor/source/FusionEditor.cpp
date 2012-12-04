@@ -700,7 +700,7 @@ namespace FusionEngine
 		MessageBoxMaker::AddFactory("error",
 			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
 		{
-			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
+			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "Data/core/gui/message_box.rml"));
 
 			messageBox->SetType("error_message");
 			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
@@ -952,7 +952,7 @@ namespace FusionEngine
 
 		m_DockedWindows = std::make_shared<DockedWindowManager>(this);
 
-		m_Background = m_GUIContext->LoadDocument("core/gui/editor_background.rml");
+		m_Background = m_GUIContext->LoadDocument("Data/core/gui/editor_background.rml");
 		m_Background->RemoveReference();
 
 		m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
@@ -1013,7 +1013,7 @@ namespace FusionEngine
 		if (m_Active)
 			BuildCreateEntityScript();
 
-		ScriptManager::getSingleton().AddFile("/core/gui/gui_popup.as", "gui_popup.as");
+		ScriptManager::getSingleton().AddFile("/Data/core/gui/gui_popup.as", "gui_popup.as");
 	}
 
 	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
@@ -1170,24 +1170,8 @@ namespace FusionEngine
 					offset = Vector2(ToRenderUnits(c.x), ToRenderUnits(c.y));
 				}
 
-				boost::filesystem::path pathRelativeToData;
-				boost::filesystem::path filepath(filename);
-				auto dataIsAt = std::find(filepath.begin(), filepath.end(), "Data");
-				if (dataIsAt != filepath.end())
-				{
-					for (++dataIsAt; dataIsAt != filepath.end(); ++dataIsAt)
-						pathRelativeToData /= *dataIsAt;
-				}
-				else
-					pathRelativeToData = filepath;
-
-				if (!pathRelativeToData.empty())
-				{
-					auto editor = editorEntry->second;
-					ResourceManager::getSingleton().GetResource(type, pathRelativeToData.generic_string(), [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
-				}
-				else
-					SendToConsole(filename + " is not a valid resource path");
+				auto editor = editorEntry->second;
+				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
 			}
 			else
 				SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
@@ -1204,7 +1188,7 @@ namespace FusionEngine
 
 	void Editor::ShowSaveDialog()
 	{
-		auto document = m_GUIContext->LoadDocument("core/gui/file_dialog.rml");
+		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
 		Rocket::Core::String title("Save Map");
 		document->SetTitle(title);
@@ -1220,7 +1204,7 @@ namespace FusionEngine
 
 	void Editor::ShowLoadDialog()
 	{
-		auto document = m_GUIContext->LoadDocument("core/gui/file_dialog.rml");
+		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
 		Rocket::Core::String title("Open Map");
 		document->SetTitle(title);
@@ -1336,7 +1320,7 @@ namespace FusionEngine
 	{
 		if (!m_ResourceBrowser)
 		{
-			m_ResourceBrowser = m_GUIContext->LoadDocument("core/gui/resource_browser.rml");
+			m_ResourceBrowser = m_GUIContext->LoadDocument("Data/core/gui/resource_browser.rml");
 			m_ResourceBrowser->RemoveReference();
 
 			m_DockedWindows->AddWindow(m_ResourceBrowser.get(), DockedWindowManager::Left);
@@ -1743,12 +1727,12 @@ namespace FusionEngine
 						//entity->SetName(m_EntityManager->GenerateName(entity));
 					}
 
-					std::string archetypeName = entity->GetName() + ".archetype";
+					std::string archetypeName = "/Data/" + entity->GetName() + ".archetype";
 
 					std::shared_ptr<ArchetypeFactory> archetypeFactory = std::make_shared<ArchetypeFactory>();
 					archetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), archetypeName, entity);
 
-					IO::PhysFSStream archetypeFile("/Data/" + archetypeName, IO::OpenMode::Write);
+					IO::PhysFSStream archetypeFile(archetypeName, IO::OpenMode::Write);
 					archetypeFactory->Save(archetypeFile);
 				}
 
@@ -2278,17 +2262,17 @@ namespace FusionEngine
 
 		auto module = scriptManager.GetModule("core_create_entity");
 		// Load the script file
-		auto script = OpenString_PhysFS("/core/create_entity.as");
+		auto script = OpenString_PhysFS("Data/core/create_entity.as");
 		// Generate and add the basecode section (also preprocess the script)
 		int r = module->AddCode("basecode", m_AngelScriptWorld->GenerateBaseCodeForScript(script));
 		FSN_ASSERT(r >= 0);
 		// Add the pre-processed script
-		r = module->AddCode("/core/create_entity.as", script);
+		r = module->AddCode("/Data/core/create_entity.as", script);
 		FSN_ASSERT(r >= 0);
 		// Attempt to build
 		r = module->Build();
 		if (r < 0)
-			SendToConsole("Failed to build /core/create_entity.as");
+			SendToConsole("Failed to build /Data/core/create_entity.as");
 
 		m_CreateEntityFn = module->GetASModule()->GetFunctionByName("createEntity");
 	}
@@ -2588,11 +2572,11 @@ namespace FusionEngine
 
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback)
 	{
-		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
+		auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
 		//{
-		//	auto script = OpenString_PhysFS("/core/gui/gui_base.as");
+		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
 		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
-		//	doc->LoadScript(strm, "/core/gui/gui_base.as");
+		//	doc->LoadScript(strm, "/Data/core/gui/gui_base.as");
 		//	strm->RemoveReference();
 		//}
 
@@ -2609,11 +2593,11 @@ namespace FusionEngine
 
 	void Editor::CreatePropertiesWindowForSelected()
 	{
-		auto doc = m_GUIContext->LoadDocument("/core/gui/properties.rml");
+		auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
 		//{
-		//	auto script = OpenString_PhysFS("/core/gui/gui_base.as");
+		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
 		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
-		//	doc->LoadScript(strm, "/core/gui/gui_base.as");
+		//	doc->LoadScript(strm, "/Data/core/gui/gui_base.as");
 		//	strm->RemoveReference();
 		//}
 

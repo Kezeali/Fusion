@@ -213,8 +213,8 @@ void GeneratePreviewPopup(string filename, Event@ event)
 	{
 		if (tooltip is null)
 		{
-			//@tooltip = document.GetContext().LoadDocument(rString("/core/gui/popup.rml"));
-			@tooltip = gui.getContext().LoadDocument(rString("/core/gui/popup.rml"));
+			//@tooltip = document.GetContext().LoadDocument(rString("/Data/core/gui/popup.rml"));
+			@tooltip = gui.getContext().LoadDocument(rString("/Data/core/gui/popup.rml"));
 			//tooltip.SetAttribute(rString('id'), rString("tooltip"));
 			@content = document.CreateElement(rString("div"));
 			content.SetAttribute(rString('id'), rString('tooltip_content'));

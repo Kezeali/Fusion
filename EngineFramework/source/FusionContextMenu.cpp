@@ -425,7 +425,7 @@ namespace FusionEngine
 	{
 		if (m_Document == nullptr)
 		{
-			m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
+			m_Document = m_Context->LoadDocument("Data/core/gui/context_menu.rml");
 			m_Document->AddEventListener("mouseout", this);
 		}
 
@@ -479,7 +479,7 @@ namespace FusionEngine
 	{
 		//context->AddReference();
 		m_Context = context;
-		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
+		m_Document = m_Context->LoadDocument("Data/core/gui/context_menu.rml");
 
 		InputManager *manager = InputManager::getSingletonPtr();
 		if (manager != nullptr)
@@ -493,7 +493,7 @@ namespace FusionEngine
 	{
 		//context->AddReference();
 		m_Context = context;
-		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
+		m_Document = m_Context->LoadDocument("Data/core/gui/context_menu.rml");
 
 		m_RawInputConnection = input->SignalRawInput.connect( std::bind(&ContextMenu::OnRawInput, this, _1) );
 	}

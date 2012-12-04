@@ -16,7 +16,7 @@ class EditButtonFormatter : IDataFormatter
 			string r0 = raw_data[0];
 			string r1 = raw_data[1];
 			//formattedData =
-			//	"<div class=\"edit_resource\" onclick=\"%this:OnEditResource('"+ r0 +"');\"><img src=\"/core/gui/edit_resource.png\"/></div>";
+			//	"<div class=\"edit_resource\" onclick=\"%this:OnEditResource('"+ r0 +"');\"><img src=\"/Data/core/gui/edit_resource.png\"/></div>";
 			formattedData =
 				"<div class=\"resource_row\">"
 				"<div class=\"r_filename\">" + r1 + "</div>"
@@ -24,7 +24,7 @@ class EditButtonFormatter : IDataFormatter
 			if (editor.isResourceEditable(r0))
 			{
 				formattedData +=
-					"<div class=\"edit_resource\" onclick=\"%this:OnEditResource('"+ r0 +"');\"><img src=\"/core/gui/edit_resource.png\"/></div>";
+					"<div class=\"edit_resource\" onclick=\"%this:OnEditResource('"+ r0 +"');\"><img src=\"/Data/core/gui/edit_resource.png\"/></div>";
 			}
 			formattedData += "</div>";
 		}

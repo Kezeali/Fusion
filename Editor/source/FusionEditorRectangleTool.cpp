@@ -260,7 +260,7 @@ namespace FusionEngine
 	{
 		if (!m_GuiDoc)
 		{
-			m_GuiDoc = GUI::getSingleton().GetContext("editor")->LoadDocument("/core/gui/editor_shapetool_toolbar.rml");
+			m_GuiDoc = GUI::getSingleton().GetContext("editor")->LoadDocument("/Data/core/gui/editor_shapetool_toolbar.rml");
 			m_GuiDoc->RemoveReference();
 
 			if (auto title = m_GuiDoc->GetElementById("title"))
