@@ -242,6 +242,11 @@ namespace FusionEngine
 
 	RegionFile::~RegionFile()
 	{
+		flush();
+	}
+
+	void RegionFile::flush()
+	{
 		// Write the region to disk (if it wasn't loaded read-only)
 		if (!filename.empty())
 		{
@@ -595,6 +600,21 @@ namespace FusionEngine
 
 		m_Cache.clear();
 		m_CacheImportance.clear();
+	}
+
+	void RegionCellCache::FlushCache()
+	{
+		//CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
+		for (auto it = m_Cache.cbegin(); it != m_Cache.cend(); ++it)
+		{
+			const auto& regionFile = it->second;
+
+			if (regionFile.IsLoaded())
+			{
+				regionFile->flush();
+			}
+		}
 	}
 
 	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)

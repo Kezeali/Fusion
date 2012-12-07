@@ -78,6 +78,9 @@ namespace FusionEngine
 		//! Unload held files (doesn't delete them from disk)
 		void DropCache();
 
+		//! Write cache data from loaded regions to disk (unlike DropCache, keeps them loaded)
+		void FlushCache();
+
 		typedef std::function<void (RegionFile*)> RegionLoadedCallback;
 
 		//! Clear the cache for the given file and reload it

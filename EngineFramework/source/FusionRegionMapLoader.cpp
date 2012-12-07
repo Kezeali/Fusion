@@ -916,15 +916,15 @@ namespace FusionEngine
 			{
 				// Process quick-save queue
 				{
-					m_Cache->Sustain();
-					m_EditableCache->Sustain();
+					//m_Cache->Sustain(); // Prevent unexpected writes to the region files -- Commented out because this is done in PerformSave now
+					//m_EditableCache->Sustain();
 					std::string saveName;
 					while (m_SaveQueue.try_pop(saveName))
 					{
 						PerformSave(saveName);
 					}
-					m_Cache->EndSustain();
-					m_EditableCache->EndSustain();
+					//m_Cache->EndSustain();
+					//m_EditableCache->EndSustain();
 				}
 
 				std::list<WriteQueue_t::value_type> writesToRetry;
@@ -1443,9 +1443,13 @@ namespace FusionEngine
 					FSN_EXCEPT(FileSystemException, "Failed to create save path (" + physFsPath + "/editable): " + std::string(PHYSFS_getLastError()));
 			}
 
-			// Flush the cache
-			// TODO: flush without unloading? (Cache->FlushFiles())
-			m_Cache->DropCache();
+			// Prevent unexpected writes (regions may have been queued to unload recently)
+			m_Cache->Sustain();
+			if (m_EditableCache) m_EditableCache->Sustain();
+
+			// Flush the cache(s)
+			m_Cache->FlushCache();
+			if (m_EditableCache) m_EditableCache->FlushCache();
 
 			std::vector<bfs::path> regionFiles;
 			std::vector<bfs::path> dataFiles;
@@ -1490,6 +1494,11 @@ namespace FusionEngine
 				auto dest = savePath; dest /= it->filename();
 				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
 			}
+
+			// Allow regions to be unloaded
+			if (m_EditableCache) m_EditableCache->EndSustain();
+			m_Cache->EndSustain();
+
 			SendToConsole("QS Progress: copying entitylocations.kc");
 			SaveEntityLocationDB((savePath /= "entitylocations.kc").string());
 			SendToConsole("QS Progress: done copying entitylocations.kc");

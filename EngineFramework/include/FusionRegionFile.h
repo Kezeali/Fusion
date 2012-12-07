@@ -113,8 +113,8 @@ namespace FusionEngine
 		//! Init
 		void init();
 
-		//! Load region data from provided source into memory
-		void loadRegionData(std::unique_ptr<std::istream> source);
+		//! Write to disk
+		void flush();
 
 		//! Move CTOR
 		RegionFile(RegionFile&& other)
@@ -183,6 +183,9 @@ namespace FusionEngine
 		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& i);
 		
 	private:
+		//! Load region data from provided source into memory
+		void loadRegionData(std::unique_ptr<std::istream> source);
+
 		// non-copyableness
 		//! Private copy constructor (class is non-copyable)
 		RegionFile(const RegionFile&) {}
