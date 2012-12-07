@@ -630,7 +630,7 @@ namespace FusionEngine
 			return std::make_tuple(true, progress, std::move(file));
 		}
 
-		return std::make_tuple(false, progress, std::shared_ptr<ICellStream>());
+		return std::make_tuple(false, progress, file ? std::move(file) : std::shared_ptr<ICellStream>());
 	}
 
 	void RegionCellArchivist::WriteCellIntro(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
@@ -880,6 +880,8 @@ namespace FusionEngine
 			job->entityInTransit,
 			job->ids, std::move(job->cellDataStream),
 			job->dataStyle);
+
+		FSN_ASSERT(job->entityInTransit || job->cellDataStream);
 
 		if (done && job->thereIsSyncedDataToReadNext) // but wait, there's more
 		{
