@@ -446,6 +446,8 @@ namespace FusionEngine
 		if (wasRunning)
 			Stop();
 
+		m_Cache->DefragNow();
+
 		if (PerformSave(save_name))
 			CompressSave(save_name);
 

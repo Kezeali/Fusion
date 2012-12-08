@@ -114,7 +114,7 @@ namespace FusionEngine
 		void init();
 
 		//! Write to disk
-		void flush();
+		void flush() const;
 
 		//! Move CTOR
 		RegionFile(RegionFile&& other)
@@ -145,6 +145,8 @@ namespace FusionEngine
 			uint32_t startingSector : 24;
 			uint32_t sectorsAllocated : 8;
 
+			static const size_t s_MaxSectorsPerCell = 255; // i.e. the 8 bits in sectorAllocated allow a max value of 255
+
 			DataLocation()
 				: startingSector(0),
 				sectorsAllocated(0)
@@ -166,6 +168,8 @@ namespace FusionEngine
 
 		size_t region_width; // Number of cells in each direction that comprise this region
 
+		bool fragmentationAllowed;
+
 		//! Gets a stream for reading data for the given cell (co-ords relative to the region)
 		std::unique_ptr<ArchiveIStream> getInputCellData(int32_t x, int32_t y, bool inflate = true);
 		//! Gets a stream for writing data to the given cell (co-ords relative to the region)
@@ -175,12 +179,29 @@ namespace FusionEngine
 		std::unique_ptr<ArchiveOStream> getOutputCellData(int32_t x, int32_t y);
 
 		//! Writes data for the given cell (co-ords relative to the region)
-		void write(const std::pair<int32_t, int32_t>& i, std::vector<char>& data);
+		void write(const std::pair<int32_t, int32_t>& cell_index, std::vector<char>& data);
 		//! Writes data to the given sector
-		void write(size_t first_sector, const std::vector<char>& data);
+		void write(size_t first_sector, size_t scalar_cell_index, const std::vector<char>& data);
 
-		void setCellDataLocation(const std::pair<int32_t, int32_t>& i, uint32_t startSector, uint32_t sectorsUsed);
-		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& i);
+		//! Defragment the entire region file
+		void defragment();
+		//! Defragment the given sectors
+		void defragment(size_t begin, size_t end);
+
+		//! Move from the given run of sectors to the given new location
+		size_t moveData(size_t first_sector, size_t dest_sector);
+		//! Move from the given run of sectors to the given new location
+		void moveData(size_t first_sector, size_t length_in_sectors, size_t dest_sector);
+
+		//! Returns the scalar index within the region file cell table that the given vector cell index translates to
+		size_t toScalarIndex(const std::pair<int32_t, int32_t>& cell_index) const;
+
+		//! Writes the given information to the region index
+		void setCellDataLocation(const std::pair<int32_t, int32_t>& cell_index, uint32_t startSector, uint32_t sectorsUsed);
+		//! Writes the given information to the region index
+		void setCellDataLocation(const size_t scalar_cell_index, uint32_t startSector, uint32_t sectorsUsed);
+		//! Get the information about the given cell from the region index
+		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& cell_index);
 		
 	private:
 		//! Load region data from provided source into memory

@@ -81,6 +81,13 @@ namespace FusionEngine
 		//! Write cache data from loaded regions to disk (unlike DropCache, keeps them loaded)
 		void FlushCache();
 
+		void SetFragmentationAllowed(bool allowed);
+
+		bool IsFragmentationAllowed() const { return m_FragmentationAllowed; }
+
+		//! Calls defragment on all cached regions
+		void DefragNow();
+
 		typedef std::function<void (RegionFile*)> RegionLoadedCallback;
 
 		//! Clear the cache for the given file and reload it
@@ -132,6 +139,8 @@ namespace FusionEngine
 
 		bool m_EditMode;
 		CL_Rect m_Bounds;
+
+		bool m_FragmentationAllowed;
 
 		//! Returns the region in which the given cell resides, and converts the coords to region-relative coords
 		RegionCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;

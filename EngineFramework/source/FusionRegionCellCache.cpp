@@ -50,7 +50,7 @@ namespace io = boost::iostreams;
 
 namespace FusionEngine
 {
-	static const uint8_t s_CellDataVersion = 1;
+	static const uint8_t s_CellDataVersion = 2;
 
 	static std::array<char, RegionFile::s_SectorSize> s_EmptySectorData;
 
@@ -212,7 +212,8 @@ namespace FusionEngine
 
 	RegionFile::RegionFile(const std::string& filename, size_t width)
 		: filename(filename),
-		region_width(width)
+		region_width(width),
+		fragmentationAllowed(true)
 	{
 		std::unique_ptr<boost::iostreams::file_descriptor> filedesc;
 
@@ -233,7 +234,8 @@ namespace FusionEngine
 	}
 
 	RegionFile::RegionFile(std::unique_ptr<std::istream>&& read_only_file, size_t width)
-		: region_width(width)
+		: region_width(width),
+		fragmentationAllowed(true)
 	{
 		loadRegionData(std::move(read_only_file));
 
@@ -245,7 +247,7 @@ namespace FusionEngine
 		flush();
 	}
 
-	void RegionFile::flush()
+	void RegionFile::flush() const
 	{
 		// Write the region to disk (if it wasn't loaded read-only)
 		if (!filename.empty())
@@ -396,23 +398,17 @@ namespace FusionEngine
 		if (dataLength > s_SectorSize * numSectors)
 		{
 			std::stringstream str; str << location.first << ", " << location.second;
-			AddLogEntry("Region file is corrupt: data length for cell [" + str.str() + "] is inconsistent with sectors used", LOG_CRITICAL);
+			AddLogEntry("Data length for cell [" + str.str() + "] is inconsistent with sectors used (meaning region file is corrupt)", LOG_CRITICAL);
 			return std::unique_ptr<ArchiveIStream>();
 		}
 
 		const auto dataVersion = reader.ReadValue<uint8_t>();
 
 		// When there is a changes to the cell data, add conversion for old data here
-		if (dataVersion != s_CellDataVersion)
-			FSN_EXCEPT(FileTypeException, "Incorrect cell data type");
-
-		// Decompress the data
-		//if (inflate)
-		//{
-		//	io::filtering_istream decompressor;
-		//	decompressor.push(io::zlib_decompressor());
-		//	decompressor.push(*file);
-		//}
+		// like:
+		//if (dataVersion == 1) generate some value that wouldn't be in this version; else read the value;
+		if (dataVersion == s_CellDataVersion)
+			FSN_EXCEPT(FileTypeException, "Invalid cell data");
 
 		SmartArrayDevice device;
 
@@ -454,24 +450,24 @@ namespace FusionEngine
 		const auto length = data.size();
 
 		const auto& dataLocation = getCellDataLocation(cell_index);
-		auto sectorNumber = dataLocation.startingSector;
-		auto sectorsAllocated = dataLocation.sectorsAllocated;
-		auto sectorsNeeded = (length + s_CellHeaderSize) / s_SectorSize + 1;
+		auto startingSector = dataLocation.startingSector;
+		const auto sectorsAllocated = dataLocation.sectorsAllocated;
+		const auto sectorsNeeded = (length + s_CellHeaderSize) / s_SectorSize + 1;
 
-		if (sectorsNeeded > 256)
+		if (sectorsNeeded > DataLocation::s_MaxSectorsPerCell)
 		{
 			std::stringstream str; str << cell_index.first << ", " << cell_index.second;
 			FSN_EXCEPT(FileSystemException, "Too much data for cell [" + str.str() + "] in region " + filename);
 		}
 
-		if (sectorNumber != 0 && sectorsAllocated == sectorsNeeded)
+		if (startingSector != 0 && sectorsAllocated == sectorsNeeded) // Must be exact match to just write, because even if the data is smaller that needs to be recorded
 		{
-			write(sectorNumber, data);
+			write(startingSector, toScalarIndex(cell_index), data);
 		}
-		else // Allocate new sectors
+		else // Allocate & assign new sectors (or mark sectors unused if data has shrunk)
 		{
 			for (size_t i = 0; i < sectorsAllocated; ++i)
-				free_sectors.set(sectorNumber + i, true);
+				free_sectors.set(startingSector + i, true);
 
 			// Scan for a run of free sectors that will fit the cell data
 			auto runStart = free_sectors.find_first();
@@ -480,14 +476,14 @@ namespace FusionEngine
 			{
 				for (auto i = runStart; i < free_sectors.size(); ++i)
 				{
-					if (runLength != 0)
+					if (runLength != 0) // Continue checking a run
 					{
 						if (free_sectors.test(i))
 							++runLength;
-						else
+						else // These was a gap in the data, but it wasn't big enough for the new data
 							runLength = 0;
 					}
-					else if (free_sectors.test(i))
+					else if (free_sectors.test(i)) // Start a new run
 					{
 						runStart = i;
 						runLength = 1;
@@ -499,17 +495,21 @@ namespace FusionEngine
 
 			if (runLength >= sectorsNeeded) // Free space found
 			{
-				sectorNumber = runStart;
-				setCellDataLocation(cell_index, sectorNumber, sectorsNeeded);
+				const auto newStartingSector = runStart;
+				setCellDataLocation(cell_index, newStartingSector, sectorsNeeded);
 				// Mark these sectors used
 				for (size_t i = 0; i < sectorsAllocated; ++i)
-					free_sectors.set(sectorNumber + i, false);
+					free_sectors.set(newStartingSector + i, false);
 				
-				write(sectorNumber, data);
+				write(newStartingSector, toScalarIndex(cell_index), data);
+
+				// Defrag if that is turned on
+				if (!fragmentationAllowed)
+					defragment(startingSector, newStartingSector + sectorsAllocated);
 			}
 			else // No free space found, grow the file
 			{
-				sectorNumber = free_sectors.size();
+				startingSector = free_sectors.size();
 				free_sectors.resize(free_sectors.size() + sectorsNeeded, false);
 
 				file->seekp(0, std::ios::end);
@@ -518,29 +518,129 @@ namespace FusionEngine
 					file->write(s_EmptySectorData.data(), s_SectorSize);
 				}
 				
-				write(sectorNumber, data);
-				setCellDataLocation(cell_index, sectorNumber, sectorsNeeded);
+				write(startingSector, toScalarIndex(cell_index), data);
+				setCellDataLocation(cell_index, startingSector, sectorsNeeded);
 			}
 		}
 	}
 
-	void RegionFile::write(size_t sector_number, const std::vector<char>& data)
+	void RegionFile::write(size_t first_sector, size_t scalar_cell_index, const std::vector<char>& data)
 	{
 		IO::Streams::CellStreamWriter writer(file.get());
 
-		std::streampos streamPos(sector_number * s_SectorSize);
+		std::streampos streamPos(first_sector * s_SectorSize);
 		file->seekp(streamPos);
 
+		// Write the basic cell header, consisting of length of data then version number
 		writer.WriteAs<size_t>(data.size() + sizeof(uint8_t)); // The length written includes the version number (written below)
 		writer.WriteAs<uint8_t>(s_CellDataVersion);
+		
+		// * Added in s_CellDataVersion 2
+		// Write the cell index for backwards lookup (used to update the index in sector0 when defraging)
+		writer.WriteAs<size_t>(scalar_cell_index);
+
 		file->write(data.data(), data.size());
+	}
+
+	void RegionFile::defragment()
+	{
+		defragment(1, free_sectors.size());
+	}
+
+	void RegionFile::defragment(size_t begin, size_t end)
+	{
+		FSN_ASSERT(begin > 0); // don't defrag the index!
+		FSN_ASSERT(end <= free_sectors.size());
+
+		// Find the first gap
+		auto gapStart = free_sectors.find_first();
+		if (gapStart != boost::dynamic_bitset<>::npos)
+		{
+			for (auto i = gapStart; i < end; ++i)
+			{
+				if (!free_sectors.test(i))
+				{
+					FSN_ASSERT(free_sectors.test(i - 1));
+					// this overload of moveData returns the number of sectors moved
+					//  which is then added to i to skip them
+					//i += moveData(i, gapStart);
+					moveData(i, gapStart);
+
+					// Find the next gap (if any)
+					gapStart = free_sectors.find_next(gapStart);
+					if (gapStart != boost::dynamic_bitset<>::npos)
+						i = gapStart;
+					else
+						break; // no more gaps
+				}
+			}
+		}
+	}
+
+	size_t RegionFile::moveData(size_t first_sector, size_t dest_sector)
+	{
+		if (first_sector > 0) // sector zero is the cell index, which doesn't have length data
+		{
+			// Read the data length from the give sector
+			IO::Streams::CellStreamReader reader(file.get());
+
+			auto length = reader.ReadValue<size_t>();
+			if (length > 0)
+			{
+				const auto dataVersion = reader.ReadValue<uint8_t>();
+				if (dataVersion == 1)
+					FSN_EXCEPT(FileTypeException, "Can't defrag version 1 region files");
+
+				const auto cellIndex = reader.ReadValue<size_t>();
+				const auto lengthInSectors = (size_t)(length / s_SectorSize + 1u);
+				moveData(first_sector, lengthInSectors, dest_sector);
+
+#ifdef _DEBUG
+				auto indexEntry = std::find_if(cellDataLocations.cbegin(), cellDataLocations.cend(), [first_sector](const DataLocation& location) { return location.startingSector == first_sector; });
+				FSN_ASSERT(indexEntry != cellDataLocations.cend() && std::distance(cellDataLocations.cbegin(), indexEntry) == cellIndex);
+#endif
+				setCellDataLocation(cellIndex, first_sector, lengthInSectors);
+
+				return lengthInSectors;
+			}
+
+			return 0;
+		}
+		else
+			FSN_EXCEPT(InvalidArgumentException, "Failed to move data with region: can't move sector 0");
+	}
+
+	void RegionFile::moveData(size_t first_sector, size_t length_in_sectors, size_t dest_sector)
+	{
+		std::vector<char> buffer(length_in_sectors * s_SectorSize);
+
+		std::streampos streamPos(first_sector * s_SectorSize);
+		file->seekg(streamPos);
+
+		file->read(buffer.data(), buffer.size());
+
+		file->seekp(dest_sector * s_SectorSize);
+		file->write(buffer.data(), buffer.size());
+
+		// Update free_sectors
+		// TODO: copy the flags from the original to new new
+		for (size_t i = first_sector; i < first_sector + length_in_sectors; ++i)
+			free_sectors.set(i, true);
+
+		for (size_t i = dest_sector; i < dest_sector + length_in_sectors; ++i)
+			free_sectors.set(i, false);
+	}
+
+	size_t RegionFile::toScalarIndex(const std::pair<int32_t, int32_t>& cell_index) const
+	{
+		return cell_index.first + cell_index.second * region_width;
 	}
 
 	void RegionFile::setCellDataLocation(const std::pair<int32_t, int32_t>& cell_index, uint32_t startSector, uint32_t sectorsUsed)
 	{
 		// Make sure the values given fit within the space available to them in the bitfield
 		FSN_ASSERT(startSector < (1 << 24));
-		FSN_ASSERT(sectorsUsed < 256);
+		FSN_ASSERT(sectorsUsed < DataLocation::s_MaxSectorsPerCell);
 
 		const auto x = cell_index.first;
 		const auto y = cell_index.second;
@@ -551,20 +651,24 @@ namespace FusionEngine
 		FSN_ASSERT(y < (int32_t)region_width);
 		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 
-		auto& data = cellDataLocations[x + y * region_width];
+		setCellDataLocation(x + y * region_width, startSector, sectorsUsed);
+	}
+
+	void RegionFile::setCellDataLocation(const size_t cell_index, uint32_t startSector, uint32_t sectorsUsed)
+	{
+		auto& data = cellDataLocations[cell_index];
 		data.startingSector = startSector;
 		data.sectorsAllocated = sectorsUsed;
 
-		//auto output = data;
-
 		IO::Streams::CellStreamWriter writer(file.get());
 
-		std::streampos pos((x + y * region_width) * sizeof(DataLocation));
-		//file->seekp(x + y * region_width * sizeof(DataLocation), std::ios::beg);
+		std::streampos pos(cell_index * sizeof(DataLocation));
 		if (file->seekp(pos))
 			writer.Write(data);
+#ifdef _DEBUG
 		const auto p = file->tellp();
 		const auto expectedp = pos + std::streamoff(sizeof(data));
+#endif
 		FSN_ASSERT(file->tellp() == (pos + std::streamoff(sizeof(data))));
 	}
 
@@ -584,7 +688,8 @@ namespace FusionEngine
 		: m_CachePath(cache_path),
 		m_RegionSize(region_size),
 		m_MaxLoadedFiles(10),
-		m_EditMode(false)
+		m_EditMode(false),
+		m_FragmentationAllowed(true)
 	{
 		FSN_ASSERT(region_size > 0);
 
@@ -617,10 +722,38 @@ namespace FusionEngine
 		}
 	}
 
+	void RegionCellCache::SetFragmentationAllowed(bool allowed)
+	{
+		if (!allowed)
+			SendToConsole("Enabling auto-defrag on all regions in " + m_CachePath);
+
+		m_FragmentationAllowed = allowed;
+		for (auto it = m_Cache.cbegin(); it != m_Cache.cend(); ++it)
+		{
+			if (it->second.IsLoaded())
+			{
+				it->second->fragmentationAllowed = allowed;
+			}
+		}
+	}
+
+	void RegionCellCache::DefragNow()
+	{
+		for (auto it = m_Cache.cbegin(); it != m_Cache.cend(); ++it)
+		{
+			if (it->second.IsLoaded())
+			{
+				it->second->defragment();
+			}
+		}
+	}
+
 	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)
 	{
 		m_EditMode = enable;
 		m_Bounds = bounds;
+
+		SetFragmentationAllowed(!enable);
 	}
 
 	RegionCellCache::RegionCoord_t RegionCellCache::cellToRegionCoord(int32_t* cell_x, int32_t* cell_y) const
@@ -721,6 +854,9 @@ namespace FusionEngine
 
 		auto resourcePointer = m_Cache[coord] = ResourcePointer<RegionFile>(resource);
 		RegionFile* regionFile = resourcePointer.Get();
+		FSN_ASSERT(regionFile);
+
+		regionFile->fragmentationAllowed = m_FragmentationAllowed;
 
 		std::stringstream str; str << coord.x << "," << coord.y;
 		AddLogEntry("cells_loaded", "<RegionFileLoaded [" + str.str() + "]>");
