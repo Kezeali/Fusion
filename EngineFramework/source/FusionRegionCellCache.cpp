@@ -404,11 +404,17 @@ namespace FusionEngine
 
 		const auto dataVersion = reader.ReadValue<uint8_t>();
 
-		// When there is a changes to the cell data, add conversion for old data here
-		// like:
-		//if (dataVersion == 1) generate some value that wouldn't be in this version; else read the value;
-		if (dataVersion == s_CellDataVersion)
-			FSN_EXCEPT(FileTypeException, "Invalid cell data");
+		// When there is a changes to the cell data, conversions for old data can be added here
+
+		if (dataVersion != s_CellDataVersion)
+			FSN_EXCEPT(FileTypeException, "Cell data version unsupported");
+
+		const auto scalarCellIndex = reader.ReadValue<size_t>();
+		if (scalarCellIndex != toScalarIndex(location))
+		{
+			std::stringstream str; str << location.first << ", " << location.second;
+			FSN_EXCEPT(FileTypeException, "Cell data retrieved is not for the expected cell index - the region file is probably corrupt");
+		}
 
 		SmartArrayDevice device;
 
