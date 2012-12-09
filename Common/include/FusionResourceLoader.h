@@ -50,6 +50,9 @@ namespace FusionEngine
 	//! Fn. pointer for loading stuff into a GC (textures)
 	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, boost::any user_data);
 
+	//! Fn. pointer for checking for changes
+	typedef void (*resource_haschanged)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
+
 	typedef std::vector< std::pair< std::string, std::string > > DepsList;
 	//! Fn. pointer - should return a list of resources that this resource needs access to
 	/*!
