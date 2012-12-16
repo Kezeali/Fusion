@@ -55,8 +55,6 @@ namespace FusionEngine
 
 		//! Used when compiling a map from a cell cache
 		virtual void GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y) = 0;
-
-		virtual CL_Rect GetUsedBounds() const = 0;
 	};
 
 }

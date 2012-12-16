@@ -59,40 +59,32 @@ namespace FusionEngine
 	class GameMap
 	{
 	public:
-		GameMap(CL_IODevice& file, const std::string& name);
+		GameMap(const std::string& path);
 
-		// TODO: remove this
-		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, EntityInstantiator* instantiator);
+		void InitInstantiator(EntityInstantiator* instantiator);
 
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
 		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
 		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 
-		static void CompileMap(std::ostream& device, float cell_size, CellDataSource* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
+		static void CompileMap(std::ostream &metadataFile, std::ostream& nonStreamingEntitiesFile, float cell_size, CellDataSource* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
 		const std::string& GetName() const { return m_Name; }
 
-		CL_Rect GetBounds() const;
+		std::string GetPath() const { return m_Basepath + GetName(); }
 
-		float GetMapWidth() const;
-		unsigned int GetNumCellsAcross() const;
+		std::string GetEntityDatabasePath() const { return GetPath() + m_EntityDatabaseFilename; }
+
 		float GetCellSize() const;
 
-		uint32_t GetNonStreamingEntitiesLocation() const { return m_NonStreamingEntitiesLocation; }
-
 	private:
+		std::string m_Basepath;
 		std::string m_Name;
-		CL_IODevice m_File;
-		std::vector<std::pair<uint32_t, uint32_t>> m_CellLocations; // Locations within the file for each cell
-		uint32_t m_NonStreamingEntitiesLocation;
-		uint32_t m_NonStreamingEntitiesDataLength;
-		unsigned int m_XCells;
-		Vector2T<int32_t> m_MinCell;
-		Vector2T<int32_t> m_MaxCell;
-		Vector2T<uint32_t> m_NumCells;
+		// TODO: ? Don't store the file, just load it from the stored path when required
+		std::shared_ptr<std::istream> m_NonStreamingEntitiesFile;
+		std::string m_EntityDatabaseFilename;
 		float m_CellSize;
-		float m_MapWidth;
 	};
 	
 	//! Loads maps and games.
@@ -108,16 +100,8 @@ namespace FusionEngine
 		/*!
 		* \param[in] filename
 		* The file to load
-		* \param[in] directory
-		* The filesystem to load the file from
-		* \param[in] synchroniser
-		* Load synced Entities (entities with an ID, that are synced over the network/saved.)
-		* Set if starting a new game; if joining a game or loading a save, set to null
-		* so synced entities can be loaded from the existing ontology.
 		*/
-		std::shared_ptr<GameMap> LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, EntityInstantiator* synchroniser = nullptr);
-
-		std::shared_ptr<GameMap> LoadMap(const std::string &filename, EntityInstantiator* synchroniser = nullptr);
+		std::shared_ptr<GameMap> LoadMap(const std::string &filename, bool synchronise = false);
 
 		void onEntityInstanced(EntityPtr &entity);
 

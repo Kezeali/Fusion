@@ -106,6 +106,7 @@
     </ClCompile>
     <ClCompile Include="source\FusionArchetype.cpp" />
     <ClCompile Include="source\FusionArchetypeFactory.cpp" />
+    <ClCompile Include="source\FusionCellSerialisationUtils.cpp" />
     <ClCompile Include="source\FusionComponentScriptTypeRegistration.cpp" />
     <ClCompile Include="source\FusionComponentUniverse.cpp" />
     <ClCompile Include="source\FusionContextMenu.cpp" />
@@ -121,6 +122,7 @@
     <ClCompile Include="source\FusionGUI.cpp" />
     <ClCompile Include="source\FusionMessageBox.cpp" />
     <ClCompile Include="source\FusionMultiEntityLoader.cpp" />
+    <ClCompile Include="source\FusionNetworkedRegionCellCache.cpp" />
     <ClCompile Include="source\FusionP2PEntityInstantiator.cpp" />
     <ClCompile Include="source\FusionPrefabInstantiator.cpp" />
     <ClCompile Include="source\CellArchivistSystem.cpp" />
@@ -135,8 +137,12 @@
     <ClInclude Include="include\FusionActiveEntityDirectory.h" />
     <ClInclude Include="include\FusionArchetype.h" />
     <ClInclude Include="include\FusionArchetypeFactory.h" />
+    <ClInclude Include="include\FusionCell.h" />
     <ClInclude Include="include\FusionCellCache.h" />
     <ClInclude Include="include\FusionCellDataSource.h" />
+    <ClInclude Include="include\FusionCellSerialisationUtils.h" />
+    <ClInclude Include="include\FusionCellStreamTypes.h" />
+    <ClInclude Include="include\FusionCharCounter.h" />
     <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
     <ClInclude Include="include\FusionComponentUniverse.h" />
     <ClInclude Include="include\FusionContextMenu.h" />
@@ -153,11 +159,13 @@
     <ClInclude Include="include\FusionGUI.h" />
     <ClInclude Include="include\FusionMessageBox.h" />
     <ClInclude Include="include\FusionMultiEntityLoader.h" />
+    <ClInclude Include="include\FusionNetworkedRegionCellCache.h" />
     <ClInclude Include="include\FusionP2PEntityInstantiator.h" />
     <ClInclude Include="include\FusionPrefabInstantiator.h" />
     <ClInclude Include="include\CellArchivistSystem.h" />
     <ClInclude Include="include\FusionRegionCellCache.h" />
     <ClInclude Include="include\FusionRegionFile.h" />
+    <ClInclude Include="include\FusionRegionFileLoadedCallbackHandle.h" />
     <ClInclude Include="include\FusionRegionMapLoader.h" />
     <ClInclude Include="include\FusionRocketInterface.h" />
     <ClInclude Include="include\FusionRocketReferenceCountable.h" />

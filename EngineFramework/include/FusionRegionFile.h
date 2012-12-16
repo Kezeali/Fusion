@@ -220,6 +220,8 @@ namespace FusionEngine
 		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 		//! Region resource unloader callback - writes data
 		void UnloadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+		//! Region resource loader callback
+		void LoadStaticMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	}
 
 }

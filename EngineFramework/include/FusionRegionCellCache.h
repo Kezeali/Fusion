@@ -73,13 +73,19 @@ namespace FusionEngine
 		* \param cells_per_region_square
 		* Width & height in number of cells per region file, i.e. 16 makes 16x16 region files.
 		*/
-		RegionCellCache(const std::string& cache_path, int32_t cells_per_region_square = 16);
+		RegionCellCache(const std::string& cache_path, int32_t cells_per_region_square = 16, bool readonly = false);
+
+		//! Set the path from which the cache files should be loaded
+		void SetPath(const std::string& new_path);
 
 		//! Unload held files (doesn't delete them from disk)
 		void DropCache();
 
 		//! Write cache data from loaded regions to disk (unlike DropCache, keeps them loaded)
 		void FlushCache();
+
+		//! Set properties for editable cache
+		void SetupEditMode(bool enabled);
 
 		void SetFragmentationAllowed(bool allowed);
 
@@ -97,7 +103,7 @@ namespace FusionEngine
 		* \param[in] load_if_uncached
 		* If false, null will be returned if the region file isn't already cached
 		*/
-		void GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCoord_t& coord, bool load_if_uncached);
+		virtual void GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCoord_t& coord, bool load_if_uncached);
 
 		//! Callback handler that delivers cell data from loaded regions
 		void OnRegionFileLoaded(ResourceDataPtr& resource, const RegionCoord_t& coord);
@@ -114,13 +120,18 @@ namespace FusionEngine
 		//! Returns the compressed cell data
 		void GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y);
 
-		//! In edit mode, the cell cache records the maximum and minimum cell coordinates
-		void SetupEditMode(bool record_bounds, CL_Rect initial_bounds = CL_Rect());
-		//! Gets the recorded bounds of the cache (max/min coords of cells accessed this session)
-		CL_Rect GetUsedBounds() const { return m_Bounds; }
-
 		void Sustain();
 		void EndSustain();
+
+	protected:
+		bool IsCached(const RegionCoord_t& coord) const;
+
+		std::string GetRegionFilePath(const RegionCoord_t& coord) const;
+
+		//! Returns the region in which the given cell resides, and converts the coords to region-relative coords
+		RegionCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;
+		//! Returns the region that the given cell resides within
+		RegionCoord_t cellToRegionCoord(int32_t x, int32_t y) const;
 
 	private:
 		typedef tbb::concurrent_hash_map<RegionCoord_t, RegionFileLoadedCallbackHandle> CallbackHandles_t;
@@ -141,9 +152,6 @@ namespace FusionEngine
 		CL_Rect m_Bounds;
 
 		bool m_FragmentationAllowed;
-
-		//! Returns the region in which the given cell resides, and converts the coords to region-relative coords
-		RegionCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;
 	};
 
 }

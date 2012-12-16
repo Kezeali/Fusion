@@ -42,6 +42,7 @@
 #include "FusionEntity.h"
 #include "FusionCamera.h"
 #include "FusionCameraManager.h"
+#include "FusionCell.h"
 #include "FusionIDStack.h"
 
 #include "FusionHashable.h"
@@ -66,125 +67,6 @@ namespace FusionEngine
 			else
 				return l.y < r.y;
 		}
-	};
-
-//#define STREAMING_USEMAP
-//#define FSN_CELL_HISTORY
-
-	struct CellEntry
-	{
-		enum State { Inactive = 0, Active = 1, Waiting = 2 };
-		State active;
-		bool pendingDeactivation;
-		float pendingDeactivationTime;
-
-		float x, y;
-
-		ObjectID id;
-		std::shared_ptr<RakNet::BitStream> data;
-
-		CellEntry()
-			: active(Inactive),
-			pendingDeactivation(false),
-			pendingDeactivationTime(0.0f),
-			x(0.0f),
-			y(0.0f)
-		{}
-	};
-	//typedef EntityPtr CellEntry;
-	class Cell
-	{
-	public:
-		Cell()
-			: inRange(false),
-			objects(0)
-		{
-			loaded = false;
-			active_entries = 0;
-			waiting = Ready;
-		}
-
-		void Reset()
-		{
-			inRange = false;
-			objects.clear();
-			loaded = false;
-			active_entries = 0;
-			waiting = Ready;
-		}
-
-	private:
-		Cell(const Cell& other)
-			: objects(other.objects),
-			active_entries(other.active_entries),
-			loaded(other.loaded)
-		{
-			waiting = Ready;
-		}
-
-		Cell(Cell&& other)
-			: objects(std::move(other.objects)),
-			active_entries(other.active_entries),
-			loaded(other.loaded)
-		{}
-
-		Cell& operator= (const Cell& other)
-		{
-			objects = other.objects;
-			active_entries = other.active_entries;
-			loaded = other.loaded;
-			return *this;
-		}
-
-		Cell& operator= (Cell&& other)
-		{
-			objects = std::move(other.objects);
-			active_entries = other.active_entries;
-			loaded = other.loaded;
-			return *this;
-		}
-	public:
-#ifdef STREAMING_USEMAP
-		typedef std::map<Entity*, CellEntry> CellEntryMap;
-		CellEntryMap objects;
-#else
-		typedef std::pair<EntityPtr, CellEntry> EntityEntryPair;
-		typedef std::vector<EntityEntryPair> CellEntryMap;
-		CellEntryMap objects;
-#endif
-		tbb::atomic<unsigned int> active_entries;
-		void EntryUnreferenced() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryUnreferenced", active_entries); }
-		void EntryReferenced() { ++active_entries; AddHist("EntryReferenced", active_entries); }
-		bool IsActive() const { return active_entries > 0; }
-
-		tbb::atomic<bool> loaded;
-		bool IsLoaded() const { return loaded; }
-
-		bool inRange;
-
-		enum WaitingState { Ready, Retrieve, Store };
-		tbb::atomic<WaitingState> waiting;
-
-		bool IsRetrieved() const { return loaded && waiting != Store; }
-
-		typedef tbb::spin_mutex mutex_t;
-		mutex_t mutex;
-
-#ifdef FSN_PROFILING_ENABLED
-		bool loadTimeRecorded;
-		tbb::tick_count timeRequested;
-#endif
-
-#ifdef FSN_CELL_HISTORY
-		mutex_t historyMutex;
-		std::vector<std::string> history;
-#endif
-		void AddHist(const std::string& hist, unsigned int num = -1);
-	};
-
-	struct StreamingHandle
-	{
-		size_t cellIndex;
 	};
 
 	struct ActivationEvent

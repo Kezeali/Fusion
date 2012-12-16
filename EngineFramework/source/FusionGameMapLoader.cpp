@@ -35,6 +35,7 @@
 #include <StringCompressor.h>
 
 #include "FusionCellCache.h"
+#include "FusionCellSerialisationUtils.h"
 #include "FusionClientOptions.h"
 #include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
@@ -53,61 +54,24 @@
 
 #include <boost/filesystem.hpp>
 
-// TODO: remove
-#include "FusionVirtualFileSource_PhysFS.h"
+// TEMP: remove this when the cell cache is generated externally
+#include "FusionRegionCellCache.h"
 
 using namespace std::placeholders;
 
 namespace FusionEngine
 {
 
-	GameMap::GameMap(CL_IODevice& file, const std::string& name)
-		: m_File(file),
-		m_Name(name)
+	GameMap::GameMap(const std::string& name)
+		: m_Name(name)
 	{
-		m_MinCell.x = m_File.read_int32();
-		m_MaxCell.x = m_File.read_int32();
-		m_MinCell.y = m_File.read_int32();
-		m_MaxCell.y = m_File.read_int32();
-		m_CellSize = m_File.read_float();
+		std::istream metadata = std::stringstream();
+		IO::Streams::CellStreamReader reader(&metadata);
+		m_CellSize = reader.ReadValue<float>();
 
-		if (m_MaxCell.x < m_MinCell.x || m_MaxCell.y < m_MinCell.y)
-		{
-			FSN_EXCEPT(FileSystemException, "The given map file has an invalid header");
-		}
-
-		//m_NumCells = m_MaxCell - m_MinCell;
-		// + 1 because both min and max are inclusive
-		m_NumCells.x = (uint32_t)((int64_t)m_MaxCell.x - (int64_t)m_MinCell.x + 1);
-		m_NumCells.y = (uint32_t)((int64_t)m_MaxCell.y - (int64_t)m_MinCell.y + 1); 
-
-		m_CellLocations.resize(m_NumCells.x * m_NumCells.y);
-		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
-		{
-			uint32_t begin = m_File.read_uint32();
-			uint32_t length = m_File.read_uint32();
-			m_CellLocations[i] = std::make_pair(begin, length);
-
-			FSN_ASSERT((length == 0 || begin != 0) && begin + length <= (unsigned int)m_File.get_size());
-		}
-
-		m_NonStreamingEntitiesLocation = m_File.read_uint32();
-		m_NonStreamingEntitiesDataLength = m_File.read_uint32();
-	}
-
-	CL_Rect GameMap::GetBounds() const
-	{
-		return CL_Rect(m_MinCell.x, m_MinCell.y, m_MaxCell.x, m_MaxCell.y);
-	}
-
-	unsigned int GameMap::GetNumCellsAcross() const
-	{
-		return m_XCells;
-	}
-
-	float GameMap::GetMapWidth() const
-	{
-		return m_MapWidth;
+		// TEMP: this will be created somewhere else. Also, 24 is the size used for map regions; obviously should be a const
+		auto cellCache = new RegionCellCache("Static", 24);
+		cellCache->SetPath(GetPath());
 	}
 
 	float GameMap::GetCellSize() const
@@ -115,51 +79,10 @@ namespace FusionEngine
 		return m_CellSize;
 	}
 
-	std::vector<char> GameMap::GetRegionData(int32_t x, int32_t y, bool include_synched)
+	void GameMap::InitInstantiator(EntityInstantiator* instantiator)
 	{
-		if (x >= m_MinCell.x && x <= m_MaxCell.x && y >= m_MinCell.y && y <= m_MaxCell.y)
-		{
-			//Vector2T<uint32_t> size = m_MaxCell - m_MinCell;
-			//size.x += 1; size.y += 1; // min and max are inclusive
-			auto size = m_NumCells;
-			uint32_t adj_x, adj_y;
-			if (x < 0)
-			{
-				FSN_ASSERT(x - m_MinCell.x >= 0);
-				FSN_ASSERT(y - m_MinCell.y >= 0);
-				adj_x = x - m_MinCell.x;
-				adj_y = y - m_MinCell.y;
-			}
-			else
-			{
-				// When [x > 0] it is possable that [x - mincell.x] will be greater than numeric_limits<int32_t>::max()
-				// (actually, I'm not sure that this is correct - will revisit when I make a map bigger than 2147483647
-				//  cells wide (never))
-				adj_x = (uint32_t)x - m_MinCell.x;
-				adj_y = (uint32_t)y - m_MinCell.y;
-			}
-			auto index = adj_x + adj_y * size.x;
-			auto pos = m_CellLocations[index];
-
-			if (pos.second == 0) // No data for this cell
-				return std::vector<char>();
-
-			FSN_ASSERT(pos.first < (unsigned int)std::numeric_limits<int>::max());
-			m_File.seek((int)pos.first);
-
-			std::vector<char> buf(pos.second);
-
-			if (m_File.read(buf.data(), pos.second))
-				return std::move(buf);
-			else
-			{
-				FSN_EXCEPT(FileSystemException, "Failed to load static region data from the map file");
-			}
-		}
-		else
-		{
-			return std::vector<char>();
-		}
+		std::istream metadata = std::stringstream();
+		instantiator->LoadState(metadata);
 	}
 
 	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator)
@@ -167,19 +90,12 @@ namespace FusionEngine
 		using namespace EntitySerialisationUtils;
 		namespace io = boost::iostreams;
 
-		if (m_NonStreamingEntitiesDataLength == 0)
-			return;
-
-		m_File.seek(m_NonStreamingEntitiesLocation);
-
-		std::vector<char> buf(m_NonStreamingEntitiesDataLength);
-		if (m_File.read(buf.data(), m_NonStreamingEntitiesDataLength) == m_NonStreamingEntitiesDataLength)
 		{
 			std::shared_ptr<std::istream> stream;
 			{
 				auto inflateStream = new io::filtering_istream();
 				inflateStream->push(io::zlib_decompressor());
-				inflateStream->push(io::array_source(buf.data(), buf.size()));
+				inflateStream->push(*m_NonStreamingEntitiesFile);
 				stream.reset(inflateStream);
 			}
 			IO::Streams::CellStreamReader reader(stream.get());
@@ -206,120 +122,45 @@ namespace FusionEngine
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}
-
-				instantiator->LoadState(*stream);
 			}
 		}
 	}
 
-	// CellArchiver should throw if GetCellData is called while it is running (Stop() must be called first)
-	// CellDataSource could be a class (that implements ICellDataSource::GetCellData()) that you create by passing
-	//  a StreamingManager and a SimpleCellArchiver. It would call tell the streaming manager to dump all its
-	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
-	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
-	//  cells
-	void GameMap::CompileMap(std::ostream &fileStream, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(std::ostream &metadataFile, std::ostream &fileStream, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
-		CellStreamWriter writer(&fileStream);
-
-		std::vector<EntityPtr> nonStreamingEntities = nsentities;
-		std::vector<EntityPtr> nonStreamingEntitiesSynched;
-		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end;)
 		{
-			auto& entity = *it;
-			if (!entity->IsSyncedEntity())
-			{
-				++it;
-			}
-			else
-			{
-				nonStreamingEntitiesSynched.push_back(entity);
-				it = nonStreamingEntities.erase(it);
-				end = nonStreamingEntities.end();
-			}
+			CellStreamWriter writer(&metadataFile);
+			writer.Write(cell_size);
+
+			instantiator->SaveState(metadataFile);
 		}
 
-		auto bounds = cell_cache->GetUsedBounds();
-		int32_t minX = bounds.left;
-		int32_t maxX = bounds.right;
-		int32_t minY = bounds.top;
-		int32_t maxY = bounds.bottom;
-
-		const size_t cellsAcross = maxX - minX + 1; // +1 because given bounds are inclusive
-		const size_t cellsDown = maxY - minY + 1;
-
-		const size_t numCells = cellsAcross * cellsDown;
-
-		// Write the world bounds info
-		writer.Write(minX);
-		writer.Write(maxX);
-		writer.Write(minY);
-		writer.Write(maxY);
-		writer.Write(cell_size);
-
-		std::streampos locationsOffset = fileStream.tellp();
 		{
-			uint32_t locationsSpaceSize = numCells * sizeof(uint32_t) * 2;
-			std::vector<char> space(locationsSpaceSize);
-			fileStream.write(space.data(), space.size()); // leave some space for the cell-data offsets
-		}
-		writer.WriteAs<uint32_t>(0); // Non-streaming entities location
-		writer.WriteAs<uint32_t>(0); //  '' length
+			CellStreamWriter writer(&fileStream);
 
-		std::streampos locationsEndOffset;
-#ifdef _DEBUG
-		locationsEndOffset = fileStream.tellp();
-#endif
+			// Filter the pseudo / synced entities into separate lists
+			std::vector<EntityPtr> nonStreamingEntities = nsentities;
+			std::vector<EntityPtr> nonStreamingEntitiesSynched;
+			for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end;)
+			{
+				auto& entity = *it;
+				if (!entity->IsSyncedEntity())
+				{
+					++it;
+				}
+				else
+				{
+					nonStreamingEntitiesSynched.push_back(entity);
+					it = nonStreamingEntities.erase(it);
+					end = nonStreamingEntities.end();
+				}
+			}
 
-		std::vector<std::pair<uint32_t, uint32_t>> cellDataLocations(numCells);
-
-		//{
-		//	// Buffer for copying data out of the cache files
-		//	std::vector<char> buffer(4096);
-
-		//	for (int32_t y = minY; y <= maxY; ++y)
-		//	{
-		//		for (int32_t x = minX; x <= maxX; ++x)
-		//		{
-		//			auto cellData = cell_cache->GetRawCellStreamForReading(x, y);
-
-		//			// Convert the X,Y grid location to a 1-D array index
-		//			const size_t i = (y - minY) * cellsAcross + (x - minX);
-		//			FSN_ASSERT(i < numCells);
-
-		//			if (cellData)
-		//			{
-		//				auto& cellDataLocation = cellDataLocations[i];
-		//				cellDataLocation.first = uint32_t(fileStream.tellp());
-
-		//				int bytesRead = 0;
-		//				while (!cellData->eof())
-		//				{
-		//					cellData->read(buffer.data(), buffer.size());
-		//					if (cellData->gcount() > 0)
-		//						fileStream.write(buffer.data(), cellData->gcount());
-		//				}
-
-		//				cellDataLocation.second = uint32_t(fileStream.tellp()) - cellDataLocation.first;
-		//			}
-		//		}
-		//	}
-		//}
-
-		// Store the position of this section to write later
-		uint32_t nonStreamingEntitiesLocation = 0;
-		std::streamoff nonStreamingDataBegin;
-		{
-			nonStreamingDataBegin = fileStream.tellp();
-			if (nonStreamingDataBegin > 0)
-				nonStreamingEntitiesLocation = (uint32_t)nonStreamingDataBegin;
-
-			// The non-streaming entities section
 			boost::iostreams::filtering_ostream compressingStream;
 			compressingStream.push(boost::iostreams::zlib_compressor());
 			compressingStream.push(fileStream);
@@ -342,23 +183,7 @@ namespace FusionEngine
 
 				SaveEntity(compressingStream, entity, true, FastBinary);
 			}
-
-			instantiator->SaveState(compressingStream);
 		}
-		uint32_t nonStreamingEntitiesDataLength = (uint32_t)(std::streamoff(fileStream.tellp()) - nonStreamingDataBegin);
-
-		fileStream.seekp(locationsOffset);
-		for (auto it = cellDataLocations.begin(), end = cellDataLocations.end(); it != end; ++it)
-		{
-			writer.Write(it->first);
-			writer.Write(it->second);
-			FSN_ASSERT(fileStream.tellp() <= locationsEndOffset);
-		}
-
-		writer.Write(nonStreamingEntitiesLocation);
-		writer.Write(nonStreamingEntitiesDataLength);
-
-		FSN_ASSERT(uint32_t(fileStream.tellp()) == locationsEndOffset);
 	}
 
 	GameMapLoader::GameMapLoader(/*ClientOptions *options*/)
@@ -425,19 +250,17 @@ namespace FusionEngine
 
 			try
 			{
-				CL_VirtualDirectory directory(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
+				IO::PhysFSStream device(filename, IO::Read);
 
 				boost::crc_32_type crc;
 				int count = 0;
 				static const size_t bufferSize = 2048;
-				do
+				while (!device.eof())
 				{
-					char buffer[bufferSize];
-					count = device.read(buffer, bufferSize);
-					if (count > 0)
-						crc.process_bytes(buffer, (size_t)count);
-				} while (count == bufferSize);
+					char buffer[2048];
+					device.read(buffer, 2048);
+					crc.process_bytes(buffer, 2048);
+				}
 
 				if (crc.checksum() == expectedChecksum)
 				{
@@ -454,36 +277,38 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, EntityInstantiator* synchroniser)
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, bool synchronise)
 	{
-		CL_IODevice device = directory.open_file_read(filename);
+		auto stringCompressor = RakNet::StringCompressor::Instance();
+
+		IO::PhysFSStream device(filename, IO::Read);
 
 		m_MapFilename = filename;
 
 		// Calculate checksum
-		if (synchroniser)
+		if (synchronise)
 		{
 			boost::crc_32_type crc;
-			int count = 0;
-			do
+			while (!device.eof())
 			{
 				char buffer[2048];
-				count = device.read(buffer, 2048);
+				device.read(buffer, 2048);
 				crc.process_bytes(buffer, 2048);
-			} while (count == 2048);
+			}
 
 			m_MapChecksum = crc.checksum();
 
-			device.seek(0, CL_IODevice::seek_set);
+			device.seekg(0);
 
 			// Send map change notification to peers
 			RakNet::BitStream bitStream;
-			bitStream.Write(m_MapFilename.size());
-			bitStream.Write(m_MapFilename.data(), m_MapFilename.size());
+			//bitStream.Write(m_MapFilename.size());
+			//bitStream.Write(m_MapFilename.data(), m_MapFilename.size());
+			stringCompressor->EncodeString(m_MapFilename.c_str(), m_MapFilename.length() + 1, &bitStream);
 			bitStream.Write(m_MapChecksum);
 
 			NetworkManager::getSingleton().GetNetwork()->Send(
-				Dear::Populace(), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+				To::Populace(), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 		}
 
 		boost::filesystem::path mapPath(filename);
@@ -491,14 +316,9 @@ namespace FusionEngine
 			mapPath = mapPath.parent_path() / mapPath.stem();
 		else
 			mapPath = mapPath.stem();
-		auto map = std::make_shared<GameMap>(device, mapPath.generic_string());
+		auto map = std::make_shared<GameMap>(mapPath.generic_string());
 
 		return map;
-	}
-
-	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, EntityInstantiator* synchroniser)
-	{
-		return LoadMap(filename, CL_VirtualDirectory(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), ""), synchroniser);
 	}
 
 	void GameMapLoader::onEntityInstanced(EntityPtr &entity)

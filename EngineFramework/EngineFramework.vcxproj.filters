@@ -88,6 +88,12 @@
     <ClCompile Include="source\CellArchivistSystem.cpp">
       <Filter>Map\Async Loading</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionCellSerialisationUtils.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionNetworkedRegionCellCache.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -173,6 +179,24 @@
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="include\CellArchivistSystem.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCellSerialisationUtils.h">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCellStreamTypes.h">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCharCounter.h">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCell.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionNetworkedRegionCellCache.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRegionFileLoadedCallbackHandle.h">
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
   </ItemGroup>

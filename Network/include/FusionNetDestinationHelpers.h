@@ -67,7 +67,7 @@ namespace FusionEngine
 			return destination;
 		}
 
-		//! My fellow RakPeerInterfaces: it is time to address the state of our ontology...
+		//! My fellow RakPeerInterfaces: it is time to address the state of our world...
 		static NetDestination Populace()
 		{
 			NetDestination destination;
@@ -91,7 +91,7 @@ namespace FusionEngine
 
 	}
 
-	//! For better gramMER - e.g. Send(To::Player(1), ...);
+	//! For better gram'ma - e.g. Send(To::Player(1), ...);
 	namespace To = Dear;
 
 }
