@@ -156,6 +156,8 @@ namespace FusionEngine
 
 			// Init resource manager
 			m_ResourceManager.reset(new ResourceManager(m_DisplayWindow.get_gc()));
+			// Resource manager options
+			m_ResourceManager->SetHotReloadingAllowed(options->GetOption_bool("hot_reloading"));
 
 			// Init GUI
 			m_GUI.reset(new GUI(m_DisplayWindow));
@@ -434,8 +436,6 @@ namespace FusionEngine
 		if (options.GetOption_bool("console_logging"))
 			m_Logger->ActivateConsoleLogging();
 
-		m_ResourceManager->SetHotReloadingAllowed(options.GetOption_bool("hot_reloading"));
-
 		auto activeExtensionsStr = options.GetOption_str("active_extensions");
 		auto activeExtensions = fe_splitstring(activeExtensionsStr, ",");
 		m_EnabledExtensions.insert(activeExtensions.begin(), activeExtensions.end());
@@ -654,7 +654,7 @@ namespace FusionEngine
 			// Load the map
 			if (!m_EditMode/* && varMap.count("connect") == 0*/)
 			{
-				m_Map = m_MapLoader->LoadMap("Maps/default.gad", m_EntityInstantiator.get());
+				m_Map = m_MapLoader->LoadMap("Maps/default.gad", false);
 				m_CellArchivist->SetMap(m_Map);
 
 				m_StreamingManager->Initialise(m_Map->GetCellSize());
