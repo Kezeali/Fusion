@@ -155,7 +155,7 @@ namespace FusionEngine
 		}
 	}
 
-	long ResourceContainer::ReferenceCount() const
+	int ResourceContainer::ReferenceCount() const
 	{
 		return m_RefCount;
 	}

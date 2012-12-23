@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2011 Fusion Project Team
+*  Copyright (c) 2006-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -84,6 +84,10 @@ namespace FusionEngine
 
 		//! Returns the list of resource types for which loaders have been added
 		std::vector<std::string> GetResourceLoaderTypes() const;
+
+		void SetHotReloadingAllowed(bool allowed);
+
+		bool IsHotReloadingAllowed() const { m_HotReloadingAllowed; }
 
 		//! Starts loading resources in the background
 		void StartLoaderThread();
@@ -179,9 +183,12 @@ namespace FusionEngine
 			resource_load load;
 			resource_unload unload;
 			resource_gcload gcload;
-			resource_list_prerequisites list_prereq;
+			resource_has_changed hasChanged;
+			resource_list_prerequisites listPrereq;
+			resource_validate_prerequisite_hot_reload validatePrereqReload;
 			boost::any userData;
-			enum ActiveOperation : uint8_t { None = 0x00, Load = 0x01, Unload = 0x02 };
+			// Note that disabling Load will also implicitly disable Reload (which is probably what you want)
+			enum ActiveOperation : uint8_t { None = 0x00, Load = 0x01, Unload = 0x02, Reload = 0x04 };
 			tbb::atomic<uint8_t> activeOperations;
 
 			ActiveResourceLoader()
@@ -193,17 +200,21 @@ namespace FusionEngine
 				: load(definition.load),
 				unload(definition.unload),
 				gcload(definition.gcload),
-				list_prereq(definition.list_prereq),
+				hasChanged(definition.hasChanged),
+				listPrereq(definition.listPrereq),
+				validatePrereqReload(definition.validatePrereqReload),
 				userData(definition.userData)
 			{
-				activeOperations = ActiveOperation::Load | ActiveOperation::Unload;
+				activeOperations = ActiveOperation::Load | ActiveOperation::Unload | ActiveOperation::Reload;
 			}
 
 			ActiveResourceLoader(const ActiveResourceLoader& other)
 				: load(other.load),
 				unload(other.unload),
 				gcload(other.gcload),
-				list_prereq(other.list_prereq),
+				hasChanged(other.hasChanged),
+				listPrereq(other.listPrereq),
+				validatePrereqReload(other.validatePrereqReload),
 				userData(other.userData)
 			{
 				activeOperations = other.activeOperations;
@@ -214,7 +225,9 @@ namespace FusionEngine
 				load = other.load;
 				unload = other.unload;
 				gcload = other.gcload;
-				list_prereq = other.list_prereq;
+				hasChanged = other.hasChanged;
+				listPrereq = other.listPrereq;
+				validatePrereqReload = other.validatePrereqReload;
 				userData = other.userData;
 				activeOperations = other.activeOperations;
 				return *this;
@@ -231,8 +244,6 @@ namespace FusionEngine
 
 		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceQueue;
 		typedef tbb::concurrent_unordered_set<ResourceContainer*> UnreferencedResourceSet;
-
-		typedef tbb::concurrent_unordered_set<std::string> PausedResources;
 
 		struct ResourceToLoadData
 		{
@@ -296,6 +307,8 @@ namespace FusionEngine
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 
+		bool m_HotReloadingAllowed;
+
 		//! Gets / makes a ResourceContainer in the resource map (m_Resources), without loading it
 		void obtainResource(ResourceDataPtr& out, const std::string& type, const std::string& path);
 		// TODO: use this, since intrusive_ptr supports move assignment (rvalue)
@@ -307,6 +320,12 @@ namespace FusionEngine
 
 		void getAndUnloadResource(const std::string &path);
 		bool unloadResource(const ResourceDataPtr& resource);
+
+		bool hasChanged(const ResourceDataPtr& resource);
+
+		bool shouldReload(const ResourceDataPtr& resource);
+
+		bool validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload);
 	};
 
 }

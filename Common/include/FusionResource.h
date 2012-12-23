@@ -52,6 +52,25 @@ namespace FusionEngine
 	//! Resource container shared pointer
 	typedef boost::intrusive_ptr<ResourceContainer> ResourceDataPtr;
 
+	struct count_true
+	{
+		typedef int result_type;
+
+		template<typename InputIterator>
+		size_t operator()(InputIterator first, InputIterator last) const
+		{
+			int numTrue = 0;
+
+			while (first != last)
+			{
+				numTrue += (*first == true);
+				++first;
+			}
+
+			return numTrue;
+		}
+	};
+
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
 	* The resource manager maintains a list of Resources, which can hold any
@@ -67,11 +86,13 @@ namespace FusionEngine
 
 		tbb::atomic<void*> m_Data;
 
+		boost::any m_Metadata;
+
 		bool m_RequiresGC;
 
 		bool m_Loaded;
 
-		tbb::atomic<long int> m_RefCount;
+		tbb::atomic<int> m_RefCount;
 
 		// These are separate because a resource can be in both at once
 		tbb::atomic<bool> m_QueuedToLoad;
@@ -84,7 +105,8 @@ namespace FusionEngine
 		// When there is lots of listeners, more signals are spawned so they don't all have to be notified within one frame
 		tbb::concurrent_queue<std::shared_ptr<LoadedSignal>> SigLoadedExt;
 		std::shared_ptr<LoadedSignal> SigLoaded;
-		//LoadedSignal SigReLoaded;
+		// All users (including other resources that depend on this one) must return true to allow this resource to be hot-reloaded
+		boost::signals2::signal<bool (ResourceDataPtr), count_true> SigValidateHotReload;
 		typedef std::function<void (ResourceDataPtr)> LoadedFn;
 
 		typedef std::function<void (ResourceContainer*)> ReleasedFn;
@@ -152,7 +174,7 @@ namespace FusionEngine
 		void RemoveReference();
 
 		//! Returns the current number of references (including the ResourceManager's reference)
-		long ReferenceCount() const;
+		int ReferenceCount() const;
 
 		//! Returns true if the given resource is not used (i.e. only referenced by the manager)
 		bool Unused() const { return ReferenceCount() == 1; }

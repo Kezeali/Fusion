@@ -1,3 +1,29 @@
+/*
+*  Copyright (c) 2006-2012 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
+*/
 
 #include "PrecompiledHeaders.h"
 
@@ -26,7 +52,8 @@ namespace FusionEngine
 		m_Running(false),
 		m_Clearing(false),
 		m_FinishLoadingBeforeStopping(false),
-		m_GC(gc)
+		m_GC(gc),
+		m_HotReloadingAllowed(false)
 	{
 	}
 
@@ -45,9 +72,20 @@ namespace FusionEngine
 	void ResourceManager::AddResourceLoader(const ResourceLoader &loader)
 	{
 		if (!m_Running)
-		//m_LoaderMutex.lock();
+		{
+			// Loaders with prereqs must also have a validatePrereqReload function
+			//  and conversely validatePrereqReload is pointless if you don't have
+			//  any prereqs
+			if((loader.listPrereq == nullptr) != (loader.validatePrereqReload == nullptr))
+			{
+				if (loader.listPrereq)
+					FSN_EXCEPT(InvalidArgumentException, "Resource Loader " + loader.type + " has a listPrereq function, but no validatePrereqReload function. Use both or neither");
+				else
+					FSN_EXCEPT(InvalidArgumentException, "Resource Loader " + loader.type + " has a validatePrereqReload function, but no listPrereq function. Use both or neither");
+			}
+
 			m_ResourceLoaders[loader.type] = loader;
-		//m_LoaderMutex.unlock();
+		}
 		else
 			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
 	}
@@ -58,6 +96,11 @@ namespace FusionEngine
 		for (auto it = m_ResourceLoaders.begin(); it != m_ResourceLoaders.end(); ++it)
 			types.push_back(it->first);
 		return types;
+	}
+
+	void ResourceManager::SetHotReloadingAllowed(bool allowed)
+	{
+		m_HotReloadingAllowed = allowed;
 	}
 
 	void ResourceManager::StartLoaderThread()
@@ -100,10 +143,10 @@ namespace FusionEngine
 			}
 			ActiveResourceLoader& loader = _where->second;
 
-			if (loader.list_prereq != nullptr)
+			if (loader.listPrereq != nullptr)
 			{
 				DepsList prereqs;
-				loader.list_prereq(resource.get(), prereqs, loader.userData);
+				loader.listPrereq(resource.get(), prereqs, loader.userData);
 
 				for (auto it = prereqs.begin(), end = prereqs.end(); it != end; ++it)
 				{
@@ -112,6 +155,7 @@ namespace FusionEngine
 					loadResourceAndDeps(dep, depth_limit - 1);
 
 					resource->AttachDependency(dep);
+					dep->SigValidateHotReload.connect(std::bind(&ResourceManager::validatePrereqReload, this, resource, std::placeholders::_1));
 				}
 			}
 
@@ -175,10 +219,12 @@ namespace FusionEngine
 	{
 		auto logfile = Logger::getSingleton().OpenLog("ResourceManager");
 
+		std::string lastResourceChecked; // for hot-reload
+
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
-			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent);
+			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent, m_HotReloadingAllowed ? 100 : -1);
 			// 0 = stop event, -1 = error; otherwise, it is
 			//  a ToLoad / ToUnload Event, meaning the load loop below should resume
 			if (receivedEvent <= 0 && !m_FinishLoadingBeforeStopping)
@@ -199,7 +245,7 @@ namespace FusionEngine
 					// In GetResource, if IsQueuedToUnload is true, IsQueuedToLoad is checked and
 					//  and if it isn't set this resource is re-enqueued to load
 					//  So QueuedToUnload is set to false here to avoid this unnecessary
-					//  re-enquation (which turns out to happen quite often without this
+					//  re-enqueueation (which turns out to happen quite often without this
 					//  workaround)
 					toLoadData.resource->setQueuedToUnload(false);
 
@@ -263,8 +309,43 @@ namespace FusionEngine
 				//m_ToUnload.clear();
 			}
 
+			// Stop when stop even is set
 			if (receivedEvent <= 0)
 				break;
+
+			// Check for changes & hot-reload
+			if (m_HotReloadingAllowed)
+			{
+				const size_t maxChecked = 32;
+				size_t resourcesChecked = 0;
+
+				// Attempt to continue iteration from the last resource checked
+				ResourceMap::const_iterator it = m_Resources.find(lastResourceChecked);
+				if (it != m_Resources.end())
+					++it;
+				else
+					it = m_Resources.cbegin();
+
+				for (; it != m_Resources.cend(); ++it)
+				{
+					const auto& resource = it->second;
+					// Check for changes, then only reload if all users (minus the resource manager itself) validate the action
+					if (shouldReload(resource) && resource->SigValidateHotReload(resource.get()) >= resource->ReferenceCount() - 1)
+					{
+						if (unloadResource(resource))
+						{
+							loadResource(resource);
+							m_ToDeliver.push(resource);
+						}
+					}
+
+					if (resourcesChecked++ >= maxChecked)
+					{
+						lastResourceChecked = it->first;
+						break;
+					}
+				}
+			}
 		}
 
 		//asThreadCleanup();
@@ -654,6 +735,61 @@ namespace FusionEngine
 				return false;
 		}
 		return true;
+	}
+
+	bool ResourceManager::hasChanged(const ResourceDataPtr& resource)
+	{
+		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
+		if (entry != m_ResourceLoaders.end())
+		{
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+			// Run the function
+			ActiveResourceLoader& loader = entry->second;
+			if (loader.hasChanged)
+				return loader.hasChanged(resource.get(), vdir, loader.userData);
+			else
+				return false;
+		}
+		else
+			return false;
+	}
+
+	bool ResourceManager::shouldReload(const ResourceDataPtr& resource)
+	{
+		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
+		if (entry != m_ResourceLoaders.end())
+		{
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+			ActiveResourceLoader& loader = entry->second;
+			// Only run if the loader has a hasChanged function, and Reload is allowed for this type at the moment
+			if (loader.hasChanged && loader.activeOperations & ActiveResourceLoader::ActiveOperation::Reload && loader.activeOperations & ActiveResourceLoader::ActiveOperation::Load)
+			{
+				return loader.hasChanged(resource.get(), vdir, loader.userData);
+			}
+			else
+				return false;
+		}
+		else
+			return false;
+	}
+	
+	bool ResourceManager::validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload)
+	{
+		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
+		if (entry != m_ResourceLoaders.end())
+		{
+			// Run the function
+			ActiveResourceLoader& loader = entry->second;
+			return loader.validatePrereqReload(resource.get(), prereq_that_wants_to_reload.get(), loader.userData);
+		}
+		else
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Can't validate prerequisite reload: missing resource loader for type " + resource->GetType());
+		}
 	}
 
 }

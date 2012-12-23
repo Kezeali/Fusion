@@ -51,7 +51,7 @@ namespace FusionEngine
 	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, boost::any user_data);
 
 	//! Fn. pointer for checking for changes
-	typedef void (*resource_haschanged)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
+	typedef bool (*resource_has_changed)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
 
 	typedef std::vector< std::pair< std::string, std::string > > DepsList;
 	//! Fn. pointer - should return a list of resources that this resource needs access to
@@ -60,13 +60,18 @@ namespace FusionEngine
 	*/
 	typedef bool (*resource_list_prerequisites)(ResourceContainer* res, DepsList& dependencies, boost::any user_data);
 
+	//! Fn. pointer for allowing resources that other resources depend on (via list_prerequisites) to be hot-reloaded
+	typedef bool (*resource_validate_prerequisite_hot_reload)(ResourceContainer* res, ResourceContainer* resource_that_wants_to_reload, boost::any user_data);
+
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader
 	{
 		resource_load load;
 		resource_unload unload;
 		resource_gcload gcload;
-		resource_list_prerequisites list_prereq;
+		resource_has_changed hasChanged;
+		resource_list_prerequisites listPrereq;
+		resource_validate_prerequisite_hot_reload validatePrereqReload;
 		boost::any userData;
 		std::string type;
 
@@ -74,7 +79,8 @@ namespace FusionEngine
 			: load(nullptr),
 			unload(nullptr),
 			gcload(nullptr),
-			list_prereq(nullptr)
+			hasChanged(nullptr),
+			listPrereq(nullptr)
 		{
 		}
 
@@ -83,17 +89,40 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(nullptr),
-			list_prereq(nullptr)
+			hasChanged(nullptr),
+			listPrereq(nullptr)
 		{
 		}
 
-		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, boost::any _userData)
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, boost::any user_data)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),
 			gcload(nullptr),
-			list_prereq(nullptr),
-			userData(_userData)
+			hasChanged(nullptr),
+			listPrereq(nullptr),
+			userData(user_data)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_has_changed has_changed)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(nullptr),
+			hasChanged(has_changed),
+			listPrereq(nullptr)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_has_changed has_changed, boost::any user_data)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(nullptr),
+			hasChanged(has_changed),
+			listPrereq(nullptr),
+			userData(user_data)
 		{
 		}
 
@@ -102,17 +131,65 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(gcLoadFn),
-			list_prereq(nullptr)
+			hasChanged(nullptr),
+			listPrereq(nullptr)
 		{
 		}
 
-		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, boost::any _userData)
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, boost::any user_data)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),
 			gcload(gcLoadFn),
-			list_prereq(nullptr),
-			userData(_userData)
+			hasChanged(nullptr),
+			listPrereq(nullptr),
+			userData(user_data)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, resource_has_changed has_changed)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(gcLoadFn),
+			hasChanged(has_changed),
+			listPrereq(nullptr),
+			userData(nullptr)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, resource_has_changed has_changed, boost::any user_data)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(gcLoadFn),
+			hasChanged(has_changed),
+			listPrereq(nullptr),
+			userData(user_data)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, resource_has_changed has_changed, resource_list_prerequisites list_prereq, resource_validate_prerequisite_hot_reload validate_prereq_reload)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(gcLoadFn),
+			hasChanged(has_changed),
+			listPrereq(list_prereq),
+			validatePrereqReload(validate_prereq_reload),
+			userData(nullptr)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_gcload gcLoadFn, resource_has_changed has_changed, resource_list_prerequisites list_prereq, resource_validate_prerequisite_hot_reload validate_prereq_reload, boost::any user_data)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			gcload(gcLoadFn),
+			hasChanged(has_changed),
+			listPrereq(list_prereq),
+			validatePrereqReload(validate_prereq_reload),
+			userData(user_data)
 		{
 		}
 	};
