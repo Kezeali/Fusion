@@ -139,6 +139,49 @@ namespace FusionEngine
 		//! Returns the resource ptr
 		void* GetDataPtr();
 
+		template <typename T>
+		void SetMetadata(T metadata)
+		{
+			m_Metadata = metadata;
+		}
+
+		template <typename T>
+		T GetMetadata() const
+		{
+			return boost::any_cast<T>(m_Metadata);
+		}
+
+		template <typename T>
+		bool TryGetMetadata(T& out) const
+		{
+			try
+			{
+				if (!m_Metadata.empty())
+				{
+					out = boost::any_cast<T>(m_Metadata);
+					return true;
+				}
+			}
+			catch (boost::bad_any_cast&)
+			{
+			}
+			return false;
+		}
+
+		template <typename T>
+		T GetMetadataOrDefault(T fallback) const
+		{
+			try
+			{
+				if (!m_Metadata.empty())
+					return boost::any_cast<T>(m_Metadata);
+			}
+			catch (boost::bad_any_cast&)
+			{
+			}
+			return fallback;
+		}
+
 		//! Validates / invalidates this resource
 		/*!
 		* A resource is valid if data is loaded. A resource becomes
@@ -178,7 +221,6 @@ namespace FusionEngine
 
 		//! Returns true if the given resource is not used (i.e. only referenced by the manager)
 		bool Unused() const { return ReferenceCount() == 1; }
-
 	};
 
 	inline bool ResourceContainer::setQueuedToLoad(const bool is_queued)

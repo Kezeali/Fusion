@@ -5,11 +5,14 @@
 #include "FusionResourceManager.h"
 
 #include "FusionResourcePointer.h"
+#include "FusionPhysFSIOStream.h"
 
 #include "FusionLogger.h"
 #include "FusionProfiling.h"
 
 #include <gtest/gtest.h>
+
+#include <boost/crc.hpp>
 
 class resource_manager_f;
 
@@ -17,6 +20,8 @@ namespace FusionEngine { namespace Test
 {
 	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 }}
 	
 using namespace FusionEngine;
@@ -71,7 +76,9 @@ protected:
 
 	void AddStandardLoaders()
 	{
-		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(ResourceLoader("TestResource", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource, boost::any(this))));
+		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(
+			ResourceLoader("TestResource", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource, &FusionEngine::Test::ResourceFileDateHasChanged, boost::any(this))
+			));
 	}
 
 	void AttemptActualLoad(bool next = true)
@@ -182,9 +189,7 @@ namespace FusionEngine { namespace Test
 
 	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
-		// TODO: should the resource manager be allowed to request reloads like this?
-		//UnloadTextResource(resource, vdir, userData);
-		// ... or should this be a valid assertion?
+		// Resource manager should never attempt to load a resource that's already loaded
 		ASSERT_FALSE(resource->IsLoaded());
 
 		auto content = new std::string();
@@ -194,6 +199,9 @@ namespace FusionEngine { namespace Test
 			content->resize(file.get_size());
 			file.read(&(*content)[0], content->length());
 
+			auto modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+			resource->SetMetadata(modTime);
+
 			resource->SetDataPtr(content);
 			resource->setLoaded(true);
 		}
@@ -201,6 +209,50 @@ namespace FusionEngine { namespace Test
 		{
 			delete content;
 			FSN_EXCEPT(FileSystemException, "Failed to load test resource: " + std::string(e.what()));
+		}
+	}
+
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		if (resource->IsLoaded())
+		{
+			auto modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+			auto storedModTime = resource->GetMetadataOrDefault(modTime);
+
+			return modTime != storedModTime;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		if (resource->IsLoaded())
+		{
+				std::int64_t storedChecksum = resource->GetMetadataOrDefault<std::int64_t>(0);
+				IO::PhysFSStream stream(resource->GetPath(), IO::Read);
+
+				boost::crc_32_type checksummer;
+
+				std::array<char, 4096> buffer;
+				IO::PhysFSStream::pos_type startpos = 0;
+				while (!stream.eof())
+				{
+					stream.read(buffer.data(), 4096);
+					auto length = stream.tellg() - startpos;
+					startpos = stream.tellg();
+					
+					if (length > 0)
+						checksummer.process_bytes(buffer.data(), (size_t)length);
+				}
+
+				return checksummer.checksum() != storedChecksum;
+		}
+		else
+		{
+			return false;
 		}
 	}
 }}
@@ -347,4 +399,81 @@ TEST_F(resource_manager_f, destruct_with_resources_in_use)
 	ASSERT_NO_FATAL_FAILURE(manager.reset());
 
 	ASSERT_NO_FATAL_FAILURE(resourcesBeingLoaded.clear());
+}
+
+bool validateReload(ResourceDataPtr res)
+{
+	return true;
+}
+
+TEST_F(resource_manager_f, hot_reload)
+{
+	AddStandardLoaders();
+
+	manager->SetHotReloadingAllowed(true);
+
+	ASSERT_NO_THROW(manager->StartLoaderThread());
+	//const size_t numIterations = 95;
+	//for (size_t i = 0; i < numIterations; ++i)
+	//{
+	//	ASSERT_NO_THROW(AttemptActualLoad());
+	//}
+
+	const std::string testFilePath("testHotReload.txt");
+
+	{
+		IO::PhysFSStream newFile(testFilePath, IO::Write);
+		newFile << "test data";
+	}
+
+	auto resourceToThatWillBeChanged = ResourceHelper::Load(manager, testFilePath);
+
+	manager->DeliverLoadedResources();
+	manager->UnloadUnreferencedResources();
+
+	manager->StopLoaderThreadWhenDone();
+
+	manager->DeliverLoadedResources();
+
+	// All requested resources should be loaded when the thread stops
+	ASSERT_TRUE(resourceToThatWillBeChanged->resource.get() != nullptr);
+	ASSERT_TRUE(resourceToThatWillBeChanged->resource->IsLoaded());
+	for (auto it = resourcesBeingLoaded.begin(), end = resourcesBeingLoaded.end(); it != end; ++it)
+	{
+		ASSERT_TRUE((*it)->resource.get() != nullptr);
+		ASSERT_TRUE((*it)->resource->IsLoaded());
+	}
+	// All resources with ref count > 1 should be loaded, and the rest should be unloaded
+	ASSERT_TRUE(manager->VerifyResources(false));
+
+	auto initialMetadata = resourceToThatWillBeChanged->resource->GetMetadata<std::int64_t>();
+	resourceToThatWillBeChanged->resource->SigValidateHotReload.connect(std::bind(&validateReload, std::placeholders::_1));
+
+	{
+		IO::PhysFSStream existingFile(testFilePath, IO::Write);
+		existingFile << "changed test data";
+	}
+
+	manager->StartLoaderThread();
+
+	manager->CheckForChangesForced();
+
+	manager->DeliverLoadedResources();
+	manager->UnloadUnreferencedResources();
+
+	manager->StopLoaderThreadWhenDone();
+
+	manager->DeliverLoadedResources();
+
+	ASSERT_TRUE(resourceToThatWillBeChanged->resource.get() != nullptr);
+	ASSERT_TRUE(resourceToThatWillBeChanged->resource->IsLoaded());
+	for (auto it = resourcesBeingLoaded.begin(), end = resourcesBeingLoaded.end(); it != end; ++it)
+	{
+		ASSERT_TRUE((*it)->resource.get() != nullptr);
+		ASSERT_TRUE((*it)->resource->IsLoaded());
+	}
+	ASSERT_TRUE(manager->VerifyResources(false));
+
+	auto metadata = resourceToThatWillBeChanged->resource->GetMetadata<std::int64_t>();
+	ASSERT_TRUE(metadata != initialMetadata);
 }

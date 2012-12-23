@@ -65,7 +65,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				IO::PhysFSStream file(m_Resource.GetTarget()->GetPath());
+				IO::PhysFSStream file(m_Resource.GetTarget()->GetPath(), IO::Write);
 				m_Resource->Save(file);
 			}
 			catch (CL_Exception& e)

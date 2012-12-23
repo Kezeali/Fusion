@@ -93,6 +93,9 @@ namespace FusionEngine
 		//! Tell the loader thread to resources that support hot-reloading for changes, and reload them if any are detected
 		void CheckForChanges();
 
+		//! Forces full recheck
+		void CheckForChangesForced();
+
 		//! Starts loading resources in the background
 		void StartLoaderThread();
 		//! Stops loading resources in the background
@@ -288,6 +291,7 @@ namespace FusionEngine
 		bool m_Running;
 		bool m_Clearing;
 		bool m_FinishLoadingBeforeStopping;
+		bool m_ForceCheckForChanges;
 
 		CL_GraphicContext m_GC;
 

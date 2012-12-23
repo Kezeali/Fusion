@@ -53,6 +53,7 @@ namespace FusionEngine
 		m_Running(false),
 		m_Clearing(false),
 		m_FinishLoadingBeforeStopping(false),
+		m_ForceCheckForChanges(false),
 		m_GC(gc),
 		m_HotReloadingAllowed(false)
 	{
@@ -107,7 +108,19 @@ namespace FusionEngine
 	void ResourceManager::CheckForChanges()
 	{
 		if (m_HotReloadingAllowed)
+		{
+			m_ForceCheckForChanges = false;
 			m_CheckForChangesEvent.set();
+		}
+	}
+
+	void ResourceManager::CheckForChangesForced()
+	{
+		if (m_HotReloadingAllowed)
+		{
+			m_ForceCheckForChanges = true;
+			m_CheckForChangesEvent.set();
+		}
 	}
 
 	void ResourceManager::StartLoaderThread()
@@ -317,11 +330,7 @@ namespace FusionEngine
 				//m_ToUnload.clear();
 			}
 
-			// Stop when stop even is set
-			if (receivedEvent == 0)
-				break;
-
-			if (receivedEvent == 3 && m_HotReloadingAllowed)
+			if ((receivedEvent == 3 || m_ForceCheckForChanges) && m_HotReloadingAllowed)
 				checkingResourcesForReload = true;
 
 			// Check for changes & hot-reload
@@ -350,7 +359,7 @@ namespace FusionEngine
 						}
 					}
 
-					if (resourcesChecked++ >= maxChecked)
+					if (!m_ForceCheckForChanges && resourcesChecked++ >= maxChecked)
 					{
 						lastResourceChecked = it->first;
 						break;
@@ -363,6 +372,10 @@ namespace FusionEngine
 					lastResourceChecked.clear();
 				}
 			}
+
+			// Stop when stop even is set
+			if (receivedEvent == 0)
+				break;
 		}
 
 		//asThreadCleanup();

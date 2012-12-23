@@ -26,6 +26,8 @@ struct CommonTestsEnv : public testing::Environment
 		ASSERT_TRUE(PHYSFS_mkdir(s_LogfilePath.c_str()) != 0);
 		ASSERT_TRUE(SetupPhysFS::mount(dataFolder, "", "zip"));
 		SetupPhysFS::mount_archives(dataFolder, "", "7z");
+
+		PHYSFS_mount(writep.c_str(), "", 0);
 	}
 	virtual void TearDown()
 	{

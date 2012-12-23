@@ -80,7 +80,8 @@ namespace FusionEngine
 			unload(nullptr),
 			gcload(nullptr),
 			hasChanged(nullptr),
-			listPrereq(nullptr)
+			listPrereq(nullptr),
+			validatePrereqReload(nullptr)
 		{
 		}
 
@@ -90,7 +91,8 @@ namespace FusionEngine
 			unload(unloadFn),
 			gcload(nullptr),
 			hasChanged(nullptr),
-			listPrereq(nullptr)
+			listPrereq(nullptr),
+			validatePrereqReload(nullptr)
 		{
 		}
 
@@ -101,6 +103,7 @@ namespace FusionEngine
 			gcload(nullptr),
 			hasChanged(nullptr),
 			listPrereq(nullptr),
+			validatePrereqReload(nullptr),
 			userData(user_data)
 		{
 		}
@@ -111,7 +114,8 @@ namespace FusionEngine
 			unload(unloadFn),
 			gcload(nullptr),
 			hasChanged(has_changed),
-			listPrereq(nullptr)
+			listPrereq(nullptr),
+			validatePrereqReload(nullptr)
 		{
 		}
 
@@ -122,6 +126,7 @@ namespace FusionEngine
 			gcload(nullptr),
 			hasChanged(has_changed),
 			listPrereq(nullptr),
+			validatePrereqReload(nullptr),
 			userData(user_data)
 		{
 		}
@@ -132,7 +137,8 @@ namespace FusionEngine
 			unload(unloadFn),
 			gcload(gcLoadFn),
 			hasChanged(nullptr),
-			listPrereq(nullptr)
+			listPrereq(nullptr),
+			validatePrereqReload(nullptr)
 		{
 		}
 
@@ -143,6 +149,7 @@ namespace FusionEngine
 			gcload(gcLoadFn),
 			hasChanged(nullptr),
 			listPrereq(nullptr),
+			validatePrereqReload(nullptr),
 			userData(user_data)
 		{
 		}
@@ -154,6 +161,7 @@ namespace FusionEngine
 			gcload(gcLoadFn),
 			hasChanged(has_changed),
 			listPrereq(nullptr),
+			validatePrereqReload(nullptr),
 			userData(nullptr)
 		{
 		}
@@ -165,6 +173,7 @@ namespace FusionEngine
 			gcload(gcLoadFn),
 			hasChanged(has_changed),
 			listPrereq(nullptr),
+			validatePrereqReload(nullptr),
 			userData(user_data)
 		{
 		}
