@@ -35,6 +35,7 @@
 #include "FusionAnyFS.h"
 #include "FusionArchetypeFactory.h"
 #include "FusionBinaryStream.h"
+#include "FusionCharCounter.h"
 #include "FusionGameMapLoader.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionEntityInstantiator.h"
@@ -46,7 +47,6 @@
 #include "FusionZipArchive.h"
 
 #include <boost/filesystem.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -65,6 +65,8 @@
 
 namespace bio = boost::iostreams;
 
+using namespace FusionEngine::CellSerialisationUtils;
+
 namespace FusionEngine
 {
 
@@ -72,29 +74,7 @@ namespace FusionEngine
 
 	extern void AddHist(const CellHandle& loc, const std::string& l, unsigned int n = -1);
 
-	//! boost::iostreams filter that counts bytes written
-	struct CharCounter
-	{
-		typedef char char_type;
-		typedef bio::multichar_output_filter_tag category;
-
-		std::shared_ptr<std::streamsize> totalWritten;
-
-		CharCounter() : totalWritten(new std::streamsize(0))
-		{}
-
-		std::streamsize count() const { return *totalWritten; }
-
-		template <typename Sink>
-		std::streamsize write(Sink& snk, const char_type* s, std::streamsize n)
-		{
-			*totalWritten += n;
-			bio::write(snk, s, n);
-			return n;
-		}
-	};
-
-	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, RegionCellArchivist::CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
+	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
 	{
 		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
 
@@ -124,7 +104,7 @@ namespace FusionEngine
 		db.set((const char*)&id, sizeof(id), data.data(), data.size());
 	}
 
-	static bool getEntityLocation(kyotocabinet::HashDB& db, RegionCellArchivist::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
+	static bool getEntityLocation(kyotocabinet::HashDB& db, CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
 	{
 		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
 
@@ -171,6 +151,9 @@ namespace FusionEngine
 	RegionCellArchivist::RegionCellArchivist(bool edit_mode, const std::string& cache_path)
 		: m_EditMode(edit_mode),
 		m_Running(false),
+		m_Cache(nullptr),
+		m_EditableCache(nullptr),
+		m_MapCache(nullptr),
 		m_RegionSize(s_DefaultRegionSize),
 		m_SavePath(s_SavePath),
 		m_CachePath(cache_path),
@@ -238,20 +221,26 @@ namespace FusionEngine
 	{
 		m_Map = map;
 
-		PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "/entitylocations.kc");
+		// Close any existing entity database
 		if (m_EntityLocationDB)
 		{
 			if (!m_EntityLocationDB->close())
 				AddLogEntry(m_EntityLocationDB->error().message());
 		}
+
 		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+
+		// Copy the database from the map's folder
+		PhysFSHelp::copy_file(m_Map->GetEntityDatabasePath(), m_CachePath + "/entitylocations.kc");
+
+		// Init the database using the new file
 		setupTuning(m_EntityLocationDB.get());
 		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
 
-		m_Cache->SetupEditMode(m_EditMode, m_Map->GetBounds());
+		m_MapCache = new RegionCellCache(m_Map->GetPath());
 	}
 
-	void RegionCellArchivist::Update(ObjectID id, const RegionCellArchivist::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
+	void RegionCellArchivist::Update(ObjectID id, const CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
 	{
 		m_ObjectUpdateQueue.push(std::make_shared<UpdateJob>(id, UpdateOperation::UPDATE, new_location, std::move(continuous), std::move(occasional)));
 		m_NewData.set();
@@ -530,40 +519,15 @@ namespace FusionEngine
 		AddLogEntry("cells_loaded", "  Got [" + str.str() + "]");
 		AddHist(job->coord, "Got cell data stream");
 		job->cellDataStream = std::move(cellDataStream);
-		m_ReadQueueLoadEntities.push(job);
+
+		// Enqueue to load entities when a) there is no map data to load, or b) map data is ready to load
+		if (!job->mapSubjob || job->mapSubjob->cellDataStream)
+			m_ReadQueueLoadEntities.push(job);
 	}
 
 	std::shared_ptr<EntitySerialisationUtils::EntityFuture> RegionCellArchivist::LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
 		return EntitySerialisationUtils::LoadEntity(std::move(file), includes_id, id, data_style, m_Factory, m_EntityManager, m_Instantiator);
-	}
-
-	std::pair<size_t, std::vector<ObjectID>> RegionCellArchivist::ReadCellIntro(const CellCoord_t& coord, ICellStream& file, bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle)
-	{
-		size_t numEntries;
-		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
-
-		FSN_ASSERT_MSG(numEntries < 65535, "Probably invalid data: entry count is implausible");
-
-		std::vector<ObjectID> ids;
-
-		if (data_includes_ids)
-		{
-			/*const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
-			std::vector<char> bleh(headerSize);
-			file.read(bleh.data(), headerSize);*/
-			IO::Streams::CellStreamReader reader(&file);
-			for (size_t i = 0; i < numEntries; ++i)
-			{
-				ObjectID id;
-				//std::streamoff bleh;
-				reader.Read(id);
-				//reader.Read(bleh);
-				ids.push_back(id);
-			}
-		}
-
-		return std::make_pair(numEntries, ids);
 	}
 
 	std::tuple<bool, size_t, std::shared_ptr<ICellStream>> RegionCellArchivist::ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::shared_ptr<EntitySerialisationUtils::EntityFuture>& incomming_entity, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style)
@@ -640,64 +604,14 @@ namespace FusionEngine
 		using namespace EntitySerialisationUtils;
 	}
 
-	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
 	void RegionCellArchivist::WriteCellData(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched, const EntitySerialisationUtils::SerialisedDataStyle data_style)
 	{
-		using namespace EntitySerialisationUtils;
+		FSN_ASSERT(cell);
 
-		CharCounter counter;
-		bio::filtering_ostream file;
-		file.push(counter, 0);
-		file.push(file_param);
+		auto dataPositions = CellSerialisationUtils::WriteCellData(file_param, cell->objects, synched, data_style);
 
-		IO::Streams::CellStreamWriter writer(&file);
-
-		writer.Write(expectedNumEntries);
-
-		std::vector<std::tuple<ObjectID, std::streamoff, std::streamsize>> dataPositions;
-		//std::streamoff headerPos = sizeof(expectedNumEntries);
-		if (synched)
-		{
-			// Leave some space for the header data
-			//const std::vector<char> headerSpace(expectedNumEntries * (sizeof(ObjectID) /*+ sizeof(std::streamoff)*/));
-			//file.write(headerSpace.data(), headerSpace.size());
-
-			for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
-			{
-				const bool entSynched = it->first->IsSyncedEntity();
-				if (entSynched)
-					writer.Write(it->first->GetID());
-			}
-
-			dataPositions.reserve(expectedNumEntries);
-		}
-
-		std::streamoff beginPos;
-		for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
-		{
-			const bool entSynched = it->first->IsSyncedEntity();
-			if (entSynched == synched)
-			{
-				if (entSynched)
-				{
-					beginPos = counter.count();
-				}
-
-				SaveEntity(file, it->first, false, data_style);
-
-				if (entSynched)
-				{
-					auto endPos = counter.count();
-					std::streamsize length = endPos - beginPos;
-					dataPositions.push_back(std::make_tuple(it->first->GetID(), beginPos, length));
-				}
-
-				FSN_ASSERT(expectedNumEntries-- > 0); // Confirm the number of synched / unsynched entities expected
-			}
-		}
-
-		// Write the header if this is ID'd ("synched") data
-		if (synched && data_style == FastBinary)
+		// Update the entity location DB
+		if (synched && data_style == EntitySerialisationUtils::FastBinary)
 		{
 			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
 			{
@@ -759,38 +673,24 @@ namespace FusionEngine
 			{
 				auto& cellDataStream = job->cellDataStream;
 
-				// Last param makes the method load synched entities from the map if the cache file isn't available:
-				if (m_Map)
+				if (job->mapSubjob)
 				{
 					// Load synched entities if this cell is un-cached (hasn't been loaded before)
 					const bool uncached = !cellDataStream;//m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
 
-					auto data = m_Map->GetRegionData(cellCoord.x, cellCoord.y, uncached);
-
-					if (!data.empty())
 					{
-						std::unique_ptr<bio::filtering_istream> inflateStream(new bio::filtering_istream());
-						inflateStream->push(bio::zlib_decompressor());
-						inflateStream->push(bio::array_source(data.data(), data.size()));
-
-						IO::Streams::CellStreamReader reader(inflateStream.get());
+						IO::Streams::CellStreamReader reader(job->mapSubjob->cellDataStream.get());
 						auto pseudoEntityDataLength = reader.ReadValue<std::streamsize>();
-
-						// Create the sub-job for loading this map cell
-						job->mapSubjob = std::make_shared<ReadJob>(a_cell_that_is_locked, cellCoord);
-						job->mapSubjob->dataStyle = FastBinary; // Map data is always FastBinary
-
-						job->mapSubjob->cellDataStream = std::move(inflateStream);
 
 						// Read pseudo-entities
 						if (pseudoEntityDataLength > 0)
 						{
-							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, false, FastBinary);
+							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *job->mapSubjob->cellDataStream, false, FastBinary);
 							// Remember that there are synced-entities to read next if this cell is uncached:
 							job->thereIsSyncedDataToReadNext = uncached;
 						}
 						else if (uncached)
-							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *inflateStream, true, FastBinary);
+							std::tie(job->mapSubjob->entitiesExpected, job->mapSubjob->ids) = ReadCellIntro(cellCoord, *job->mapSubjob->cellDataStream, true, FastBinary);
 
 						// Enqueue the map data load job if there is anything to load for this map cell
 						if (job->mapSubjob->entitiesExpected > 0)
@@ -955,8 +855,16 @@ namespace FusionEngine
 							// Request the cached cell data (if available)
 							if (!m_EditMode)
 							{
-								GetCellStreamForReading(
+								m_Cache->GetCellStreamForReading(
 									std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, _1, toRead),
+									cell_coord.x, cell_coord.y);
+
+								// Create the sub-job for loading this map cell
+								toRead->mapSubjob = std::make_shared<ReadJob>(toRead->cell, cell_coord);
+								toRead->mapSubjob->dataStyle = FastBinary; // Map data is always FastBinary
+
+								m_MapCache->GetCellStreamForReading(
+									std::bind(&RegionCellArchivist::OnGotCellStreamForReading, this, std::placeholders::_1, toRead->mapSubjob),
 									cell_coord.x, cell_coord.y);
 							}
 							else
@@ -1090,7 +998,7 @@ namespace FusionEngine
 										if (cell->active_entries != 0 && !m_EditMode)
 											AddLogEntry("Warning: writing cell with active entries");
 
-										FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
+										FSN_ASSERT(cell->loaded == true); // Just in case I do something dumb
 
 										size_t numSynched = 0;
 										size_t numPseudo = 0;

@@ -175,6 +175,19 @@ namespace FusionEngine
 			fn(peers[i]);
 	}
 
+	bool RakNetwork::AllPeers(std::function<bool (const RakNet::RakNetGUID &)>&& fn)
+	{
+		DataStructures::List<RakNet::RakNetGUID> peers;
+		m_FullyConnectedMeshPlugin.GetParticipantList(peers);
+		for (size_t i = 0; i < peers.Size(); ++i)
+		{
+			if (!fn(peers[i]))
+				return false;
+		}
+
+		return true;
+	}
+
 	const RakNetGUID &RakNetwork::GetLocalGUID() const
 	{
 		return m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS);

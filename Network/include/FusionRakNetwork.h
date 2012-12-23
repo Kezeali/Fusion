@@ -105,7 +105,14 @@ namespace FusionEngine
 		NetDestination()
 			: Broadcast(false)
 		{}
-		//! Destination with data initialisation
+
+		//! Destination (default unicast)
+		NetDestination(const RakNet::RakNetGUID &guid)
+			: GUID(guid),
+			Broadcast(false)
+		{}
+
+		//! Destination w/ bcast setting
 		NetDestination(const RakNet::RakNetGUID &guid, bool broadcast)
 			: GUID(guid),
 			Broadcast(broadcast)
@@ -178,6 +185,9 @@ namespace FusionEngine
 
 		// TODO: add an in-host-order version of this method
 		void ForEachPeer(std::function<void (const RakNet::RakNetGUID &)>&& fn);
+
+		//! Returns true if all the given fn. returns true for all peers
+		bool AllPeers(std::function<bool (const RakNet::RakNetGUID &)>&& fn);
 
 		//! Returnst he GUID of this machine
 		const RakNet::RakNetGUID &GetLocalGUID() const;

@@ -34,6 +34,7 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionResourceManager.h"
+#include "FusionRegionFileLoadedCallbackHandle.h"
 
 #include "FusionResource.h"
 
@@ -44,7 +45,6 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/signals2/connection.hpp>
 
 namespace io = boost::iostreams;
 
@@ -690,19 +690,35 @@ namespace FusionEngine
 		return cellDataLocations[x + y * region_width];
 	}
 
-	RegionCellCache::RegionCellCache(const std::string& cache_path, int32_t region_size)
+	RegionCellCache::RegionCellCache(const std::string& cache_path, int32_t region_size, bool readonly)
 		: m_CachePath(cache_path),
 		m_RegionSize(region_size),
 		m_MaxLoadedFiles(10),
-		m_EditMode(false),
 		m_FragmentationAllowed(true)
 	{
 		FSN_ASSERT(region_size > 0);
 
 		FSN_ASSERT(region_size * region_size < RegionFile::s_MaxSectors);
 
-		ResourceManager::getSingleton().AddResourceLoader(
-			ResourceLoader("MapRegion" + m_CachePath, &RegionMap::LoadMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
+		if (readonly)
+		{
+			ResourceManager::getSingleton().AddResourceLoader(
+				ResourceLoader("MapRegion" + m_CachePath, &RegionMap::LoadMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
+		}
+		else
+		{
+			ResourceManager::getSingleton().AddResourceLoader(
+				ResourceLoader("StaticMapRegion" + m_CachePath, &RegionMap::LoadStaticMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
+		}
+	}
+
+	void RegionCellCache::SetPath(const std::string& new_path)
+	{
+		// Prevent cache access while the path is being changed
+		CacheMutex_t::scoped_lock lock(m_CacheMutex);
+
+		m_CachePath = new_path;
+		DropCache();
 	}
 
 	void RegionCellCache::DropCache()
@@ -754,11 +770,8 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)
+	void RegionCellCache::SetupEditMode(bool enable)
 	{
-		m_EditMode = enable;
-		m_Bounds = bounds;
-
 		SetFragmentationAllowed(!enable);
 	}
 
@@ -768,6 +781,11 @@ namespace FusionEngine
 		// Figure out the location of the cell relative to the origin (0,0) point of the region
 		*cell_x = *cell_x - regionCoord.x * m_RegionSize, *cell_y = *cell_y - regionCoord.y * m_RegionSize;
 		return regionCoord;
+	}
+
+	RegionCellCache::RegionCoord_t RegionCellCache::cellToRegionCoord(int32_t cell_x, int32_t cell_y) const
+	{
+		return cellToRegionCoord(&cell_x, &cell_y);
 	}
 	
 	void RegionCellCache::ReloadRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord)
@@ -779,23 +797,13 @@ namespace FusionEngine
 		GetRegionFile(loadedCallback, coord, true);
 	}
 
-	class RegionFileLoadedCallbackHandle
+	std::string RegionCellCache::GetRegionFilePath(const RegionCoord_t& coord) const
 	{
-	public:
-		RegionFileLoadedCallbackHandle()
-		{}
-		RegionFileLoadedCallbackHandle(const boost::signals2::connection& connection)
-			: m_Connection(connection)
-		{}
+		std::stringstream str; str << coord.x << "." << coord.y;
+		std::string filename = str.str();
 
-		~RegionFileLoadedCallbackHandle()
-		{
-			m_Connection.disconnect();
-		}
-		boost::signals2::connection m_Connection;
-
-		std::list<RegionCellCache::RegionLoadedCallback> m_OtherCallbacks;
-	};
+		return m_CachePath + filename + ".celldata";
+	}
 
 	void RegionCellCache::GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord, bool load_if_uncached)
 	{
@@ -804,14 +812,13 @@ namespace FusionEngine
 		{
 			if (load_if_uncached)
 			{
-				// Add a new cache entry
-				std::stringstream str; str << coord.x << "." << coord.y;
-				std::string filename = str.str();
-				std::string filePath = m_CachePath + filename + ".celldata";
-
 				CacheMutex_t::scoped_lock lock(m_CacheMutex);
 
+				// Add a new cache entry
+
 				// Request the region file resource
+				std::string filePath = GetRegionFilePath(coord);
+
 				using namespace std::placeholders;
 				CallbackHandles_t::accessor accessor;
 				if (m_CallbackHandles.insert(accessor, coord))
@@ -913,15 +920,6 @@ namespace FusionEngine
 
 	std::unique_ptr<ArchiveOStream> RegionCellCache::GetCellStreamForWriting(int32_t cell_x, int32_t cell_y)
 	{
-		// Expand the bounds (edit mode)
-		if (m_EditMode)
-		{
-			m_Bounds.left = std::min(m_Bounds.left, cell_x);
-			m_Bounds.right = std::max(m_Bounds.right, cell_x);
-			m_Bounds.top = std::min(m_Bounds.top, cell_y);
-			m_Bounds.bottom = std::max(m_Bounds.bottom, cell_y);
-		}
-
 		const size_t predictedDataLength = RegionFile::s_SectorSize;
 
 		BureaucraticCellBuffer device(this);
@@ -963,6 +961,16 @@ namespace FusionEngine
 			ResourceManager::getSingleton().ResumeUnload("MapRegion" + m_CachePath);
 	}
 
+	bool RegionCellCache::IsCached(const RegionCoord_t& coord) const
+	{
+		if  (m_Cache.find(coord) != m_Cache.end())
+			return true;
+		else
+		{
+			return boost::filesystem::exists(GetRegionFilePath(coord));
+		}
+	}
+
 	namespace RegionMap
 	{
 		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
@@ -1000,6 +1008,34 @@ namespace FusionEngine
 				delete static_cast<RegionFile*>(resource->GetDataPtr());
 			}
 			resource->SetDataPtr(nullptr);
+		}
+
+		void LoadStaticMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+		{
+			if (resource->IsLoaded())
+			{
+				delete static_cast<RegionFile*>(resource->GetDataPtr());
+			}
+
+			try
+			{
+				auto regionSize = boost::any_cast<int32_t>(&user_data);
+				if (regionSize)
+				{
+					std::unique_ptr<IO::PhysFSStream> readonlyStream(new IO::PhysFSStream(resource->GetPath(), IO::Read));
+					RegionFile* regionFile = new RegionFile(std::move(readonlyStream), (size_t)(*regionSize));
+					resource->SetDataPtr(regionFile);
+					resource->setLoaded(true);
+				}
+			}
+			catch (boost::filesystem::filesystem_error& ex)
+			{
+				FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
+			}
+			catch (Exception&)
+			{
+				throw;
+			}
 		}
 	}
 

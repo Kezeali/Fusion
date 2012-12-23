@@ -1111,8 +1111,10 @@ namespace FusionEngine
 			m_MapLoader->Stop();
 			try
 			{
-				IO::PhysFSStream file("default.gad", IO::Write);
-				GameMap::CompileMap(file, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
+				PHYSFS_mkdir("mapname");
+				IO::PhysFSStream metadata("mapname/mapname.info", IO::Write);
+				IO::PhysFSStream entities("mapname/transcendent.entitydata", IO::Write);
+				GameMap::CompileMap(metadata, entities, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
 				m_MapLoader->SaveEntityLocationDB("default.endb");
 			}
 			catch (FileSystemException& e)
@@ -1224,16 +1226,6 @@ namespace FusionEngine
 		{
 			try
 			{
-				if (auto editor_metadata = m_MapLoader->CreateDataFile("editor_metadata"))
-				{
-					IO::Streams::CellStreamWriter writer(editor_metadata.get());
-					// Write the map bounds
-					CL_Rectf bounds = m_MapLoader->GetCellCache()->GetUsedBounds();
-					writer.Write(bounds.top);
-					writer.Write(bounds.left);
-					writer.Write(bounds.right);
-					writer.Write(bounds.bottom);
-				}
 				m_Saver->Save(m_SaveName, false);
 			}
 			catch (std::exception& e)
@@ -1250,17 +1242,7 @@ namespace FusionEngine
 			try
 			{
 				m_Saver->Load(m_SaveName);
-				if (auto editor_metadata = m_MapLoader->LoadDataFile("editor_metadata"))
-				{
-					IO::Streams::CellStreamReader reader(editor_metadata.get());
-					// Read the map bounds
-					CL_Rectf bounds;
-					reader.Read(bounds.top);
-					reader.Read(bounds.left);
-					reader.Read(bounds.right);
-					reader.Read(bounds.bottom);
-					m_MapLoader->GetCellCache()->SetupEditMode(true, bounds);
-				}
+				
 				m_NonStreamedEntities = m_EntityManager->GetLastLoadedNonStreamedEntities();
 				m_StreamingManager->AddCamera(m_EditCam, m_EditCamRange);
 			}

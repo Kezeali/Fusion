@@ -50,8 +50,9 @@
 #include "FusionGameMapLoader.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionSaveDataArchive.h"
-// Only used for ICellStream; TODO: remove
+#include "FusionCellStreamTypes.h"
 #include "FusionEntitySerialisationUtils.h"
+#include "FusionCellSerialisationUtils.h"
 
 #include "FusionHashable.h"
 
@@ -71,8 +72,6 @@ namespace FusionEngine
 	class RegionCellArchivist : public CellArchiver, public SaveDataArchive
 	{
 	public:
-		typedef Vector2T<int32_t> CellCoord_t;
-
 		//! Ctor
 		/*
 		* The map provides a static entity source, whilst the CellArchiver (cache) provides methods for 
@@ -260,7 +259,7 @@ namespace FusionEngine
 		void WriteCellDataForEditMode(const std::unique_ptr<std::ostream>& filePtr, const CellCoord_t& cell_coord, const std::shared_ptr<Cell>& cell, size_t numPseudo, size_t numSynched, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 
 		// Reads the number of entities, and optional IDs from the cell data
-		std::pair<size_t, std::vector<ObjectID>> ReadCellIntro(const CellCoord_t& coord, ICellStream& file, const bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle data_style);
+		//std::pair<size_t, std::vector<ObjectID>> ReadCellIntro(const CellCoord_t& coord, ICellStream& file, const bool data_includes_ids, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 		std::tuple<bool, size_t, std::shared_ptr<ICellStream>> ContinueReadingCell(const CellCoord_t& coord, const std::shared_ptr<Cell>& conveniently_locked_cell, size_t num_entities, size_t progress, std::shared_ptr<EntitySerialisationUtils::EntityFuture>& incomming_entity, const std::vector<ObjectID>& ids, std::shared_ptr<ICellStream> file, const EntitySerialisationUtils::SerialisedDataStyle data_style);
 
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
@@ -284,6 +283,8 @@ namespace FusionEngine
 		RegionCellCache* m_Cache;
 
 		RegionCellCache* m_EditableCache;
+
+		RegionCellCache* m_MapCache;
 
 		std::string m_FullBasePath;
 		std::unique_ptr<kyotocabinet::HashDB> m_EntityLocationDB;
