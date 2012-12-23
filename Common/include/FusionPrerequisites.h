@@ -50,6 +50,10 @@
 #undef GetObject
 #endif
 
+#ifdef IN
+#undef IN
+#endif
+
 #define FSN_TBB_AVAILABLE
 
 #ifndef BOOST_BIND_NO_PLACEHOLDERS
