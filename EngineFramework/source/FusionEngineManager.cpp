@@ -255,6 +255,26 @@ namespace FusionEngine
 					return "";
 			});
 
+			m_Console->BindCommand("resources_check_for_changes", [this](const std::vector<std::string>& cmdargs)->std::string
+			{
+				m_ResourceManager->CheckForChanges();
+				return "";
+			});
+
+			m_Console->BindCommand("resources_hot_reloading", [this](const std::vector<std::string>& cmdargs)->std::string
+			{
+				bool allowed = false;
+				if (cmdargs.size() >= 2)
+				{
+					allowed = cmdargs[1] == "on";
+					m_ResourceManager->SetHotReloadingAllowed(allowed);
+				}
+				else
+					allowed = m_ResourceManager->IsHotReloadingAllowed();
+
+				return allowed ? "Hot reloading is on" : "Hot reloading is off";
+			});
+
 			m_Console->BindCommand("exec", [](const std::vector<std::string>& cmdargs)->std::string
 			{
 				if (cmdargs.size() >= 2)
@@ -413,6 +433,8 @@ namespace FusionEngine
 
 		if (options.GetOption_bool("console_logging"))
 			m_Logger->ActivateConsoleLogging();
+
+		m_ResourceManager->SetHotReloadingAllowed(options.GetOption_bool("hot_reloading"));
 
 		auto activeExtensionsStr = options.GetOption_str("active_extensions");
 		auto activeExtensions = fe_splitstring(activeExtensionsStr, ",");
@@ -598,6 +620,9 @@ namespace FusionEngine
 			}
 			
 			m_ResourceManager->StartLoaderThread();
+
+			// Check for resource changes whenever the window regains focus (for hot reloading)
+			m_GotFocusSlot = m_DisplayWindow.sig_got_focus().connect(m_ResourceManager.get(), &ResourceManager::CheckForChanges);
 
 			// Create worlds
 			std::vector<std::shared_ptr<ISystemWorld>> worlds;

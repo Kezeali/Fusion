@@ -171,6 +171,9 @@ namespace FusionEngine
 
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;
+
+		CL_Slot m_GotFocusSlot;
+
 		void ReadOptions(const ClientOptions& options);
 
 		void RegisterScriptTypes();

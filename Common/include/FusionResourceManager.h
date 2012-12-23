@@ -85,9 +85,13 @@ namespace FusionEngine
 		//! Returns the list of resource types for which loaders have been added
 		std::vector<std::string> GetResourceLoaderTypes() const;
 
+		//! Allow hot-reloading (for resources that support it)
 		void SetHotReloadingAllowed(bool allowed);
+		//! Returns true if hot-reloading is allowed
+		bool IsHotReloadingAllowed() const { return m_HotReloadingAllowed; }
 
-		bool IsHotReloadingAllowed() const { m_HotReloadingAllowed; }
+		//! Tell the loader thread to resources that support hot-reloading for changes, and reload them if any are detected
+		void CheckForChanges();
 
 		//! Starts loading resources in the background
 		void StartLoaderThread();
@@ -279,6 +283,7 @@ namespace FusionEngine
 		CL_Event m_StopEvent; // Set to stop the worker thread
 		CL_Event m_ToLoadEvent; // Set when there is more data to load
 		CL_Event m_ToUnloadEvent;
+		CL_Event m_CheckForChangesEvent; // For hot-reloading
 		CL_Thread m_Thread;
 		bool m_Running;
 		bool m_Clearing;

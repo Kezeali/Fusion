@@ -49,6 +49,7 @@ namespace FusionEngine
 		: m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(true),
+		m_CheckForChangesEvent(false),
 		m_Running(false),
 		m_Clearing(false),
 		m_FinishLoadingBeforeStopping(false),
@@ -101,6 +102,12 @@ namespace FusionEngine
 	void ResourceManager::SetHotReloadingAllowed(bool allowed)
 	{
 		m_HotReloadingAllowed = allowed;
+	}
+
+	void ResourceManager::CheckForChanges()
+	{
+		if (m_HotReloadingAllowed)
+			m_CheckForChangesEvent.set();
 	}
 
 	void ResourceManager::StartLoaderThread()
@@ -220,11 +227,12 @@ namespace FusionEngine
 		auto logfile = Logger::getSingleton().OpenLog("ResourceManager");
 
 		std::string lastResourceChecked; // for hot-reload
+		bool checkingResourcesForReload = false;
 
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
-			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent, m_HotReloadingAllowed ? 100 : -1);
+			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent, m_CheckForChangesEvent);
 			// 0 = stop event, -1 = error; otherwise, it is
 			//  a ToLoad / ToUnload Event, meaning the load loop below should resume
 			if (receivedEvent <= 0 && !m_FinishLoadingBeforeStopping)
@@ -310,13 +318,16 @@ namespace FusionEngine
 			}
 
 			// Stop when stop even is set
-			if (receivedEvent <= 0)
+			if (receivedEvent == 0)
 				break;
 
+			if (receivedEvent == 3 && m_HotReloadingAllowed)
+				checkingResourcesForReload = true;
+
 			// Check for changes & hot-reload
-			if (m_HotReloadingAllowed)
+			if (checkingResourcesForReload && m_HotReloadingAllowed)
 			{
-				const size_t maxChecked = 32;
+				const size_t maxChecked = 100;
 				size_t resourcesChecked = 0;
 
 				// Attempt to continue iteration from the last resource checked
@@ -344,6 +355,12 @@ namespace FusionEngine
 						lastResourceChecked = it->first;
 						break;
 					}
+				}
+
+				if (it == m_Resources.cend())
+				{
+					checkingResourcesForReload = false; // done
+					lastResourceChecked.clear();
 				}
 			}
 		}
