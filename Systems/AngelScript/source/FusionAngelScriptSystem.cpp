@@ -507,7 +507,7 @@ namespace FusionEngine
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
-		ResourceManager::getSingleton().AddResourceLoader(ResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource));
+		ResourceManager::getSingleton().AddResourceLoader(ResourceLoader("ScriptModule", &LoadScriptResource, &UnloadScriptResource, &ScriptResourceHasChanged));
 	}
 
 	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, EntityInstantiator* obj)
@@ -550,6 +550,8 @@ namespace FusionEngine
 		m_ScriptManager(manager)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
+
+		ResourceManager::getSingleton().SetResourceLoaderUserData("ScriptModule", this);
 		
 		BuildScripts(true);
 
@@ -882,6 +884,8 @@ namespace FusionEngine
 
 	void AngelScriptWorld::BuildScripts(bool rebuild_all)
 	{
+		SendToConsole("Building Scripts");
+
 		std::vector<std::tuple<std::string, std::string, ModulePtr>> modulesToBuild;
 
 		std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>> scriptsToBuild;
@@ -940,7 +944,8 @@ namespace FusionEngine
 			auto& script = it->second.first;
 			auto& scriptInfo = it->second.second;
 
-			ResourceDataPtr resource; // The resource pointer for any active scripts will be copied here
+			// Find active scripts that use this module
+			//ResourceDataPtr resource; // The module resource for the last active script found will be left here
 			for (auto sit = m_ActiveScripts.begin(), send = m_ActiveScripts.end(); sit != send; ++sit)
 			{
 				const auto& scriptComponent = (*sit);
@@ -960,7 +965,7 @@ namespace FusionEngine
 
 					scriptComponent->SetScriptObject(nullptr, scriptInfo.Properties);
 					//scriptComponent->m_Module.Release();
-					resource = scriptComponent->m_Module.GetTarget();
+					//resource = scriptComponent->m_Module.GetTarget();
 
 					rebuiltScripts.push_back(rebuiltScript);
 				}
@@ -970,9 +975,9 @@ namespace FusionEngine
 
 			auto module = m_ScriptManager->GetModule(fileName.c_str(), asGM_ALWAYS_CREATE);
 
-			// Hackiddy hack (switch the resource data)
-			if (resource)
-				resource->SetDataPtr(module->GetASModule());
+			//// Hackiddy hack (switch the resource data)
+			//if (resource)
+			//	resource->SetDataPtr(module->GetASModule());
 
 			module->AddCode(fileName, script);
 
@@ -1008,8 +1013,8 @@ namespace FusionEngine
 		{
 			const auto& rebuiltScript = *it;
 			//rebuiltScript.component->m_ModuleLoadedConnection =
-			//	ResourceManager::getSingleton().GetResource("MODULE", rebuiltScript.component->GetScriptPath(),
-			//	std::bind(&ASScript::OnModuleLoaded, rebuiltScript.component.get(), std::placeholders::_1));
+			//	ResourceManager::getSingleton().GetResource("ScriptModule", rebuiltScript.component->GetScriptPath(),
+			//	std::bind(&ASScript::ModuleLoaded, rebuiltScript.component.get(), std::placeholders::_1));
 
 			rebuiltScript.component->m_EntityWrapperTypeId =
 				rebuiltScript.component->m_Module->GetTypeIdByDecl("EntityWrapper@");
@@ -1033,6 +1038,8 @@ namespace FusionEngine
 		ComponentTypeInfoCache::getSingleton().ClearCache();
 
 		ISystemWorld::PostSystemMessage(MessageType::NewTypes);
+
+		SendToConsole("Finished Building Scripts");
 	}
 
 	bool ScriptResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
@@ -1041,7 +1048,8 @@ namespace FusionEngine
 		{
 			auto scriptWorld = boost::any_cast<AngelScriptWorld>(&user_data);
 
-			return scriptWorld->ScriptHasChanged(resource->GetPath());
+			if (scriptWorld)
+				return scriptWorld->ScriptHasChanged(resource->GetPath());
 		}
 		catch (boost::bad_any_cast&)
 		{
@@ -1063,6 +1071,33 @@ namespace FusionEngine
 		}
 		else // No existing entry
 			return true;
+	}
+
+	bool AngelScriptWorld::ScriptHotReloadEvent(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev)
+	{
+		if (ev == ResourceContainer::HotReloadEvent::Validate)
+		{
+			script->m_Module.Release();
+		}
+		else if (ev == ResourceContainer::HotReloadEvent::PreReload)
+		{
+			// Building here so that when the resource manager "reloads" the script resources
+			//  the rebuilt modules are ready
+			BuildScripts();
+		}
+		else if (ev == ResourceContainer::HotReloadEvent::PostReload)
+		{
+			script->ModuleLoaded(resource);
+		}
+		return true; // Allow reloading
+	}
+
+	void AngelScriptWorld::ModuleLoaded(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource)
+	{
+		script->ModuleLoaded(resource);
+
+		using namespace std::placeholders;
+		script->m_ModuleResourceConnection = resource->SigHotReloadEvents.connect(std::bind(&AngelScriptWorld::ScriptHotReloadEvent, this, script.get(), _1, _2));
 	}
 
 	std::vector<std::string> AngelScriptWorld::GetTypes() const
@@ -1106,7 +1141,7 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			using namespace std::placeholders;
-			scriptComponent->m_ModuleLoadedConnection = ResourceManager::getSingleton().GetResource("MODULE", scriptComponent->GetScriptPath(), std::bind(&ASScript::OnModuleLoaded, scriptComponent.get(), _1));
+			scriptComponent->m_ModuleResourceConnection = ResourceManager::getSingleton().GetResource("ScriptModule", scriptComponent->GetScriptPath(), std::bind(&AngelScriptWorld::ModuleLoaded, this, scriptComponent.get(), _1));
 
 			FSN_ASSERT(!m_Updating);
 			if (scriptComponent->m_ScriptObject && scriptComponent->InitialiseEntityWrappers())

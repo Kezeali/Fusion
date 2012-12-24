@@ -37,6 +37,8 @@
 #include "FusionComponentSystem.h"
 #include "FusionEntityComponent.h"
 
+#include "FusionResource.h"
+
 #include <array>
 #include <memory>
 #include <set>
@@ -105,6 +107,10 @@ namespace FusionEngine
 		void BuildScripts(bool rebuild_all = false);
 
 		bool ScriptHasChanged(const std::string& path);
+
+		bool ScriptHotReloadEvent(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev);
+
+		void ModuleLoaded(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource);
 
 		//! Preprocesses the given script and generates code for an EntityWrapper type to be used in it
 		std::string GenerateBaseCodeForScript(std::string& filename);

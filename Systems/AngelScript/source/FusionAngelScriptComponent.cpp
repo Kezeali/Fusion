@@ -882,7 +882,7 @@ namespace FusionEngine
 
 	ASScript::~ASScript()
 	{
-		m_ModuleLoadedConnection.disconnect();
+		m_ModuleResourceConnection.disconnect();
 	}
 
 	std::shared_ptr<Box2DContactListener> ASScript::GetContactListener()
@@ -1544,7 +1544,7 @@ namespace FusionEngine
 		}
 	}
 
-	void ASScript::OnModuleLoaded(ResourceDataPtr resource)
+	void ASScript::ModuleLoaded(ResourceDataPtr resource)
 	{
 		m_Module.SetTarget(resource);
 		m_ModuleReloaded = true;
@@ -1553,6 +1553,24 @@ namespace FusionEngine
 		{
 			m_EntityWrapperTypeId = m_Module->GetTypeIdByDecl("EntityWrapper@"); FSN_ASSERT(m_EntityWrapperTypeId >= 0);
 		}
+	}
+
+	bool ASScript::HotReloadEvent(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev)
+	{
+		if (ev == ResourceContainer::HotReloadEvent::Validate)
+		{
+			m_Module.Release();
+		}
+		else if (ev == ResourceContainer::HotReloadEvent::PreReload)
+		{
+			// TODO: get the script world to perform the build here, so that when the resource
+			//  manager "reloads" the script resources the rebuilt modules are ready
+		}
+		else if (ev == ResourceContainer::HotReloadEvent::PostReload)
+		{
+			ModuleLoaded(resource);
+		}
+		return true; // Allow reloading
 	}
 
 	bool ASScript::InitialiseEntityWrappers()

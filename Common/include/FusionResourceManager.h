@@ -82,6 +82,9 @@ namespace FusionEngine
 		//! Returns true if a loader has been added for the given resource type
 		bool HasResourceLoader(const std::string& type) const { m_ResourceLoaders.find(type) != m_ResourceLoaders.end(); }
 
+		//! Change the userdata stored for a given loader
+		void SetResourceLoaderUserData(const std::string& type, boost::any newUserData);
+
 		//! Returns the list of resource types for which loaders have been added
 		std::vector<std::string> GetResourceLoaderTypes() const;
 

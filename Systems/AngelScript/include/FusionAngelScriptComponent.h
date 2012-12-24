@@ -266,7 +266,9 @@ namespace FusionEngine
 
 		void CheckChangedPropertiesIn();
 		
-		void OnModuleLoaded(ResourceDataPtr resource);
+		void ModuleLoaded(ResourceDataPtr resource);
+
+		bool HotReloadEvent(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev);
 
 		asIScriptModule* GetScriptModule() const { return m_Module.Get(); }
 
@@ -321,7 +323,7 @@ namespace FusionEngine
 
 		bool m_ModuleReloaded;
 
-		boost::signals2::connection m_ModuleLoadedConnection;
+		boost::signals2::connection m_ModuleResourceConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		int m_EntityWrapperTypeId;
 		// Script object
@@ -333,7 +335,7 @@ namespace FusionEngine
 		// Methods
 		std::vector<ScriptMethodData> m_ScriptMethods;
 		std::unordered_map<std::string, size_t> m_MethodDeclIndex;
-		std::vector<size_t> m_EventHandlerMethodIndex; // Indicies refer to m_ScriptMethod
+		std::vector<size_t> m_EventHandlerMethodIndex; // Entries refer to m_ScriptMethod
 
 		std::shared_ptr<ASScriptB2ContactListener> m_ContactListener;
 

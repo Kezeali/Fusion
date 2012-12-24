@@ -92,6 +92,17 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "Can't add resource loaders after the loader thread has started");
 	}
 
+	void ResourceManager::SetResourceLoaderUserData(const std::string& type, boost::any newUserData)
+	{
+		auto entry = m_ResourceLoaders.find(type);
+		if (entry != m_ResourceLoaders.end())
+		{
+			entry->second.userData = newUserData;
+		}
+		else
+			FSN_EXCEPT(InvalidArgumentException, "Can't change userdata, resource loader of type " + type + " doesn't exist");
+	}
+
 	std::vector<std::string> ResourceManager::GetResourceLoaderTypes() const
 	{
 		std::vector<std::string> types;

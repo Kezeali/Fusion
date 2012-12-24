@@ -157,7 +157,7 @@ namespace FusionEngine
 			// Init resource manager
 			m_ResourceManager.reset(new ResourceManager(m_DisplayWindow.get_gc()));
 			// Resource manager options
-			m_ResourceManager->SetHotReloadingAllowed(options->GetOption_bool("hot_reloading"));
+			m_ResourceManager->SetHotReloadingAllowed(options->GetOption_bool("hot_reload"));
 
 			// Init GUI
 			m_GUI.reset(new GUI(m_DisplayWindow));
