@@ -252,6 +252,13 @@ namespace FusionEngine
 		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceQueue;
 		typedef tbb::concurrent_unordered_set<ResourceContainer*> UnreferencedResourceSet;
 
+		struct ReloadEventQueueEntry
+		{
+			ResourceDataPtr resource;
+			ResourceContainer::HotReloadEvent eventToFire;
+		};
+		typedef tbb::concurrent_queue<ReloadEventQueueEntry> ReloadEventQueue;
+
 		struct ResourceToLoadData
 		{
 			int priority;
@@ -312,6 +319,9 @@ namespace FusionEngine
 		//CL_Mutex m_ToDeliverMutex;
 		ResourceQueue m_ToDeliver;
 
+		ReloadEventQueue m_HotReloadEventsQueue;
+		ResourceQueue m_ToReload;
+
 		//CL_Mutex m_LoaderMutex;
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
@@ -334,7 +344,7 @@ namespace FusionEngine
 
 		bool shouldReload(const ResourceDataPtr& resource);
 
-		bool validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload);
+		bool validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload, ResourceContainer::HotReloadEvent ev);
 	};
 
 }

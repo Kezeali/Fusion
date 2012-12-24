@@ -61,7 +61,7 @@ namespace FusionEngine
 	typedef bool (*resource_list_prerequisites)(ResourceContainer* res, DepsList& dependencies, boost::any user_data);
 
 	//! Fn. pointer for allowing resources that other resources depend on (via list_prerequisites) to be hot-reloaded
-	typedef bool (*resource_validate_prerequisite_hot_reload)(ResourceContainer* res, ResourceContainer* resource_that_wants_to_reload, boost::any user_data);
+	typedef bool (*resource_validate_prerequisite_hot_reload)(ResourceContainer* res, ResourceContainer* resource_that_wants_to_reload, ResourceContainer::HotReloadEvent ev, boost::any user_data);
 
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader

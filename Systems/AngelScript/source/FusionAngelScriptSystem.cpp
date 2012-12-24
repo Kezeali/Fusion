@@ -787,11 +787,16 @@ namespace FusionEngine
 		return GenerateBaseCode(scriptInfo, m_ScriptInfo);
 	}
 
-	bool AngelScriptWorld::updateChecksum(const std::string& filename, const std::string& filedata)
+	static unsigned int checksumString(const std::string& filedata)
 	{
 		boost::crc_32_type crc;
 		crc.process_bytes(filedata.data(), filedata.size());
-		auto sum = crc.checksum();
+		return crc.checksum();
+	}
+
+	bool AngelScriptWorld::updateChecksum(const std::string& filename, const std::string& filedata)
+	{
+		auto sum = checksumString(filedata);
 
 		auto insertResult = m_ScriptChecksums.insert(std::make_pair(filename, sum));
 		if (!insertResult.second)
@@ -1028,6 +1033,36 @@ namespace FusionEngine
 		ComponentTypeInfoCache::getSingleton().ClearCache();
 
 		ISystemWorld::PostSystemMessage(MessageType::NewTypes);
+	}
+
+	bool ScriptResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		try
+		{
+			auto scriptWorld = boost::any_cast<AngelScriptWorld>(&user_data);
+
+			return scriptWorld->ScriptHasChanged(resource->GetPath());
+		}
+		catch (boost::bad_any_cast&)
+		{
+		}
+
+		return false;
+	}
+
+	bool AngelScriptWorld::ScriptHasChanged(const std::string& path)
+	{
+		auto sum = checksumString(OpenString_PhysFS(path));
+
+		std::string filename = boost::filesystem::path(path).filename().string();
+
+		auto entry = m_ScriptChecksums.find(filename);
+		if (entry != m_ScriptChecksums.end())
+		{
+			return entry->second == sum;
+		}
+		else // No existing entry
+			return true;
 	}
 
 	std::vector<std::string> AngelScriptWorld::GetTypes() const

@@ -21,7 +21,7 @@ namespace FusionEngine { namespace Test
 	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	bool ResourceFileDateHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	bool TextContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 }}
 	
 using namespace FusionEngine;
@@ -77,7 +77,9 @@ protected:
 	void AddStandardLoaders()
 	{
 		ASSERT_NO_FATAL_FAILURE(manager->AddResourceLoader(
-			ResourceLoader("TestResource", &FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource, &FusionEngine::Test::ResourceFileDateHasChanged, boost::any(this))
+			ResourceLoader("TestResource",
+			&FusionEngine::Test::LoadTextResource, &FusionEngine::Test::UnloadTextResource,
+			&FusionEngine::Test::TextContentHasChanged, boost::any(this))
 			));
 	}
 
@@ -110,28 +112,34 @@ protected:
 	class ResourceHelper
 	{
 	public:
-		ResourceHelper(std::string path) : pathSoYouKnowWhatBroke(path) {}
+		ResourceHelper(std::string path) : pathSoYouKnowWhatBroke(path), reloaded(false) {}
 		virtual ~ResourceHelper()
 		{
 			loadConnection.disconnect();
 		}
 
-		static std::shared_ptr<ResourceHelper> Load(const std::shared_ptr<ResourceManager>& manager, const std::string& path)
+		static std::shared_ptr<ResourceHelper> Load(const std::shared_ptr<ResourceManager>& manager, const std::string& path);
+
+		bool ValidateReload(ResourceDataPtr res, ResourceContainer::HotReloadEvent ev)
 		{
-			auto helper = std::make_shared<ResourceHelper>(path);
-			std::weak_ptr<ResourceHelper> helperRef = helper;
-			helper->loadConnection = manager->GetResource("TestResource", path, [helperRef](ResourceDataPtr resource)
+			if (ev == ResourceContainer::HotReloadEvent::Validate)
 			{
-				if (auto h = helperRef.lock())
-				{
-					h->resource = resource;
-				}
-			});
-			return helper;
+				resource.reset();
+			}
+			else if (ev == ResourceContainer::HotReloadEvent::PostReload)
+			{
+				resource = res;
+				reloaded = true;
+			}
+			lastReloadEvent = ev;
+			return true;
 		}
+
 		std::string pathSoYouKnowWhatBroke;
 		boost::signals2::connection loadConnection;
 		ResourceDataPtr resource;
+		ResourceContainer::HotReloadEvent lastReloadEvent;
+		bool reloaded;
 	};
 	
 	std::vector<std::shared_ptr<ResourceHelper>> resourcesBeingLoaded;
@@ -147,8 +155,56 @@ protected:
 	std::shared_ptr<Profiling> profiling;
 };
 
+std::shared_ptr<resource_manager_f::ResourceHelper> resource_manager_f::ResourceHelper::Load(const std::shared_ptr<ResourceManager>& manager, const std::string& path)
+{
+	auto helper = std::make_shared<ResourceHelper>(path);
+	std::weak_ptr<ResourceHelper> helperRef = helper;
+	helper->loadConnection = manager->GetResource("TestResource", path, [helperRef](ResourceDataPtr resource)
+	{
+		if (auto h = helperRef.lock())
+		{
+			using namespace std::placeholders;
+			h->resource = resource;
+			h->loadConnection = resource->SigHotReloadEvents.connect(std::bind(&resource_manager_f::ResourceHelper::ValidateReload, h.get(), _1, _2));
+		}
+	});
+	return helper;
+}
+
 namespace FusionEngine { namespace Test
 {
+	template <typename T>
+	T processStream(IO::PhysFSStream& stream, std::function<T (const std::array<char, 4096>&, size_t)> func, T initial)
+	{
+		T result = initial;
+
+		std::array<char, 4096> buffer;
+		while (!stream.eof())
+		{
+			stream.read(buffer.data(), 4096);
+			auto count = stream.gcount();
+
+			if (count > 0)
+			{
+				result += func(buffer, (size_t)count);
+			}
+		}
+		return result;
+	}
+
+	std::int64_t checksumStream(IO::PhysFSStream& stream)
+	{
+		boost::crc_32_type checksummer;
+
+		processStream<int>(stream, [&checksummer](const std::array<char, 4096>& buffer, size_t length)->int
+		{
+			checksummer.process_bytes(buffer.data(), length);
+			return 0;
+		}, 0);
+
+		return checksummer.checksum();
+	}
+
 	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		//ASSERT_TRUE(resource->IsLoaded());
@@ -195,12 +251,24 @@ namespace FusionEngine { namespace Test
 		auto content = new std::string();
 		try
 		{
-			auto file = vdir.open_file_read(resource->GetPath());
-			content->resize(file.get_size());
-			file.read(&(*content)[0], content->length());
+			//auto file = vdir.open_file_read(resource->GetPath());
+			//content->resize(file.get_size());
+			//file.read(&(*content)[0], content->length());
+			IO::PhysFSStream stream(resource->GetPath(), IO::Read);
 
-			auto modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
-			resource->SetMetadata(modTime);
+			boost::crc_32_type checksummer;
+
+			*content = processStream<std::string>(stream, [&checksummer](const std::array<char, 4096>& buffer, size_t length)->std::string
+			{
+				checksummer.process_bytes(buffer.data(), length);
+				return std::string(buffer.data(), length);
+			}, std::string());
+
+			auto sum = checksummer.checksum();
+
+			resource->SetMetadata((std::int64_t)sum);
+			//auto modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+			//resource->SetMetadata(modTime);
 
 			resource->SetDataPtr(content);
 			resource->setLoaded(true);
@@ -227,28 +295,14 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	bool TextContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
 				std::int64_t storedChecksum = resource->GetMetadataOrDefault<std::int64_t>(0);
 				IO::PhysFSStream stream(resource->GetPath(), IO::Read);
 
-				boost::crc_32_type checksummer;
-
-				std::array<char, 4096> buffer;
-				IO::PhysFSStream::pos_type startpos = 0;
-				while (!stream.eof())
-				{
-					stream.read(buffer.data(), 4096);
-					auto length = stream.tellg() - startpos;
-					startpos = stream.tellg();
-					
-					if (length > 0)
-						checksummer.process_bytes(buffer.data(), (size_t)length);
-				}
-
-				return checksummer.checksum() != storedChecksum;
+				return checksumStream(stream) != storedChecksum;
 		}
 		else
 		{
@@ -401,11 +455,6 @@ TEST_F(resource_manager_f, destruct_with_resources_in_use)
 	ASSERT_NO_FATAL_FAILURE(resourcesBeingLoaded.clear());
 }
 
-bool validateReload(ResourceDataPtr res)
-{
-	return true;
-}
-
 TEST_F(resource_manager_f, hot_reload)
 {
 	AddStandardLoaders();
@@ -447,7 +496,6 @@ TEST_F(resource_manager_f, hot_reload)
 	ASSERT_TRUE(manager->VerifyResources(false));
 
 	auto initialMetadata = resourceToThatWillBeChanged->resource->GetMetadata<std::int64_t>();
-	resourceToThatWillBeChanged->resource->SigValidateHotReload.connect(std::bind(&validateReload, std::placeholders::_1));
 
 	{
 		IO::PhysFSStream existingFile(testFilePath, IO::Write);
@@ -456,10 +504,16 @@ TEST_F(resource_manager_f, hot_reload)
 
 	manager->StartLoaderThread();
 
-	manager->CheckForChangesForced();
+	manager->CheckForChanges();
 
-	manager->DeliverLoadedResources();
-	manager->UnloadUnreferencedResources();
+	auto startTime = CL_System::get_time();
+	// Wait for reload, but give up after a few seconds
+	while (!resourceToThatWillBeChanged->reloaded && (CL_System::get_time() - startTime) < 10000)
+	{
+		CL_System::sleep(100);
+		manager->DeliverLoadedResources();
+		manager->UnloadUnreferencedResources();
+	}
 
 	manager->StopLoaderThreadWhenDone();
 

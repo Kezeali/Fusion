@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -103,6 +103,8 @@ namespace FusionEngine
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
 		void BuildScripts(bool rebuild_all = false);
+
+		bool ScriptHasChanged(const std::string& path);
 
 		//! Preprocesses the given script and generates code for an EntityWrapper type to be used in it
 		std::string GenerateBaseCodeForScript(std::string& filename);

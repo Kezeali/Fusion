@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2012 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -92,6 +92,8 @@ namespace FusionEngine
 
 		bool m_Loaded;
 
+		bool m_MarkedToReload;
+
 		tbb::atomic<int> m_RefCount;
 
 		// These are separate because a resource can be in both at once
@@ -105,8 +107,11 @@ namespace FusionEngine
 		// When there is lots of listeners, more signals are spawned so they don't all have to be notified within one frame
 		tbb::concurrent_queue<std::shared_ptr<LoadedSignal>> SigLoadedExt;
 		std::shared_ptr<LoadedSignal> SigLoaded;
+
+		enum HotReloadEvent { Validate, PreReload, PostReload };
 		// All users (including other resources that depend on this one) must return true to allow this resource to be hot-reloaded
-		boost::signals2::signal<bool (ResourceDataPtr), count_true> SigValidateHotReload;
+		boost::signals2::signal<bool (ResourceDataPtr, HotReloadEvent), count_true> SigHotReloadEvents;
+
 		typedef std::function<void (ResourceDataPtr)> LoadedFn;
 
 		typedef std::function<void (ResourceContainer*)> ReleasedFn;
@@ -194,6 +199,11 @@ namespace FusionEngine
 
 		//! Returns true if the resource data is valid
 		bool IsLoaded() const;
+
+		//! Mark this resource as pending reload
+		void SetMarkedToReload(bool is_marked) { m_MarkedToReload = is_marked; }
+		//! Returns true if this resource has been marked
+		bool IsMarkedToReload() const { return m_MarkedToReload; }
 
 		//! Notifies the resource of its queue status
 		inline bool setQueuedToLoad(const bool is_queued);

@@ -51,6 +51,7 @@ namespace FusionEngine
 		: m_Type(""),
 		m_Path(""),
 		m_RequiresGC(false),
+		m_MarkedToReload(false),
 		SigLoaded(std::make_shared<LoadedSignal>())
 	{
 		m_Data = nullptr;
@@ -64,6 +65,7 @@ namespace FusionEngine
 		: m_Type(type),
 		m_Path(path),
 		m_RequiresGC(false),
+		m_MarkedToReload(false),
 		SigLoaded(std::make_shared<LoadedSignal>())
 	{
 		m_Data = nullptr;

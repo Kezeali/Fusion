@@ -175,7 +175,9 @@ namespace FusionEngine
 					loadResourceAndDeps(dep, depth_limit - 1);
 
 					resource->AttachDependency(dep);
-					dep->SigValidateHotReload.connect(std::bind(&ResourceManager::validatePrereqReload, this, resource, std::placeholders::_1));
+					// Configure a proxy for the hot-reload signal
+					using namespace std::placeholders;
+					dep->SigHotReloadEvents.connect(std::bind(&ResourceManager::validatePrereqReload, this, resource, _1, _2));
 				}
 			}
 
@@ -330,10 +332,40 @@ namespace FusionEngine
 				//m_ToUnload.clear();
 			}
 
+			// Perform validated reloads
+			if (m_HotReloadingAllowed)
+			{
+				ResourceDataPtr resource;
+				while (m_ToReload.try_pop(resource))
+				{
+					// Resource map entry + ToReload entry = 2 refs
+					if (resource->ReferenceCount() == 2 && unloadResource(resource))
+					{
+						loadResource(resource);
+
+						//m_ToDeliver.push(resource);
+
+						ReloadEventQueueEntry entry;
+						entry.resource = resource;
+						entry.eventToFire = ResourceContainer::HotReloadEvent::PostReload;
+						m_HotReloadEventsQueue.push(entry);
+					}
+					else
+					{
+						// Resource has been retrieved by a new user. This isn't a massive problem: it will
+						//  be reloaded next time a changes check is run (assuming /another/ new user doesn't
+						//  pop up)
+						logfile->AddEntry("Hot-reload of " + resource->GetPath() + " aborted: resource has become used again.", LOG_NORMAL);
+					}
+
+					resource->SetMarkedToReload(false);
+				}
+			}
+
 			if ((receivedEvent == 3 || m_ForceCheckForChanges) && m_HotReloadingAllowed)
 				checkingResourcesForReload = true;
 
-			// Check for changes & hot-reload
+			// Check for changes, push changed resources into the hot-reload pipeline
 			if (checkingResourcesForReload && m_HotReloadingAllowed)
 			{
 				const size_t maxChecked = 100;
@@ -349,14 +381,15 @@ namespace FusionEngine
 				for (; it != m_Resources.cend(); ++it)
 				{
 					const auto& resource = it->second;
-					// Check for changes, then only reload if all users (minus the resource manager itself) validate the action
-					if (shouldReload(resource) && resource->SigValidateHotReload(resource.get()) >= resource->ReferenceCount() - 1)
+					// Check for changes
+					if (!resource->IsMarkedToReload() && shouldReload(resource))
 					{
-						if (unloadResource(resource))
-						{
-							loadResource(resource);
-							m_ToDeliver.push(resource);
-						}
+						resource->SetMarkedToReload(true);
+
+						ReloadEventQueueEntry entry;
+						entry.resource = resource;
+						entry.eventToFire = ResourceContainer::HotReloadEvent::Validate;
+						m_HotReloadEventsQueue.push(entry);
 					}
 
 					if (!m_ForceCheckForChanges && resourcesChecked++ >= maxChecked)
@@ -428,6 +461,35 @@ namespace FusionEngine
 				//res->SigLoaded(res);
 				res->SigLoaded->disconnect_all_slots();
 				res->SigLoadedExt.clear();
+			}
+		}
+
+		ReloadEventQueueEntry entry;
+		while ((tbb::tick_count::now() - startTime).seconds() < time_limit && m_HotReloadEventsQueue.try_pop(entry))
+		{
+			const auto& resource = entry.resource;
+
+			switch (entry.eventToFire)
+			{
+			case ResourceContainer::HotReloadEvent::Validate:
+				{
+					const auto validated = resource->SigHotReloadEvents(resource.get(), ResourceContainer::HotReloadEvent::Validate);
+
+					if (validated && resource->ReferenceCount() == 2)
+					{
+						resource->SigHotReloadEvents(resource.get(), ResourceContainer::HotReloadEvent::PreReload);
+						m_ToReload.push(resource);
+					}
+					else
+					{
+						resource->SetMarkedToReload(false);
+						AddLogEntry("ResourceManager", "Hot-reload of " + resource->GetPath() + " aborted: one more more users didn't allow the reload", LOG_NORMAL);
+					}
+				}
+				break;
+			case ResourceContainer::HotReloadEvent::PostReload:
+				resource->SigHotReloadEvents(resource.get(), ResourceContainer::HotReloadEvent::PostReload);
+				break;
 			}
 		}
 	}
@@ -807,14 +869,14 @@ namespace FusionEngine
 			return false;
 	}
 	
-	bool ResourceManager::validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload)
+	bool ResourceManager::validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload, ResourceContainer::HotReloadEvent ev)
 	{
 		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
 		if (entry != m_ResourceLoaders.end())
 		{
 			// Run the function
 			ActiveResourceLoader& loader = entry->second;
-			return loader.validatePrereqReload(resource.get(), prereq_that_wants_to_reload.get(), loader.userData);
+			return loader.validatePrereqReload(resource.get(), prereq_that_wants_to_reload.get(), ev, loader.userData);
 		}
 		else
 		{
