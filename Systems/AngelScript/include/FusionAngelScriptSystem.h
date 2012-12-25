@@ -208,6 +208,8 @@ namespace FusionEngine
 		std::unordered_map<std::string, std::function<void (ASScript*, int)>> m_ScriptMethodExecutors;
 		std::array<std::string, EventHandlerMethodTypeIds::NumHandlerTypes> m_EventHandlerMethodDeclarations;
 
+		boost::signals2::connection m_CheckForChangesConnection;
+
 		void insertScriptToBuild(std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>>& scriptsToBuild, const std::string& filename, std::string& script, bool check_dependencies);
 
 		//! Instantiates the object that implements the script-type 'ScriptComponent' in the module loaded by the given component

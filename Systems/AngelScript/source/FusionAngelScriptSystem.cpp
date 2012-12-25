@@ -507,7 +507,7 @@ namespace FusionEngine
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
-		ResourceManager::getSingleton().AddResourceLoader(ResourceLoader("ScriptModule", &LoadScriptResource, &UnloadScriptResource, &ScriptResourceHasChanged));
+		ResourceManager::getSingleton().AddResourceLoader(ResourceLoader("ScriptModule", &LoadScriptResource, &UnloadScriptResource));
 	}
 
 	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, EntityInstantiator* obj)
@@ -552,6 +552,7 @@ namespace FusionEngine
 		m_Engine = m_ScriptManager->GetEnginePtr();
 
 		ResourceManager::getSingleton().SetResourceLoaderUserData("ScriptModule", this);
+		m_CheckForChangesConnection = ResourceManager::getSingleton().AddCheckForChangesListener(std::bind(&AngelScriptWorld::BuildScripts, this, false));
 		
 		BuildScripts(true);
 
@@ -563,6 +564,8 @@ namespace FusionEngine
 
 	AngelScriptWorld::~AngelScriptWorld()
 	{
+		m_CheckForChangesConnection.disconnect();
+
 		delete m_ASTaskB;
 		delete m_ASTask;
 	}
@@ -945,7 +948,7 @@ namespace FusionEngine
 			auto& scriptInfo = it->second.second;
 
 			// Find active scripts that use this module
-			//ResourceDataPtr resource; // The module resource for the last active script found will be left here
+			ResourceDataPtr resource;
 			for (auto sit = m_ActiveScripts.begin(), send = m_ActiveScripts.end(); sit != send; ++sit)
 			{
 				const auto& scriptComponent = (*sit);
@@ -955,17 +958,21 @@ namespace FusionEngine
 					rebuiltScript.component = scriptComponent;
 
 					// TODO: SerialiseEditable(rebuiltScript.serialisedData);
-					scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData);
-					scriptComponent->SerialiseContinuous(*rebuiltScript.continiousData);
+					scriptComponent->SerialiseEditable(*rebuiltScript.occasionalData);
+					//scriptComponent->SerialiseOccasional(*rebuiltScript.occasionalData);
+					//scriptComponent->SerialiseContinuous(*rebuiltScript.continiousData);
 
 					if (rebuiltScript.occasionalData->GetNumberOfBitsUsed() == 0)
 						rebuiltScript.occasionalData.reset();
-					if (rebuiltScript.continiousData->GetNumberOfBitsUsed() == 0)
-						rebuiltScript.continiousData.reset();
+					//if (rebuiltScript.occasionalData->GetNumberOfBitsUsed() == 0)
+					//	rebuiltScript.occasionalData.reset();
+					//if (rebuiltScript.continiousData->GetNumberOfBitsUsed() == 0)
+					//	rebuiltScript.continiousData.reset();
 
 					scriptComponent->SetScriptObject(nullptr, scriptInfo.Properties);
-					//scriptComponent->m_Module.Release();
-					//resource = scriptComponent->m_Module.GetTarget();
+
+					if (!resource)
+						resource = scriptComponent->m_Module.GetTarget();
 
 					rebuiltScripts.push_back(rebuiltScript);
 				}
@@ -975,9 +982,9 @@ namespace FusionEngine
 
 			auto module = m_ScriptManager->GetModule(fileName.c_str(), asGM_ALWAYS_CREATE);
 
-			//// Hackiddy hack (switch the resource data)
-			//if (resource)
-			//	resource->SetDataPtr(module->GetASModule());
+			// Switch the resource data
+			if (resource)
+				resource->SetDataPtr(module->GetASModule());
 
 			module->AddCode(fileName, script);
 
@@ -1012,9 +1019,8 @@ namespace FusionEngine
 		for (auto it = rebuiltScripts.begin(), end = rebuiltScripts.end(); it != end; ++it)
 		{
 			const auto& rebuiltScript = *it;
-			//rebuiltScript.component->m_ModuleLoadedConnection =
-			//	ResourceManager::getSingleton().GetResource("ScriptModule", rebuiltScript.component->GetScriptPath(),
-			//	std::bind(&ASScript::ModuleLoaded, rebuiltScript.component.get(), std::placeholders::_1));
+
+			FSN_ASSERT(rebuiltScript.component->m_Module.IsLoaded());
 
 			rebuiltScript.component->m_EntityWrapperTypeId =
 				rebuiltScript.component->m_Module->GetTypeIdByDecl("EntityWrapper@");
@@ -1023,15 +1029,17 @@ namespace FusionEngine
 			if (rebuiltScript.component->m_EntityWrapperTypeId < 0)
 			{
 				SendToConsole("Failed to rebuild scripts");
-				break;
+				continue;
 			}
 
 			if (instantiateScript(rebuiltScript.component))
 			{
 				if (rebuiltScript.occasionalData)
-					rebuiltScript.component->DeserialiseOccasional(*rebuiltScript.occasionalData);
-				if (rebuiltScript.continiousData)
-					rebuiltScript.component->DeserialiseContinuous(*rebuiltScript.continiousData);
+					rebuiltScript.component->DeserialiseEditable(*rebuiltScript.occasionalData);
+				//if (rebuiltScript.occasionalData)
+				//	rebuiltScript.component->DeserialiseOccasional(*rebuiltScript.occasionalData);
+				//if (rebuiltScript.continiousData)
+				//	rebuiltScript.component->DeserialiseContinuous(*rebuiltScript.continiousData);
 			}
 		}
 
@@ -1046,7 +1054,7 @@ namespace FusionEngine
 	{
 		try
 		{
-			auto scriptWorld = boost::any_cast<AngelScriptWorld>(&user_data);
+			auto scriptWorld = boost::any_cast<AngelScriptWorld*>(user_data);
 
 			if (scriptWorld)
 				return scriptWorld->ScriptHasChanged(resource->GetPath());
@@ -1141,7 +1149,8 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			using namespace std::placeholders;
-			scriptComponent->m_ModuleResourceConnection = ResourceManager::getSingleton().GetResource("ScriptModule", scriptComponent->GetScriptPath(), std::bind(&AngelScriptWorld::ModuleLoaded, this, scriptComponent.get(), _1));
+			scriptComponent->m_ModuleResourceConnection = ResourceManager::getSingleton().GetResource("ScriptModule", scriptComponent->GetScriptPath(),
+				std::bind(&ASScript::ModuleLoaded, scriptComponent.get(), _1));
 
 			FSN_ASSERT(!m_Updating);
 			if (scriptComponent->m_ScriptObject && scriptComponent->InitialiseEntityWrappers())
@@ -1306,13 +1315,14 @@ namespace FusionEngine
 
 		if (!script->m_ScriptObject)
 		{
+			// Find the component type defined by this module
 			asIObjectType* objectType = nullptr;
 			for (unsigned int i = 0; i < script->m_Module->GetObjectTypeCount(); ++i)
 			{
 				objectType = script->m_Module->GetObjectTypeByIndex(i);
 				std::string name = objectType->GetName();
 				// This is a shitty way to do this
-				// TODO: multimap with module name index
+				// TODO: bimap with module name index
 				auto scriptInfoForThis = m_ScriptInfo.find(name);
 				if (scriptInfoForThis != m_ScriptInfo.end() && scriptInfoForThis->second.Module == script->m_Module->GetName())
 					break;

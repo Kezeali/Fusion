@@ -116,12 +116,19 @@ namespace FusionEngine
 		m_HotReloadingAllowed = allowed;
 	}
 
+	boost::signals2::connection ResourceManager::AddCheckForChangesListener(const std::function<void (void)>& listener)
+	{
+		return m_SigCheckingForChanges.connect(listener);
+	}
+
 	void ResourceManager::CheckForChanges()
 	{
 		if (m_HotReloadingAllowed)
 		{
 			m_ForceCheckForChanges = false;
 			m_CheckForChangesEvent.set();
+
+			m_SigCheckingForChanges();
 		}
 	}
 

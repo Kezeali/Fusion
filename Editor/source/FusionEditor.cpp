@@ -1734,10 +1734,12 @@ namespace FusionEngine
 				if (m_SelectionRectangle.right < m_SelectionRectangle.left)
 					std::swap(m_SelectionRectangle.left, m_SelectionRectangle.right);
 
-				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)))
+				const int spawnAreaInterval = 100;
+
+				if (m_SelectionRectangle.contains(CL_Vec2f(pos.x, pos.y)) && m_SelectionRectangle.get_width() > spawnAreaInterval && m_SelectionRectangle.get_height() > spawnAreaInterval)
 				{
-					for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += 100)
-						for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += 100)
+					for (pos.y = m_SelectionRectangle.top; pos.y < m_SelectionRectangle.bottom; pos.y += spawnAreaInterval)
+						for (pos.x = m_SelectionRectangle.left; pos.x < m_SelectionRectangle.right; pos.x += spawnAreaInterval)
 						{
 							Vector2 simPos(ToSimUnits(pos.x), ToSimUnits(pos.y));
 

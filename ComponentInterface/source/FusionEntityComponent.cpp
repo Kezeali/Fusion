@@ -146,8 +146,8 @@ namespace FusionEngine
 
 	void EntityComponent::DeserialiseEditable(RakNet::BitStream& stream)
 	{
-		if (!m_PropertiesMap)
-			m_PropertiesMap = ComponentTypeInfoCache::getSingleton().GetComponentTypeInfo(this);
+		// Remember: always update properties map because it may have changed
+		m_PropertiesMap = ComponentTypeInfoCache::getSingleton().GetComponentTypeInfo(this);
 
 		size_t numProps = 0;
 		stream.Read(numProps);

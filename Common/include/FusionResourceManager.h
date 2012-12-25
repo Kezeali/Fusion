@@ -93,6 +93,8 @@ namespace FusionEngine
 		//! Returns true if hot-reloading is allowed
 		bool IsHotReloadingAllowed() const { return m_HotReloadingAllowed; }
 
+		boost::signals2::connection AddCheckForChangesListener(const std::function<void (void)>& listener);
+
 		//! Tell the loader thread to resources that support hot-reloading for changes, and reload them if any are detected
 		void CheckForChanges();
 
@@ -302,6 +304,8 @@ namespace FusionEngine
 		bool m_Clearing;
 		bool m_FinishLoadingBeforeStopping;
 		bool m_ForceCheckForChanges;
+
+		boost::signals2::signal<void (void)> m_SigCheckingForChanges;
 
 		CL_GraphicContext m_GC;
 
