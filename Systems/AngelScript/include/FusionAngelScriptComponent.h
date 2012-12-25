@@ -82,9 +82,6 @@ namespace FusionEngine
 	//! Sprite resource unloader callback
 	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
-	//! Sprite resource unloader callback
-	bool ScriptResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-
 	class CoroutineSemaphore
 	{
 		virtual ~CoroutineSemaphore();

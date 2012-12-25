@@ -129,6 +129,64 @@ namespace FusionEngine
 			AddLogEntry("CLSprite: Seems like a sprite resource failed to load. Image: " + m_ImagePath + " Animation: " + m_AnimationPath);
 	}
 
+	bool CLSprite::ImageHotReloadEvents(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev)
+	{
+		switch (ev)
+		{
+		case ResourceContainer::HotReloadEvent::Validate:
+			//m_Sprite = CL_Sprite(); // This seems to cause a crash
+			m_SpriteDef.reset();
+			m_ImageResource.Release();
+			break;
+		case ResourceContainer::HotReloadEvent::PostReload:
+			ImageLoaded(resource);
+			break;
+		}
+
+		return true;
+	}
+
+	bool CLSprite::AnimationHotReloadEvents(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev)
+	{
+		switch (ev)
+		{
+		case ResourceContainer::HotReloadEvent::Validate:
+			m_AnimationResource.Release();
+			if (!m_Sprite.is_null())
+				redefineSprite();
+			break;
+		case ResourceContainer::HotReloadEvent::PostReload:
+			AnimationLoaded(resource);
+			break;
+		}
+
+		return true;
+	}
+
+	void CLSprite::ImageLoaded(ResourceDataPtr data)
+	{
+		using namespace std::placeholders;
+
+		m_ImageResource.SetTarget(data);
+		// Allow hot-reload
+		m_ImageLoadConnection = data->SigHotReloadEvents.connect(std::bind(&CLSprite::ImageHotReloadEvents, this, _1, _2));
+
+		m_RecreateSprite = true;
+		//redefineSprite();
+	}
+
+	void CLSprite::AnimationLoaded(ResourceDataPtr data)
+	{
+		using namespace std::placeholders;
+
+		m_AnimationResource.SetTarget(data);
+		// Allow hot-reload
+		m_AnimationLoadConnection = data->SigHotReloadEvents.connect(std::bind(&CLSprite::AnimationHotReloadEvents, this, _1, _2));
+
+		m_RecreateSprite = true;
+		//redefineSprite();
+	}
+
 	void CLSprite::DefineSpriteIfNecessary()
 	{
 		using namespace std::placeholders;
@@ -136,15 +194,8 @@ namespace FusionEngine
 		{
 			if (!m_ImagePath.empty())
 			{
-				auto onImageLoaded = [this](ResourceDataPtr data)
-				{
-					m_ImageResource.SetTarget(data);
-					m_RecreateSprite = true;
-					//redefineSprite();
-				};
-
 				m_ImageLoadConnection.disconnect();
-				m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, onImageLoaded);
+				m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, std::bind(&CLSprite::ImageLoaded, this, _1));
 			}
 			else
 			{
@@ -159,15 +210,8 @@ namespace FusionEngine
 		{
 			if (!m_AnimationPath.empty())
 			{
-				auto onAnimationLoaded = [this](ResourceDataPtr data)
-				{
-					m_AnimationResource.SetTarget(data);
-					m_RecreateSprite = true;
-					//redefineSprite();
-				};
-
 				m_AnimationLoadConnection.disconnect();
-				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, onAnimationLoaded);
+				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, std::bind(&CLSprite::ImageLoaded, this, _1));
 			}
 			else
 			{

@@ -506,6 +506,17 @@ namespace FusionEngine
 				}
 				break;
 			case ResourceContainer::HotReloadEvent::PostReload:
+				if (!resource->IsLoaded() && resource->RequiresGC())
+				{
+					auto entry = m_ResourceLoaders.find(resource->GetType());
+					if (entry != m_ResourceLoaders.end())
+					{
+						FSN_PROFILE("GCLoad " + resource->GetType());
+						ActiveResourceLoader& loader = entry->second;
+						loader.gcload(resource.get(), m_GC, loader.userData);
+					}
+				}
+
 				resource->SigHotReloadEvents(resource.get(), ResourceContainer::HotReloadEvent::PostReload);
 				break;
 			}

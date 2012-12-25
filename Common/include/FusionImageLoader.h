@@ -38,6 +38,12 @@
 
 namespace FusionEngine
 {
+	struct FileMetadata 
+	{
+		PHYSFS_sint64 modTime;
+		size_t length;
+		std::uint32_t checksum;
+	};
 
 	//! Image (pixel-buffer) resource loader callback
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
@@ -50,6 +56,8 @@ namespace FusionEngine
 	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Loads a texture resource into GFX RAM
 	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data);
+	//! Returns true when a texture has changed
+	bool ResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 
 	//! Sprite resource loader callback
 	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);

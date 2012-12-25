@@ -531,7 +531,7 @@ namespace FusionEngine
 	void EngineManager::AddResourceLoaders()
 	{
 		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource));
-		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC, &ResourceHasChanged));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
 

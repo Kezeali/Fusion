@@ -136,6 +136,12 @@ namespace FusionEngine
 
 		void DefineSpriteIfNecessary();
 
+		bool ImageHotReloadEvents(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev);
+		bool AnimationHotReloadEvents(ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev);
+
+		void ImageLoaded(ResourceDataPtr data);
+		void AnimationLoaded(ResourceDataPtr data);
+
 		bool RequiresSpriteDefinition() const { return m_RecreateSprite && !m_SpriteDef; }
 
 		void Update(unsigned int tick, const float elapsed, const float alpha);

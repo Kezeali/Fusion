@@ -34,8 +34,23 @@
 #include "FusionExceptionFactory.h"
 #include "FusionSpriteDefinition.h"
 
+#include <boost/crc.hpp>
+
 namespace FusionEngine
 {
+
+	std::uint32_t checksumCL(CL_IODevice& device)
+	{
+		boost::crc_32_type crc;
+		std::array<char, 2048> buffer;
+		int count = 0; 
+		while ((count = device.read(buffer.data(), buffer.size())) > 0)
+		{
+			crc.process_bytes(buffer.data(), count);
+		}
+
+		return crc.checksum();
+	}
 
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
 	{
@@ -44,17 +59,26 @@ namespace FusionEngine
 			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 
+		CL_IODevice file = vdir.open_file_read(resource->GetPath());
+
 		CL_String ext = CL_PathHelp::get_extension(resource->GetPath());
 		CL_PixelBuffer sp;
 		try
 		{
-			sp = CL_ImageProviderFactory::load(resource->GetPath(), vdir, ext);
+			sp = CL_ImageProviderFactory::load(file, ext);
 		}
 		catch (CL_Exception& ex)
 		{
 			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
+
+		FileMetadata metadata;
+		metadata.modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+		metadata.length = file.get_size();
+		file.seek(0);
+		metadata.checksum = checksumCL(file);
+		resource->SetMetadata(metadata);
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
 		resource->SetDataPtr(data);
@@ -111,6 +135,41 @@ namespace FusionEngine
 			//resource->setRequiresGC(false);
 			resource->setLoaded(true);
 		}
+	}
+
+	bool ResourceModTimeHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		FileMetadata metadata;
+		if (resource->TryGetMetadata(metadata))
+		{
+			const auto currentModTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+
+			return currentModTime != metadata.modTime;
+		}
+		return false;
+	}
+
+	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		FileMetadata metadata;
+		if (resource->TryGetMetadata(metadata))
+		{
+			CL_IODevice device = vdir.open_file_read(resource->GetPath());
+
+			// Compare length
+			if (device.get_size() != metadata.length)
+				return true;
+
+			// Compare sum
+			const auto newChecksum = checksumCL(device);
+
+			return newChecksum != metadata.checksum;
+		}
+	}
+
+	bool ResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	{
+		return ResourceModTimeHasChanged(resource, vdir, user_data) || ResourceContentHasChanged(resource, vdir, user_data);
 	}
 
 	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)

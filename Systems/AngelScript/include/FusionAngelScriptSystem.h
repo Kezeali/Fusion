@@ -108,10 +108,6 @@ namespace FusionEngine
 
 		bool ScriptHasChanged(const std::string& path);
 
-		bool ScriptHotReloadEvent(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev);
-
-		void ModuleLoaded(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource);
-
 		//! Preprocesses the given script and generates code for an EntityWrapper type to be used in it
 		std::string GenerateBaseCodeForScript(std::string& filename);
 

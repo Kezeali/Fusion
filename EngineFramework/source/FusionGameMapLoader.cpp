@@ -253,13 +253,13 @@ namespace FusionEngine
 				IO::PhysFSStream device(filename, IO::Read);
 
 				boost::crc_32_type crc;
-				int count = 0;
-				static const size_t bufferSize = 2048;
+				std::array<char, 2048> buffer;
 				while (!device.eof())
 				{
-					char buffer[2048];
-					device.read(buffer, 2048);
-					crc.process_bytes(buffer, 2048);
+					device.read(buffer.data(), buffer.size());
+					auto count = device.gcount();
+					if (count > 0)
+						crc.process_bytes(buffer.data(), count);
 				}
 
 				if (crc.checksum() == expectedChecksum)

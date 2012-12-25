@@ -1050,22 +1050,6 @@ namespace FusionEngine
 		SendToConsole("Finished Building Scripts");
 	}
 
-	bool ScriptResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
-	{
-		try
-		{
-			auto scriptWorld = boost::any_cast<AngelScriptWorld*>(user_data);
-
-			if (scriptWorld)
-				return scriptWorld->ScriptHasChanged(resource->GetPath());
-		}
-		catch (boost::bad_any_cast&)
-		{
-		}
-
-		return false;
-	}
-
 	bool AngelScriptWorld::ScriptHasChanged(const std::string& path)
 	{
 		auto sum = checksumString(OpenString_PhysFS(path));
@@ -1079,33 +1063,6 @@ namespace FusionEngine
 		}
 		else // No existing entry
 			return true;
-	}
-
-	bool AngelScriptWorld::ScriptHotReloadEvent(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource, ResourceContainer::HotReloadEvent ev)
-	{
-		if (ev == ResourceContainer::HotReloadEvent::Validate)
-		{
-			script->m_Module.Release();
-		}
-		else if (ev == ResourceContainer::HotReloadEvent::PreReload)
-		{
-			// Building here so that when the resource manager "reloads" the script resources
-			//  the rebuilt modules are ready
-			BuildScripts();
-		}
-		else if (ev == ResourceContainer::HotReloadEvent::PostReload)
-		{
-			script->ModuleLoaded(resource);
-		}
-		return true; // Allow reloading
-	}
-
-	void AngelScriptWorld::ModuleLoaded(boost::intrusive_ptr<ASScript> script, ResourceDataPtr resource)
-	{
-		script->ModuleLoaded(resource);
-
-		using namespace std::placeholders;
-		script->m_ModuleResourceConnection = resource->SigHotReloadEvents.connect(std::bind(&AngelScriptWorld::ScriptHotReloadEvent, this, script.get(), _1, _2));
 	}
 
 	std::vector<std::string> AngelScriptWorld::GetTypes() const
