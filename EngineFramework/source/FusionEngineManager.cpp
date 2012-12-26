@@ -74,6 +74,7 @@
 #include "FusionAudioLoader.h"
 #include "FusionImageLoader.h"
 #include "FusionPolygonLoader.h"
+#include "FusionResourceLoaderUtils.h"
 
 #include <angelscript.h>
 #include <boost/lexical_cast.hpp>
@@ -530,19 +531,20 @@ namespace FusionEngine
 
 	void EngineManager::AddResourceLoaders()
 	{
-		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource));
-		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC, &ResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC, &FileMetadataResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource, &FileMetadataResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO", &LoadAudio, &UnloadAudio));
-		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio)); // Note that this intentionally uses the same unload method
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, &FileMetadataResourceHasChanged));
+		// Note that this intentionally uses the same unload method
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, &FileMetadataResourceHasChanged));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("SPRITE", &LoadLegacySpriteResource, &UnloadLegacySpriteResource));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource, &FileMetadataResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource, &FileMetadataResourceHasChanged));
 	}
 
 	const CL_DisplayWindow& EngineManager::GetDisplayWindow() const

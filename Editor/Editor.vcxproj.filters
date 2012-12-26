@@ -66,6 +66,9 @@
     <ClInclude Include="include\FusionArchetypeResourceEditor.h">
       <Filter>ResourceEditors</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionResourceEditorFactory.h">
+      <Filter>ResourceEditors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

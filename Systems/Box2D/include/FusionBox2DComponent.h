@@ -457,13 +457,15 @@ namespace FusionEngine
 
 		void Update();
 
+		bool HotReloadEvent(ResourceDataPtr resReloading, ResourceContainer::HotReloadEvent ev);
+
 	private:
 		b2Shape* GetShape() { return m_PolygonResource.IsLoaded() ? m_PolygonResource.Get() : &m_PolyShape; }
 
 		// EntityComponent
 		std::string GetType() const { return "b2Polygon"; }
 
-		// Box2DFixture overides
+		// Box2DFixture overrides
 		virtual void SerialiseOccasional(RakNet::BitStream& stream);
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream);
 

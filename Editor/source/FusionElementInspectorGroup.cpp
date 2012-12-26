@@ -372,6 +372,7 @@ namespace FusionEngine { namespace Inspectors
 				inspector->SetCircleToolExecutor(m_CircleToolExecutor);
 				inspector->SetRectangleToolExecutor(m_RectangleToolExecutor);
 				inspector->SetPolygonToolExecutor(m_PolygonToolExecutor);
+				inspector->SetResourceEditorFactory(m_ResourceEditorFactory);
 
 				//inspector->InitUI();
 

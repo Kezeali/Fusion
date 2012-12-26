@@ -64,7 +64,8 @@ namespace FusionEngine
 		bool m_DoneEditing;
 
 		PolygonToolExecutor_t m_PolygonEditorCb;
-		ResourceDataPtr m_Resource;
+
+		std::string m_Path;
 		std::unique_ptr<b2PolygonShape> m_EditedShape;
 
 		Vector2 m_Offset;

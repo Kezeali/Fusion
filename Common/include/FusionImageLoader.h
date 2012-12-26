@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEngine_ImageLoader
-#define H_FusionEngine_ImageLoader
+#ifndef H_FusionImageLoader
+#define H_FusionImageLoader
 
 #if _MSC_VER > 1000
 #pragma once
@@ -38,13 +38,6 @@
 
 namespace FusionEngine
 {
-	struct FileMetadata 
-	{
-		PHYSFS_sint64 modTime;
-		size_t length;
-		std::uint32_t checksum;
-	};
-
 	//! Image (pixel-buffer) resource loader callback
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
 	//! Image resource unloader callback

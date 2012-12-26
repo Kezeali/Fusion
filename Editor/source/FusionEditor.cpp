@@ -1153,7 +1153,7 @@ namespace FusionEngine
 		return m_ResourceEditors.find(m_ResourceDatabase->GetResourceType(filename)) != m_ResourceEditors.end();
 	}
 	
-	void Editor::StartResourceEditor(const std::string& filename)
+	std::shared_ptr<ResourceEditor> Editor::StartResourceEditor(const std::string& filename, const Vector2& offset)
 	{
 		auto type = m_ResourceDatabase->GetResourceType(filename);
 		if (!type.empty())
@@ -1165,21 +1165,31 @@ namespace FusionEngine
 				if (path.has_parent_path())
 					PHYSFS_mkdir(path.string().c_str());
 
-				Vector2 offset(m_EditCam->GetPosition().x, m_EditCam->GetPosition().y);				
-				if (GetNumSelected() > 0)
-				{
-					auto c = GetBBOfSelected().get_center();
-					offset = Vector2(ToRenderUnits(c.x), ToRenderUnits(c.y));
-				}
-
 				auto editor = editorEntry->second;
 				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
+
+				return editor;
 			}
 			else
-				SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
+				SendToConsole("There is no resource editor for " + type + ".");
 		}
 		else
 			SendToConsole(filename + " is not present in the resource-db. Load it to assign a type before attempting to edit.");
+
+		return std::shared_ptr<ResourceEditor>();
+	}
+
+	std::shared_ptr<ResourceEditor> Editor::StartResourceEditor(const std::string& filename)
+	{
+		// Default to cam center
+		Vector2 offset(m_EditCam->GetPosition().x, m_EditCam->GetPosition().y);
+		// Set offset to center of selection
+		if (GetNumSelected() > 0)
+		{
+			auto c = GetBBOfSelected().get_center();
+			offset = Vector2(ToRenderUnits(c.x), ToRenderUnits(c.y));
+		}
+		return StartResourceEditor(filename, offset);
 	}
 
 	void Editor::GoToEntity(const EntityPtr& entity)
@@ -1556,34 +1566,34 @@ namespace FusionEngine
 		{
 			switch (ev.id)
 			{
-			case CL_KEY_L:
-				{
-					std::vector<Vector2> verts;
-					m_PolygonTool->Start(verts, [](const std::vector<Vector2>& v) {}, EditorPolygonTool::Line);
-					m_Tool = Tool::Polygon;
-				}
-				break;
-			case CL_KEY_K:
-				{
-					Vector2 center;
-					m_CircleTool->Start(center, 0.0f, [](const Vector2& c, float r) {
-						SendToConsole("Circle: " + boost::lexical_cast<std::string>(c.x) + "," + boost::lexical_cast<std::string>(c.x) + ", " + boost::lexical_cast<std::string>(r));
-					});
-					m_Tool = Tool::Elipse;
-				}
-				break;
-			case CL_KEY_M:
-				{
-					Vector2 hsize(1.f, 1.f);
-					Vector2 center;
-					m_RectangleTool->Start(hsize, center, 0.0f, [](const Vector2& hs, const Vector2& c, float r) {
-						SendToConsole("Rect: " + boost::lexical_cast<std::string>(c.x) + "," + boost::lexical_cast<std::string>(c.x) +
-							" size:" + boost::lexical_cast<std::string>(hs.x) + "," + boost::lexical_cast<std::string>(hs.x) +
-							" r:" + boost::lexical_cast<std::string>(r));
-					});
-					m_Tool = Tool::Rectangle;
-				}
-				break;
+			//case CL_KEY_L:
+			//	{
+			//		std::vector<Vector2> verts;
+			//		m_PolygonTool->Start(verts, [](const std::vector<Vector2>& v) {}, EditorPolygonTool::Line);
+			//		m_Tool = Tool::Polygon;
+			//	}
+			//	break;
+			//case CL_KEY_K:
+			//	{
+			//		Vector2 center;
+			//		m_CircleTool->Start(center, 0.0f, [](const Vector2& c, float r) {
+			//			SendToConsole("Circle: " + boost::lexical_cast<std::string>(c.x) + "," + boost::lexical_cast<std::string>(c.x) + ", " + boost::lexical_cast<std::string>(r));
+			//		});
+			//		m_Tool = Tool::Elipse;
+			//	}
+			//	break;
+			//case CL_KEY_M:
+			//	{
+			//		Vector2 hsize(1.f, 1.f);
+			//		Vector2 center;
+			//		m_RectangleTool->Start(hsize, center, 0.0f, [](const Vector2& hs, const Vector2& c, float r) {
+			//			SendToConsole("Rect: " + boost::lexical_cast<std::string>(c.x) + "," + boost::lexical_cast<std::string>(c.x) +
+			//				" size:" + boost::lexical_cast<std::string>(hs.x) + "," + boost::lexical_cast<std::string>(hs.x) +
+			//				" r:" + boost::lexical_cast<std::string>(r));
+			//		});
+			//		m_Tool = Tool::Rectangle;
+			//	}
+			//	break;
 			case CL_KEY_RETURN:
 				if (m_Tool != Tool::None)
 				{
@@ -2525,6 +2535,7 @@ namespace FusionEngine
 			this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Freeform);
 			this->m_Tool = Editor::Tool::Polygon;
 		});
+		generator.inspector_group->SetResourceEditorFactory(this);
 		
 		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
 		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)->ComponentPtr
@@ -2595,6 +2606,11 @@ namespace FusionEngine
 		doc->RemoveReference();
 	}
 
+	void Editor_StartResourceEditor(const std::string& path, Editor* obj)
+	{
+		obj->StartResourceEditor(path);
+	}
+
 	ViewportPtr Editor_GetViewport(const std::string& name, Editor* obj)
 	{
 		return obj->GetViewport();
@@ -2607,7 +2623,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Editor", "Entity CreateEntity(const string &in, const Vector &in, float, bool, bool)", asMETHOD(Editor, CreateEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "void createArchetypeInstance(const string &in, const Vector &in, float)", asMETHOD(Editor, CreateArchetypeInstance), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "bool isResourceEditable(const string &in) const", asMETHOD(Editor, IsResourceEditable), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Editor", "void startResourceEditor(const string &in)", asMETHOD(Editor, StartResourceEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor", "void startResourceEditor(const string &in)", asFUNCTION(Editor_StartResourceEditor), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "bool goToEntity(const Entity &in)", asMETHOD(Editor, GoToEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor", "Viewport getViewport(const string &in)", asFUNCTION(Editor_GetViewport), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}

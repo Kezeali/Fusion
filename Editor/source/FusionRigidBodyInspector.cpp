@@ -80,39 +80,39 @@ namespace FusionEngine { namespace Inspectors
 
 	void RigidBodyInspector::InitUI()
 	{
-		AddToggleInput("Interpolate",
+		AddProperty("Interpolate", AddToggleInput("Interpolate",
 			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Interpolate.Set(value); }),
 			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Interpolate.Get(); })
-			);
+			));
 
-		AddTextInput("LinearDamping",
+		AddProperty("LinearDamping", AddTextInput("LinearDamping",
 			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->LinearDamping.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->LinearDamping.Get(); })
-			);
-		AddTextInput("AngularDamping",
+			));
+		AddProperty("AngularDamping", AddTextInput("AngularDamping",
 			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->AngularDamping.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->AngularDamping.Get(); })
-			);
+			));
 
-		AddTextInput("GravityScale",
+		AddProperty("GravityScale", AddTextInput("GravityScale",
 			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->GravityScale.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->GravityScale.Get(); })
-			);
+			));
 		
-		AddToggleInput("SleepingAllowed",
+		AddProperty("SleepingAllowed", AddToggleInput("SleepingAllowed",
 			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->SleepingAllowed.Set(value); }),
 			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->SleepingAllowed.Get(); })
-			);
+			));
 		
-		AddToggleInput("Bullet",
+		AddProperty("Bullet", AddToggleInput("Bullet",
 			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Bullet.Set(value); }),
 			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Bullet.Get(); })
-			);
+			));
 		
-		AddToggleInput("FixedRotation",
+		AddProperty("FixedRotation", AddToggleInput("FixedRotation",
 			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->FixedRotation.Set(value); }),
 			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->FixedRotation.Get(); })
-			);
+			));
 	}
 
 } }

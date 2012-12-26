@@ -173,6 +173,9 @@
     <ClCompile Include="source\FusionCommonAppTypes.cpp">
       <Filter>AngelScript</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionResourceLoaderUtils.cpp">
+      <Filter>Resources\Loaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptConsoleCallback.h">
@@ -347,6 +350,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionCommonAppTypes.h">
       <Filter>AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionResourceLoaderUtils.h">
+      <Filter>Resources\Loaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

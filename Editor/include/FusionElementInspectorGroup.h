@@ -50,6 +50,7 @@
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"
+#include "FusionResourceEditorFactory.h"
 
 namespace FusionEngine { namespace Inspectors
 {
@@ -82,6 +83,8 @@ namespace FusionEngine { namespace Inspectors
 		void SetCircleToolExecutor(const CircleToolExecutor_t& executor) { m_CircleToolExecutor = executor; }
 		void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) { m_RectangleToolExecutor = executor; }
 		void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) { m_PolygonToolExecutor = executor; }
+
+		void SetResourceEditorFactory(ResourceEditorFactory* factory) { m_ResourceEditorFactory = factory; }
 
 		bool AddInspector(const ComponentPtr& component, const std::string& inspector_type, bool removable);
 
@@ -117,6 +120,8 @@ namespace FusionEngine { namespace Inspectors
 		CircleToolExecutor_t m_CircleToolExecutor;
 		RectangleToolExecutor_t m_RectangleToolExecutor;
 		PolygonToolExecutor_t m_PolygonToolExecutor;
+
+		ResourceEditorFactory* m_ResourceEditorFactory;
 
 		unsigned short m_UpdatesSkipped;
 

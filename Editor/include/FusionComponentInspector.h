@@ -43,6 +43,7 @@
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"
+#include "FusionResourceEditorFactory.h"
 
 namespace FusionEngine { namespace Inspectors
 {
@@ -65,6 +66,7 @@ namespace FusionEngine { namespace Inspectors
 		virtual void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) {}
 		virtual void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) {}
 
+		virtual void SetResourceEditorFactory(ResourceEditorFactory* factory) {}
 	};
 
 } }

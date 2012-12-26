@@ -30,8 +30,10 @@
 #include "FusionPolygonLoader.h"
 
 #include "FusionCLStream.h"
+#include "FusionResourceLoaderUtils.h"
 
 #include <Box2D/Box2D.h>
+#include "FusionPhysFSIOStream.h"
 
 namespace FusionEngine
 {
@@ -49,17 +51,16 @@ namespace FusionEngine
 		return out;
 	}
 
-	std::unique_ptr<b2PolygonShape> PolygonResource::Load(CL_IODevice dev)
+	std::unique_ptr<b2PolygonShape> PolygonResource::Load(std::istream& stream)
 	{
 		try
 		{
-			IO::CLStream stream(dev);
 			YAML::Parser p(stream);
 			YAML::Node doc;
 			if (p.GetNextDocument(doc))
 			{
 				if (doc.begin() == doc.end())
-					return std::unique_ptr<b2PolygonShape>();
+					return std::unique_ptr<b2PolygonShape>(new b2PolygonShape());
 
 				//const auto& vertsNode = doc["verts"];
 				const auto& vertsNode = doc;
@@ -91,7 +92,8 @@ namespace FusionEngine
 			}
 			else
 			{
-				FSN_EXCEPT(FileTypeException, "The given polygon file contains no entries");
+				//FSN_EXCEPT(FileTypeException, "The given polygon file contains no entries");
+				return std::unique_ptr<b2PolygonShape>(new b2PolygonShape());
 			}
 		}
 		catch (YAML::Exception& ex)
@@ -100,11 +102,10 @@ namespace FusionEngine
 		}
 	}
 
-	void PolygonResource::Save(CL_IODevice dev, const b2PolygonShape& shape)
+	void PolygonResource::Save(std::ostream& stream, const b2PolygonShape& shape)
 	{
 		try
 		{
-			IO::CLStream stream(dev);
 			YAML::Emitter emitter;
 			
 			emitter << YAML::BeginSeq;
@@ -113,11 +114,28 @@ namespace FusionEngine
 				emitter << shape.GetVertex(i);
 			}
 			emitter << YAML::EndSeq;
-			dev.write(emitter.c_str(), emitter.size());
+			stream.write(emitter.c_str(), emitter.size());
 		}
 		catch (YAML::Exception& ex)
 		{
-			FSN_EXCEPT(FileTypeException, std::string("Invalid polygon file: ") + ex.what());
+			FSN_EXCEPT(FileTypeException, std::string("Failed to write polygon file: ") + ex.what());
+		}
+	}
+
+	void PolygonResource::CreateEmpty(std::ostream& stream)
+	{
+		try
+		{
+			YAML::Emitter emitter;
+
+			emitter << YAML::BeginSeq;
+			emitter << YAML::EndSeq;
+
+			stream.write(emitter.c_str(), emitter.size());
+		}
+		catch (YAML::Exception& ex)
+		{
+			FSN_EXCEPT(FileTypeException, std::string("Failed to write polygon file: ") + ex.what());
 		}
 	}
 
@@ -130,8 +148,11 @@ namespace FusionEngine
 		std::unique_ptr<b2PolygonShape> data;
 		try
 		{
-			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
-			data = PolygonResource::Load(dev);
+			//auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
+			IO::PhysFSStream stream(resource->GetPath(), IO::Read);
+			data = PolygonResource::Load(stream);
+
+			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), stream));
 		}
 		catch (CL_Exception& ex)
 		{

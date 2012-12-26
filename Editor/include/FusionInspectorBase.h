@@ -41,6 +41,7 @@
 #include "FusionInspectorUtils.h"
 
 #include "FusionArchetypalEntityManager.h"
+#include "FusionResourceEditorFactory.h"
 
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
@@ -101,6 +102,8 @@ namespace FusionEngine { namespace Inspectors
 		typedef std::function<void (PropertyID)> FollowCallback_t;
 
 		typedef typename boost::intrusive_ptr<Rocket::Core::Element> InputElementPtr;
+
+		ResourceEditorFactory* m_ResourceEditors;
 
 		CircleToolExecutor_t m_CircleToolExecutor;
 		RectangleToolExecutor_t m_RectangleToolExecutor;
@@ -164,6 +167,7 @@ namespace FusionEngine { namespace Inspectors
 		void SetRectangleToolExecutor(const RectangleToolExecutor_t& executor) { m_RectangleToolExecutor = executor; }
 		void SetPolygonToolExecutor(const PolygonToolExecutor_t& executor) { m_PolygonToolExecutor = executor; }
 		
+		void SetResourceEditorFactory(ResourceEditorFactory* factory) { m_ResourceEditors = factory; }
 
 		//! 'Input' callback for the Edit Circle button
 		class EditCircleButtonFunctor
@@ -782,46 +786,33 @@ namespace FusionEngine { namespace Inspectors
 			const bool isCheckboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "checkbox";
 			const bool isTextboxElem = inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "text";
 			const bool isButton = ev.GetTargetElement()->GetTagName() == "button" || (inputElem && inputElem->GetAttribute("type", Rocket::Core::String()) == "submit");
-			if (ev == "enter" || ((isSelectElem || isCheckboxElem) && ev == "change") || (isButton && ev == "click"))
+			if (ev == "enter" || (isTextboxElem && ev == "blur") || ((isSelectElem || isCheckboxElem) && ev == "change") || (isButton && ev == "click"))
 			{
-				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
-				if (entry != m_Inputs.end())
+				if (!m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope)
 				{
-					auto& inputData = entry->second;
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+					auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
+					if (entry != m_Inputs.end())
 					{
-						boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
-
-						if (!m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope)
+						auto& inputData = entry->second;
+						for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 						{
-							// Enable prefab override
-							Entity* entity = it->p->GetParent();
-							FSN_ASSERT(entity);
-							if (entity->GetArchetypeAgent())
+							if (!m_ResettingUI_DontApplyChangesToArchetypeInstance_YouDope)
 							{
-								for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
-									entity->GetArchetypeAgent()->AutoOverride(*nameIt, true);
+								boost::apply_visitor(GetUIValueVisitor(*it), inputData.ui_element, inputData.callback);
+
+								// Enable prefab override
+								Entity* entity = it->p->GetParent();
+								FSN_ASSERT(entity);
+								if (entity->GetArchetypeAgent())
+								{
+									for (auto nameIt = entry->second.property_names.begin(); nameIt != entry->second.property_names.end(); ++nameIt)
+										entity->GetArchetypeAgent()->AutoOverride(*nameIt, true);
+								}
 							}
 						}
-					}
 
-					if (ev == "enter")
-						entry->first->Blur();
-				}
-			}
-			else if (isTextboxElem && ev == "blur")
-			{
-				// TODO: make it an settable option whether un-focusing an input resets or commits the changed value
-				//  (could default to committing once undo/redo for properties is implemented tho)
-				auto entry = m_Inputs.find(InputElementPtr(ev.GetTargetElement()));
-				if (entry != m_Inputs.end())
-				{
-					bool first = true;
-					auto& inputData = entry->second;
-					for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-					{
-						boost::apply_visitor(SetUIValueVisitor(first, *it), inputData.ui_element, inputData.get_callback);
-						first = false;
+						if (ev == "enter")
+							entry->first->Blur();
 					}
 				}
 			}

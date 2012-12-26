@@ -34,35 +34,43 @@ namespace FusionEngine { namespace Inspectors
 
 	void PolygonShapeInspector::InitUI()
 	{
-		AddTextInput("PolygonFile",
+		AddProperty("PolygonFile", AddTextInput("PolygonFile",
 			StringSetter_t([](std::string value, ComponentIPtr<IPolygonShape> component) { component->PolygonFile.Set(value); }),
 			StringGetter_t([](ComponentIPtr<IPolygonShape> component)->std::string { return component->PolygonFile.Get(); })
-			);
-		AddButtonInput("Edit polygon", "Edit",
+			));
+		/*AddProperty("Verts", */AddButtonInput("Edit polygon", "Edit",
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
-			auto verts = component->Verts.Get();
-			auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
-			for (auto it = verts.begin(), end = verts.end(); it != end; ++it)
-			{
-				*it += offset;
-				it->x = ToRenderUnits(it->x);
-				it->y = ToRenderUnits(it->y);
-			}
-			this->m_PolygonToolExecutor(verts, [component](const std::vector<Vector2>& verts)
+			if (!component->PolygonFile.Get().empty())
 			{
 				auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
-				auto localVerts = verts;
-				for (auto it = localVerts.begin(), end = localVerts.end(); it != end; ++it)
+				this->m_ResourceEditors->StartResourceEditor(component->PolygonFile.Get(), offset);
+			}
+			else
+			{
+				auto verts = component->Verts.Get();
+				auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
+				for (auto it = verts.begin(), end = verts.end(); it != end; ++it)
 				{
-					it->x = ToSimUnits(it->x);
-					it->y = ToSimUnits(it->y);
-					*it -= offset;
+					*it += offset;
+					it->x = ToRenderUnits(it->x);
+					it->y = ToRenderUnits(it->y);
 				}
-				component->Verts.Set(localVerts);
-			});
-		}));
-		AddButtonInput("Edit Polygon as Rectangle", "EditRect",
+				this->m_PolygonToolExecutor(verts, [component](const std::vector<Vector2>& verts)
+				{
+					auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
+					auto localVerts = verts;
+					for (auto it = localVerts.begin(), end = localVerts.end(); it != end; ++it)
+					{
+						it->x = ToSimUnits(it->x);
+						it->y = ToSimUnits(it->y);
+						*it -= offset;
+					}
+					component->Verts.Set(localVerts);
+				});
+			}
+		}))/*)*/;
+		/*AddProperty("Verts", */AddButtonInput("Edit Polygon as Rectangle", "EditRect",
 			StringSetter_t([this](std::string, ComponentIPtr<IPolygonShape> component)
 		{
 			Vector2 hsize(10.f, 10.f);
@@ -81,7 +89,7 @@ namespace FusionEngine { namespace Inspectors
 				}
 				component->Verts.Set(verts);
 			});
-		}));
+		}))/*)*/;
 	}
 
 } }

@@ -34,25 +34,25 @@ namespace FusionEngine { namespace Inspectors
 
 	void FixtureInspector::InitUI()
 	{
-		AddToggleInput("Sensor",
+		AddProperty("Sensor", AddToggleInput("Sensor",
 			BoolSetter_t([](bool value, ComponentIPtr<IFixture> component) { component->Sensor.Set(value); }),
 			BoolGetter_t([](ComponentIPtr<IFixture> component)->bool { return component->Sensor.Get(); })
-			);
+			));
 
-		AddTextInput("Density",
+		AddProperty("Density", AddTextInput("Density",
 			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Density.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Density.Get(); })
-			);
+			));
 
-		AddTextInput("Friction",
+		AddProperty("Friction", AddTextInput("Friction",
 			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Friction.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Friction.Get(); })
-			);
+			));
 
-		AddTextInput("Restitution",
+		AddProperty("Restitution", AddTextInput("Restitution",
 			FloatSetter_t([](float value, ComponentIPtr<IFixture> component) { component->Restitution.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<IFixture> component)->float { return component->Restitution.Get(); })
-			);
+			));
 	}
 
 } }

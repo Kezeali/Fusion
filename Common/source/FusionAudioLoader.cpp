@@ -29,7 +29,9 @@
 
 #include "FusionAudioLoader.h"
 
+#include "FusionCLStream.h"
 #include "FusionExceptionFactory.h"
+#include "FusionResourceLoaderUtils.h"
 
 #include <ClanLib/Core/System/exception.h>
 #include <ClanLib/sound.h>
@@ -47,7 +49,10 @@ namespace FusionEngine
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(resource->GetPath(), false, vdir);
+			CL_IODevice file = vdir.open_file_read(resource->GetPath());
+			sp = CL_SoundProviderFactory::load(file, false, CL_PathHelp::get_extension(resource->GetPath()));
+
+			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
 		}
 		catch (CL_Exception&)
 		{
@@ -79,7 +84,10 @@ namespace FusionEngine
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(resource->GetPath(), true, vdir);
+			CL_IODevice file = vdir.open_file_read(resource->GetPath());
+			sp = CL_SoundProviderFactory::load(file, true, CL_PathHelp::get_extension(resource->GetPath()));
+
+			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
 		}
 		catch (CL_Exception&)
 		{

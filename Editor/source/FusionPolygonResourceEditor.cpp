@@ -34,6 +34,7 @@
 #include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionResourceManager.h"
 #include <ClanLib/core.h>
+#include "FusionPhysFSIOStream.h"
 
 namespace FusionEngine
 {
@@ -68,11 +69,11 @@ namespace FusionEngine
 		}
 		else
 		{
-			SendToConsole("Too many verticies in edited polygon");
+			SendToConsole("Too many vertices in edited polygon");
 			if (m_ErrorCallback)
 			{
 				std::stringstream str; str << b2_maxPolygonVertices;
-				m_ErrorCallback("Too many verticies in edited polygon. Reduce the verts to less than " + str.str() + " before saving.");
+				m_ErrorCallback("Too many vertices in edited polygon. Reduce the verts to less than " + str.str() + " before saving.");
 			}
 			// Restart the editor
 			auto vertsCopy = verts;
@@ -84,9 +85,10 @@ namespace FusionEngine
 
 	void PolygonResourceEditor::SetResource(const ResourceDataPtr& resource, const Vector2& offset)
 	{
-		m_Resource = resource;
+		m_Path = resource->GetPath();
+
 		std::vector<Vector2> verts;
-		auto polygon = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
+		auto polygon = static_cast<b2PolygonShape*>(resource->GetDataPtr());
 		for (int i = 0; i < polygon->GetVertexCount(); ++i)
 		{
 			const auto& b2vert = polygon->GetVertex(i);
@@ -103,26 +105,20 @@ namespace FusionEngine
 
 	void PolygonResourceEditor::Finish()
 	{
-		if (m_Resource && m_EditedShape)
+		if (!m_Path.empty() && m_EditedShape)
 		{
+			const std::string path = m_Path;
 			try
 			{
-				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "/");
-				auto dev = vdir.open_file(m_Resource->GetPath(), CL_File::create_always, CL_File::access_write);
-				PolygonResource::Save(dev, *m_EditedShape);
+				IO::PhysFSStream stream(path, IO::Write);
+				PolygonResource::Save(stream, *m_EditedShape);
 			}
-			catch (CL_Exception& e)
+			catch (std::exception& e)
 			{
-				SendToConsole("Failed to save polygon resource '" + m_Resource->GetPath() + "': " + e.what());
+				SendToConsole("Failed to save polygon resource '" + path + "': " + e.what());
 				if (m_ErrorCallback)
-					m_ErrorCallback("Failed to save polygon resource '" + m_Resource->GetPath() + "': " + e.what());
+					m_ErrorCallback("Failed to save polygon resource '" + path + "': " + e.what());
 			}
-
-			auto oldData = static_cast<b2PolygonShape*>(m_Resource->GetDataPtr());
-			m_Resource->SetDataPtr(m_EditedShape.release());
-			delete oldData;
-			//m_Resource->SigReLoaded(m_Resource);
-			m_Resource.reset();
 		}
 		m_DoneEditing = true;
 	}

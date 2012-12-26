@@ -117,6 +117,7 @@
     <ClInclude Include="include\FusionPolygonShapeInspector.h" />
     <ClInclude Include="include\FusionResourceDatabase.h" />
     <ClInclude Include="include\FusionResourceEditor.h" />
+    <ClInclude Include="include\FusionResourceEditorFactory.h" />
     <ClInclude Include="include\FusionRigidBodyInspector.h" />
     <ClInclude Include="include\FusionSpriteInspector.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />

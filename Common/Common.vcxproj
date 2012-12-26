@@ -127,6 +127,7 @@
     <ClCompile Include="source\FusionPolygonLoader.cpp" />
     <ClCompile Include="source\FusionProfiling.cpp" />
     <ClCompile Include="source\FusionResource.cpp" />
+    <ClCompile Include="source\FusionResourceLoaderUtils.cpp" />
     <ClCompile Include="source\FusionResourceManager.cpp" />
     <ClCompile Include="source\FusionScriptedConsoleCommand.cpp" />
     <ClCompile Include="source\FusionScriptedSlots.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="include\FusionRefCounted.h" />
     <ClInclude Include="include\FusionResource.h" />
     <ClInclude Include="include\FusionResourceLoader.h" />
+    <ClInclude Include="include\FusionResourceLoaderUtils.h" />
     <ClInclude Include="include\FusionResourceManager.h" />
     <ClInclude Include="include\FusionResourcePointer.h" />
     <ClInclude Include="include\FusionSaveDataArchive.h" />

@@ -49,8 +49,9 @@ namespace FusionEngine
 	class PolygonResource
 	{
 	public:
-		static std::unique_ptr<b2PolygonShape> Load(CL_IODevice dev);
-		static void Save(CL_IODevice dev, const b2PolygonShape& shape);
+		static std::unique_ptr<b2PolygonShape> Load(std::istream& stream);
+		static void Save(std::ostream& stream, const b2PolygonShape& shape);
+		static void CreateEmpty(std::ostream& stream);
 	};
 
 	//! Polygon resource loader callback

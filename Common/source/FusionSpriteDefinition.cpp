@@ -32,6 +32,7 @@
 #include "FusionCLStream.h"
 #include "FusionExceptionFactory.h"
 #include "FusionPhysFS.h"
+#include "FusionResourceLoaderUtils.h"
 #include "FusionXML.h"
 
 #include <yaml-cpp/yaml.h>
@@ -229,6 +230,8 @@ namespace FusionEngine
 			const auto animationName = pathEnd != std::string::npos ? resource->GetPath().substr(pathEnd + 1) : "";
 			auto dev = vdir.open_file(path, CL_File::open_existing, CL_File::access_read);
 			data->Load(dev, animationName);
+
+			resource->SetMetadata(CreateFileMetadata(path, IO::CLStream(dev)));
 		}
 		catch (CL_Exception& ex)
 		{

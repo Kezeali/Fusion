@@ -34,14 +34,19 @@ namespace FusionEngine { namespace Inspectors
 
 	void CircleShapeInspector::InitUI()
 	{
-		AddCircleInput(
-			[](float offsetx, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(offsetx, component->Position.Get().y)); },
-			[](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().x; },
-			[](float offsety, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(component->Position.Get().x, offsety)); },
-			[](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().y; },
-			[](float radius, ComponentIPtr<ICircleShape> component) { component->Radius.Set(radius); },
-			[](ComponentIPtr<ICircleShape> component)->float { return component->Radius.Get(); }
-			);
+		AddProperty("Position", AddTextInput("Y",
+			FloatSetter_t([](float value, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
+			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().y; })
+			));
+		AddProperty("Position", AddTextInput("X",
+			FloatSetter_t([](float value, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(component->Position.Get().x, value)); }),
+			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().x; })
+			));
+
+		AddProperty("Radius", AddTextInput("Radius",
+			FloatSetter_t([](float value, ComponentIPtr<ICircleShape> component) { component->Radius.Set(value); }),
+			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Radius.Get(); })
+			));
 	}
 
 } }

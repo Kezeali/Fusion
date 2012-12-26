@@ -31,6 +31,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionEngineExtension.h"
+#include "FusionResourceEditorFactory.h"
 
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
@@ -95,7 +96,7 @@ namespace FusionEngine
 
 	class InspectorGenerator;
 
-	class Editor : public EngineExtension
+	class Editor : public EngineExtension, public ResourceEditorFactory
 	{
 	public:
 		Editor(const std::vector<CL_String> &args);
@@ -135,7 +136,9 @@ namespace FusionEngine
 
 		bool IsResourceEditable(const std::string& file) const;
 
-		void StartResourceEditor(const std::string& path);
+		virtual std::shared_ptr<ResourceEditor> StartResourceEditor(const std::string& path);
+
+		virtual std::shared_ptr<ResourceEditor> StartResourceEditor(const std::string& path, const Vector2& offset);
 
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
@@ -315,6 +318,7 @@ namespace FusionEngine
 		void CreatePropertiesWindowForSelected();
 
 		void RegisterScriptType(asIScriptEngine* engine);
+
 	};
 
 }

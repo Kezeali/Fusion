@@ -661,14 +661,35 @@ namespace FusionEngine
 		m_PolygonLoadConnection.disconnect();
 	}
 
+	bool Box2DPolygonFixture::HotReloadEvent(ResourceDataPtr resReloading, ResourceContainer::HotReloadEvent ev)
+	{
+		switch (ev)
+		{
+		case ResourceContainer::HotReloadEvent::Validate:
+			m_PolygonResource.Release();
+			break;
+		case ResourceContainer::HotReloadEvent::PostReload:
+			m_PolygonResource.SetTarget(resReloading);
+			m_ReconstructFixture = true;
+			break;
+		}
+		return true;
+	}
+
 	void Box2DPolygonFixture::RefreshResource()
 	{
 		if (!m_PolygonFile.empty())
 		{
+			using namespace std::placeholders;
+
 			m_PolygonLoadConnection.disconnect();
 			m_PolygonLoadConnection = ResourceManager::getSingleton().GetResource("POLYGON", m_PolygonFile, [this](ResourceDataPtr data)
 			{
-				m_PolygonResource.SetTarget(data); m_ReconstructFixture = true;
+				m_PolygonResource.SetTarget(data);
+				m_ReconstructFixture = true;
+
+				using namespace std::placeholders;
+				m_PolygonLoadConnection = data->SigHotReloadEvents.connect(std::bind(&Box2DPolygonFixture::HotReloadEvent, this, _1, _2));
 			});
 		}
 		else

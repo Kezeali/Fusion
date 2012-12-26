@@ -35,6 +35,7 @@
 #include "FusionCLStream.h"
 #include "FusionEntity.h"
 #include "FusionEntitySerialisationUtils.h"
+#include "FusionResourceLoaderUtils.h"
 #include "FusionSaveDataArchive.h"
 
 #include <boost/iostreams/filtering_stream.hpp>
@@ -69,7 +70,41 @@ namespace FusionEngine
 		void StoreResource(const ResourceDataPtr& resource);
 
 	private:
-		std::list<ResourceDataPtr> m_Volatile;
+		class StoredResource
+		{
+		public:
+			ResourceDataPtr resource;
+			boost::signals2::connection hotReloadConnection;
+
+			bool HotReloadEvents(ResourceDataPtr eventResource, ResourceContainer::HotReloadEvent ev)
+			{
+				switch (ev)
+				{
+				case ResourceContainer::HotReloadEvent::Validate:
+					resource.reset();
+					break;
+				case ResourceContainer::HotReloadEvent::PostReload:
+					resource = eventResource;
+				}
+				return true;
+			}
+
+			StoredResource(const ResourceDataPtr& resource);
+
+			StoredResource(StoredResource&& other)
+				: resource(std::move(other.resource)),
+				hotReloadConnection(std::move(other.hotReloadConnection))
+			{
+			}
+
+			StoredResource& operator =(StoredResource&& other)
+			{
+				resource = std::move(other.resource);
+				hotReloadConnection = std::move(other.hotReloadConnection);
+				return *this;
+			}
+		};
+		std::list<StoredResource> m_Volatile;
 		std::list<ResourceDataPtr> m_Sustained;
 
 		tbb::atomic<bool> m_Sustaining;
@@ -130,9 +165,16 @@ namespace FusionEngine
 		{
 			m_Sustained.push_back(resource);
 		}
-		m_Volatile.push_back(resource);
+		m_Volatile.push_back(StoredResource(resource));
 		if (m_Volatile.size() > m_VolitileCapacity)
 			m_Volatile.pop_front();
+	}
+
+	SimpleResourceSustainer::StoredResource::StoredResource(const ResourceDataPtr& resource)
+		: resource(resource)
+	{
+		using namespace std::placeholders;
+		hotReloadConnection = resource->SigHotReloadEvents.connect(std::bind(&SimpleResourceSustainer::StoredResource::HotReloadEvents, this, _1, _2));
 	}
 
 	ArchetypeFactory::ArchetypeFactory()
@@ -274,7 +316,12 @@ namespace FusionEngine
 		try
 		{
 			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
-			factory->Load(std::unique_ptr<IO::CLStream>(new IO::CLStream(dev)), ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
+			auto stream = std::make_shared<IO::CLStream>(dev);
+
+			factory->Load(stream, ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
+
+			// Add the metadata that will be used to detect changes to this resource
+			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), *stream));
 		}
 		catch (CL_Exception& ex)
 		{
