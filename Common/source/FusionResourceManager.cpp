@@ -53,10 +53,10 @@ namespace FusionEngine
 		m_Running(false),
 		m_Clearing(false),
 		m_FinishLoadingBeforeStopping(false),
-		m_ForceCheckForChanges(false),
 		m_GC(gc),
 		m_HotReloadingAllowed(false)
 	{
+		m_CheckingForChanges = CheckForChangesPriority::NotChecking;
 	}
 
 	ResourceManager::~ResourceManager()
@@ -125,20 +125,37 @@ namespace FusionEngine
 	{
 		if (m_HotReloadingAllowed)
 		{
-			m_ForceCheckForChanges = false;
+			m_CheckingForChanges = CheckForChangesPriority::Low;
 			m_CheckForChangesEvent.set();
 
 			m_SigCheckingForChanges();
 		}
 	}
 
-	void ResourceManager::CheckForChangesForced()
+	void ResourceManager::CheckForChangesASAP()
 	{
 		if (m_HotReloadingAllowed)
 		{
-			m_ForceCheckForChanges = true;
+			m_CheckingForChanges = CheckForChangesPriority::High;
 			m_CheckForChangesEvent.set();
+
+			m_SigCheckingForChanges();
 		}
+	}
+
+	void ResourceManager::CheckForChanges(const std::string& path)
+	{
+		if (m_HotReloadingAllowed)
+		{
+			FSN_ASSERT_FAIL("This isn't implemented");
+
+			//m_CheckForChanges.push(path);
+		}
+	}
+
+	bool ResourceManager::IsCheckingForChanges() const
+	{
+		return m_CheckingForChanges != CheckForChangesPriority::NotChecking;
 	}
 
 	void ResourceManager::StartLoaderThread()
@@ -278,6 +295,11 @@ namespace FusionEngine
 				m_ToUnloadEvent.reset();
 			}
 
+			const bool checkForChangesAsap = m_CheckingForChanges == CheckForChangesPriority::High;
+
+			if (checkForChangesAsap)
+				ContinueCheckingForChanges(lastResourceChecked, checkForChangesAsap);
+
 			// Load
 			{
 				ResourceToLoadData toLoadData;
@@ -290,23 +312,30 @@ namespace FusionEngine
 					//  workaround)
 					toLoadData.resource->setQueuedToUnload(false);
 
-					try
+					if (!toLoadData.resource->IsMarkedToReload())
 					{
-						logfile->AddEntry("Loading " + toLoadData.resource->GetPath(), LOG_INFO);
-						// Dependency tree can be no deeper than 6 (just an artificial way to detect circular
-						//  trees, since having an actual resource with that much abstraction is unlikely)
-						loadResourceAndDeps(toLoadData.resource, 6);
+						try
+						{
+							logfile->AddEntry("Loading " + toLoadData.resource->GetPath(), LOG_INFO);
+							// Dependency tree can be no deeper than 6 (just an artificial way to detect circular
+							//  trees, since having an actual resource with that much abstraction is unlikely)
+							loadResourceAndDeps(toLoadData.resource, 6);
+						}
+						catch (FileSystemException &ex)
+						{
+							//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
+							logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
+						}
+
+						toLoadData.resource->setQueuedToLoad(false);
+
+						// Push this on to the outgoing queue (even if it failed to load)
+						m_ToDeliver.push(toLoadData.resource);
 					}
-					catch (FileSystemException &ex)
+					else
 					{
-						//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
-						logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
+						m_ToLoad.push(toLoadData);
 					}
-
-					toLoadData.resource->setQueuedToLoad(false);
-
-					// Push this on to the outgoing queue (even if it failed to load)
-					m_ToDeliver.push(toLoadData.resource);
 				}
 			}
 
@@ -357,7 +386,8 @@ namespace FusionEngine
 				while (m_ToReload.try_pop(resource))
 				{
 					// Resource map entry + ToReload entry = 2 refs
-					if (resource->ReferenceCount() == 2 && unloadResource(resource))
+					if (resource->ReferenceCount() == 2
+						&& unloadResource(resource))
 					{
 						loadResource(resource);
 
@@ -380,48 +410,9 @@ namespace FusionEngine
 				}
 			}
 
-			if ((receivedEvent == 3 || m_ForceCheckForChanges) && m_HotReloadingAllowed)
-				checkingResourcesForReload = true;
-
-			// Check for changes, push changed resources into the hot-reload pipeline
-			if (checkingResourcesForReload && m_HotReloadingAllowed)
+			if (m_CheckingForChanges != CheckForChangesPriority::NotChecking && m_HotReloadingAllowed)
 			{
-				const size_t maxChecked = 100;
-				size_t resourcesChecked = 0;
-
-				// Attempt to continue iteration from the last resource checked
-				ResourceMap::const_iterator it = m_Resources.find(lastResourceChecked);
-				if (it != m_Resources.end())
-					++it;
-				else
-					it = m_Resources.cbegin();
-
-				for (; it != m_Resources.cend(); ++it)
-				{
-					const auto& resource = it->second;
-					// Check for changes
-					if (!resource->IsMarkedToReload() && shouldReload(resource))
-					{
-						resource->SetMarkedToReload(true);
-
-						ReloadEventQueueEntry entry;
-						entry.resource = resource;
-						entry.eventToFire = ResourceContainer::HotReloadEvent::Validate;
-						m_HotReloadEventsQueue.push(entry);
-					}
-
-					if (!m_ForceCheckForChanges && resourcesChecked++ >= maxChecked)
-					{
-						lastResourceChecked = it->first;
-						break;
-					}
-				}
-
-				if (it == m_Resources.cend())
-				{
-					checkingResourcesForReload = false; // done
-					lastResourceChecked.clear();
-				}
+				ContinueCheckingForChanges(lastResourceChecked, checkForChangesAsap);
 			}
 
 			// Stop when stop even is set
@@ -430,6 +421,40 @@ namespace FusionEngine
 		}
 
 		//asThreadCleanup();
+	}
+
+	void ResourceManager::ContinueCheckingForChanges(std::string &lastResourceChecked, const bool checkForChangesAsap)
+	{
+		const size_t maxChecked = 100;
+		size_t resourcesChecked = 0;
+
+		// Attempt to continue iteration from the last resource checked
+		ResourceMap::const_iterator it = m_Resources.find(lastResourceChecked);
+		if (it != m_Resources.end())
+			++it;
+		else
+			it = m_Resources.cbegin();
+
+		for (; it != m_Resources.cend(); ++it)
+		{
+			EnqueueForReloadIfChanged(it->second);
+
+			// Stop checking for changes as soon as there is something to load
+			if (!checkForChangesAsap && (!m_ToLoad.empty() || resourcesChecked++ >= maxChecked))
+			{
+				lastResourceChecked = it->first;
+				break;
+			}
+		}
+
+		if (it == m_Resources.cend())
+		{
+			lastResourceChecked.clear();
+
+			// Should always get here the first time when checking with high priority
+			//  so this should prevent getting stuck in an endless loop
+			m_CheckingForChanges = CheckForChangesPriority::NotChecking;
+		}
 	}
 
 	void ResourceManager::DeliverLoadedResources(float time_limit)
@@ -557,14 +582,14 @@ namespace FusionEngine
 
 		boost::signals2::connection onLoadConnection;
 
-		if (!resource->IsQueuedToUnload() && resource->IsLoaded()) 
+		if (!resource->IsQueuedToUnload() && resource->IsLoaded() && !IsCheckingForChanges()) 
 		{
 			if (on_load_callback)
 			{
 				on_load_callback(resource);
 			}
 		}
-		else // is QueuedToUnload || !Loaded
+		else // is QueuedToUnload || !Loaded || is CheckingForChanges
 		{
 			if (on_load_callback)
 			{
@@ -896,6 +921,19 @@ namespace FusionEngine
 		}
 		else
 			return false;
+	}
+
+	void ResourceManager::EnqueueForReloadIfChanged(const ResourceDataPtr& resource)
+	{
+		if (!resource->IsMarkedToReload() && shouldReload(resource))
+		{
+			resource->SetMarkedToReload(true);
+
+			ReloadEventQueueEntry entry;
+			entry.resource = resource;
+			entry.eventToFire = ResourceContainer::HotReloadEvent::Validate;
+			m_HotReloadEventsQueue.push(entry);
+		}
 	}
 	
 	bool ResourceManager::validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload, ResourceContainer::HotReloadEvent ev)

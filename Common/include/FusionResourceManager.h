@@ -95,11 +95,15 @@ namespace FusionEngine
 
 		boost::signals2::connection AddCheckForChangesListener(const std::function<void (void)>& listener);
 
-		//! Tell the loader thread to resources that support hot-reloading for changes, and reload them if any are detected
+		//! Tell the loader thread to check resources that support hot-reloading for changes, and reload them if changes are detected
 		void CheckForChanges();
+		//! Forces full check before any more resources are loaded
+		void CheckForChangesASAP();
+		//! Check the resource or resources at the given path for changes
+		void CheckForChanges(const std::string& path);
 
-		//! Forces full recheck
-		void CheckForChangesForced();
+		//! Returns true if the resource manager is currently checking for changes
+		bool IsCheckingForChanges() const;
 
 		//! Starts loading resources in the background
 		void StartLoaderThread();
@@ -271,9 +275,9 @@ namespace FusionEngine
 
 			ResourceToLoadData() {}
 
-			ResourceToLoadData(int _priority, const ResourceDataPtr& _resource)
-				: priority(_priority),
-				resource(_resource)
+			ResourceToLoadData(int priority_, const ResourceDataPtr& resource_)
+				: priority(priority_),
+				resource(resource_)
 			{}
 
 			ResourceToLoadData(const ResourceToLoadData& other)
@@ -303,7 +307,9 @@ namespace FusionEngine
 		bool m_Running;
 		bool m_Clearing;
 		bool m_FinishLoadingBeforeStopping;
-		bool m_ForceCheckForChanges;
+
+		enum CheckForChangesPriority : char { NotChecking, Low, High };
+		tbb::atomic<CheckForChangesPriority> m_CheckingForChanges;
 
 		boost::signals2::signal<void (void)> m_SigCheckingForChanges;
 
@@ -351,7 +357,11 @@ namespace FusionEngine
 
 		bool shouldReload(const ResourceDataPtr& resource);
 
+		void EnqueueForReloadIfChanged(const ResourceDataPtr& resource);
+
 		bool validatePrereqReload(const ResourceDataPtr& resource, const ResourceDataPtr& prereq_that_wants_to_reload, ResourceContainer::HotReloadEvent ev);
+
+		void ContinueCheckingForChanges(std::string &lastResourceChecked, const bool checkForChangesAsap);
 	};
 
 }

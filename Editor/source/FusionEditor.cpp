@@ -1166,7 +1166,7 @@ namespace FusionEngine
 					PHYSFS_mkdir(path.string().c_str());
 
 				auto editor = editorEntry->second;
-				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr d) { editor->SetResource(d, offset); });
+				ResourceManager::getSingleton().GetResource(type, filename, [editor, offset](ResourceDataPtr res) { editor->SetResource(res, offset); });
 
 				return editor;
 			}

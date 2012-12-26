@@ -112,6 +112,8 @@ namespace FusionEngine
 			{
 				IO::PhysFSStream stream(path, IO::Write);
 				PolygonResource::Save(stream, *m_EditedShape);
+
+				ResourceManager::getSingleton().CheckForChangesASAP();
 			}
 			catch (std::exception& e)
 			{
