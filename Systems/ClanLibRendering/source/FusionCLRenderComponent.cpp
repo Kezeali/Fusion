@@ -222,7 +222,7 @@ namespace FusionEngine
 			m_ReloadAnimation = false;
 		}
 
-		if (m_RecreateSprite && !m_SpriteDef)
+		if (m_RecreateSprite/* && !m_SpriteDef*/)
 			redefineSprite();
 	}
 

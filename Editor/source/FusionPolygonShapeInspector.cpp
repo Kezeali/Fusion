@@ -44,6 +44,8 @@ namespace FusionEngine { namespace Inspectors
 			if (!component->PolygonFile.Get().empty())
 			{
 				auto offset = dynamic_cast<EntityComponent*>(component.get())->GetParent()->GetPosition();
+				// Translate offset to render-units, because that's what the polygon tool uses
+				offset.x = ToRenderUnits(offset.x); offset.y = ToRenderUnits(offset.y);
 				this->m_ResourceEditors->StartResourceEditor(component->PolygonFile.Get(), offset);
 			}
 			else
