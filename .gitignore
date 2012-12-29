@@ -1,0 +1,15 @@
+
+*.sdf
+*.suo
+*.vcxproj.user
+*.opensdf
+ipch
+/lib
+/debug/UnitTestData/write_dir/Logs
+/Tools/WakeOnLan.exe
+/Tools/WakeUp.cmd
+Release
+Debug
+Fast Debug
+/release_package
+AS_DEBUG
