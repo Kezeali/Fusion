@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -146,6 +146,9 @@ namespace FusionEngine
 
 		RegionCellCache* GetCellCache() const { return m_Cache; }
 		RegionCellCache* GetEditableCellCache() const { return m_EditableCache; }
+
+		void CopyCellDataFrom(const std::string& cache_path, const std::string& dest_path);
+		void CopyCellDataTo(const std::string& cache_path, const std::string& source_path);
 
 		void SaveEntityLocationDB(const std::string& filename);
 

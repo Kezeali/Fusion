@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2009-2012 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -62,7 +62,7 @@ using namespace std::placeholders;
 namespace FusionEngine
 {
 
-	GameMap::GameMap(const std::string& name)
+	GameMap::GameMap(const std::string& path)
 		: m_Name(name)
 	{
 		std::istream metadata = std::stringstream();
@@ -81,7 +81,7 @@ namespace FusionEngine
 
 	void GameMap::InitInstantiator(EntityInstantiator* instantiator)
 	{
-		std::istream metadata = std::stringstream();
+		std::istream metadata = IO::PhysFSStream(GetMetadataPath(), IO::Read)
 		instantiator->LoadState(metadata);
 	}
 
@@ -126,13 +126,16 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::CompileMap(std::ostream &metadataFile, std::ostream &fileStream, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(std::ostream &metadataFile, std::ostream &nonStreamingEntitiesFile, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
+		// Metadata
+		//  cell size
+		//  instantiator state
 		{
 			CellStreamWriter writer(&metadataFile);
 			writer.Write(cell_size);
@@ -141,7 +144,7 @@ namespace FusionEngine
 		}
 
 		{
-			CellStreamWriter writer(&fileStream);
+			//CellStreamWriter writer(&nonStreamingEntitiesFile);
 
 			// Filter the pseudo / synced entities into separate lists
 			std::vector<EntityPtr> nonStreamingEntities = nsentities;
@@ -163,7 +166,7 @@ namespace FusionEngine
 
 			boost::iostreams::filtering_ostream compressingStream;
 			compressingStream.push(boost::iostreams::zlib_compressor());
-			compressingStream.push(fileStream);
+			compressingStream.push(nonStreamingEntitiesFile);
 
 			IO::Streams::CellStreamWriter nonsWriter(&compressingStream);
 

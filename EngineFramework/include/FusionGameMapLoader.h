@@ -51,11 +51,6 @@ namespace FusionEngine
 	class Cell;
 	class CellDataSource;
 
-	namespace IO
-	{
-		class PhysFSDevice;
-	}
-
 	class GameMap
 	{
 	public:
@@ -65,21 +60,21 @@ namespace FusionEngine
 
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
-		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
-		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 
 		static void CompileMap(std::ostream &metadataFile, std::ostream& nonStreamingEntitiesFile, float cell_size, CellDataSource* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
-		const std::string& GetName() const { return m_Name; }
+		std::string GetName() const { return m_Name; }
 
-		std::string GetPath() const { return m_Basepath + GetName(); }
+		std::string GetPath() const { return m_Path; }
 
-		std::string GetEntityDatabasePath() const { return GetPath() + m_EntityDatabaseFilename; }
+		std::string GetMetadataPath() const { return GetPath() + "/" + GetName() + ".metadata"; }
+
+		std::string GetEntityDatabasePath() const { return GetPath() + "entitylocations.kc"; }
 
 		float GetCellSize() const;
 
 	private:
-		std::string m_Basepath;
+		std::string m_Path;
 		std::string m_Name;
 		// TODO: ? Don't store the file, just load it from the stored path when required
 		std::shared_ptr<std::istream> m_NonStreamingEntitiesFile;

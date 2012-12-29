@@ -1107,15 +1107,29 @@ namespace FusionEngine
 		{
 			m_CompileMap = false;
 
-			m_StreamingManager->StoreAllCells(false);
-			m_MapLoader->Stop();
+			const std::string mapName = m_SaveName;
+
 			try
 			{
-				PHYSFS_mkdir("mapname");
-				IO::PhysFSStream metadata("mapname/mapname.info", IO::Write);
-				IO::PhysFSStream entities("mapname/transcendent.entitydata", IO::Write);
-				GameMap::CompileMap(metadata, entities, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
-				m_MapLoader->SaveEntityLocationDB("default.endb");
+				PHYSFS_mkdir(mapName.c_str());
+
+				m_StreamingManager->StoreAllCells(false);
+				// Save a copy of the cache
+				const auto savePath = m_MapLoader->GetSavePath();
+				m_MapLoader->SetSavePath(m_SaveName);
+				m_MapLoader->Save(mapName);
+				m_MapLoader->Stop();
+				// Restore save path
+				m_MapLoader->SetSavePath(savePath);
+
+				IO::PhysFSStream metadata(mapName + "/" + mapName + ".info", IO::Write);
+				IO::PhysFSStream tentsData(mapName + "/transcendental.entitydata", IO::Write);
+				GameMap::CompileMap(metadata, tentsData, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
+
+				m_MapLoader->SaveEntityLocationDB(mapName + "/entitylocations.kc");
+
+				auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
+				mb->Show();
 			}
 			catch (FileSystemException& e)
 			{
@@ -1123,11 +1137,7 @@ namespace FusionEngine
 				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
 			}
 			m_MapLoader->Start();
-
 			m_StreamingManager->Update(true);
-
-			auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
-			mb->Show();
 		}
 
 		if (m_SaveMap)

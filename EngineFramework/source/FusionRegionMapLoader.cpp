@@ -380,6 +380,14 @@ namespace FusionEngine
 		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
 
+	void RegionCellArchivist::CopyCellDataFrom(const std::string& cache_path, const std::string& dest_path)
+	{
+	}
+
+	void RegionCellArchivist::CopyCellDataTo(const std::string& cache_path, const std::string& source_path)
+	{
+	}
+
 	void RegionCellArchivist::SaveEntityLocationDB(const std::string& filename)
 	{
 		if (m_EntityLocationDB)
