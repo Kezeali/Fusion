@@ -1,0 +1,13 @@
+Nomenclature:
+  Entities:
+    definitions:
+    - [Entity, Synced Entity, Synchronised Entity] : "Entities sent over the network, stored to disk"
+    - [Pseudo Entity, Non-Synced Entity] : "Entities that aren't stored to disk"
+    - [Tent, Transcendent Entity] : "Entities that are always loaded, because they aren't part of the streaming map"
+    notes: >
+      Transcendent entities are also Synchronised or Pseudo entities
+  Components:
+  	- [Component] : "An object that defines a piece of logic for an arbitrary entity"
+  Editor:
+  	definitions:
+  	- [Inspector] : "Edit the properties of an entity or its components"
