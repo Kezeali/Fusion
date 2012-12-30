@@ -53,14 +53,14 @@ namespace FusionEngine
 	}
 
 	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl)
-		: m_CallSlot(module, decl.c_str()),
+		: m_CallSlot(ScriptUtils::Calling::Caller::Create(module, decl.c_str())),
 		m_TargetObject(nullptr)
 	{
 	}
 
 	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptObject *object, const std::string &decl)
-		: m_TargetObject(object),
-		m_CallSlot(object, decl.c_str())
+		: m_CallSlot(ScriptUtils::Calling::Caller::Create(object, decl.c_str())),
+		m_TargetObject(object)
 	{
 		//m_TargetObject->AddRef();
 	}

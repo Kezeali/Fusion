@@ -48,37 +48,40 @@ namespace FusionEngine
 
 	std::string ScriptedConsoleCommand(asIScriptModule* module, std::string decl, const StringVector &args)
 	{
-		ScriptUtils::Calling::Caller commandCaller(module, decl.c_str());
-		if (commandCaller)
+		ScriptManager *manager = ScriptManager::getSingletonPtr();
+		if (manager && module)
 		{
-			ScriptManager *manager = ScriptManager::getSingletonPtr();
-			if (manager != NULL)
-				manager->ConnectToCaller(commandCaller);
+			auto context = manager->CreateContext();
 
-			void *ret = commandCaller(&args);
+			ScriptUtils::Calling::Caller commandCaller(context.get(), module->GetFunctionByDecl(decl.c_str()));
+			if (commandCaller)
+			{
+				void *ret = commandCaller(&args);
 
-			if (ret != NULL)
-				return *static_cast<std::string*>( ret );
+				if (ret != NULL)
+					return *static_cast<std::string*>( ret );
+			}
 		}
 
-		return std::string("");
+		return "Failed to execute " + decl;
 	}
 
 	StringVector ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, int arg_num, const std::string &incomplete_val)
 	{
-		ScriptUtils::Calling::Caller autocompleteCaller(module, decl.c_str());
-		if (autocompleteCaller)
+		ScriptManager *manager = ScriptManager::getSingletonPtr();
+		if (manager && module)
 		{
-			ScriptManager *manager = ScriptManager::getSingletonPtr();
-			if (manager != NULL)
-				manager->ConnectToCaller(autocompleteCaller);
+			auto context = manager->CreateContext();
 
-			void *ret = autocompleteCaller(arg_num, incomplete_val);
+			ScriptUtils::Calling::Caller autocompleteCaller(context.get(), module->GetFunctionByDecl(decl.c_str()));
+			if (autocompleteCaller)
+			{
+				void *ret = autocompleteCaller(arg_num, incomplete_val);
 
-			if (ret != NULL)
-				return *static_cast<StringVector*>( ret );
+				if (ret != NULL)
+					return *static_cast<StringVector*>( ret );
+			}
 		}
-
 		return StringVector();
 	}
 
@@ -174,7 +177,7 @@ namespace FusionEngine
 				callbackFullDecl = callback;
 
 			// Make sure the indicated function exists
-			if (module->GetFunctionIdByDecl(callbackFullDecl.c_str()) < 0)
+			if (module->GetFunctionByDecl(callbackFullDecl.c_str()))
 			{
 				// Set script exception? Log?
 				return;
@@ -193,7 +196,7 @@ namespace FusionEngine
 					autocompleteFullDecl = autocomplete;
 
 				// Make sure the indicated function exists
-				if (module->GetFunctionIdByDecl(autocompleteFullDecl.c_str()) < 0)
+				if (module->GetFunctionByDecl(autocompleteFullDecl.c_str()))
 				{
 					// Set script exception? Log?
 					return;

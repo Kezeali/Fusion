@@ -69,15 +69,10 @@ namespace FusionEngine
 
 		//typedef std::shared_ptr<BuildModuleSignalType> BuildModuleSignalTypePtr;
 
-	public:
 		Module();
 		Module(asIScriptModule *module);
 
 		~Module();
-
-	public:
-		ScriptObject CreateObject(const std::string& name);
-		ScriptObject CreateObject(int type_id);
 
 		ScriptUtils::Calling::Caller GetCaller(const std::string &decl);
 

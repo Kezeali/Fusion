@@ -71,14 +71,14 @@ namespace FusionEngine
 
 		auto refTypeId = gen->GetReturnTypeId();
 
-		if( obj->GetImpl()->GetTypeId() & asTYPEID_MASK_OBJECT )
+		if (obj->GetImpl()->GetTypeId() & asTYPEID_MASK_OBJECT)
 		{
 			// Is the object type compatible with the stored value?
 
 			// Copy the object into the given reference
-			if( obj->GetImpl()->GetTypeId() == refTypeId )
+			if (obj->GetImpl()->GetTypeId() == refTypeId)
 			{
-				engine->CopyScriptObject(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), obj->GetImpl()->GetTypeId());
+				engine->AssignScriptObject(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), obj->GetImpl()->GetTypeId());
 				return;
 			}
 		}
@@ -86,7 +86,7 @@ namespace FusionEngine
 		{
 			// Is the primitive type compatible with the stored value?
 
-			if( obj->GetImpl()->GetTypeId() == refTypeId )
+			if (obj->GetImpl()->GetTypeId() == refTypeId)
 			{
 				int size = engine->GetSizeOfPrimitiveType(refTypeId);
 				memcpy(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), size);

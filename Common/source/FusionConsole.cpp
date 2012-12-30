@@ -727,12 +727,21 @@ namespace FusionEngine
 		asIScriptObject *m_Listener;
 	};
 
+	bool HasMethod(asIScriptObject* object, const std::string& method)
+	{
+		if (object)
+			return object->GetObjectType()->GetMethodByDecl(method.c_str()) != nullptr;
+		else
+			return false;
+	}
+
 	ScriptedConsoleListenerWrapper::ScriptedConsoleListenerWrapper(asIScriptObject *listener, Console *console)
 		: m_Listener(listener)
 	{
-		ScriptUtils::Calling::Caller callNewLine(m_Listener, "void OnNewLine(const string &in)");
-		ScriptUtils::Calling::Caller callNewData(m_Listener, "void OnNewData(const string &in)");
-		ScriptUtils::Calling::Caller callClear(m_Listener, "void OnClear()");
+		using namespace ScriptUtils::Calling;
+		const bool callNewLine = HasMethod(listener, "void OnNewLine(const string &in)");
+		const bool callNewData = HasMethod(listener, "void OnNewData(const string &in)");
+		const bool callClear = HasMethod(listener, "void OnClear()");
 
 		if (callNewLine)
 			m_ConsoleOnNewLineConnection = console->OnNewLine.connect( std::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
@@ -760,21 +769,21 @@ namespace FusionEngine
 
 	void ScriptedConsoleListenerWrapper::OnNewLine(const std::string &line)
 	{
-		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewLine(const string &in)");
+		ScriptUtils::Calling::Caller f = ScriptUtils::Calling::Caller::Create(m_Listener, "void OnNewLine(const string &in)");
 		if (f)
 			f(line);
 	}
 
 	void ScriptedConsoleListenerWrapper::OnNewData(const std::string &data)
 	{
-		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewData(const string &in)");
+		ScriptUtils::Calling::Caller f = ScriptUtils::Calling::Caller::Create(m_Listener, "void OnNewData(const string &in)");
 		if (f)
 			f(data);
 	}
 
 	void ScriptedConsoleListenerWrapper::OnClear()
 	{
-		ScriptUtils::Calling::Caller f(m_Listener, "void OnClear()");
+		ScriptUtils::Calling::Caller f = ScriptUtils::Calling::Caller::Create(m_Listener, "void OnClear()");
 		if (f)
 			f();
 	}

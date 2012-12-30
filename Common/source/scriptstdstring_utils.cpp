@@ -1,5 +1,4 @@
 #include "PrecompiledHeaders.h"
-
 #include <assert.h>
 #include "scriptstdstring.h"
 #include "scriptarray.h"

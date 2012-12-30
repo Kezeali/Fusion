@@ -206,23 +206,7 @@ namespace FusionEngine
 		 * Time the script can run before it's aborted. Default 1000 milis
 		 * \returns The exit status of the script (asEXECUTION_ABORTED for timeout)
 		 */
-		ScriptReturn ExecuteString(const std::string &script, const char *module, int timeout = 5000);
-
-		//! Re-executes the given stored context
-		/*!
-		 * Allows you to re-execute a suspended string execution. If you want
-		 * to re-excute a Script, just call ExecuteScript() on it again.
-		 *
-		 * \param[in] context The context ID of the context which should be resumed.
-		 * \param[in] module The module to execute the code in.
-		 * \returns The exit status of the script.
-		 * \retval asEXECUTION_ABORTED For timeout.
-		 * \retval asERROR If the context doesn't exist.
-		 *
-		 * \sa
-		 * ExecuteString()
-		 */
-		void ReExecute(ScriptContext& context);
+		boost::intrusive_ptr<asIScriptContext> ExecuteString(const std::string &script, const char *module, int timeout = 5000);
 
 		void SetDefaultTimeout(unsigned int timeout);
 		unsigned int GetDefaultTimeout() const;
@@ -230,19 +214,7 @@ namespace FusionEngine
 		//! Creates a context and attaches line / exception callbacks
 		boost::intrusive_ptr<asIScriptContext> CreateContext();
 
-		//! Returns a class object corresponding to the given typename
-		ScriptClass GetClass(const char* module, const std::string& type_name);
-		//! Returns an object of the class corresponding to the given typename
-		ScriptObject CreateObject(const char* module, const std::string& type_name);
-		//! Returns an object of the class corresponding to the given type-id
-		ScriptObject CreateObject(int type_id);
-
 		ModulePtr GetModule(const char *module_name, asEGMFlags when = asGM_CREATE_IF_NOT_EXISTS);
-
-		//! Returns a global caller
-		ScriptUtils::Calling::Caller GetCaller(const char* module, const std::string &signature);
-		//! Returns a method caller
-		ScriptUtils::Calling::Caller GetCaller(const ScriptObject &object, const std::string &signature);
 
 		void ConnectToCaller(ScriptUtils::Calling::Caller &caller);
 
@@ -255,7 +227,8 @@ namespace FusionEngine
 
 		boost::signals2::connection SubscribeToDebugEvents(DebugSlotType slot);
 
-		enum DebugModeFlags {
+		enum DebugModeFlags
+		{
 			Disabled    = 0x0,
 			StepThrough = 0x1,
 			Breakpoints = 0x2,

@@ -1,7 +1,11 @@
 #ifndef SCRIPTANY_H
 #define SCRIPTANY_H
 
+#ifndef ANGELSCRIPT_H 
+// Avoid having to inform include path if header is already include before
 #include <angelscript.h>
+#endif
+
 
 BEGIN_AS_NAMESPACE
 
@@ -65,7 +69,6 @@ public:
 
 void intrusive_ptr_add_ref(CScriptAny *ptr);
 void intrusive_ptr_release(CScriptAny *ptr);
-
 void RegisterScriptAny(asIScriptEngine *engine);
 void RegisterScriptAny_Native(asIScriptEngine *engine);
 void RegisterScriptAny_Generic(asIScriptEngine *engine);

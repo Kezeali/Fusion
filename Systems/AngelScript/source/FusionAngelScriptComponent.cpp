@@ -1515,7 +1515,7 @@ namespace FusionEngine
 
 			// Pass the script-interface to the script object
 			{
-				auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
+				auto setAppObj = ScriptUtils::Calling::Caller::Create(obj, "void _setAppObj(ASScript @)");
 				if (setAppObj)
 				{
 					m_ScriptObject->addRef();

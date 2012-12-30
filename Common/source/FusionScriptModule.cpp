@@ -50,25 +50,11 @@ namespace FusionEngine
 	{
 	}
 
-	ScriptObject Module::CreateObject(const std::string &name)
-	{
-		asIScriptEngine *engine = m_Module->GetEngine();
-		asIScriptObject *object = static_cast<asIScriptObject*>( engine->CreateScriptObject( m_Module->GetTypeIdByDecl(name.c_str()) ) );
-		return ScriptObject(object, false);
-	}
-
-	ScriptObject Module::CreateObject(int typeId)
-	{
-		asIScriptEngine *engine = m_Module->GetEngine();
-		asIScriptObject *object = static_cast<asIScriptObject*>( engine->CreateScriptObject( typeId ) );
-		return ScriptObject(object, false);
-	}
-
 	ScriptUtils::Calling::Caller Module::GetCaller(const std::string &decl)
 	{
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
-		ScriptUtils::Calling::Caller caller(m_Module, decl.c_str());
-		manager->ConnectToCaller(caller); // For debugging / exception handling
+		auto context = manager->CreateContext();
+		ScriptUtils::Calling::Caller caller(context.get(), m_Module->GetFunctionByDecl(decl.c_str()));
 		return caller;
 	}
 

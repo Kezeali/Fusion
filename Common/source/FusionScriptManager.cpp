@@ -61,6 +61,8 @@ using namespace std::placeholders;
 namespace FusionEngine
 {
 
+	static const unsigned int s_ScriptDefaultTimeout = 1000;
+
 	typedef std::pair<std::string::const_iterator, std::string::const_iterator> CharRange;
 
 	// '#include' Preprocessor
@@ -236,7 +238,7 @@ namespace FusionEngine
 	//////////
 	// ScriptingManager
 	ScriptManager::ScriptManager()
-		: m_DefaultTimeout(g_ScriptDefaultTimeout),
+		: m_DefaultTimeout(s_ScriptDefaultTimeout),
 		m_DebugOutput(false),
 		m_DebugMode(0),
 		m_SectionSerial(0),
@@ -422,10 +424,10 @@ namespace FusionEngine
 		return GetModule(module)->ConnectToBuild(slot);
 	}
 
-	ScriptContext ScriptManager::ExecuteString(const std::string &script, const char *module_name, int timeout)
+	boost::intrusive_ptr<asIScriptContext> ScriptManager::ExecuteString(const std::string &script, const char *module_name, int timeout)
 	{
 		asIScriptContext* ctx = m_asEngine->CreateContext();
-		ScriptContext sctx(ctx);
+		boost::intrusive_ptr<asIScriptContext> sctx(ctx);
 
 		if (ctx != NULL)
 		{
@@ -437,18 +439,13 @@ namespace FusionEngine
 			fnScript += "\n;}";
 			asIScriptFunction *fn;
 			int r = module->CompileFunction("ExecuteString", fnScript.c_str(), -1, 0, &fn); if (r < 0) return sctx;
-			r = ctx->Prepare(fn->GetId()); if (r < 0) return sctx;
+			r = ctx->Prepare(fn); if (r < 0) return sctx;
 			ctx->Execute();
 
 			fn->Release();
 		}
 
 		return sctx;
-	}
-
-	void ScriptManager::ReExecute(ScriptContext& context)
-	{
-		context.Execute();
 	}
 
 	void ScriptManager::SetDefaultTimeout(unsigned int timeout)
@@ -466,25 +463,6 @@ namespace FusionEngine
 		auto ctx = m_asEngine->CreateContext();
 		ctx->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 		return boost::intrusive_ptr<asIScriptContext>(ctx, false);
-	}
-
-	ScriptClass ScriptManager::GetClass(const char* module, const std::string& type_name)
-	{
-		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
-		return ScriptClass(this, module, type_name, id);
-	}
-
-	ScriptObject ScriptManager::CreateObject(const char* module, const std::string& type_name)
-	{
-		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
-		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
-		return ScriptObject(obj, false);
-	}
-
-	ScriptObject ScriptManager::CreateObject(int id)
-	{
-		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
-		return ScriptObject(obj, false);
 	}
 
 	ModulePtr ScriptManager::GetModule(const char *module_name, asEGMFlags when)
@@ -510,20 +488,6 @@ namespace FusionEngine
 		{
 			return ModulePtr();
 		}
-	}
-
-	ScriptUtils::Calling::Caller ScriptManager::GetCaller(const char * module_name, const std::string &signature)
-	{
-		ScriptUtils::Calling::Caller caller(m_asEngine->GetModule(module_name), signature.c_str());
-		ConnectToCaller(caller);
-		return caller;
-	}
-
-	ScriptUtils::Calling::Caller ScriptManager::GetCaller(const FusionEngine::ScriptObject &object, const std::string &signature)
-	{
-		ScriptUtils::Calling::Caller caller(object.GetScriptObject(), signature.c_str());
-		ConnectToCaller(caller);
-		return caller;
 	}
 
 	void ScriptManager::EnableDebugOutput()
