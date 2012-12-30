@@ -106,7 +106,7 @@ namespace FusionEngine { namespace IO
 			break;
 		};
 
-		if (m_Device.seek((int)off, clSeekMode))
+		if (!m_Device.seek((int)off, clSeekMode))
 			FSN_EXCEPT(FileSystemException, "Tried to go to an invalid position within a data-source");
 
 		return std::streampos(m_Device.get_position());
