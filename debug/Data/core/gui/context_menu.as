@@ -7,7 +7,7 @@ class MenuItem
 {
 	uint index;
 	string name;
-	Element@ element;
+	Rocket::Element@ element;
 
 	MenuItem()
 	{
@@ -16,7 +16,7 @@ class MenuItem
 		@element = null;
 	}
 
-	MenuItem(uint i, const string&in n, Element@ e)
+	MenuItem(uint i, const string&in n, Rocket::Element@ e)
 	{
 		index = i;
 		name = n;
@@ -77,20 +77,20 @@ class ContextMenu : IEventListener
 	int m_CurrentSelection;
 
 	Document@ m_MenuDoc;
-	rString m_Id;
+	Rocket::String m_Id;
 	e_Vector2i m_Position;
 
-	ContextMenu(const rString&in id, const e_Vector2i&in position)
+	ContextMenu(const Rocket::String&in id, const e_Vector2i&in position)
 	{
 		m_Id = id;
 		m_Position = position;
 
-		@m_MenuDoc = gui.getContext().LoadDocument(rString("Data/core/gui/context_menu.rml"));
+		@m_MenuDoc = gui.getContext().LoadDocument(Rocket::String("Data/core/gui/context_menu.rml"));
 		if (m_MenuDoc !is null)
 		{
 			m_MenuDoc.SetId(id);
-			m_MenuDoc.SetProperty(rString("left"), rString(position.x + "px"));
-			m_MenuDoc.SetProperty(rString("top"), rString(position.y + "px"));
+			m_MenuDoc.SetProperty(Rocket::String("left"), Rocket::String(position.x + "px"));
+			m_MenuDoc.SetProperty(Rocket::String("top"), Rocket::String(position.y + "px"));
 
 			m_Items.resize(5);
 			m_ItemCount = 0;
@@ -127,8 +127,8 @@ class ContextMenu : IEventListener
 	{
 		m_Position.x = x;
 		m_Position.y = y;
-		m_MenuDoc.SetProperty(rString("left"), rString(x + "px"));
-		m_MenuDoc.SetProperty(rString("top"), rString(y + "px"));
+		m_MenuDoc.SetProperty(Rocket::String("left"), Rocket::String(x + "px"));
+		m_MenuDoc.SetProperty(Rocket::String("top"), Rocket::String(y + "px"));
 	}
 
 	void SetListener(IContextMenuListener@ listener)
@@ -138,16 +138,16 @@ class ContextMenu : IEventListener
 
 	bool AddItem(const string&in name)
 	{
-		// Add the GUI element to the context menu document
-		Element@ element = @m_MenuDoc.CreateElement(rString("button"));
-		element.SetProperty(rString("display"), rString("block"));
-		element.SetProperty(rString("clip"), rString("auto"));
-		element.SetAttribute(rString("menu_index"), m_ItemCount);
-		element.SetId(rString("contextmenuitem-"+name+m_ItemCount));
-		element.SetInnerRML(rString(name));
+		// Add the GUI element to the cntext menu document
+		Rocket::Element@ element = @m_MenuDoc.CreateElement(Rocket::String("button"));
+		element.SetProperty(Rocket::String("display"), Rocket::String("block"));
+		element.SetProperty(Rocket::String("clip"), Rocket::String("auto"));
+		element.SetAttribute(Rocket::String("menu_index"), m_ItemCount);
+		element.SetId(Rocket::String("contextmenuitem-"+name+m_ItemCount));
+		element.SetInnerRML(Rocket::String(name));
 		m_MenuDoc.AppendChild(element);
 
-		EventConnection@ cnx = element.AddEventListener(rString("click"), this);
+		EventConnection@ cnx = element.AddEventListener(Rocket::String("click"), this);
 		m_EventConnections.Add(cnx);
 
 		// Add the MenuItem object
@@ -219,7 +219,7 @@ class ContextMenu : IEventListener
 	{
 		if (index >= 0 && index < m_ItemCount)
 		{
-			m_Items[index].element.DispatchEvent(rString("click"));
+			m_Items[index].element.DispatchEvent(Rocket::String("click"));
 		}
 	}
 
@@ -228,15 +228,15 @@ class ContextMenu : IEventListener
 		ClickItem(m_CurrentSelection);
 	}
 
-	void OnAttach(Element@) {}
-	void OnDetach(Element@) {}
+	void OnAttach(Rocket::Element@) {}
+	void OnDetach(Rocket::Element@) {}
 
 	void ProcessEvent(Event@ ev)
 	{
-		if (ev.GetType() == rString("click"))
+		if (ev.GetType() == Rocket::String("click"))
 		{
-			Element@ clicked = ev.GetTargetElement();
-			uint index = clicked.GetAttribute(rString("menu_index"), m_ItemCount);
+			Rocket::Element@ clicked = ev.GetTargetElement();
+			uint index = clicked.GetAttribute(Rocket::String("menu_index"), m_ItemCount);
 			if (index < m_ItemCount)
 				m_Listener.OnContextMenuClick(m_Items[index]);
 

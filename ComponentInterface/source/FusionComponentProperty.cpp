@@ -193,7 +193,7 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectType("Property<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); FSN_ASSERT( r >= 0 );
 		
-		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_FACTORY, "Property<T> @f(int &in)", asFUNCTIONPR(ComponentPropertyT_factory, (asIObjectType*), ComponentProperty*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_FACTORY, "Property<T>@ f(int &in)", asFUNCTIONPR(ComponentPropertyT_factory, (asIObjectType*), ComponentProperty*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 

@@ -3,8 +3,8 @@
 
 void StartGUI()
 {
-	Context @context = gui.getContext();
-	context.LoadMouseCursor(rString("Data/core/gui/cursor.rml"));
+	Rocket::Context @context = gui.getContext();
+	context.LoadMouseCursor(Rocket::String("Data/core/gui/cursor.rml"));
 
 	InitialiseConsole();
 	CreateConsole();

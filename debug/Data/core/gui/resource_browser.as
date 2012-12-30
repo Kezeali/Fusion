@@ -2,13 +2,13 @@ class EditButtonFormatter : IDataFormatter
 {
 	EditButtonFormatter()
 	{
-		AddDataFormatter(rString("edit_button"), this);
+		AddDataFormatter(Rocket::String("edit_button"), this);
 	}
 	~EditButtonFormatter()
 	{
 	}
 	
-	rString FormatData(const StringList &in raw_data)
+	Rocket::String FormatData(const StringList &in raw_data)
 	{
 		string formattedData = "";
 		if (raw_data.size() >= 2)
@@ -37,7 +37,7 @@ EditButtonFormatter@ editButtonFormatter = @EditButtonFormatter();
 void OnResourceBrowserWindowUnload(Event@ event)
 {
 	OnWindowUnload(event);
-	RemoveDataFormatter(rString("edit_button"));
+	RemoveDataFormatter(Rocket::String("edit_button"));
 }
 
 void OnEditResource(string path)

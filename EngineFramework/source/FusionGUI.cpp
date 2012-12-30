@@ -611,21 +611,21 @@ namespace FusionEngine
 		{
 			Rocket::AngelScript::RegisterCore(engine);
 			Rocket::AngelScript::Controls::RegisterControls(engine);
-			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(engine, "string", true);
+			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(engine, "::string", true);
 
 			r = engine->RegisterObjectBehaviour("string",
 				asBEHAVE_CONSTRUCT,
-				"void f(const rString &in)",
+				"void f(const Rocket::String &in)",
 				asFUNCTION(stdstringCtor_FromEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("string",
-				"string& opAssign(const rString &in)",
+				"string& opAssign(const Rocket::String &in)",
 				asFUNCTION(stdstringAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("string",
-				"string& opAddAssign(const rString &in)",
+				"string& opAddAssign(const Rocket::String &in)",
 				asFUNCTION(stdstringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}
@@ -691,7 +691,7 @@ namespace FusionEngine
 			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(
-			"GUI", "Context@ getContext() const",
+			"GUI", "Rocket::Context@ getContext() const",
 			asFUNCTION(GUI_GetContextRef), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod(

@@ -696,12 +696,13 @@ namespace FusionEngine
 
 		ContextMenu::RegisterType<ContextMenu>(engine, "ContextMenu");
 
-		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f()", asFUNCTION(ContextMenu_FactoryGeneric), asCALL_GENERIC);
-		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f(Context@, bool)", asFUNCTION(ContextMenu_Factory), asCALL_CDECL);
+		int r;
+		r = engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f()", asFUNCTION(ContextMenu_FactoryGeneric), asCALL_GENERIC); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f(Rocket::Context@, bool)", asFUNCTION(ContextMenu_Factory), asCALL_CDECL); FSN_ASSERT(r >= 0);
 		
-		engine->RegisterObjectMethod("ContextMenu", "void show()", asMETHODPR(ContextMenu, Show, (void), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod("ContextMenu", "void show(int, int, bool)", asMETHODPR(ContextMenu, Show, (int, int, bool), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod("ContextMenu", "void show(int, int)", asFUNCTION(ContextMenu_ShowWithinCtx), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("ContextMenu", "void show()", asMETHODPR(ContextMenu, Show, (void), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("ContextMenu", "void show(int, int, bool)", asMETHODPR(ContextMenu, Show, (int, int, bool), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("ContextMenu", "void show(int, int)", asFUNCTION(ContextMenu_ShowWithinCtx), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		// Register MenuItem inheritance
 		RegisterBaseOf<MenuItem, ContextMenu>(engine, "MenuItem", "ContextMenu");
