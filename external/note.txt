@@ -1,1 +1,0 @@
-These "should" be seperately compiled as libs but are small enough to just build with the main project.
