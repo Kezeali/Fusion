@@ -211,7 +211,7 @@ namespace FusionEngine
 			if (!m_AnimationPath.empty())
 			{
 				m_AnimationLoadConnection.disconnect();
-				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, std::bind(&CLSprite::ImageLoaded, this, _1));
+				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, std::bind(&CLSprite::AnimationLoaded, this, _1));
 			}
 			else
 			{

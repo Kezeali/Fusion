@@ -45,31 +45,31 @@ namespace FusionEngine
 			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 
-		CL_IODevice file = vdir.open_file_read(resource->GetPath());
-
 		CL_String ext = CL_PathHelp::get_extension(resource->GetPath());
 		CL_PixelBuffer sp;
 		try
 		{
+			CL_IODevice file = vdir.open_file_read(resource->GetPath());
+			// Load the image
 			sp = CL_ImageProviderFactory::load(file, ext);
+			// Create the resource metadata
+			file.seek(0);
+			FileMetadata metadata;
+			metadata.modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
+			metadata.length = file.get_size();
+			metadata.checksum = checksumClanLibDevice(file);
+			resource->SetMetadata(metadata);
+
+			CL_PixelBuffer *data = new CL_PixelBuffer(sp);
+			resource->SetDataPtr(data);
+
+			resource->setLoaded(true);
 		}
 		catch (CL_Exception& ex)
 		{
 			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
-
-		file.seek(0);
-		FileMetadata metadata;
-		metadata.modTime = PHYSFS_getLastModTime(resource->GetPath().c_str());
-		metadata.length = file.get_size();
-		metadata.checksum = checksumClanLibDevice(file);
-		resource->SetMetadata(metadata);
-
-		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
-		resource->SetDataPtr(data);
-
-		resource->setLoaded(true);
 	}
 
 	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
