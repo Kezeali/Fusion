@@ -94,6 +94,9 @@
     <ClCompile Include="source\FusionNetworkedRegionCellCache.cpp">
       <Filter>Map\Async Loading</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionProgressDisplay.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionTaskScheduler.h" />
@@ -198,6 +201,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionRegionFileLoadedCallbackHandle.h">
       <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionProgressDisplay.h">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
