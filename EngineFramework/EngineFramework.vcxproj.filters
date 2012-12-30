@@ -205,5 +205,8 @@
     <ClInclude Include="include\FusionProgressDisplay.h">
       <Filter>GUI</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionCellFileManager.h">
+      <Filter>Map</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

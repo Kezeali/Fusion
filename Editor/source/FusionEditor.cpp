@@ -1158,7 +1158,7 @@ namespace FusionEngine
 				m_MapLoader->Stop();
 
 				PhysVFS vfs;
-				GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader, m_NonStreamedEntities, m_EntityInstantiator.get());
+				GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
 
 				auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
 				mb->Show();

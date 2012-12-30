@@ -51,8 +51,7 @@ namespace FusionEngine
 	class Cell;
 	class CellDataSource;
 
-	// TODO: replace with CellFilesystem
-	class RegionCellArchivist;
+	class CellFileManager;
 
 	class VirtualFilesystem
 	{
@@ -74,7 +73,7 @@ namespace FusionEngine
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
 
-		static void CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, RegionCellArchivist* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
+		static void CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, CellFileManager* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
 		std::string GetName() const { return m_Name; }
 

@@ -47,6 +47,7 @@
 #include <tbb/concurrent_hash_map.h>
 
 #include "FusionCellDataSource.h"
+#include "FusionCellFileManager.h"
 #include "FusionGameMapLoader.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionSaveDataArchive.h"
@@ -69,7 +70,7 @@ namespace FusionEngine
 	class ActiveEntityDirectory;
 
 	//! CellArchiver implementation
-	class RegionCellArchivist : public CellArchiver, public SaveDataArchive
+	class RegionCellArchivist : public CellArchiver, public SaveDataArchive, public CellFileManager
 	{
 	public:
 		//! Ctor
@@ -147,10 +148,14 @@ namespace FusionEngine
 		RegionCellCache* GetCellCache() const { return m_Cache; }
 		RegionCellCache* GetEditableCellCache() const { return m_EditableCache; }
 
-		virtual void CopyCellFiles(const std::string& cache_path, const std::string& dest_path);
-
+		//! Implements CellFileManager
 		virtual void CopyCellFiles(const std::string& dest_path);
+		//! Implements CellFileManager
+		virtual void CopyDatabase(const std::string& dest_path);
 
+		//! Copy the cache files at the given path. Relative to the base-path for this archiver - so the main cache is "" (an empty string)
+		void CopyCellFiles(const std::string& cache_path, const std::string& dest_path);
+		//! Save a copy of the current entity location DB
 		void SaveEntityLocationDB(const std::string& filename);
 
 		void EnqueueQuickSave(const std::string& save_name);

@@ -430,6 +430,16 @@ namespace FusionEngine
 		}
 	}
 
+	void RegionCellArchivist::CopyCellFiles(const std::string& dest_path)
+	{
+		CopyCellFiles("", dest_path);
+	}
+
+	void RegionCellArchivist::CopyDatabase(const std::string& dest_path)
+	{
+		SaveEntityLocationDB(dest_path);
+	}
+
 	void RegionCellArchivist::CopyCellFiles(const std::string& cache_path, const std::string& dest_path)
 	{
 		std::vector<boost::filesystem::path> regionFiles;
@@ -441,11 +451,6 @@ namespace FusionEngine
 		}
 
 		ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, regionFiles, dest_path, [](unsigned int fileNum) {});
-	}
-
-	void RegionCellArchivist::CopyCellFiles(const std::string& dest_path)
-	{
-		CopyCellFiles("", dest_path);
 	}
 
 	void RegionCellArchivist::SaveEntityLocationDB(const std::string& filename)

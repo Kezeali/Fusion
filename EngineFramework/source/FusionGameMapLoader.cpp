@@ -35,6 +35,7 @@
 #include <StringCompressor.h>
 
 #include "FusionCellCache.h"
+#include "FusionCellFileManager.h"
 #include "FusionCellSerialisationUtils.h"
 #include "FusionClientOptions.h"
 #include "FusionComponentFactory.h"
@@ -57,18 +58,15 @@
 
 #include "FusionPhysFS.h"
 
-// TODO: make an interface for the methods the compiler requires from RegionCellArchivist (call the interface CellFilesystem)
-#include "FusionRegionMapLoader.h"
-
 using namespace std::placeholders;
 
 namespace FusionEngine
 {
 
 	const std::string GameMap::metadataExtension = ".yaml";
-	const std::string instantiatorStateFilename = "instantiator_state";
-	const std::string tentDataFilename = "transcendental.entitydata";
-	const std::string entityDatabaseFilename = "entitylocations.kc";
+	const std::string GameMap::instantiatorStateFilename = "instantiator_state";
+	const std::string GameMap::tentDataFilename = "transcendental.entitydata";
+	const std::string GameMap::entityDatabaseFilename = "entitylocations.kc";
 
 	GameMap::GameMap(const std::string& path)
 		: m_Path(path)
@@ -169,7 +167,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, RegionCellArchivist* cell_archiver, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, CellFileManager* cell_archiver, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
@@ -183,7 +181,8 @@ namespace FusionEngine
 		const std::string tentDataPath = path + "/" + tentDataFilename;
 		const std::string entityDatabasePath = path + "/" + entityDatabaseFilename;
 
-		cell_archiver->SaveEntityLocationDB(entityDatabasePath);
+		// Entity locations database
+		cell_archiver->CopyDatabase(entityDatabasePath);
 
 		// Metadata
 		//  cell size

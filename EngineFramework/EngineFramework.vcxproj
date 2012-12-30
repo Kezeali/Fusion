@@ -141,6 +141,7 @@
     <ClInclude Include="include\FusionCell.h" />
     <ClInclude Include="include\FusionCellCache.h" />
     <ClInclude Include="include\FusionCellDataSource.h" />
+    <ClInclude Include="include\FusionCellFileManager.h" />
     <ClInclude Include="include\FusionCellSerialisationUtils.h" />
     <ClInclude Include="include\FusionCellStreamTypes.h" />
     <ClInclude Include="include\FusionCharCounter.h" />
