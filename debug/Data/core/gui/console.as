@@ -2,7 +2,7 @@
 
 void InitialiseConsole()
 {
-	RegisterElementType(Rocket::String("console"), Rocket::String("ConsoleElement"));
+	Rocket::RegisterElementType(Rocket::String("console"), Rocket::String("ConsoleElement"));
 }
 
 ContextMenu@ autocomplete_menu;
@@ -139,9 +139,9 @@ class ConsoleElement : ScriptElement
 			{
 				//text_area.SetCursorIndex(current_text.Length(), true);
 				// Send ctrl-end key-press event
-				e_Dictionary parameters;
+				Rocket::Dictionary parameters;
 				parameters.Set(Rocket::String("ctrl_key"), int(1));
-				parameters.Set(Rocket::String("key_identifier"), int(GUIKey::KI_END));
+				parameters.Set(Rocket::String("key_identifier"), int(Rocket::GUIKey::KI_END));
 				text_area.DispatchEvent(Rocket::String("keydown"), parameters);
 				text_area.ShowCursor(false, true); // scroll to cursor
 				autoScroll = false;
@@ -176,8 +176,8 @@ class ConsoleElement : ScriptElement
 		}
 		input.Focus();
 
-		e_Dictionary parameters;
-		parameters.Set(Rocket::String("key_identifier"), int(GUIKey::KI_END));
+		Rocket::Dictionary parameters;
+		parameters.Set(Rocket::String("key_identifier"), int(Rocket::GUIKey::KI_END));
 		input.DispatchEvent(Rocket::String("keydown"), parameters);
 	}
 
@@ -186,7 +186,7 @@ class ConsoleElement : ScriptElement
 bool acConnection = false;
 Rocket::String lastvalue = Rocket::String("");
 StringArray possibleCompletions;
-void OnConsoleEntryChanged(Event& ev)
+void OnConsoleEntryChanged(Rocket::Event& ev)
 {
 	if (autocomplete_menu is null)
 		return;
@@ -246,8 +246,8 @@ void OnConsoleEntryChanged(Event& ev)
 	}
 }
 
-EventConnection@ consoleClickConnection;
-void OnConsoleEnterClick(Event& ev)
+//EventConnection@ consoleClickConnection;
+void OnConsoleEnterClick(Rocket::Event& ev)
 {
 	autocomplete_menu.hide();
 	autocomplete_menu.removeAllChildren();
@@ -261,7 +261,7 @@ void OnConsoleEnterClick(Event& ev)
 	input.SetValue(Rocket::String(""));
 }
 
-void OnConsoleEntryEnter(Event& ev)
+void OnConsoleEntryEnter(Rocket::Event& ev)
 {
 	if (autocomplete_menu.getSelectedIndex() != -1)
 	{
@@ -273,16 +273,16 @@ void OnConsoleEntryEnter(Event& ev)
 		OnConsoleEnterClick(ev);
 }
 
-void OnConsoleEntryKeyUp(Event& ev)
+void OnConsoleEntryKeyUp(Rocket::Event& ev)
 {
 	if (ev.GetType() == Rocket::String("keyup"))
 	{
 		int key_identifier = ev.GetParameter(Rocket::String("key_identifier"), int(0));
-		if (key_identifier == GUIKey::KI_UP)
+		if (key_identifier == Rocket::GUIKey::KI_UP)
 		{
 			autocomplete_menu.selectRelative(-1);
 		}
-		if (key_identifier == GUIKey::KI_DOWN)
+		if (key_identifier == Rocket::GUIKey::KI_DOWN)
 		{
 			autocomplete_menu.selectRelative(1);
 		}
@@ -290,14 +290,14 @@ void OnConsoleEntryKeyUp(Event& ev)
 	else if (ev.GetType() == Rocket::String("keydown"))
 	{
 		int key_identifier = ev.GetParameter(Rocket::String("key_identifier"), int(0));
-		if (key_identifier == GUIKey::KI_UP || key_identifier == GUIKey::KI_DOWN)
+		if (key_identifier == Rocket::GUIKey::KI_UP || key_identifier == Rocket::GUIKey::KI_DOWN)
 		{
 			ev.StopPropagation();
 		}
 	}
 }
 
-void OnConsoleOpened(Event &ev)
+void OnConsoleOpened(Rocket::Event &ev)
 {
 	//OnWindowLoad(ev);
 }
@@ -307,7 +307,7 @@ void OnConsoleClosed()
 	gui.hideDebugger();
 }
 
-void OnConsoleShow(Event &ev)
+void OnConsoleShow(Rocket::Event &ev)
 {
 	Rocket::Element@ input = ev.GetCurrentElement().GetElementById(Rocket::String("command_element"));
 	input.Focus();

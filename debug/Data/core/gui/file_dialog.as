@@ -90,7 +90,7 @@ string ExtractTableFromDataSource(string filesystem_datasource_string)
 		return "";
 }
 
-string UpdateCurrentTable(Event@ event)
+string UpdateCurrentTable(Rocket::Event@ event)
 {
 	string dataSource = event.GetParameter(Rocket::String("source"), Rocket::String(""));
 	string result = ExtractTableFromDataSource(dataSource);
@@ -102,18 +102,18 @@ string UpdateCurrentTable(Event@ event)
 	return result;
 }
 
-void OnWindowLoad(Event@ event)
+void OnWindowLoad(Rocket::Event@ event)
 {
 	//@previewFormatter = ResourcePreviewFormatter();
 	//AddDataFormatter(Rocket::String("resource_preview"), @previewFormatter);
 }
 
-void OnWindowUnload(Event@ event)
+void OnWindowUnload(Rocket::Event@ event)
 {
 	RemoveDataFormatter(Rocket::String("resource_preview"));
 }
 
-void OnWindowShow(Event@ event)
+void OnWindowShow(Rocket::Event@ event)
 {
 	Rocket::ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 	Rocket::ElementDataGrid@ dataGrid = cast<Rocket::ElementDataGrid>( doc.GetElementById(Rocket::String("file_list")) );
@@ -133,7 +133,7 @@ void OnWindowShow(Event@ event)
 	//AddDataFormatter(Rocket::String("resource_preview"), @previewFormatter);
 }
 
-void OnFileSelected(Event@ event)
+void OnFileSelected(Rocket::Event@ event)
 {
 	int index = event.GetParameter(Rocket::String("row_index"), -1);
 	if (index == -1)
@@ -162,7 +162,7 @@ void OnFileSelected(Event@ event)
 	UpdatePathFormField(doc);
 }
 
-void OnRowDblClick(Event@ event)
+void OnRowDblClick(Rocket::Event@ event)
 {
 	int index = event.GetParameter(Rocket::String("row_index"), -1);
 	if (index == -1)
@@ -184,7 +184,7 @@ void OnRowDblClick(Event@ event)
 	UpdatePathFormField(doc);
 }
 
-void OnUpClicked(Event@ event)
+void OnUpClicked(Rocket::Event@ event)
 {
 	if (root != "" && currentTable != root)
 	{
@@ -199,14 +199,14 @@ void OnUpClicked(Event@ event)
 	}
 }
 
-void OnRefreshClicked(Event@ event)
+void OnRefreshClicked(Rocket::Event@ event)
 {
 	filesystem_datasource.refresh();
 }
 
 Rocket::ElementDocument@ tooltip = null;
 Rocket::Element@ content = null;
-void GeneratePreviewPopup(string filename, Event@ event)
+void GeneratePreviewPopup(string filename, Rocket::Event@ event)
 {
 	Rocket::ElementDocument@ document = event.GetTargetElement().GetOwnerDocument();
 	if (document !is null)
@@ -234,7 +234,7 @@ void GeneratePreviewPopup(string filename, Event@ event)
 	}
 }
 
-void MovePreviewPopup(Event@ event)
+void MovePreviewPopup(Rocket::Event@ event)
 {
 	string mouse_x = event.GetParameter(Rocket::String("mouse_x"), Rocket::String());
 	string mouse_y = event.GetParameter(Rocket::String("mouse_y"), Rocket::String());
@@ -242,7 +242,7 @@ void MovePreviewPopup(Event@ event)
 		Rocket::String("display: block; width: 60px; position: absolute; left: " + mouse_x + "; top: " + mouse_y + ";"));
 }
 
-void HidePreviewPopup(Event@ event)
+void HidePreviewPopup(Rocket::Event@ event)
 {
 	Rocket::ElementDocument@ document = event.GetTargetElement().GetOwnerDocument();
 	if (document !is null)

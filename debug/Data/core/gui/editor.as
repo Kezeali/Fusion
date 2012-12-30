@@ -1,7 +1,7 @@
 Rocket::ElementUndoMenu @editor_undoMenu = null;
 Rocket::ElementUndoMenu @editor_redoMenu = null;
 
-void OnEditorWindowLoad(Event@ event)
+void OnEditorWindowLoad(Rocket::Event@ event)
 {
 	Rocket::ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 	doc.GetElementById(Rocket::String("title")).SetInnerRML(doc.GetTitle());
@@ -15,7 +15,7 @@ void OnEditorWindowLoad(Event@ event)
 		editor.attachRedoMenu(editor_redoMenu);
 }
 
-void OnUndo(Event@ event)
+void OnUndo(Rocket::Event@ event)
 {
 	if (editor_undoMenu is null)
 		return;
@@ -27,7 +27,7 @@ void OnUndo(Event@ event)
 	editor.undo(editor_undoMenu.GetSelection());
 }
 
-void OnRedo(Event@ event)
+void OnRedo(Rocket::Event@ event)
 {
 	if (editor_redoMenu is null)
 		return;
@@ -39,26 +39,26 @@ void OnRedo(Event@ event)
 	editor.redo(editor_redoMenu.GetSelection());
 }
 
-void OnClickActualGFXCheckbox(Event@ event)
+void OnClickActualGFXCheckbox(Rocket::Event@ event)
 {
 	bool enabled = event.GetParameter(Rocket::String("value"), false);
 	editor.setDisplayActualSprites(enabled);
 }
 
-void OnEntityTypeChanged(Event@ event)
+void OnEntityTypeChanged(Rocket::Event@ event)
 {
 	string type = event.GetParameter(Rocket::String('value'), Rocket::String());
 	editor.updateSuggestions(type);
 	editor.setEntityType(type);
 }
 
-void OnClickPseudoCheckbox(Event@ event)
+void OnClickPseudoCheckbox(Rocket::Event@ event)
 {
 	bool pseudo = event.GetParameter(Rocket::String("value"), false);
 	editor.setPlacePseudoEntities(pseudo);
 }
 
-void OnSelected(Event@ event)
+void OnSelected(Rocket::Event@ event)
 {
 	int index = event.GetParameter(Rocket::String("row_index"), -1);
 	if (index == -1)
@@ -75,7 +75,7 @@ void OnSelected(Event@ event)
 	}
 }
 
-void SubmitSaveOrLoad(Event@ event)
+void SubmitSaveOrLoad(Rocket::Event@ event)
 {
 	string filename = event.GetParameter(Rocket::String('filename'), Rocket::String());
 	string type = event.GetParameter(Rocket::String('submit'), Rocket::String());

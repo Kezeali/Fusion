@@ -231,7 +231,7 @@ class ContextMenu : IEventListener
 	void OnAttach(Rocket::Element@) {}
 	void OnDetach(Rocket::Element@) {}
 
-	void ProcessEvent(Event@ ev)
+	void ProcessEvent(Rocket::Event@ ev)
 	{
 		if (ev.GetType() == Rocket::String("click"))
 		{

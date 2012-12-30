@@ -34,7 +34,7 @@ class EditButtonFormatter : IDataFormatter
 
 EditButtonFormatter@ editButtonFormatter = @EditButtonFormatter();
 
-void OnResourceBrowserWindowUnload(Event@ event)
+void OnResourceBrowserWindowUnload(Rocket::Event@ event)
 {
 	OnWindowUnload(event);
 	RemoveDataFormatter(Rocket::String("edit_button"));

@@ -1,4 +1,4 @@
-void OnDragDrop(Event@ event)
+void OnDragDrop(Rocket::Event@ event)
 {
 	Rocket::Element@ dragElement = event.GetParameterAsElement(Rocket::String('drag_element'));
 	int posx = event.GetParameter("mouse_x", int(0));
