@@ -512,10 +512,22 @@ namespace FusionEngine
 
 	void StreamingManager::StoreAllCells(bool refresh_next_update)
 	{
+		const unsigned int waitLimit = 60000;
+		unsigned int timeWaiting = 0;
+		unsigned int lastTick = CL_System::get_time();
+
 		while (!m_TheVoid.objects.empty())
 		{
-			CL_System::sleep(1);
+			CL_System::sleep(60);
 			Update(Default);
+
+			const auto currentTick = CL_System::get_time();
+			if (currentTick > lastTick)
+				timeWaiting += currentTick - lastTick;
+			lastTick = currentTick;
+
+			if (timeWaiting > waitLimit)
+				FSN_EXCEPT(Exception, "Moving entities out of The Void took too long");
 		}
 
 		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)

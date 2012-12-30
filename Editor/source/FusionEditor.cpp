@@ -715,6 +715,41 @@ namespace FusionEngine
 			return messageBox.get();
 		});
 
+		Console::getSingleton().BindCommand("editor_load", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			if (cmdargs.size() >= 2)
+			{
+				m_SaveName = cmdargs[1];
+				Load();
+				return "";
+			}
+			return "Save name required";
+		});
+		Console::getSingleton().SetCommandHelpText("editor_load", "Load the map with the given name", StringVector()/*"savename"*/);
+		
+		Console::getSingleton().BindCommand("editor_save", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			if (cmdargs.size() >= 2)
+			{
+				m_SaveName = cmdargs[1];
+				Save();
+				return "";
+			}
+			return "Save name required";
+		});
+		Console::getSingleton().SetCommandHelpText("editor_save", "Save the current map", StringVector()/*"savename"*/);
+
+		Console::getSingleton().BindCommand("editor_savename", [this](const std::vector<std::string>& cmdargs)->std::string
+		{
+			if (cmdargs.size() >= 2)
+			{
+				m_SaveName = cmdargs[1];
+				return "Save name set to " + m_SaveName;
+			}
+			return m_SaveName;
+		});
+		Console::getSingleton().SetCommandHelpText("editor_savename", "Set the save name (without saving)", StringVector()/*"savename"*/);
+
 		Console::getSingleton().BindCommand("le", [this](const std::vector<std::string>& cmdargs)->std::string
 		{
 			std::string retval = "Selected entities: ";
@@ -1053,16 +1088,16 @@ namespace FusionEngine
 	class PhysVFS : public VirtualFilesystem
 	{
 	public:
-		virtual std::istream OpenFileForReading(const std::string& path) const
+		virtual std::shared_ptr<std::istream> OpenFileForReading(const std::string& path) const
 		{
-			return IO::PhysFSStream(path, IO::Read);
+			return std::make_shared<IO::PhysFSStream>(path, IO::Read);
 		}
 
-		virtual std::ostream OpenFileForWriting( const std::string& path ) const
+		virtual std::shared_ptr<std::ostream> OpenFileForWriting( const std::string& path ) const
 		{
 			const std::string folder = boost::filesystem::path(path).remove_filename().string();
 			CreateFolder(folder);
-			return IO::PhysFSStream(path, IO::Write);
+			return std::make_shared<IO::PhysFSStream>(path, IO::Write);
 		}
 
 		virtual void CreateFolder(const std::string& path) const
@@ -1150,20 +1185,31 @@ namespace FusionEngine
 
 			try
 			{
-				PHYSFS_mkdir(mapName.c_str());
+				if (!mapName.empty() && (PHYSFS_isDirectory(mapName.c_str()) || PHYSFS_mkdir(mapName.c_str())))
+				{
+					m_StreamingManager->StoreAllCells(false);
 
-				m_StreamingManager->StoreAllCells(false);
+					m_MapLoader->Save(mapName);
+					m_MapLoader->Stop();
 
-				m_MapLoader->Save(mapName);
-				m_MapLoader->Stop();
+					PhysVFS vfs;
+					GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
 
-				PhysVFS vfs;
-				GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
-
-				auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
-				mb->Show();
+					auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled " + mapName);
+					mb->Show();
+				}
+				else
+				{
+					SendToConsole("Failed to compile map: failed to create map folder");
+					MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:Failed to create map folder");
+				}
 			}
 			catch (FileSystemException& e)
+			{
+				SendToConsole("Failed to compile map: " + e.GetDescription());
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+			}
+			catch (Exception& e)
 			{
 				SendToConsole("Failed to compile map: " + e.GetDescription());
 				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());

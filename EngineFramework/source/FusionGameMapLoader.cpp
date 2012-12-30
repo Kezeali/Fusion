@@ -167,22 +167,23 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, CellFileManager* cell_archiver, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(const VirtualFilesystem& vfs, const std::string& map_name, float cell_size, CellFileManager* cell_archiver, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
-		const std::string mapName = boost::filesystem::path(path).filename().string();
+		const std::string path = map_name;
 
-		const std::string metadataPath = path + "/" + mapName + metadataExtension;
+		const std::string metadataPath = path + "/" + map_name + metadataExtension;
 		const std::string instantiatorStatePath = path + "/" + instantiatorStateFilename;
 		const std::string tentDataPath = path + "/" + tentDataFilename;
 		const std::string entityDatabasePath = path + "/" + entityDatabaseFilename;
 
 		// Entity locations database
 		cell_archiver->CopyDatabase(entityDatabasePath);
+		cell_archiver->CopyCellFiles(path);
 
 		// Metadata
 		//  cell size
@@ -196,22 +197,22 @@ namespace FusionEngine
 			emitter << YAML::Value << cell_size;
 			emitter << YAML::EndMap;
 
-			metadataFile.write(emitter.c_str(), emitter.size());
+			metadataFile->write(emitter.c_str(), emitter.size());
 		}
 
 		// Instantiator state
 		//  who knows
 		{
-			auto file = vfs.OpenFileForWriting(instantiatorStateFilename);
+			auto file = vfs.OpenFileForWriting(instantiatorStatePath);
 
-			instantiator->SaveState(file);
+			instantiator->SaveState(*file);
 		}
 
 		// Tents
 		//  pseudo entity data
 		//  synced entity data
 		{
-			auto tentsFile = vfs.OpenFileForWriting(tentDataFilename);
+			auto tentsFile = vfs.OpenFileForWriting(tentDataPath);
 
 			// Filter the pseudo / synced entities into separate lists
 			std::vector<EntityPtr> nonStreamingEntities = nsentities;
@@ -233,7 +234,7 @@ namespace FusionEngine
 
 			boost::iostreams::filtering_ostream compressingStream;
 			compressingStream.push(boost::iostreams::zlib_compressor());
-			compressingStream.push(tentsFile);
+			compressingStream.push(*tentsFile);
 
 			IO::Streams::CellStreamWriter nonsWriter(&compressingStream);
 

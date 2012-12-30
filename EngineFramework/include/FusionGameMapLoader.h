@@ -57,8 +57,8 @@ namespace FusionEngine
 	{
 	public:
 		virtual ~VirtualFilesystem() {}
-		virtual std::istream OpenFileForReading(const std::string& path) const = 0;
-		virtual std::ostream OpenFileForWriting(const std::string& path) const = 0;
+		virtual std::shared_ptr<std::istream> OpenFileForReading(const std::string& path) const = 0;
+		virtual std::shared_ptr<std::ostream> OpenFileForWriting(const std::string& path) const = 0;
 		virtual void CreateFolder(const std::string& path) const = 0;
 		virtual void Delete(const std::string& path) const = 0;
 	};
@@ -73,7 +73,7 @@ namespace FusionEngine
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
 
-		static void CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, CellFileManager* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
+		static void CompileMap(const VirtualFilesystem& vfs, const std::string& map_name, float cell_size, CellFileManager* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
 		std::string GetName() const { return m_Name; }
 

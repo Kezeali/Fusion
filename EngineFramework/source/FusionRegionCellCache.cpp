@@ -694,21 +694,22 @@ namespace FusionEngine
 		: m_CachePath(cache_path),
 		m_RegionSize(region_size),
 		m_MaxLoadedFiles(10),
-		m_FragmentationAllowed(true)
+		m_FragmentationAllowed(true),
+		m_ReadOnly(readonly)
 	{
 		FSN_ASSERT(region_size > 0);
 
 		FSN_ASSERT(region_size * region_size < RegionFile::s_MaxSectors);
 
-		if (readonly)
+		if (readonly) // Used for compiled maps (can't be written to, obviously)
 		{
 			ResourceManager::getSingleton().AddResourceLoader(
-				ResourceLoader("MapRegion" + m_CachePath, &RegionMap::LoadMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
+				ResourceLoader("StaticMapRegion" + m_CachePath, &RegionMap::LoadStaticMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
 		}
 		else
 		{
 			ResourceManager::getSingleton().AddResourceLoader(
-				ResourceLoader("StaticMapRegion" + m_CachePath, &RegionMap::LoadStaticMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
+				ResourceLoader("MapRegion" + m_CachePath, &RegionMap::LoadMapRegionResource, RegionMap::UnloadMapRegionResource, region_size));
 		}
 	}
 
@@ -747,7 +748,7 @@ namespace FusionEngine
 	void RegionCellCache::SetFragmentationAllowed(bool allowed)
 	{
 		if (!allowed)
-			SendToConsole("Enabling auto-defrag on all regions in " + m_CachePath);
+			AddLogEntry("Enabling auto-defrag on all regions in " + m_CachePath);
 
 		m_FragmentationAllowed = allowed;
 		for (auto it = m_Cache.cbegin(); it != m_Cache.cend(); ++it)
@@ -826,7 +827,7 @@ namespace FusionEngine
 					AddLogEntry("cells_loaded", "** Requested " + filePath);
 					FSN_ASSERT_MSG(!accessor->second.m_Connection.connected(), "What??!");
 					accessor->second.m_Connection =
-						ResourceManager::getSingleton().GetResource("MapRegion" + m_CachePath,
+						ResourceManager::getSingleton().GetResource(m_ReadOnly ? "StaticMapRegion" : "MapRegion" + m_CachePath,
 						filePath,
 						std::bind(&RegionCellCache::OnRegionFileLoaded, this, _1, coord),
 						-1000);

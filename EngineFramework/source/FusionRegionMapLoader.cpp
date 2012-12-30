@@ -237,7 +237,7 @@ namespace FusionEngine
 		setupTuning(m_EntityLocationDB.get());
 		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
 
-		m_MapCache = new RegionCellCache(m_Map->GetPath());
+		m_MapCache = new RegionCellCache(m_Map->GetPath(), 16, true);
 	}
 
 	void RegionCellArchivist::Update(ObjectID id, const CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
@@ -401,7 +401,18 @@ namespace FusionEngine
 			relativePath /= fit->string();
 		}
 
-		return relativePath.generic_string();
+		return relativePath;
+	}
+
+	std::string make_absolute(const std::string& path_relative_to_write_dir)
+	{
+		std::string fullPath = boost::filesystem::path(path_relative_to_write_dir).generic_string();
+		std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).generic_string();
+
+		if (fullPath.length() < writeDir.length() || fullPath.substr(0, writeDir.length()) != writeDir)
+			fullPath = writeDir + "/" + fullPath;
+
+		return fullPath;
 	}
 
 	namespace ArchivistSaveUtils
@@ -450,18 +461,16 @@ namespace FusionEngine
 			ArchivistSaveUtils::FindWithExtensions(regionFiles, boost::filesystem::path(m_FullBasePath), extensions);
 		}
 
-		ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, regionFiles, dest_path, [](unsigned int fileNum) {});
+		const std::string fullPath = make_absolute(dest_path);
+
+		ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, regionFiles, fullPath, [](unsigned int fileNum) {});
 	}
 
 	void RegionCellArchivist::SaveEntityLocationDB(const std::string& filename)
 	{
 		if (m_EntityLocationDB)
 		{
-			std::string fullPath = boost::filesystem::path(filename).generic_string();
-			std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).generic_string();
-
-			if (fullPath.length() < writeDir.length() || fullPath.substr(0, writeDir.length()) != writeDir)
-				fullPath = writeDir + "/" + fullPath;
+			const std::string fullPath = make_absolute(filename);
 
 			if (m_Thread.joinable())
 			{
@@ -596,6 +605,8 @@ namespace FusionEngine
 		// Enqueue to load entities when a) there is no map data to load, or b) map data is ready to load
 		if (!job->mapSubjob || job->mapSubjob->cellDataStream)
 			m_ReadQueueLoadEntities.push(job);
+
+		m_NewData.set();
 	}
 
 	std::shared_ptr<EntitySerialisationUtils::EntityFuture> RegionCellArchivist::LoadEntity(std::shared_ptr<ICellStream> file, bool includes_id, ObjectID id, const EntitySerialisationUtils::SerialisedDataStyle data_style)
@@ -971,6 +982,8 @@ namespace FusionEngine
 								StartJob(toRead, cell);
 								if (cell->waiting == Cell::Ready) // Sometimes there isn't much to do, and the job finishes immediately
 									readyCells.push_back(cellCoord);
+								else
+									m_NewData.set();
 							}
 							else
 							{
@@ -1017,7 +1030,11 @@ namespace FusionEngine
 										it = m_IncommingCells.erase(it);
 									}
 									else
+									{
+										// Not done yet (check again soon)
+										m_NewData.set();
 										++it;
+									}
 								}
 								catch (Exception& ex)
 								{

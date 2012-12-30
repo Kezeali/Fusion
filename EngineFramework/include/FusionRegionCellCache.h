@@ -152,6 +152,8 @@ namespace FusionEngine
 		CL_Rect m_Bounds;
 
 		bool m_FragmentationAllowed;
+
+		bool m_ReadOnly;
 	};
 
 }
