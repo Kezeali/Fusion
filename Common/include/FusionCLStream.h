@@ -41,8 +41,6 @@
 //#include "FusionPhysFSIOStream.h"
 #include <boost/iostreams/stream.hpp>
 
-#include <yaml-cpp/yaml.h>
-
 namespace FusionEngine { namespace IO
 {
 

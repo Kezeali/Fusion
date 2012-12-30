@@ -51,27 +51,61 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include "FusionBinaryStream.h"
+#include <yaml-cpp/yaml.h>
 
 #include <boost/filesystem.hpp>
 
-// TEMP: remove this when the cell cache is generated externally
-#include "FusionRegionCellCache.h"
+#include "FusionPhysFS.h"
+
+// TODO: make an interface for the methods the compiler requires from RegionCellArchivist (call the interface CellFilesystem)
+#include "FusionRegionMapLoader.h"
 
 using namespace std::placeholders;
 
 namespace FusionEngine
 {
 
-	GameMap::GameMap(const std::string& path)
-		: m_Name(name)
-	{
-		std::istream metadata = std::stringstream();
-		IO::Streams::CellStreamReader reader(&metadata);
-		m_CellSize = reader.ReadValue<float>();
+	const std::string GameMap::metadataExtension = ".yaml";
+	const std::string instantiatorStateFilename = "instantiator_state";
+	const std::string tentDataFilename = "transcendental.entitydata";
+	const std::string entityDatabaseFilename = "entitylocations.kc";
 
-		// TEMP: this will be created somewhere else. Also, 24 is the size used for map regions; obviously should be a const
-		auto cellCache = new RegionCellCache("Static", 24);
-		cellCache->SetPath(GetPath());
+	GameMap::GameMap(const std::string& path)
+		: m_Path(path)
+	{
+		auto findResult = PhysFSHelp::regex_find(path, ".*\\." + metadataExtension);
+		if (!findResult.empty())
+		{
+			m_Name = boost::filesystem::path(findResult[0]).filename().replace_extension().string();
+
+			ReadMetadata();
+		}
+	}
+
+	void GameMap::ReadMetadata()
+	{
+		try
+		{
+			IO::PhysFSStream stream(GetMetadataPath(), IO::Read);
+	
+			try
+			{
+				YAML::Parser p(stream);
+				YAML::Node doc;
+				if (p.GetNextDocument(doc))
+				{
+					doc["cell_size"] >> m_CellSize;
+				}
+			}
+			catch (YAML::ParserException&)
+			{
+				SendToConsole("Failed to parse map metadata");
+			}
+		}
+		catch (FileSystemException&)
+		{
+			SendToConsole("Failed to load map metadata file");
+		}
 	}
 
 	float GameMap::GetCellSize() const
@@ -81,8 +115,16 @@ namespace FusionEngine
 
 	void GameMap::InitInstantiator(EntityInstantiator* instantiator)
 	{
-		std::istream metadata = IO::PhysFSStream(GetMetadataPath(), IO::Read)
-		instantiator->LoadState(metadata);
+		try
+		{
+			IO::PhysFSStream file(GetInstantiatorStatePath(), IO::Read);
+
+			instantiator->LoadState(file);
+		}
+		catch (FileSystemException&)
+		{
+			SendToConsole("Failed to load instantiator state");
+		}
 	}
 
 	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator)
@@ -90,12 +132,13 @@ namespace FusionEngine
 		using namespace EntitySerialisationUtils;
 		namespace io = boost::iostreams;
 
+		IO::PhysFSStream entitydataFile(GetTentDataPath());
 		{
 			std::shared_ptr<std::istream> stream;
 			{
 				auto inflateStream = new io::filtering_istream();
 				inflateStream->push(io::zlib_decompressor());
-				inflateStream->push(*m_NonStreamingEntitiesFile);
+				inflateStream->push(entitydataFile);
 				stream.reset(inflateStream);
 			}
 			IO::Streams::CellStreamReader reader(stream.get());
@@ -126,25 +169,50 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMap::CompileMap(std::ostream &metadataFile, std::ostream &nonStreamingEntitiesFile, float cell_size, CellDataSource* cell_cache, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
+	void GameMap::CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, RegionCellArchivist* cell_archiver, const std::vector<EntityPtr>& nsentities, EntityInstantiator* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
+		const std::string mapName = boost::filesystem::path(path).filename().string();
+
+		const std::string metadataPath = path + "/" + mapName + metadataExtension;
+		const std::string instantiatorStatePath = path + "/" + instantiatorStateFilename;
+		const std::string tentDataPath = path + "/" + tentDataFilename;
+		const std::string entityDatabasePath = path + "/" + entityDatabaseFilename;
+
+		cell_archiver->SaveEntityLocationDB(entityDatabasePath);
+
 		// Metadata
 		//  cell size
-		//  instantiator state
 		{
-			CellStreamWriter writer(&metadataFile);
-			writer.Write(cell_size);
+			auto metadataFile = vfs.OpenFileForWriting(metadataPath);
 
-			instantiator->SaveState(metadataFile);
+			YAML::Emitter emitter;
+
+			emitter << YAML::BeginMap;
+			emitter << YAML::Key << "cell_size";
+			emitter << YAML::Value << cell_size;
+			emitter << YAML::EndMap;
+
+			metadataFile.write(emitter.c_str(), emitter.size());
 		}
 
+		// Instantiator state
+		//  who knows
 		{
-			//CellStreamWriter writer(&nonStreamingEntitiesFile);
+			auto file = vfs.OpenFileForWriting(instantiatorStateFilename);
+
+			instantiator->SaveState(file);
+		}
+
+		// Tents
+		//  pseudo entity data
+		//  synced entity data
+		{
+			auto tentsFile = vfs.OpenFileForWriting(tentDataFilename);
 
 			// Filter the pseudo / synced entities into separate lists
 			std::vector<EntityPtr> nonStreamingEntities = nsentities;
@@ -166,7 +234,7 @@ namespace FusionEngine
 
 			boost::iostreams::filtering_ostream compressingStream;
 			compressingStream.push(boost::iostreams::zlib_compressor());
-			compressingStream.push(nonStreamingEntitiesFile);
+			compressingStream.push(tentsFile);
 
 			IO::Streams::CellStreamWriter nonsWriter(&compressingStream);
 

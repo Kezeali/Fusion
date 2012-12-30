@@ -44,6 +44,7 @@
 #include "FusionGUI.h"
 #include "FusionMessageBox.h"
 #include "FusionClientOptions.h"
+#include "FusionPhysFS.h"
 #include "FusionPolygonResourceEditor.h"
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
@@ -1049,6 +1050,44 @@ namespace FusionEngine
 		}
 	}
 
+	class PhysVFS : public VirtualFilesystem
+	{
+	public:
+		virtual std::istream OpenFileForReading(const std::string& path) const
+		{
+			return IO::PhysFSStream(path, IO::Read);
+		}
+
+		virtual std::ostream OpenFileForWriting( const std::string& path ) const
+		{
+			const std::string folder = boost::filesystem::path(path).remove_filename().string();
+			CreateFolder(folder);
+			return IO::PhysFSStream(path, IO::Write);
+		}
+
+		virtual void CreateFolder(const std::string& path) const
+		{
+			if (!PHYSFS_exists(path.c_str()))
+			{
+				if (PHYSFS_mkdir(path.c_str()) == 0)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to create folder " + path + ": " + PHYSFS_getLastError());
+				}
+			}
+		}
+
+		virtual void Delete(const std::string& path) const
+		{
+			if (PHYSFS_isDirectory(path.c_str()))
+				PhysFSHelp::clear_folder(path);
+
+			if (PHYSFS_delete(path.c_str()) == 0)
+			{
+				FSN_EXCEPT(FileSystemException, "Failed to delete item at " + path + ": " + PHYSFS_getLastError());
+			}
+		}
+	};
+
 	void Editor::Update(float time, float dt)
 	{
 		// Bodies have to be forced to create since the simulation isn't running
@@ -1114,19 +1153,12 @@ namespace FusionEngine
 				PHYSFS_mkdir(mapName.c_str());
 
 				m_StreamingManager->StoreAllCells(false);
-				// Save a copy of the cache
-				const auto savePath = m_MapLoader->GetSavePath();
-				m_MapLoader->SetSavePath(m_SaveName);
+
 				m_MapLoader->Save(mapName);
 				m_MapLoader->Stop();
-				// Restore save path
-				m_MapLoader->SetSavePath(savePath);
 
-				IO::PhysFSStream metadata(mapName + "/" + mapName + ".info", IO::Write);
-				IO::PhysFSStream tentsData(mapName + "/transcendental.entitydata", IO::Write);
-				GameMap::CompileMap(metadata, tentsData, m_StreamingManager->GetCellSize(), m_MapLoader->GetCellCache(), m_NonStreamedEntities, m_EntityInstantiator.get());
-
-				m_MapLoader->SaveEntityLocationDB(mapName + "/entitylocations.kc");
+				PhysVFS vfs;
+				GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader, m_NonStreamedEntities, m_EntityInstantiator.get());
 
 				auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled default.gad");
 				mb->Show();

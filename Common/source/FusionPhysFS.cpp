@@ -167,6 +167,36 @@ namespace FusionEngine
 			}
 		}
 
+		std::vector<std::string> find_all(const std::string& path, std::function<bool (const std::string&)> predicate, bool recursive)
+		{
+			std::vector<std::string> results;
+
+			auto files = PHYSFS_enumerateFiles(path.c_str());
+			for (auto it = files; *it != NULL; ++it)
+			{
+				std::string filename = *it;
+				std::string filePath = path + filename;
+
+				if (!predicate || predicate(filePath))
+				{
+					results.push_back(filePath);
+				}
+
+				if (recursive && PHYSFS_isDirectory(filePath.c_str()))
+				{
+					find_all(filePath, predicate, recursive);
+				}
+			}
+			PHYSFS_freeList(files);
+
+			return results;
+		}
+
+		std::vector<std::string> list_content(const std::string& path, bool recursive)
+		{
+			return find_all(path, std::function<bool (const std::string&)>(), recursive);
+		}
+
 		std::vector<std::string> regex_find(const std::string& path, const std::string& expression, bool recursive)
 		{
 			try
@@ -183,29 +213,10 @@ namespace FusionEngine
 
 		std::vector<std::string> regex_find(const std::string& path, const std::regex& expression, bool recursive)
 		{
-			std::vector<std::string> results;
-
-			auto files = PHYSFS_enumerateFiles(path.c_str());
-			for (auto it = files; *it != NULL; ++it)
-			{
-				std::string filename = *it;
-				std::string filePath = path + filename;
-
-				if (std::regex_match(filePath, expression))
-				{
-					results.push_back(filePath);
-				}
-
-				if (recursive && PHYSFS_isDirectory(filePath.c_str()))
-				{
-					regex_find(filePath, expression, recursive);
-				}
-			}
-			PHYSFS_freeList(files);
-
-			return results;
+			return find_all(path,
+				std::bind(&std::regex_match<std::char_traits<char>, std::allocator<char>, char, std::regex_traits<char>>, std::placeholders::_1, expression, std::regex_constants::match_default),
+				recursive);
 		}
-
 	}
 
 	SetupPhysFS::SetupPhysFS()

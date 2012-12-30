@@ -147,8 +147,9 @@ namespace FusionEngine
 		RegionCellCache* GetCellCache() const { return m_Cache; }
 		RegionCellCache* GetEditableCellCache() const { return m_EditableCache; }
 
-		void CopyCellDataFrom(const std::string& cache_path, const std::string& dest_path);
-		void CopyCellDataTo(const std::string& cache_path, const std::string& source_path);
+		virtual void CopyCellFiles(const std::string& cache_path, const std::string& dest_path);
+
+		virtual void CopyCellFiles(const std::string& dest_path);
 
 		void SaveEntityLocationDB(const std::string& filename);
 
@@ -269,7 +270,8 @@ namespace FusionEngine
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
 		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
 
-		bool PerformSave(const std::string& save_name);
+		bool PerformSave(const std::string& save_name, const std::function<void (bool, const std::string&)> progress_notification);
+
 		void PrepareLoad(const std::string& save_name);
 		void PerformLoad(const std::string& save_name);
 

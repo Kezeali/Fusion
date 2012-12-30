@@ -51,6 +51,19 @@ namespace FusionEngine
 	class Cell;
 	class CellDataSource;
 
+	// TODO: replace with CellFilesystem
+	class RegionCellArchivist;
+
+	class VirtualFilesystem
+	{
+	public:
+		virtual ~VirtualFilesystem() {}
+		virtual std::istream OpenFileForReading(const std::string& path) const = 0;
+		virtual std::ostream OpenFileForWriting(const std::string& path) const = 0;
+		virtual void CreateFolder(const std::string& path) const = 0;
+		virtual void Delete(const std::string& path) const = 0;
+	};
+
 	class GameMap
 	{
 	public:
@@ -61,25 +74,33 @@ namespace FusionEngine
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, ComponentFactory* factory, ArchetypeFactory* archetype_factory, EntityInstantiator* instantiator);
 
-		static void CompileMap(std::ostream &metadataFile, std::ostream& nonStreamingEntitiesFile, float cell_size, CellDataSource* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
+		static void CompileMap(const VirtualFilesystem& vfs, const std::string& path, float cell_size, RegionCellArchivist* cache, const std::vector<EntityPtr>& nonStreamingEntities, EntityInstantiator* instantiator);
 
 		std::string GetName() const { return m_Name; }
 
 		std::string GetPath() const { return m_Path; }
 
-		std::string GetMetadataPath() const { return GetPath() + "/" + GetName() + ".metadata"; }
+		std::string GetMetadataPath() const { return GetPath() + "/" + GetName() + metadataExtension; }
 
-		std::string GetEntityDatabasePath() const { return GetPath() + "entitylocations.kc"; }
+		std::string GetInstantiatorStatePath() const { return GetPath() + "/" + instantiatorStateFilename; }
+
+		std::string GetTentDataPath() const { return GetPath() + "/" + tentDataFilename; }
+
+		std::string GetEntityDatabasePath() const { return GetPath() + "/" + entityDatabaseFilename; }
 
 		float GetCellSize() const;
 
 	private:
 		std::string m_Path;
 		std::string m_Name;
-		// TODO: ? Don't store the file, just load it from the stored path when required
-		std::shared_ptr<std::istream> m_NonStreamingEntitiesFile;
-		std::string m_EntityDatabaseFilename;
 		float m_CellSize;
+
+		static const std::string metadataExtension;
+		static const std::string instantiatorStateFilename;
+		static const std::string tentDataFilename;
+		static const std::string entityDatabaseFilename;
+
+		void ReadMetadata();
 	};
 	
 	//! Loads maps and games.

@@ -35,6 +35,8 @@
 #include <Box2D/Box2D.h>
 #include "FusionPhysFSIOStream.h"
 
+#include <yaml-cpp/yaml.h>
+
 namespace FusionEngine
 {
 

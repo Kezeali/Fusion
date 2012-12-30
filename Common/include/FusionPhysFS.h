@@ -33,6 +33,7 @@
 #endif
 
 #include <physfs.h>
+#include <functional>
 #include <regex>
 
 namespace FusionEngine
@@ -50,7 +51,14 @@ namespace FusionEngine
 		*/
 		void copy_file(const std::string& from, const std::string& to);
 
+		//! Delete everything in the given folder
 		void clear_folder(const std::string& path);
+
+		//! Return the contents of a given folder that matches the given predicate
+		std::vector<std::string> find_all(const std::string& path, std::function<bool (const std::string&)> predicate, bool recursive = false);
+
+		//! Return the contents of a given folder
+		std::vector<std::string> list_content(const std::string& path, bool recursive = false);
 
 		//! Returns files & folders matching the given expression
 		std::vector<std::string> regex_find(const std::string& path, const std::string& expression, bool recursive = false);
@@ -135,7 +143,7 @@ namespace FusionEngine
 			bool includeCdRoms = false,
 			bool archivesFirst = false);
 
-		//! Deletes all files / folders in the tempoary ('temp') folder
+		//! Deletes all files / folders in the temporary ('temp') folder
 		static void clear_temp();
 
 		//! Adds the given sub-directory to the search path.
@@ -176,7 +184,7 @@ namespace FusionEngine
 		//! Mounts all archives found below the given path
 		static bool mount_archives(const std::string &physfs_path, const std::string &mount_point, const std::string &archive_ext, bool first = false);
 
-		//! Parses the given path relative to the given directory to get an abosulte path
+		//! Parses the given path relative to the given directory to get an absolute path
 		static std::string parse_path(const std::string &working_directory, const std::string &path);
 	};
 

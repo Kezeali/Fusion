@@ -380,12 +380,72 @@ namespace FusionEngine
 		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
 
-	void RegionCellArchivist::CopyCellDataFrom(const std::string& cache_path, const std::string& dest_path)
+	boost::filesystem::path make_relative(const boost::filesystem::path& base, const boost::filesystem::path& path)
 	{
+		namespace bfs = boost::filesystem;
+
+		bfs::path relativePath;
+
+		auto basePath = base;
+		auto fullPath = path;
+		basePath.make_preferred();
+		fullPath.make_preferred();
+		auto fit = fullPath.begin(), fend = fullPath.end();
+		for (auto it = basePath.begin(), end = basePath.end(); it != end && fit != fend; ++it, ++fit)
+		{
+			if (*it != *fit)
+				break;
+		}
+		for (; fit != fend; ++fit)
+		{
+			relativePath /= fit->string();
+		}
+
+		return relativePath.generic_string();
 	}
 
-	void RegionCellArchivist::CopyCellDataTo(const std::string& cache_path, const std::string& source_path)
+	namespace ArchivistSaveUtils
 	{
+		void FindWithExtensions(std::vector<boost::filesystem::path>& files, const boost::filesystem::path& path, const std::set<std::string>& extensions)
+		{
+			for(boost::filesystem::directory_iterator it(path); it != boost::filesystem::directory_iterator(); ++it)
+			{
+				if (extensions.count(it->path().extension().string()) != 0)
+					files.push_back(it->path());
+			}
+		}
+
+		typedef std::function<void (unsigned int)> PerFileCallback_t;
+		void CopyCacheFiles(const std::string& sourceBasePath, const std::vector<boost::filesystem::path>& sourceFiles, const boost::filesystem::path& destination, const PerFileCallback_t perFileCallback = PerFileCallback_t())
+		{
+			unsigned int i = 0;
+			for (auto it = sourceFiles.begin(); it != sourceFiles.end(); ++it)
+			{
+				perFileCallback(++i);
+
+				auto dest = destination;
+				dest /= make_relative(sourceBasePath, *it);
+				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			}
+		}
+	}
+
+	void RegionCellArchivist::CopyCellFiles(const std::string& cache_path, const std::string& dest_path)
+	{
+		std::vector<boost::filesystem::path> regionFiles;
+		// List the data from the normal cache
+		{
+			std::set<std::string> extensions;
+			extensions.insert(".celldata");
+			ArchivistSaveUtils::FindWithExtensions(regionFiles, boost::filesystem::path(m_FullBasePath), extensions);
+		}
+
+		ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, regionFiles, dest_path, [](unsigned int fileNum) {});
+	}
+
+	void RegionCellArchivist::CopyCellFiles(const std::string& dest_path)
+	{
+		CopyCellFiles("", dest_path);
 	}
 
 	void RegionCellArchivist::SaveEntityLocationDB(const std::string& filename)
@@ -445,7 +505,7 @@ namespace FusionEngine
 
 		m_Cache->DefragNow();
 
-		if (PerformSave(save_name))
+		if (PerformSave(save_name, [](bool, const std::string&){}))
 			CompressSave(save_name);
 
 		if (wasRunning)
@@ -831,7 +891,7 @@ namespace FusionEngine
 					std::string saveName;
 					while (m_SaveQueue.try_pop(saveName))
 					{
-						PerformSave(saveName);
+						PerformSave(saveName, [](bool, const std::string&){});
 					}
 					//m_Cache->EndSustain();
 					//m_EditableCache->EndSustain();
@@ -1285,38 +1345,13 @@ namespace FusionEngine
 		}
 	}
 
-	boost::filesystem::path make_relative(const boost::filesystem::path& base, const boost::filesystem::path& path)
+	bool RegionCellArchivist::PerformSave(const std::string& saveName, const std::function<void (bool, const std::string&)> progress_notification)
 	{
 		namespace bfs = boost::filesystem;
 
-		bfs::path relativePath;
-
-		auto basePath = base;
-		auto fullPath = path;
-		basePath.make_preferred();
-		fullPath.make_preferred();
-		auto fit = fullPath.begin(), fend = fullPath.end();
-		for (auto it = basePath.begin(), end = basePath.end(); it != end && fit != fend; ++it, ++fit)
-		{
-			if (*it != *fit)
-				break;
-		}
-		for (; fit != fend; ++fit)
-		{
-			relativePath /= fit->string();
-		}
-
-		return relativePath.generic_string();
-	}
-
-	bool RegionCellArchivist::PerformSave(const std::string& saveName)
-	{
-		namespace bfs = boost::filesystem;
-
-		// TODO: replace all SendToConsole calls with signals
 		try
 		{
-			SendToConsole("Quick-Saving...");
+			progress_notification(false, "Saving...");
 
 			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) / m_SavePath / saveName;
 
@@ -1331,7 +1366,7 @@ namespace FusionEngine
 				physFsPath = m_SavePath + bfs::path(saveName).replace_extension().string();
 			}
 
-			SendToConsole("QS Path: " + savePath.string());
+			SendToConsole("Saving to path: " + savePath.string());
 			AddLogEntry("Saving: " + savePath.string(), LOG_INFO);
 
 			if (!bfs::is_directory(savePath))
@@ -1371,22 +1406,20 @@ namespace FusionEngine
 
 			std::vector<bfs::path> regionFiles;
 			std::vector<bfs::path> dataFiles;
-			for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+			// List the data from the normal cache
 			{
-				if (it->path().extension() == ".celldata")
-					regionFiles.push_back(it->path());
-				if (it->path().extension() == ".dat")
-					dataFiles.push_back(it->path());
+				std::set<std::string> extensions;
+				extensions.insert(".celldata");
+				extensions.insert(".dat");
+				ArchivistSaveUtils::FindWithExtensions(regionFiles, bfs::path(m_FullBasePath), extensions);
 			}
 			// List editable data
 			if (m_EditableCache)
 			{
 				auto editableDataPath = bfs::path(m_FullBasePath) / "editable";
-				for(bfs::directory_iterator it(editableDataPath); it != bfs::directory_iterator(); ++it)
-				{
-					if (it->path().extension() == ".celldata")
-						regionFiles.push_back(it->path());
-				}
+				std::set<std::string> extension;
+				extension.insert(".celldata");
+				ArchivistSaveUtils::FindWithExtensions(regionFiles, editableDataPath, extension);
 			}
 
 			std::stringstream numStr; numStr << regionFiles.size();
@@ -1394,46 +1427,39 @@ namespace FusionEngine
 			numStr.str(""); numStr << dataFiles.size();
 			std::string numDataFilesStr = numStr.str();
 
-			unsigned int i = 0;
-			for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
+			ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, regionFiles, savePath, [numRegionFilesStr, progress_notification](unsigned int fileNum)
 			{
-				std::stringstream str; str << ++i;
-				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+				std::stringstream str; str << fileNum;
+				progress_notification(false, "Copying " + str.str() + " / " + numRegionFilesStr + " regions");
+			});
 
-				auto dest = savePath; dest /= make_relative(m_FullBasePath, *it);
-				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-			}
-			i = 0;
-			for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
+			ArchivistSaveUtils::CopyCacheFiles(m_FullBasePath, dataFiles, savePath, [numDataFilesStr, progress_notification](unsigned int fileNum)
 			{
-				std::stringstream str; str << ++i;
-				SendToConsole("QS Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
-
-				auto dest = savePath; dest /= it->filename();
-				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-			}
+				std::stringstream str; str << fileNum;
+				progress_notification(false, "Copying " + str.str() + " / " + numDataFilesStr + " data files");
+			});
 
 			// Allow regions to be unloaded
 			if (m_EditableCache) m_EditableCache->EndSustain();
 			m_Cache->EndSustain();
 
-			SendToConsole("QS Progress: copying entitylocations.kc");
+			progress_notification(false, "Copying entitylocations.kc");
 			SaveEntityLocationDB((savePath /= "entitylocations.kc").string());
-			SendToConsole("QS Progress: done copying entitylocations.kc");
+			progress_notification(false, "Done copying entitylocations.kc");
 
-			SendToConsole("Done Quick-Saving.");
+			progress_notification(true, "Done Saving");
 
 			return true;
 		}
 		catch (bfs::filesystem_error& e)
 		{
-			SendToConsole("QS Failed");
+			progress_notification(true, "Save Failed");
 
 			AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
 		}
 		catch (FileSystemException& e)
 		{
-			SendToConsole("QS Failed");
+			progress_notification(true, "Save Failed");
 
 			AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
 		}
