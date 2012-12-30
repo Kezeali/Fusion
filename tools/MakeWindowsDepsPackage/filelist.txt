@@ -1,0 +1,12 @@
+angelscriptDev\sdk\add_on\scriptany
+angelscriptDev\sdk\angelscript\include
+angelscriptDev\sdk\angelscript\lib
+bin
+include
+kyotocabinet
+lib
+libRocket
+RakNet_PC-4.033
+support
+tbb_oss
+Visual Leak Detector
