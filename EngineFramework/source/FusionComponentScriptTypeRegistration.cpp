@@ -60,30 +60,49 @@ namespace FusionEngine
 
 }
 
-#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property<" scriptType ">@ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-	/*r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_@+)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);*/\
-	FSN_ASSERT(r >= 0);}
-
-#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const Property<" scriptType ">@ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-	FSN_ASSERT(r >= 0);}
-
 //#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-//	struct iface##_##prop {\
-//	static const type &get_ ## prop(void *obj) { auto com = GetIface<iface>(obj); return com->prop.Get(); }\
-//	static void set_ ## prop(const type& value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); } };\
-//	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType "&get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-//	FSN_ASSERT(r >= 0);\
-//	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(const " scriptType " &in)", asFUNCTION(iface##_##prop :: set_ ## prop ), asCALL_CDECL_OBJLAST);\
-//	FSN_ASSERT(r >= 0)
+//	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
+//	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property<" scriptType ">@ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+//	/*r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_@+)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);*/\
+//	FSN_ASSERT(r >= 0);}
 //
 //#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-//	struct iface##_##prop { static const type &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.Get(); } };\
-//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
+//	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
+//	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const Property<" scriptType ">@ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+//	FSN_ASSERT(r >= 0);}
 
+//! Macro that defines the struct used by FSN_REGISTER_PROP_ACCESSOR
+#define FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop) \
+struct iface##_##prop {\
+	static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); }\
+	static const type & get_ ## prop ## Value(void *obj) { return GetIface<iface>(obj)->prop.Get(); }\
+	static void set_ ## prop ## Value(const type & value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); }\
+};
+
+//! Macro to define the script interface for accessing properties on application-code components
+/*!
+* Uses a local class to define a method inline (within the method using this macro), and that method is
+* then registered with the script engine to access the property in question.
+*/
+#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
+FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop)\
+{\
+	int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "PropertyAny@ get_" #prop "Prop()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), scriptType " get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ## Value ), asCALL_CDECL_OBJLAST);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(const " scriptType " &in)", asFUNCTION(iface##_##prop :: set_ ## prop ## Value ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0);\
+}
+
+//! Read-only version of FSN_REGISTER_PROP_ACCESSOR
+#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
+FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop)\
+{\
+	int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const PropertyAny@ get_" #prop "Prop() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), scriptType " get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ## Value ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0);\
+}
+
+//r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " & get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ## Value ), asCALL_CDECL_OBJLAST);
 
 namespace FusionEngine
 {

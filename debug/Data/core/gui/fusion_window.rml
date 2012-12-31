@@ -2,6 +2,7 @@
 <head>
 	<link type="text/rcss" href="rkt.rcss"/>
 	<link type="text/rcss" href="fusion.rcss"/>
+	<script src="gui_base.as" />
 </head>
 <body class="window">
 	<div id="title_bar">

@@ -602,25 +602,39 @@ namespace FusionEngine
 			std::stringstream str;
 			str << i;
 			std::string propIndex = str.str();
-			const bool isHandleType = type.find('@') != std::string::npos;
 			if (type != "EntityWrapper@")
 			{
+				//scriptComponentInterface +=
+				//	"Property<" + type + ">@ get_" + identifier + "() const { "
+				//	"Property<" + type + ">@ handle;"
+				//	"app_obj.getProperty(" + propIndex + ").convert_into(@handle);"
+				//	"return handle;"
+				//	"}\n";
 				scriptComponentInterface +=
-					"Property<" + type + ">@ get_" + identifier + "() const { "
-					"Property<" + type + ">@ handle;"
-					"app_obj.getProperty(" + propIndex + ").convert_into(@handle);"
-					"return handle;"
+					"PropertyAny@ get_" + identifier + "Prop() const { "
+					"return app_obj.getProperty(" + propIndex + ");"
+					"}\n"
+
+					"" + type + " get_" + identifier + "() const { "
+					"" + type + " value; "
+					"any rawValue = app_obj.getPropertyRaw(" + propIndex + "); "
+					"rawValue.retrieve(value); "
+					"return value;"
+					"}\n"
+
+					"void set_" + identifier + "(const " + type + " &in value) { "
+					"app_obj.setPropertyRaw(" + propIndex + ", value); "
 					"}\n";
 			}
 			else
 			{
 				scriptComponentInterface +=
-					//"Property<" + type + "> get_" + identifier + "() const { "
-					type + " get_" + identifier + "() const { "
+					//"Property<EntityWrapper@> get_" + identifier + "() const { "
+					"EntityWrapper@ get_" + identifier + "() const { "
 					"EntityW value; "
-					"any propAny = app_obj.getPropertyRaw(" + propIndex + "); "
-					"propAny.retrieve(value); "
-					"return EntityWrapper(value.lock());"
+					"any rawValue = app_obj.getPropertyRaw(" + propIndex + "); "
+					"rawValue.retrieve(value); "
+					"return EntityWrapper(value.lock()); "
 					"}\n"
 
 					"void set_" + identifier + "(EntityWrapper@ wrapper) { "
@@ -641,22 +655,24 @@ namespace FusionEngine
 		{
 			std::string interfaceName = it->first;
 			std::string convenientIdentifier;
-			if (it->second.empty())
+			// Check if the declaration provided a name
+			if (it->second.empty()) // ... if not, use the type-name in lowercase
 				convenientIdentifier = fe_newlower(it->first);
 			else
 				convenientIdentifier = it->second;
 			if (usedIdentifiers.insert(convenientIdentifier).second) // Ignore duplicate #using directives
 			{
 				auto _where = scriptComponents.find(interfaceName);
-				if (_where != scriptComponents.end())
+				if (_where != scriptComponents.end()) // Script types
 				{
 					interfaceName = "I" + interfaceName;
 
+					// Interface for components (calls up to the parent entity)
 					convenientComponentProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
 						"return " + interfaceName + "(cast<ASScript>(getRaw().getParent().getComponent('IScript','" + it->second + "').get()));"
 						"}\n";
-
+					// Interface for entities
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
 						"return " + interfaceName + "(cast<ASScript>(getLocked().getComponent('IScript','" + it->second + "').get()));"
@@ -666,10 +682,12 @@ namespace FusionEngine
 				}
 				else // Native components can be casted directly from the EntityComponent returned by getComponent
 				{
+					// Interface for components (calls up to the parent entity)
 					convenientComponentProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
 						"return cast<" + interfaceName + ">((getRaw().getParent().getComponent('" + interfaceName + "','" + it->second + "')).get());"
 						"}\n";
+					// Interface for entities
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
 						"return cast<" + interfaceName + ">((getLocked().getComponent('" + interfaceName + "','" + it->second + "')).get());"
@@ -733,7 +751,7 @@ namespace FusionEngine
 			"void createCoroutine(const string &in fn_name, float delay = 0.0f) { app_obj.createCoroutine(fn_name, delay); }\n"
 			"EntityWrapper@ instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id)"
 			" { return EntityWrapper(instantiator.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
-			"void bindMethod(const string &in fn_name, IProperty@ prop) { app_obj.bindMethod(fn_name, prop); }\n"
+			"void bindMethod(const string &in fn_name, PropertyAny@ prop) { app_obj.bindMethod(fn_name, prop); }\n"
 			"\n" +
 			convenientComponentProperties +
 			"}\n"

@@ -1,6 +1,6 @@
 //#include "gui_base.as"
 
-void InitialiseConsole()
+void RegisterConsole()
 {
 	Rocket::RegisterElementType(Rocket::String("console"), Rocket::String("ConsoleElement"));
 }

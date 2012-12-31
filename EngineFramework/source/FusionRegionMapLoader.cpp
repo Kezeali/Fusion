@@ -893,8 +893,7 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
-			if (!m_WriteQueue.empty() || !m_ReadQueueGetCellData.empty() || !m_ReadQueueLoadEntities.empty())
-				SendToConsole(retrying ? "Retrying" : "Archive Running");
+
 			if (eventId == 1) // TransactionEnded
 			{
 				ClearReadyCells(readyCells);
@@ -914,14 +913,7 @@ namespace FusionEngine
 				}
 
 				std::list<WriteQueue_t::value_type> writesToRetry;
-				std::list<ReadQueue_t::value_type> readsToRetry;				
-
-				bool readingMsg = false;
-				if (!m_ReadQueueGetCellData.empty())
-				{
-					readingMsg = true;
-					SendToConsole("Reading");
-				}
+				std::list<ReadQueue_t::value_type> readsToRetry;
 
 				// Request cell data
 				{
@@ -1008,7 +1000,6 @@ namespace FusionEngine
 						Cell::mutex_t::scoped_lock lock;
 						if (lock.try_acquire(lockedCell->mutex))
 						{
-							SendToConsole("Processing incoming cells");
 							if (lockedCell->waiting == Cell::Retrieve)
 							{
 								try
@@ -1056,16 +1047,6 @@ namespace FusionEngine
 							}
 						}
 					}
-				}
-
-				if (readingMsg)
-					SendToConsole("Done Reading");
-
-				bool writingMsg = false;
-				if (!m_WriteQueue.empty())
-				{
-					writingMsg = true;
-					SendToConsole("Writing");
 				}
 
 				{
@@ -1169,8 +1150,6 @@ namespace FusionEngine
 						}
 					}
 				}
-				if (writingMsg)
-					SendToConsole("Done Writing");
 
 				// Re-enqueue blocked writes/reads
 				retrying = false;
@@ -1325,9 +1304,6 @@ namespace FusionEngine
 						}
 					}
 				}
-
-				if (readingMsg || writingMsg)
-					SendToConsole("Done Running Archive");
 
 				if (eventId == 0) // Quit
 				{

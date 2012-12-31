@@ -23,11 +23,11 @@ class GrassShake : ScriptComponent
 		//~ {
 			//~ Vector pos = ev.entity.itransform.Position;
 			//~ pos.y = pos.y + 0.1f;
-			//~ ev.entity.itransform.Position << pos;
+			//~ ev.entity.itransform.Position = pos;
 		//~ }
-		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
-		isprite.AnimationFrame.value = 1;
-		//isprite.Looping << true;
+		//isprite.AnimationPath = "/Entities/grass_anim.yaml";
+		isprite.AnimationFrame = 1;
+		//isprite.Looping = true;
 		console.println("sensed");
 	}
 	
@@ -38,11 +38,11 @@ class GrassShake : ScriptComponent
 		//~ {
 			//~ Vector pos = ev.entity.itransform.Position;
 			//~ pos.y = pos.y + 0.1f;
-			//~ ev.entity.itransform.Position << pos;
+			//~ ev.entity.itransform.Position = pos;
 		//~ }
-		//isprite.AnimationPath << "/Entities/grass_anim.yaml";
-		isprite.AnimationFrame.value = 0;
-		//isprite.Looping << false;
+		//isprite.AnimationPath = "/Entities/grass_anim.yaml";
+		isprite.AnimationFrame = 0;
+		//isprite.Looping = false;
 	}
 
 	void update()

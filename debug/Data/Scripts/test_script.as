@@ -49,11 +49,11 @@ class Test : ScriptComponent
 		instantiator.addComponent(newEnt, "b2Circle", "");
 		instantiator.addComponent(newEnt, "CLSprite", "");
 		bool script = false;
-		if (rand() < 0.2f)
-		{
+		//if (rand() < 0.2f)
+		//{
 			//instantiator.addComponent(newEnt, "TestC", "script_c");
 			//script = true;
-		}
+		//}
 		EntityComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		if (sprite is null)
@@ -97,6 +97,11 @@ class Test : ScriptComponent
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+	}
+
+	float rand()
+	{
+		return 0.5f;
 	}
 	
 	void createDirt(Vector &in pos)
@@ -162,7 +167,7 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
-			seed_rand(1234);
+			//seed_rand(1234);
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			createPI(Vector(0.3f, 0.3f), entityA);
@@ -185,7 +190,7 @@ class Test : ScriptComponent
 			//console.println(itransform.getType());
 
 			//itransform.Angle = 0.7f;
-			//itransform.Angle << 0.7;
+			//itransform.Angle << 0.7f;
 			//float angle = itransform.Angle;
 			//console.println("Angle: " + angle);
 			//Vector pos = itransform.Position;

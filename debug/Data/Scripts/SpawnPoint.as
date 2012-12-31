@@ -54,42 +54,42 @@ class SpawnPoint : ScriptComponent
 			Vector offset = Vector(0, -18.f);
 			
 			//console.println(sprite.getType());
-			sprite.ImagePath << playerSprite;
-			sprite.AnimationPath << playerAnimationFile + ":shuffle";
-			sprite.Offset << offset;
+			sprite.ImagePath = playerSprite;
+			sprite.AnimationPath = playerAnimationFile + ":shuffle";
+			sprite.Offset = offset;
 			//sprite.BaseAngle = 1.57f;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_left").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":left";
-			sprite.Offset << offset;
+			sprite.Offset = offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_up").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":up";
-			sprite.Offset << offset;
+			sprite.Offset = offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_right").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":right";
-			sprite.Offset << offset;
+			sprite.Offset = offset;
 			
 			@sprite = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_down").get());
 			
 			sprite.ImagePath = playerSprite;
 			sprite.AnimationPath = playerAnimationFile + ":down";
-			sprite.Offset << offset;
+			sprite.Offset = offset;
 			
 			ISprite@ shadow = cast<ISprite>(newEnt.getComponent("ISprite", "sprite_shadow").get());
 			shadow.ImagePath = "/Entities/character/shadow.png";
 			//shadow.BaseAngle = 1.57f;
-			//shadow.Scale << Vector(1.02f, 1.02f);
+			//shadow.Scale = Vector(1.02f, 1.02f);
 			shadow.Alpha = 0.75f;
 			shadow.LocalDepth = -1;
-			//shadow.Offset << Vector(0.0f, 0.25f);
+			//shadow.Offset = Vector(0.0f, 0.25f);
 			
 			//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
 			
@@ -101,9 +101,9 @@ class SpawnPoint : ScriptComponent
 			cam.AngleEnabled = false;
 			
 			if (owner == 1)
-				cam.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
+				cam.ViewportRect = Rect(0, 0, 0.5f - 0.01f, 1);
 			if (owner == 2)
-				cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);*/
+				cam.ViewportRect = Rect(0.5f + 0.01f, 0, 1, 1);*/
 			
 			return EntityWrapper(newEnt);
 		}
@@ -142,7 +142,7 @@ class SpawnPoint : ScriptComponent
 	EntityWrapper@ entityA;
 	EntityWrapper@ entityB;
 	
-	private ElementDocument@ doc;
+	private Rocket::ElementDocument@ doc;
 	
 	void onPlayerAdded(uint local_num, PlayerID net_num)
 	{
@@ -163,7 +163,7 @@ class SpawnPoint : ScriptComponent
 		}
 		if (local_num == 1 && entityB is null)
 		{
-			@entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), net_num);
+			@entityB = createPlayerEntity(itransform.Position + Vector(0.5f, 0.f), net_num);
 			if (entityB !is null)
 			{
 				entityB.walkcycle.speed = 3.0f;
@@ -179,16 +179,16 @@ class SpawnPoint : ScriptComponent
 		if (numPlayers == 1)
 		{
 			if (entityA !is null)
-				entityA.icamera.ViewportRect << Rect(0, 0, 1, 1);
+				entityA.icamera.ViewportRect = Rect(0, 0, 1, 1);
 			if (entityB !is null)
-				entityB.icamera.ViewportRect << Rect(0, 0, 1, 1);
+				entityB.icamera.ViewportRect = Rect(0, 0, 1, 1);
 		}
 		else if (numPlayers == 2)
 		{
 			if (entityA !is null)
-				entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.005f, 1);
+				entityA.icamera.ViewportRect = Rect(0, 0, 0.5f - 0.005f, 1);
 			if (entityB !is null)
-				entityB.icamera.ViewportRect << Rect(0.5f + 0.005f, 0, 1, 1);
+				entityB.icamera.ViewportRect = Rect(0.5f + 0.005f, 0, 1, 1);
 		}
 	}
 	
@@ -196,9 +196,7 @@ class SpawnPoint : ScriptComponent
 	{
 		++frames;
 		if (frames == 1)
-		{
-			seed_rand(1234);
-			
+		{			
 			@doc = gui.getContext().LoadDocument("/Entities/gui/add_player.rml");
 			doc.Show();
 			
@@ -208,7 +206,7 @@ class SpawnPoint : ScriptComponent
 				pos.x = pos.x + 0.5f;
 				if ((i % 7) == 0)
 				{
-					pos.x = itransform.Position.value.x;
+					pos.x = itransform.Position.x;
 					pos.y = pos.y + 0.5f;
 				}
 				createBeachBall(pos);
@@ -221,53 +219,53 @@ class SpawnPoint : ScriptComponent
 		{
 			if (frames % 60 == 0)
 			{
-				console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
+				console.println("Player pos: " + entityA.itransform.Position.x + ", " + entityA.itransform.Position.y);
 				
 				// Hack alert!
 				if (getNumLocalPlayers() == 1)
 				{
 					if (entityA !is null)
-						entityA.icamera.ViewportRect << Rect(0, 0, 1, 1);
+						entityA.icamera.ViewportRect = Rect(0, 0, 1, 1);
 					if (entityB !is null)
 					{
-						entityB.icamera.ViewportRect << Rect(0, 0, 0, 0);
+						entityB.icamera.ViewportRect = Rect(0, 0, 0, 0);
 					}
 				}
 				else if (getNumLocalPlayers() == 2)
 				{
 					if (entityA !is null)
-						entityA.icamera.ViewportRect << Rect(0, 0, 0.5f - 0.005f, 1);
+						entityA.icamera.ViewportRect = Rect(0, 0, 0.5f - 0.005f, 1);
 					if (entityB !is null)
-						entityB.icamera.ViewportRect << Rect(0.5f + 0.005f, 0, 1, 1);
+						entityB.icamera.ViewportRect = Rect(0.5f + 0.005f, 0, 1, 1);
 				}
 			}
 		}
 	}
 }
 
-void OnSelectPlayer(Event@ event)
+void OnSelectPlayer(Rocket::Event@ event)
 {
-	string numPlayersStr = event.GetParameter(rString("num_players"), rString());
+	string numPlayersStr = event.GetParameter(Rocket::String("num_players"), Rocket::String());
 	int numPlayers = parseInt(numPlayersStr);
 	for (int i = 0; i < numPlayers; ++i)
 		game.requestPlayer();
 	
-	ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
+	Rocket::ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
 	doc.Close();
 }
 
-void OnSubmitLd(Event@ event)
+void OnSubmitLd(Rocket::Event@ event)
 {
-	string saveName = event.GetParameter(rString("filename"), rString());
+	string saveName = event.GetParameter(Rocket::String("filename"), Rocket::String());
 	
-	string numPlayersStr = event.GetParameter(rString("num_players"), rString());
+	string numPlayersStr = event.GetParameter(Rocket::String("num_players"), Rocket::String());
 	int numPlayers = parseInt(numPlayersStr);
 	for (int i = 0; i < numPlayers; ++i)
 		game.requestPlayer();
 
 	game.load(saveName);
 	
-	ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
+	Rocket::ElementDocument@ doc = event.GetCurrentElement().GetOwnerDocument();
 	doc.Close();
 }
 

@@ -815,7 +815,7 @@ namespace FusionEngine
 
 			r = engine->RegisterObjectBehaviour("EntityComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, IProperty@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void bindMethod(const string &in, PropertyAny@)", asFUNCTION(ASScript_ScriptInterface_bindMethodToProperty), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript::ScriptInterface, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -823,7 +823,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "any@ getPropertyRaw(uint) const", asMETHOD(ASScript::ScriptInterface, GetPropertyRaw), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void setPropertyRaw(uint, ?&in)", asMETHODPR(ASScript::ScriptInterface, SetPropertyRaw, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-			r = engine->RegisterObjectMethod("ASScript", "IProperty@ getProperty(uint) const", asMETHOD(ASScript::ScriptInterface, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "PropertyAny@ getProperty(uint) const", asMETHOD(ASScript::ScriptInterface, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			
 			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_ScriptInterface_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 

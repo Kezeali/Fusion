@@ -501,7 +501,7 @@ namespace FusionEngine
 
 		EvesdroppingManager::RegisterScriptInterface(engine);
 
-		// IProperty and Property<T>
+		// PropertyAny and Property<T>
 		ComponentProperty::Register(engine);
 
 		// Component types
@@ -597,10 +597,7 @@ namespace FusionEngine
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 				it->second->RegisterScriptInterface(m_ScriptManager->GetEnginePtr());
 
-			//auto guiModule = m_ScriptManager->GetModule("core_gui_console");
-			//m_GUI->SetModule(guiModule);
-			//guiModule->Build();
-			m_GUI->InitialiseConsole();
+			m_GUI->InitialiseConsole(m_ScriptManager.get());
 
 			m_ActiveExtensions.clear();
 			// Initialise extensions

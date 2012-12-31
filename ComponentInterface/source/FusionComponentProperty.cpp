@@ -155,10 +155,10 @@ namespace FusionEngine
 
 		// TODO: enable this when it doesn't cause the script engine to crash on destruction
 		//r = engine->RegisterObjectMethod(derived.c_str(),
-		//	"IProperty@ to_placeholder()", asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
+		//	"PropertyAny@ to_placeholder()", asFUNCTION((convert_ref<ComponentProperty, ComponentProperty>)),
 		//	asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterGlobalFunction("IProperty@ to_placeholder(?&in)",
+		r = engine->RegisterGlobalFunction("PropertyAny@ to_placeholder(?&in)",
 			asFUNCTION(ComponentPropertyTToPlaceholder),
 			asCALL_CDECL); FSN_ASSERT( r >= 0 );
 	}
@@ -182,15 +182,16 @@ namespace FusionEngine
 
 	void ComponentProperty::Register(asIScriptEngine* engine)
 	{
-		int r;
-
-		RegisterType<ComponentProperty>(engine, "IProperty");
-
-		//r = engine->RegisterObjectMethod("IProperty", "void follow(IProperty@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		//r = engine->RegisterObjectMethod("IProperty", "IProperty& opAssign(IProperty@)", asFUNCTIONPR(ComponentPropertyT_opAssign, (ComponentProperty*, ComponentProperty*), ComponentProperty*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-
 		FSN_ASSERT( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == NULL );
 
+		int r;
+
+		// Property wrapper - just allows properties to be passed to methods and followed
+		RegisterType<ComponentProperty>(engine, "PropertyAny");
+
+		r = engine->RegisterObjectMethod("PropertyAny", "void follow(PropertyAny@)", asFUNCTION(ComponentProperty_follow), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		// Typed property wrapper
 		r = engine->RegisterObjectType("Property<class T>", 0, asOBJ_REF | asOBJ_TEMPLATE); FSN_ASSERT( r >= 0 );
 		
 		r = engine->RegisterObjectBehaviour("Property<T>", asBEHAVE_FACTORY, "Property<T>@ f(int &in)", asFUNCTIONPR(ComponentPropertyT_factory, (asIObjectType*), ComponentProperty*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
@@ -225,20 +226,8 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Property<bool>", "const bool& get_value() const", asMETHOD(ComponentProperty, Get), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Property<bool>", "void set_value(const bool &in)", asMETHOD(ComponentProperty, Set), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		//struct Gen
-		//{
-		//	asIScriptEngine* engine;
-		//	template <typename T>
-		//	void operator() (T) { GeneratePropertySpecialisation(engine, AppType<T>::name); }
-		//};
-		//Gen generator; generator.engine = engine;
-		//boost::mpl::for_each<Scripting::FundimentalTypes>(generator);
-
-
 		// Type conversion
-		ComponentPropertyT_RegisterConversion(engine, "IProperty", "Property<T>");
-		//RegisterBaseOf<ComponentProperty, ComponentProperty>(engine, "IProperty", "Property<T>");
-		//RegisterBaseOf<ComponentProperty, ComponentProperty>(engine, "IProperty", "Property<bool>");
+		ComponentPropertyT_RegisterConversion(engine, "PropertyAny", "Property<T>");
 	}
 
 }

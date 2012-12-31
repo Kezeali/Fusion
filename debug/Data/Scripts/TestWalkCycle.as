@@ -81,34 +81,34 @@ class TestWalkCycle : ScriptComponent
 		sprite_down.Alpha = 0.0f;
 		sprite_idle.Alpha = 0.0f;
 		
-		if (irigidbody.Velocity.value.x < -0.01f)
+		if (irigidbody.Velocity.x < -0.01f)
 		{
-			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:left";
+			//isprite.AnimationPath = "/Entities/character/walk_cycle2.yaml:left";
 			sprite_left.Playing = true;
 			sprite_left.Alpha = 1.0f;
 		}
-		else if (irigidbody.Velocity.value.x > 0.01f)
+		else if (irigidbody.Velocity.x > 0.01f)
 		{
-			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:right";
+			//isprite.AnimationPath = "/Entities/character/walk_cycle2.yaml:right";
 			sprite_right.Playing = true;
 			sprite_right.Alpha = 1.0f;
 		}
-		float xvel = irigidbody.Velocity.value.x;
+		float xvel = irigidbody.Velocity.x;
 		bool movingX = xvel > 0.01f || xvel < -0.01f;
-		if (irigidbody.Velocity.value.y < -0.01f && !movingX)
+		if (irigidbody.Velocity.y < -0.01f && !movingX)
 		{
-			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:up";
+			//isprite.AnimationPath = "/Entities/character/walk_cycle2.yaml:up";
 			sprite_up.Playing = true;
 			sprite_up.Alpha = 1.0f;
 		}
-		else if (irigidbody.Velocity.value.y > 0.01f && !movingX)
+		else if (irigidbody.Velocity.y > 0.01f && !movingX)
 		{
-			//isprite.AnimationPath << "/Entities/character/walk_cycle2.yaml:down";
+			//isprite.AnimationPath = "/Entities/character/walk_cycle2.yaml:down";
 			sprite_down.Playing = true;
 			sprite_down.Alpha = 1.0f;
 		}
-		if (irigidbody.Velocity.value.x < 0.01f && irigidbody.Velocity.value.x > -0.01f &&
-			irigidbody.Velocity.value.y < 0.01f && irigidbody.Velocity.value.y > -0.01f)
+		if (irigidbody.Velocity.x < 0.01f && irigidbody.Velocity.x > -0.01f &&
+			irigidbody.Velocity.y < 0.01f && irigidbody.Velocity.y > -0.01f)
 		{
 			sprite_down.Playing = false;
 			sprite_idle.Alpha = 1.0f;

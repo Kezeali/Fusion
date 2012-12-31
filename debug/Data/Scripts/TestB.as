@@ -33,24 +33,24 @@ class TestB : ScriptComponent
 		{
 			//console.println("at " + speed);
 			if (ev.isDown)
-				irigidbody.Velocity << Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
+				irigidbody.Velocity = Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
 			else
-				irigidbody.Velocity << Vector(0, 0);
+				irigidbody.Velocity = Vector(0, 0);
 			go = ev.isDown;
 		}
 		if (ev.inputName == "left")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity << -1.5;
+				irigidbody.AngularVelocity = -1.5;
 			else
-				irigidbody.AngularVelocity << 0;
+				irigidbody.AngularVelocity = 0;
 		}
 		if (ev.inputName == "right")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity << 1.5;
+				irigidbody.AngularVelocity = 1.5;
 			else
-				irigidbody.AngularVelocity << 0;
+				irigidbody.AngularVelocity = 0;
 		}
 		//if (ev.inputName == "special")
 		//{
@@ -65,9 +65,9 @@ class TestB : ScriptComponent
 		
 		if (entity.input.getButton("thrust"))
 		{
-			irigidbody.Velocity << Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
+			irigidbody.Velocity = Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
 		}
 		else
-			irigidbody.Velocity << Vector();
+			irigidbody.Velocity = Vector();
 	}
 }

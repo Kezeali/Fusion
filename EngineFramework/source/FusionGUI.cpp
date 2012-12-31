@@ -438,9 +438,27 @@ namespace FusionEngine
 		return true;
 	}
 
-	void GUI::InitialiseConsole()
+	void GUI::InitialiseConsole(ScriptManager* script_manager)
 	{
-		m_ConsoleDocument = GetContext()->LoadDocument("Data/core/gui/console.rml");
+		// Generate the gui_base module used by the window template
+		{
+			auto guiModule = script_manager->GetModule("gui_base");
+			Rocket::AngelScript::InitialiseModule(script_manager->GetEnginePtr(), "gui_base");
+			script_manager->AddFile("Data/core/gui/gui_base.as", "gui_base");
+			guiModule->Build();
+		}
+
+		auto consoleModule = script_manager->GetModule("console");
+		Rocket::AngelScript::InitialiseModule(script_manager->GetEnginePtr(), "console");
+		script_manager->AddFile("Data/core/gui/console.as", "console");
+		consoleModule->Build();
+
+		ScriptUtils::Calling::Caller registerConsole = ScriptUtils::Calling::Caller::Create(consoleModule->GetASModule(), "void RegisterConsole()");
+		if (registerConsole)
+		{
+			registerConsole();
+			m_ConsoleDocument = GetContext()->LoadDocument("Data/core/gui/console.rml");
+		}
 	}
 
 	void GUI::LoadFonts(const char* directory)

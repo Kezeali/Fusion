@@ -190,7 +190,7 @@ namespace FusionEngine
 		//! Returns the console window document
 		Rocket::Core::ElementDocument *GetConsoleWindow() const;
 
-		void InitialiseConsole();
+		void InitialiseConsole(ScriptManager* script_manager);
 
 		void InitializeDebugger(const std::string& context);
 
