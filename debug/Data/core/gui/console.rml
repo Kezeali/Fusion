@@ -50,6 +50,7 @@
 			width: 27px;
 			}
 		</style>
+		<script src="console.as" />
 	</head>
   <body template="window" onload="OnConsoleOpened(event);" onclose="OnConsoleClosed();" onshow="OnConsoleShow(event);" onhide="OnConsoleHide();">
     <console id="console_element">

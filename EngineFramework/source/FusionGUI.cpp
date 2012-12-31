@@ -32,8 +32,8 @@
 #include <Rocket/Controls.h>
 #include <Rocket/Debugger.h>
 
-#include <Rocket/AngelScript/Core/ras_Core.h>
-#include <Rocket/AngelScript/Controls/ras_Controls.h>
+#include <Rocket/AngelScript/Core/Core.h>
+#include <Rocket/AngelScript/Controls/Controls.h>
 
 #include "FusionConsole.h"
 #include "FusionLogger.h"
@@ -438,6 +438,11 @@ namespace FusionEngine
 		return true;
 	}
 
+	void GUI::InitialiseConsole()
+	{
+		m_ConsoleDocument = GetContext()->LoadDocument("Data/core/gui/console.rml");
+	}
+
 	void GUI::LoadFonts(const char* directory)
 	{
 		Rocket::Core::String font_names[4];
@@ -609,8 +614,9 @@ namespace FusionEngine
 
 		try
 		{
-			Rocket::AngelScript::RegisterCore(engine);
-			Rocket::AngelScript::Controls::RegisterControls(engine);
+			Rocket::AngelScript::Initialise(engine);
+			Rocket::AngelScript::Controls::Initialise(engine);
+
 			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(engine, "::string", true);
 
 			r = engine->RegisterObjectBehaviour("string",

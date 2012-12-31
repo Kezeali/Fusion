@@ -5,11 +5,13 @@
 *.opensdf
 ipch
 /lib
-/debug/UnitTestData/write_dir/Logs
+/debug/UnitTestData/write_dir/
 /Tools/WakeOnLan.exe
 /Tools/WakeUp.cmd
 Release
 Debug
+!/debug
+!/release
 Fast Debug
 /release_package
 AS_DEBUG

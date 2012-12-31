@@ -186,8 +186,11 @@ namespace FusionEngine
 		const std::shared_ptr<GUIContext>& CreateContext(const std::string& name, Vector2i size = Vector2i(0, 0));
 
 		Rocket::Core::Context* GetContext(const std::string& name = "screen") const;
+
 		//! Returns the console window document
 		Rocket::Core::ElementDocument *GetConsoleWindow() const;
+
+		void InitialiseConsole();
 
 		void InitializeDebugger(const std::string& context);
 
