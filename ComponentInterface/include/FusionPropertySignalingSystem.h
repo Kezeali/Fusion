@@ -41,7 +41,7 @@
 
 #include "FusionScriptTypeRegistrationUtils.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 #include <tbb/atomic.h>
 
 namespace FusionEngine

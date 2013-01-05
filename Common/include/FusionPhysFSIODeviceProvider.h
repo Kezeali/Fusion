@@ -36,7 +36,7 @@
 
 #include "physfs.h"
 
-class PhysFSIODeviceProvider : public CL_IODeviceProvider
+class PhysFSIODeviceProvider : public clan::IODeviceProvider
 {
 /// \name Construction
 /// \{
@@ -68,9 +68,9 @@ public:
 
 	virtual int peek(void *data, int len);
 
-	virtual bool seek(int position, CL_IODevice::SeekMode mode);
+	virtual bool seek(int position, clan::IODevice::SeekMode mode);
 
-	CL_IODeviceProvider *duplicate();
+	clan::IODeviceProvider *duplicate();
 
 
 /// \}

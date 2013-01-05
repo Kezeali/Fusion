@@ -40,9 +40,12 @@
 namespace FusionEngine
 {
 
-	static inline Rocket::Core::String toEmp(const std::string& str)
+	namespace
 	{
-		return Rocket::Core::String(str.data(), str.data() + str.length());
+		Rocket::Core::String toEmp(const std::string& str)
+		{
+			return Rocket::Core::String(str.data(), str.data() + str.length());
+		}
 	}
 
 	MessageBox::MessageBox(const std::string& document_filename)

@@ -29,10 +29,10 @@
 
 #include "FusionP2PEntityInstantiator.h"
 
-#include <BitStream.h>
-#include <RakNetTypes.h>
-#include <StringCompressor.h>
-#include <StringTable.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/RakNetTypes.h>
+#include <RakNet/StringCompressor.h>
+#include <RakNet/StringTable.h>
 #include <climits>
 
 #include "FusionBinaryStream.h"
@@ -151,9 +151,9 @@ namespace FusionEngine
 		}
 	}
 
-	static const ObjectID localFlag = 0x1 << (sizeof(ObjectID) * 8 - 1); // - 1 because the flag is 1 bit
-	static const ObjectID peerIndexMask = 0x78 << (sizeof(ObjectID) * 8 - 8); // - 8 because the mask overlaps 2 bytes
-	static const ObjectID localIdMask = ~(localFlag | peerIndexMask);
+	const ObjectID localFlag = 0x1 << (sizeof(ObjectID) * 8 - 1); // - 1 because the flag is 1 bit
+	const ObjectID peerIndexMask = 0x78 << (sizeof(ObjectID) * 8 - 8); // - 8 because the mask overlaps 2 bytes
+	const ObjectID localIdMask = ~(localFlag | peerIndexMask);
 
 	void P2PEntityInstantiator::TakeID(ObjectID id)
 	{
@@ -507,27 +507,30 @@ namespace FusionEngine
 		} // end switch (type)
 	}
 
-	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
+	namespace
 	{
-		ASScript* nativeCom = ASScript::GetActiveScript();
-
-		EntityPtr entity;
-		if (nativeCom)
+		EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, P2PEntityInstantiator* obj)
 		{
-			entity = nativeCom->GetParent()->shared_from_this();
+			ASScript* nativeCom = ASScript::GetActiveScript();
+
+			EntityPtr entity;
+			if (nativeCom)
+			{
+				entity = nativeCom->GetParent()->shared_from_this();
+			}
+
+			auto newEntity = obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
+
+			//newEntity->addRef();
+			return newEntity;//.get();
 		}
 
-		auto newEntity = obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
-
-		//newEntity->addRef();
-		return newEntity;//.get();
-	}
-
-	static EntityComponent* InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
-	{
-		auto com = obj->AddComponent(entity, type, identifier);
-		com->addRef();
-		return com.get();
+		EntityComponent* InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, P2PEntityInstantiator* obj)
+		{
+			auto com = obj->AddComponent(entity, type, identifier);
+			com->addRef();
+			return com.get();
+		}
 	}
 
 	void P2PEntityInstantiator::Register(asIScriptEngine* engine)

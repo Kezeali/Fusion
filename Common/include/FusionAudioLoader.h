@@ -40,17 +40,17 @@ namespace FusionEngine
 {
 
 	//! Fully loads a sound clip into memory
-	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Unloads an audio resource
-	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 	//! Loads an audio file for streaming
 	/*!
 	 * Generally used for music.
 	 */
-	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Unloads an audio resource
-	//void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	//void UnloadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 }
 

@@ -29,54 +29,10 @@
 
 #include "FusionSpriteInspector.h"
 
+#include "FusionInspectorTypeUtils.h"
+
 namespace FusionEngine { namespace Inspectors
 {
-
-	inline CL_Origin StringToOrigin(const std::string str)
-	{
-		if (str == "Top-Left")
-			return origin_top_left;
-		else if (str == "Top-Center")
-			return origin_top_center;
-		else if (str == "Top-Right")
-			return origin_top_right;
-
-		else if (str == "Center-Left")
-			return origin_center_left;
-		else if (str == "Center")
-			return origin_center;
-		else if (str == "Center-Right")
-			return origin_center_right;
-
-		else if (str == "Bottom-Left")
-			return origin_bottom_left;
-		else if (str == "Bottom-Center")
-			return origin_bottom_center;
-		else if (str == "Bottom-Right")
-			return origin_bottom_right;
-
-		else
-			return origin_center;
-	}
-
-	inline std::string OriginToString(const CL_Origin origin)
-	{
-		switch (origin)
-		{
-		case origin_top_left: return "Top-Left";
-		case origin_top_center: return "Top-Center";
-		case origin_top_right: return "Top-Right";
-
-		case origin_center_left: return "Center-Left";
-		case origin_center: return "Center";
-		case origin_center_right: return "Center-Right";
-
-		case origin_bottom_left: return "Bottom-Left";
-		case origin_bottom_center: return "Bottom-Center";
-		case origin_bottom_right: return "Bottom-Right";
-		default: return "Center";
-		};
-	}
 
 	void SpriteInspector::InitUI()
 	{
@@ -93,14 +49,15 @@ namespace FusionEngine { namespace Inspectors
 			));
 
 		std::vector<std::string> originOptions;
-		for (int i = 0; i < 9; ++i)
-			originOptions.push_back(OriginToString((CL_Origin)i));
+		// WARNING: assumes origin_bottom_right is the last value in the enum
+		for (int i = 0; i < (int)clan::origin_bottom_right; ++i)
+			originOptions.push_back(TypeUtils::OriginToString((clan::Origin)i));
 
 		// Alignment
 		AddProperty("AlignmentOrigin", AddSelectInput("AlignmentOrigin",
 			originOptions,
-			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(StringToOrigin(str)); }),
-			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->AlignmentOrigin.Get()); })
+			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->AlignmentOrigin.Set(TypeUtils::StringToOrigin(str)); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return TypeUtils::OriginToString(component->AlignmentOrigin.Get()); })
 			));
 
 		AddProperty("AlignmentOffset", AddTextInput("AlignmentOffset",
@@ -115,8 +72,8 @@ namespace FusionEngine { namespace Inspectors
 		// Rotation Hotspot
 		AddProperty("RotationOrigin", AddSelectInput("RotationOrigin",
 			originOptions,
-			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->RotationOrigin.Set(StringToOrigin(str)); }),
-			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return OriginToString(component->RotationOrigin.Get()); })
+			StringSetter_t([](std::string str, ComponentIPtr<ISprite> component) { component->RotationOrigin.Set(TypeUtils::StringToOrigin(str)); }),
+			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return TypeUtils::OriginToString(component->RotationOrigin.Get()); })
 			));
 
 		AddProperty("RotationOffset", AddTextInput("RotationOffset",

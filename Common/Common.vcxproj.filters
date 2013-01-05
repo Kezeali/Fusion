@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="PrecompiledHeaders">
-      <UniqueIdentifier>{bfe04714-acaf-4e57-a793-c1b11bb1b212}</UniqueIdentifier>
-    </Filter>
     <Filter Include="AngelScript">
       <UniqueIdentifier>{bf587d96-2839-42ac-88b2-8953caa4f9b9}</UniqueIdentifier>
     </Filter>
@@ -45,6 +42,9 @@
     </Filter>
     <Filter Include="Resources\Loaders">
       <UniqueIdentifier>{15cfddb7-3ca1-4070-b53b-9a7de36b555e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{afbe1af2-62df-4d41-a732-c07c423d3755}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -159,9 +159,6 @@
     <ClCompile Include="source\FusionException.cpp">
       <Filter>Exception</Filter>
     </ClCompile>
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionClientOptions.cpp" />
     <ClCompile Include="source\FusionCmdOptions.cpp" />
     <ClCompile Include="source\FusionIDStack.cpp" />
@@ -176,6 +173,7 @@
     <ClCompile Include="source\FusionResourceLoaderUtils.cpp">
       <Filter>Resources\Loaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\PrecompiledHeaders.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptConsoleCallback.h">
@@ -316,9 +314,6 @@
     <ClInclude Include="include\FusionSaveDataArchive.h">
       <Filter>Map</Filter>
     </ClInclude>
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionBoostSignals2.h" />
     <ClInclude Include="include\FusionClientOptions.h" />
     <ClInclude Include="include\FusionCmdOptions.h" />
@@ -353,6 +348,16 @@
     </ClInclude>
     <ClInclude Include="include\FusionResourceLoaderUtils.h">
       <Filter>Resources\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\PrecompiledHeaders.h" />
+    <ClInclude Include="include\FusionScopeGuard.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionExpected.h">
+      <Filter>Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionEvent.h">
+      <Filter>Threading</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

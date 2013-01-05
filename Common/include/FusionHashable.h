@@ -64,7 +64,7 @@ namespace FusionEngine
 	/*std::size_t hash_value(PlayerKey const& k)
 	{
 		std::hash<std::string> hasher;
-		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());
+		return hasher(k.key + clan::StringHelp::int_to_local8(k.player).c_str());
 	}*/
 
 	//! Hashable / sortable key-class for input bindings in the input manager

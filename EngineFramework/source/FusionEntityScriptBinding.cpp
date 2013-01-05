@@ -61,9 +61,12 @@ namespace FusionEngine
 		
 	};
 
-	static EntityComponent* ASComponentFuture_GetComponent(ASComponentFuture* obj)
+	namespace
 	{
-		return obj->component;
+		EntityComponent* ASComponentFuture_GetComponent(ASComponentFuture* obj)
+		{
+			return obj->component;
+		}
 	}
 
 	void ASComponentFuture::Register(asIScriptEngine* engine)
@@ -75,80 +78,83 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("ComponentFuture", "EntityComponent@ get()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
-	static ASComponentFuture* Entity_GetComponent(EntityPtr* obj, std::string type, std::string ident)
+	namespace
 	{
-		auto entity = *obj;
-		auto com = entity->GetComponent(type, ident);
-
-		auto future = new ASComponentFuture();
-
-		if (com)
+		ASComponentFuture* Entity_GetComponent(EntityPtr* obj, std::string type, std::string ident)
 		{
-			com->addRef();
-			future->component = com.get();
-		}
-		else
-		{
-			auto activeScript = ASScript::GetActiveScript();
-			if (activeScript)
+			auto entity = *obj;
+			auto com = entity->GetComponent(type, ident);
+
+			auto future = new ASComponentFuture();
+
+			if (com)
 			{
-				activeScript->YieldUntil([entity, type, ident, future]()->bool
-				{
-					auto com = entity->GetComponent(type, ident);
-					if (com)
-					{
-						com->addRef();
-						future->component = com.get();
-						return true;
-					}
-					else
-						return false;
-				},
-#ifdef PROFILE_BUILD
-					20.0f);
-#else
-					5.f);
-#endif
+				com->addRef();
+				future->component = com.get();
 			}
+			else
+			{
+				auto activeScript = ASScript::GetActiveScript();
+				if (activeScript)
+				{
+					activeScript->YieldUntil([entity, type, ident, future]()->bool
+					{
+						auto com = entity->GetComponent(type, ident);
+						if (com)
+						{
+							com->addRef();
+							future->component = com.get();
+							return true;
+						}
+						else
+							return false;
+					},
+#ifdef PROFILE_BUILD
+						20.0f);
+#else
+						5.f);
+#endif
+				}
+			}
+
+			return future;
 		}
-		
-		return future;
-	}
 
-	static ASComponentFuture* Entity_GetComponentB(EntityPtr* obj, std::string type)
-	{
-		return Entity_GetComponent(obj, type, std::string());
-	}
+		ASComponentFuture* Entity_GetComponentB(EntityPtr* obj, std::string type)
+		{
+			return Entity_GetComponent(obj, type, std::string());
+		}
 
-	static bool Entity_IsNull(EntityPtr* obj)
-	{
-		return !(*obj);
-	}
+		bool Entity_IsNull(EntityPtr* obj)
+		{
+			return !(*obj);
+		}
 
-	static bool Entity_OpEquals(EntityPtr* obj, const EntityPtr& other)
-	{
-		return *obj == other;
-	}
+		bool Entity_OpEquals(EntityPtr* obj, const EntityPtr& other)
+		{
+			return *obj == other;
+		}
 
-	static PlayerID Entity_GetOwnerID(EntityPtr* obj)
-	{
-		return (*obj)->GetOwnerID();
-	}
+		PlayerID Entity_GetOwnerID(EntityPtr* obj)
+		{
+			return (*obj)->GetOwnerID();
+		}
 
-	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
-	{
-		return (*entity)->InputIsActive(input);
-	}
+		bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
+		{
+			return (*entity)->InputIsActive(input);
+		}
 
-	static float Entity_InputGetPosition(const std::string& input, EntityPtr* entity)
-	{
-		return (*entity)->GetInputPosition(input);
-	}
+		float Entity_InputGetPosition(const std::string& input, EntityPtr* entity)
+		{
+			return (*entity)->GetInputPosition(input);
+		}
 
-	//static PlayerInput* Entity_GetInput(EntityPtr* entity)
-	//{
-	//	return (*entity)->m_PlayerInput.get();
-	//}
+		//PlayerInput* Entity_GetInput(EntityPtr* entity)
+		//{
+		//	return (*entity)->m_PlayerInput.get();
+		//}
+	}
 
 	void Entity::Register(asIScriptEngine *engine)
 	{

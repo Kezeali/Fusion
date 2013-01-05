@@ -23,18 +23,21 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -66,8 +69,6 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>PrecompiledHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -124,7 +125,9 @@
     <ClCompile Include="source\FusionPhysFSIODeviceProvider.cpp" />
     <ClCompile Include="source\FusionPhysFSIOStream.cpp" />
     <ClCompile Include="source\FusionPlayerRegistry.cpp" />
-    <ClCompile Include="source\FusionPolygonLoader.cpp" />
+    <ClCompile Include="source\FusionPolygonLoader.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\FusionDependencies\include</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="source\FusionProfiling.cpp" />
     <ClCompile Include="source\FusionResource.cpp" />
     <ClCompile Include="source\FusionResourceLoaderUtils.cpp" />
@@ -142,6 +145,9 @@
     <ClCompile Include="source\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="source\FusionXML.cpp" />
     <ClCompile Include="source\FusionZipArchive.cpp" />
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\scriptany.cpp" />
     <ClCompile Include="source\scriptarray.cpp" />
     <ClCompile Include="source\scriptmath.cpp" />
@@ -149,13 +155,6 @@
     <ClCompile Include="source\scriptstdstring_utils.cpp" />
     <ClCompile Include="source\scriptstring.cpp" />
     <ClCompile Include="source\scriptstring_utils.cpp" />
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">PrecompiledHeaders.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'">PrecompiledHeaders.h</PrecompiledHeaderFile>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionAnyFS.h" />
@@ -171,8 +170,10 @@
     <ClInclude Include="include\FusionCommonAppTypes.h" />
     <ClInclude Include="include\FusionConsole.h" />
     <ClInclude Include="include\FusionConsoleStdOutWriter.h" />
+    <ClInclude Include="include\FusionEvent.h" />
     <ClInclude Include="include\FusionException.h" />
     <ClInclude Include="include\FusionExceptionFactory.h" />
+    <ClInclude Include="include\FusionExpected.h" />
     <ClInclude Include="include\FusionHashable.h" />
     <ClInclude Include="include\FusionIDStack.h" />
     <ClInclude Include="include\FusionImageLoader.h" />
@@ -197,6 +198,7 @@
     <ClInclude Include="include\FusionResourceManager.h" />
     <ClInclude Include="include\FusionResourcePointer.h" />
     <ClInclude Include="include\FusionSaveDataArchive.h" />
+    <ClInclude Include="include\FusionScopeGuard.h" />
     <ClInclude Include="include\FusionScriptConsoleCallback.h" />
     <ClInclude Include="include\FusionScriptedConsoleCommand.h" />
     <ClInclude Include="include\FusionScriptedSlots.h" />
@@ -227,7 +229,7 @@
     <ClInclude Include="include\scriptstdstring.h" />
     <ClInclude Include="include\scriptstdvector.h" />
     <ClInclude Include="include\scriptstring.h" />
-    <ClInclude Include="PrecompiledHeaders.h" />
+    <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\external\minizip\minizip.vcxproj">

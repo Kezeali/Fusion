@@ -32,8 +32,8 @@
 #pragma once
 #endif
 
-#if _MSC_VER > 1000 && _MSC_VER < 1600
-#error Visual Studio 2010 or later required (for c++11 features)
+#if _MSC_VER > 1000 && _MSC_VER < 1700
+#error Visual Studio 2012 or later required (for c++11 features)
 #endif
 
 //#include "FusionStdHeaders.h"
@@ -48,10 +48,6 @@
 
 #ifdef GetObject
 #undef GetObject
-#endif
-
-#ifdef IN
-#undef IN
 #endif
 
 #define FSN_TBB_AVAILABLE

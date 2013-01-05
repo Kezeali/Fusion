@@ -146,17 +146,17 @@ namespace FusionEngine { namespace Scripting
 
 	static void ColorfCtor(void *ptr)
 	{
-		new (ptr) CL_Colorf();
+		new (ptr) clan::Colorf();
 	}
 
-	static void ColorfCopyCtor(const CL_Colorf &other, void *ptr)
+	static void ColorfCopyCtor(const clan::Colorf &other, void *ptr)
 	{
-		new (ptr) CL_Colorf(other);
+		new (ptr) clan::Colorf(other);
 	}
 	
-	static void ColorfDtor(CL_Colorf *ptr)
+	static void ColorfDtor(clan::Colorf *ptr)
 	{
-		ptr->~CL_Colorf();
+		ptr->~Colorf();
 	}
 
 	////////////////////////////////
@@ -165,7 +165,7 @@ namespace FusionEngine { namespace Scripting
 	{
 		int r, typeId;
 
-		r = engine->RegisterObjectType("Colour", sizeof(CL_Colorf), asOBJ_VALUE | asOBJ_APP_CLASS_CK); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectType("Colour", sizeof(clan::Colorf), asOBJ_VALUE | asOBJ_APP_CLASS_CK); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ColorfCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_CONSTRUCT, "void f(const Colour &in)", asFUNCTION(ColorfCopyCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(ColorfDtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
@@ -233,15 +233,15 @@ namespace FusionEngine { namespace Scripting
 	{
 		int r;
 		r = engine->RegisterEnum("PointOrigin");
-		r = engine->RegisterEnumValue("PointOrigin", "top_left", origin_top_left); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "top_center", origin_top_center); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "top_right", origin_top_right); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "center_left", origin_center_left); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "center", origin_center); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "center_right", origin_center_right); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_left", origin_bottom_left); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", origin_bottom_center); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", origin_bottom_right); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "top_left", clan::origin_top_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "top_center", clan::origin_top_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "top_right", clan::origin_top_right); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center_left", clan::origin_center_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center", clan::origin_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center_right", clan::origin_center_right); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_left", clan::origin_bottom_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", clan::origin_bottom_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", clan::origin_bottom_right); FSN_ASSERT( r >= 0 );
 
 		return RegisterScriptVector_Native(engine);
 	}

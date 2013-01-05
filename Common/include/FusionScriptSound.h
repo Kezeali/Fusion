@@ -42,11 +42,11 @@
 namespace FusionEngine
 {
 
-	//! CL_SoundOutput wrapper
+	//! clan::SoundOutput wrapper
 	class SoundOutput : public RefCounted, noncopyable
 	{
 	public:
-		SoundOutput(CL_SoundOutput &output);
+		SoundOutput(clan::SoundOutput &output);
 
 		void SetVolume(float volume);
 		float GetVolume();
@@ -58,14 +58,14 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		CL_SoundOutput m_SoundOutput;
+		clan::SoundOutput m_SoundOutput;
 	};
 
-	//! Ref-counted wrapper for CL_SoundBuffer_Session
+	//! Ref-counted wrapper for clan::SoundBuffer_Session
 	class SoundSession : public RefCounted, noncopyable
 	{
 	public:
-		SoundSession(CL_SoundBuffer_Session &session);
+		SoundSession(clan::SoundBuffer_Session &session);
 
 		void Play();
 		void Pause();
@@ -74,13 +74,13 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		CL_SoundBuffer_Session m_Session;
+		clan::SoundBuffer_Session m_Session;
 
 		int m_PausedPosition;
 
 	};
 
-	//! Wrapper for CL_SoundBuffer resource
+	//! Wrapper for clan::SoundBuffer resource
 	class SoundSample : public StreamedResourceUser, public RefCounted, noncopyable
 	{
 	public:
@@ -104,7 +104,7 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		ResourcePointer<CL_SoundBuffer> m_SoundBuffer;
+		ResourcePointer<clan::SoundBuffer> m_SoundBuffer;
 		bool m_Stream;
 
 		//boost::signals2::connection m_ResourceUnloadConnection;

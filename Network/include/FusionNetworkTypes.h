@@ -33,7 +33,7 @@
 #pragma once
 #endif
 
-#include <MessageIdentifiers.h>
+#include <RakNet/MessageIdentifiers.h>
 
 namespace FusionEngine
 {

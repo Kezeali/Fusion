@@ -165,14 +165,14 @@ namespace FusionEngine
 		return m_ViewportEnabled;
 	}
 
-	void StreamingCamera::SetViewportRect(const CL_Rectf& value)
+	void StreamingCamera::SetViewportRect(const clan::Rectf& value)
 	{
 		m_ViewportRect = value;
 		if (m_Viewport)
 			m_Viewport->SetArea(m_ViewportRect);
 	}
 
-	const CL_Rectf& StreamingCamera::GetViewportRect() const
+	const clan::Rectf& StreamingCamera::GetViewportRect() const
 	{
 		return m_ViewportRect;
 	}

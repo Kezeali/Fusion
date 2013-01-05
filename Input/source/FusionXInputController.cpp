@@ -229,7 +229,7 @@ namespace FusionEngine
 		}
 	}
 
-	CL_String XInputController::GetKeyName(WORD id)
+	std::string XInputController::GetKeyName(WORD id)
 	{
 		switch (id)
 		{
@@ -243,9 +243,9 @@ namespace FusionEngine
 			return "Y Button";
 
 		case VK_PAD_RSHOULDER:
-			return "Right Sholder";
+			return "Right Shoulder";
 		case VK_PAD_LSHOULDER:
-			return "Left Sholder";
+			return "Left Shoulder";
 		case VK_PAD_LTRIGGER:
 			return "Left Trigger";
 		case VK_PAD_RTRIGGER:
@@ -270,7 +270,7 @@ namespace FusionEngine
 			return "Right Thumb Press";
 
 		default:
-			return cl_format("Unknown XInput Key %1", id);
+			return clan::string_format("Unknown XInput Key %1", id);
 		}
 	}
 

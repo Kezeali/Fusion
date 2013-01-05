@@ -329,7 +329,7 @@ namespace FusionEngine
 		//! Basic constructor.
 		InputManager();
 		//! Constructor.
-		InputManager(const CL_DisplayWindow &window);
+		InputManager(const clan::DisplayWindow &window);
 		//! Deconstructor
 		~InputManager();
 
@@ -351,14 +351,13 @@ namespace FusionEngine
 		typedef std::vector<InputStateMap> PlayerInputStateMaps;
 
 		//! Current positions of each mouse
-		typedef std::vector<CL_Point> MousePositionList;
+		typedef std::vector<clan::Point> MousePositionList;
 
 #ifdef FSN_USE_XINPUT
 		typedef std::vector<XInputController> XInputControllerList;
 #endif
 
-	public:
-		void SetDisplayWindow(CL_DisplayWindow window);
+		void SetDisplayWindow(clan::DisplayWindow window);
 		/*!
 		 * \brief
 		 * Finds required devices.
@@ -448,8 +447,8 @@ namespace FusionEngine
 
 		LogPtr m_Log;
 
-		CL_DisplayWindow m_DisplayWindow;
-		mutable CL_InputContext m_InputContext;
+		clan::DisplayWindow m_DisplayWindow;
+		clan::InputContext m_InputContext;
 		//! Slot container for inputs
 		SlotContainer m_Slots;
 
@@ -489,17 +488,17 @@ namespace FusionEngine
 
 		unsigned int getIndexOfControllerCalled(const std::string& name);
 
-		void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
-		void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
+		void onKeyDown(const clan::InputEvent &ev);
+		void onKeyUp(const clan::InputEvent &ev);
 
-		void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
-		void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
-		void onMousePointerMove(const CL_InputEvent &ev, const CL_InputState &state);
-		void onMouseBallMove(const CL_InputEvent &ev, const CL_InputState &state);
+		void onMouseDown(const clan::InputEvent &ev);
+		void onMouseUp(const clan::InputEvent &ev);
+		void onMousePointerMove(const clan::InputEvent &ev);
+		void onMouseBallMove(const clan::InputEvent &ev);
 
-		void onGamepadPress(const CL_InputEvent &ev, const CL_InputState &state);
-		void onGamepadRelease(const CL_InputEvent &ev, const CL_InputState &state);
-		void onGamepadAxisMove(const CL_InputEvent &ev, const CL_InputState &state);
+		void onGamepadPress(const clan::InputEvent &ev);
+		void onGamepadRelease(const clan::InputEvent &ev);
+		void onGamepadAxisMove(const clan::InputEvent &ev);
 
 #ifdef FSN_USE_XINPUT
 		void onXInputPress(const XInputEvent &ev);
@@ -508,7 +507,7 @@ namespace FusionEngine
 #endif
 
 		//! Invokes SignalRawInput
-		void fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData device_info);
+		void fireRawInput(const clan::InputEvent &ev, RawInputUserData device_info);
 #ifdef FSN_USE_XINPUT
 		//! Invokes SignalRawInput when a XInputEvent is received
 		void fireRawInput_XInput(const XInputEvent& ev);

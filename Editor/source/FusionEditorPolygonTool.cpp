@@ -192,52 +192,52 @@ namespace FusionEngine
 			return false;
 	}
 
-	void EditorPolygonTool::Draw(CL_GraphicContext& gc)
+	void EditorPolygonTool::Draw(clan::Canvas& canvas)
 	{
-		CL_Colorf lineColour(0.4f, 0.4f, 0.96f, 0.8f);
-		CL_Colorf pointColour(1.0f, 1.0f, 0.98f, 1.0f);
+		clan::Colorf lineColour(0.4f, 0.4f, 0.96f, 0.8f);
+		clan::Colorf pointColour(1.0f, 1.0f, 0.98f, 1.0f);
 		if (m_Verts.size() > 1)
 		{
 			auto it2 = m_Verts.begin() + 1u;
 			for (auto it = m_Verts.begin(); it2 != m_Verts.end(); ++it, ++it2)
-				CL_Draw::line(gc, it->x, it->y, it2->x, it2->y, lineColour);
+				canvas.line(it->x, it->y, it2->x, it2->y, lineColour);
 			if (m_Mode != Mode::Line && m_Verts.size() > 2)
 			{
 				const auto& last = m_Verts.back();
 				const auto& first = m_Verts.front();
-				CL_Draw::line(gc, last.x, last.y, first.x, first.y, lineColour);
+				canvas.line(last.x, last.y, first.x, first.y, lineColour);
 			}
 		}
 		for (auto it = m_Verts.begin(); it != m_Verts.end(); ++it)
-			CL_Draw::circle(gc, it->x, it->y, 1.0f, pointColour);
+			canvas.circle(it->x, it->y, 1.0f, pointColour);
 
-		CL_Colorf feedbackColour;
+		clan::Colorf feedbackColour;
 		if (m_FeedbackType == Add)
-			feedbackColour = CL_Colorf(0.6f, 0.98f, 0.6f);
+			feedbackColour = clan::Colorf(0.6f, 0.98f, 0.6f);
 		else if (m_FeedbackType == Remove)
-			feedbackColour = CL_Colorf(0.98f, 0.6f, 0.6f);
+			feedbackColour = clan::Colorf(0.98f, 0.6f, 0.6f);
 		else
-			feedbackColour = CL_Colorf(0.6f, 0.6f, 0.98f);
-		CL_Draw::circle(gc, m_FeedbackPoint.x, m_FeedbackPoint.y, 1.0f, feedbackColour);
+			feedbackColour = clan::Colorf(0.6f, 0.6f, 0.98f);
+		canvas.circle(m_FeedbackPoint.x, m_FeedbackPoint.y, 1.0f, feedbackColour);
 
 		if (m_DrawFeedbackTri)
 		{
-			CL_Colorf feedbackLineColour(0.96f, 0.96f, 0.96f, 0.8f);
+			clan::Colorf feedbackLineColour(0.96f, 0.96f, 0.96f, 0.8f);
 
-			CL_Draw::circle(gc, m_FeedbackTri[0].x, m_FeedbackTri[0].y, 1.0f, feedbackColour);
+			canvas.circle(m_FeedbackTri[0].x, m_FeedbackTri[0].y, 1.0f, feedbackColour);
 			auto it2 = m_FeedbackTri.begin() + 1u;
 			for (auto it = m_FeedbackTri.begin(); it2 != m_FeedbackTri.end(); ++it, ++it2)
 			{
-				CL_Draw::circle(gc, it2->x, it2->y, 1.0f, feedbackColour);
-				CL_Draw::line(gc, it->x, it->y, it2->x, it2->y, feedbackLineColour);
+				canvas.circle(it2->x, it2->y, 1.0f, feedbackColour);
+				canvas.line(it->x, it->y, it2->x, it2->y, feedbackLineColour);
 			}
 		}
 		
-		CL_Colorf grabbedColour(0.40f, 0.40f, 1.f);
+		clan::Colorf grabbedColour(0.40f, 0.40f, 1.f);
 		for (auto it = m_GrabbedVerts.begin(); it != m_GrabbedVerts.end(); ++it)
 		{
 			const Vector2& v = m_Verts[*it];
-			CL_Draw::circle(gc, v.x, v.y, 0.5f, grabbedColour);
+			canvas.circle(v.x, v.y, 0.5f, grabbedColour);
 		}
 	}
 
@@ -257,13 +257,13 @@ namespace FusionEngine
 		}
 		else
 		{
-			CL_Vec2f p(pos.x, pos.y);
+			clan::Vec2f p(pos.x, pos.y);
 			float dist = std::numeric_limits<float>::max();
 			auto lineIt1 = m_Verts.end();
 			auto it2 = m_Verts.begin() + 1u;
 			for (auto it = m_Verts.begin(); it2 != m_Verts.end(); ++it, ++it2)
 			{
-				auto nearestPoint = CL_LineMath::closest_point(p, CL_Vec2f(it->x, it->y), CL_Vec2f(it2->x, it2->y));
+				auto nearestPoint = clan::LineMath::closest_point(p, clan::Vec2f(it->x, it->y), clan::Vec2f(it2->x, it2->y));
 				const float curDist = nearestPoint.distance(p);
 				if (curDist < dist)
 				{
@@ -280,7 +280,7 @@ namespace FusionEngine
 			{
 				const auto& last = m_Verts.back();
 				const auto& first = m_Verts.front();
-				auto nearestPoint = CL_LineMath::closest_point(p, CL_Vec2f(last.x, last.y), CL_Vec2f(first.x, first.y));
+				auto nearestPoint = clan::LineMath::closest_point(p, clan::Vec2f(last.x, last.y), clan::Vec2f(first.x, first.y));
 				const float curDist = nearestPoint.distance(p);
 				if (curDist < dist)
 				{
@@ -304,14 +304,14 @@ namespace FusionEngine
 		}
 		else
 		{
-			CL_Vec2f p(pos.x, pos.y);
+			clan::Vec2f p(pos.x, pos.y);
 			float dist = std::numeric_limits<float>::max();
 			auto lineIt1 = m_Verts.end();
 
 			auto it2 = m_Verts.begin() + 1u;
 			for (auto it = m_Verts.begin(); it2 != m_Verts.end(); ++it, ++it2)
 			{
-				CL_LineSegment2f line(CL_Vec2f(it->x, it->y), CL_Vec2f(it2->x, it2->y));
+				clan::LineSegment2f line(clan::Vec2f(it->x, it->y), clan::Vec2f(it2->x, it2->y));
 				const float curDist = line.point_distance(p);
 				if (curDist < dist)
 				{
@@ -323,7 +323,7 @@ namespace FusionEngine
 			{
 				const auto& last = m_Verts.back();
 				const auto& first = m_Verts.front();
-				CL_LineSegment2f line(CL_Vec2f(last.x, last.y), CL_Vec2f(first.x, first.y));
+				clan::LineSegment2f line(clan::Vec2f(last.x, last.y), clan::Vec2f(first.x, first.y));
 				const float curDist = line.point_distance(p);
 				if (curDist < dist)
 				{

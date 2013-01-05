@@ -73,7 +73,7 @@ namespace FusionEngine
 		bool MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 		bool MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 
-		void Draw(CL_GraphicContext& gc);
+		void Draw(clan::Canvas& canvas) override;
 
 	private:
 		Vector2 m_Center;

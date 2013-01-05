@@ -149,7 +149,7 @@ namespace FusionEngine
 		int32_t m_RegionSize;
 
 		bool m_EditMode;
-		CL_Rect m_Bounds;
+		clan::Rect m_Bounds;
 
 		bool m_FragmentationAllowed;
 

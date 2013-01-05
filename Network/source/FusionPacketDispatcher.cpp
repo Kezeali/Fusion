@@ -30,7 +30,7 @@
 
 #include "FusionPacketDispatcher.h"
 
-#include <RakNetTypes.h>
+#include <RakNet/RakNetTypes.h>
 
 #include "FusionRakNetwork.h"
 #include "FusionPacketHandler.h"

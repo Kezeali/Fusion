@@ -43,7 +43,7 @@
 #include <vector>
 #include <functional>
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 #include <boost/mpl/vector.hpp>
 #include <boost/preprocessor.hpp>
@@ -66,14 +66,6 @@ namespace FusionEngine
 
 	class ComponentProperty;
 	class IComponentProperty;
-
-	//! Serialisation exception
-	class SerialisationError : public Exception
-	{
-	public:
-		SerialisationError(const std::string& description, const std::string& origin, const char* file, long line)
-			: Exception(description, origin, file, line) {}
-	};
 
 	template <class T>
 	class ComponentIPtr

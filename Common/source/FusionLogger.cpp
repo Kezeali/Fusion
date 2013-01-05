@@ -274,9 +274,9 @@ namespace FusionEngine
 
 	void Logger::Add(const Exception& error, const std::string& tag, LogSeverity severity)
 	{
-		CL_String message = cl_format("Error: %1", error.ToString().c_str());
+		std::string message = clan::string_format("Error: %1", error.ToString().c_str());
 
-		Add(CL_StringHelp::text_to_local8(message), tag, severity);
+		Add(clan::StringHelp::text_to_local8(message), tag, severity);
 	}
 
 	void Logger::onConsoleNewLine(const std::string &message)

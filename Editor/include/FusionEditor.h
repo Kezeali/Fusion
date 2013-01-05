@@ -99,7 +99,7 @@ namespace FusionEngine
 	class Editor : public EngineExtension, public ResourceEditorFactory
 	{
 	public:
-		Editor(const std::vector<CL_String> &args);
+		Editor(const std::vector<std::string> &args);
 		virtual ~Editor();
 
 		std::string GetName() const { return "editor"; }
@@ -113,7 +113,7 @@ namespace FusionEngine
 		bool IsEditor() const { return true; }
 
 		void SetOptions(const ClientOptions& options);
-		void SetDisplay(const CL_DisplayWindow& display);
+		void SetDisplay(const clan::DisplayWindow& display);
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
 		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
@@ -165,7 +165,7 @@ namespace FusionEngine
 		bool m_Active;
 		std::string m_OriginalSavePath;
 
-		CL_DisplayWindow m_DisplayWindow;
+		clan::DisplayWindow m_DisplayWindow;
 		std::shared_ptr<AngelScriptWorld> m_AngelScriptWorld;
 		std::shared_ptr<Box2DWorld> m_Box2DWorld;
 		std::shared_ptr<CLRenderWorld> m_RenderWorld;
@@ -190,12 +190,12 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> m_NonStreamedEntities;
 
-		CL_Slot m_KeyDownSlot;
-		CL_Slot m_KeyUpSlot;
-		CL_Slot m_MouseDownSlot;
-		CL_Slot m_MouseUpSlot;
-		CL_Slot m_MouseMoveSlot;
-		CL_Slot m_WindowResizeSlot;
+		clan::Slot m_KeyDownSlot;
+		clan::Slot m_KeyUpSlot;
+		clan::Slot m_MouseDownSlot;
+		clan::Slot m_MouseUpSlot;
+		clan::Slot m_MouseMoveSlot;
+		clan::Slot m_WindowResizeSlot;
 
 		bool m_RebuildScripts;
 		bool m_CompileMap;
@@ -234,7 +234,7 @@ namespace FusionEngine
 
 		bool m_ShiftSelect;
 		bool m_AltSelect;
-		CL_Rectf m_SelectionRectangle;
+		clan::Rectf m_SelectionRectangle;
 		std::set<EntityPtr> m_SelectedEntities;
 
 		Vector2 m_DragFrom;
@@ -278,16 +278,16 @@ namespace FusionEngine
 
 		void NudgeSelectedEntities(const Vector2& pixels);
 
-		void OnKeyDown(const CL_InputEvent& ev, const CL_InputState& state);
-		void OnKeyUp(const CL_InputEvent& ev, const CL_InputState& state);
-		void OnMouseDown(const CL_InputEvent& ev, const CL_InputState& state);
-		void OnMouseUp(const CL_InputEvent& ev, const CL_InputState& state);
-		void OnMouseMove(const CL_InputEvent& ev, const CL_InputState& state);
+		void OnKeyDown(const clan::InputEvent& ev);
+		void OnKeyUp(const clan::InputEvent& ev);
+		void OnMouseDown(const clan::InputEvent& ev);
+		void OnMouseUp(const clan::InputEvent& ev);
+		void OnMouseMove(const clan::InputEvent& ev);
 
-		void OnMouseDown_Selection(const CL_InputEvent& ev);
-		void OnMouseUp_Selection(const CL_InputEvent& ev);
+		void OnMouseDown_Selection(const clan::InputEvent& ev);
+		void OnMouseUp_Selection(const clan::InputEvent& ev);
 
-		void OnMouseMove_Move(const CL_InputEvent& ev);
+		void OnMouseMove_Move(const clan::InputEvent& ev);
 
 		void OnWindowResize(int x, int y);
 
@@ -303,13 +303,13 @@ namespace FusionEngine
 
 		size_t GetNumSelected() const;
 		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
-		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const CL_Colorf&)> fn);
+		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const clan::Colorf&)> fn);
 
 		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn);
 
-		CL_Rectf GetBBOfSelected();
+		clan::Rectf GetBBOfSelected();
 
-		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const CL_Rectf& area, const QueryType query_type);
+		void GetEntitiesOverlapping(std::vector<EntityPtr>& results, const clan::Rectf& area, const QueryType query_type);
 
 		void InitInspectorGenerator(InspectorGenerator& generator, const std::function<void (void)>& close_callback);
 

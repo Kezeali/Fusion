@@ -62,7 +62,7 @@ namespace FusionEngine
 	class CLRenderSystem : public IComponentSystem
 	{
 	public:
-		CLRenderSystem(const CL_DisplayWindow& window, CameraSynchroniser* camera_sync);
+		CLRenderSystem(const clan::Canvas& window, CameraSynchroniser* camera_sync);
 
 		std::shared_ptr<ISystemWorld> CreateWorld();
 
@@ -73,7 +73,7 @@ namespace FusionEngine
 
 		void RegisterScriptInterface(asIScriptEngine* engine);
 
-		CL_DisplayWindow m_DisplayWindow;
+		clan::Canvas m_Canvas;
 		CameraSynchroniser* m_CameraSynchroniser;
 	};
 	
@@ -83,7 +83,7 @@ namespace FusionEngine
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
-		CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync);
+		CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync);
 		virtual ~CLRenderWorld();
 
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
@@ -91,7 +91,7 @@ namespace FusionEngine
 		void RemoveViewport(const ViewportPtr& viewport);
 
 		void AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& viewport);
-		void RunExtensions(const ViewportPtr& vp, const CL_GraphicContext& gc);
+		void RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas);
 
 		void AddQueuedViewports();
 
@@ -178,14 +178,14 @@ namespace FusionEngine
 
 		std::unique_ptr<B2DebugDraw> m_PhysDebugDraw;
 
-		CL_Font m_DebugFont;
-		CL_Font m_DebugFont2;
+		clan::Font m_DebugFont;
+		clan::Font m_DebugFont2;
 	};
 
 	class CLRenderGUITask : public ISystemTask
 	{
 	public:
-		CLRenderGUITask(CLRenderWorld* sysworld, const CL_DisplayWindow& window, Renderer* const renderer);
+		CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer);
 		~CLRenderGUITask();
 
 		void Update(const float delta);
@@ -199,16 +199,16 @@ namespace FusionEngine
 			return true;
 		}
 
-		void onMouseMove(const CL_InputEvent &ev, const CL_InputState &state);
+		void onMouseMove(const clan::InputEvent &ev);
 
 	private:
 		CLRenderWorld* m_RenderWorld;
 		Renderer* const m_Renderer;
 
-		CL_DisplayWindow m_DisplayWindow;
+		clan::Canvas m_Canvas;
 
-		CL_Slot m_MouseMoveSlot;
-		std::deque<CL_InputEvent> m_BufferedEvents;
+		clan::Slot m_MouseMoveSlot;
+		std::deque<clan::InputEvent> m_BufferedEvents;
 		//Vector2i m_LastPosition;
 	};
 

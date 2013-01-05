@@ -44,7 +44,7 @@ namespace FusionEngine
 	public:
 		virtual ~CLRenderExtension() {}
 
-		virtual void Draw(const CL_GraphicContext& gc) = 0;
+		virtual void Draw(clan::Canvas& canvas) = 0;
 	};
 
 }

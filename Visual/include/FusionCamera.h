@@ -50,7 +50,7 @@ namespace FusionEngine
 		~Camera();
 
 		Vector2 GetSimPosition() const;
-		const CL_Vec2f &GetPosition() const;
+		const clan::Vec2f &GetPosition() const;
 		float GetAngle() const;
 		// TODO: rename this GetScale (perhaps add GetZoom method that returns 1/GetScale())
 		//! Camera scale
@@ -67,7 +67,7 @@ namespace FusionEngine
 		Camera( const Camera& );
 		const Camera& operator=( const Camera& );
 
-		CL_Vec2f m_Position;
+		clan::Vec2f m_Position;
 		float m_Angle;
 		float m_Scale;
 	};

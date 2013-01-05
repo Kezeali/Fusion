@@ -36,7 +36,6 @@
 #include "FusionSingleton.h"
 #include "FusionWorldSaver.h"
 
-#include <ClanLib/core.h> // For CL_String (bleh)
 #include <ClanLib/display.h>
 #include <ClanLib/sound.h>
 
@@ -78,15 +77,16 @@ namespace FusionEngine
 	{
 	public:
 		//! CTOR
-		EngineManager(const std::vector<CL_String>& args);
+		EngineManager(const std::vector<std::string>& args);
 		//! DTOR
 		~EngineManager();
 
 		void Initialise();
 
-		const CL_DisplayWindow& GetDisplayWindow() const;
-		const CL_GraphicContext& GetGC() const;
-		const CL_SoundOutput& GetSoundOutput() const;
+		const clan::DisplayWindow& GetDisplayWindow() const;
+		const clan::Canvas& GetCanvas() const;
+		const clan::GraphicContext& GetGC() const;
+		const clan::SoundOutput& GetSoundOutput() const;
 		const std::shared_ptr<ScriptManager>& GetScriptManager() const;
 		CameraSynchroniser* GetCameraSynchroniser() const;
 
@@ -135,8 +135,11 @@ namespace FusionEngine
 		std::shared_ptr<StreamingManager> m_StreamingManager;
 		std::shared_ptr<CameraSynchroniser> m_CameraSynchroniser;
 
-		CL_DisplayWindow m_DisplayWindow;
-		CL_SoundOutput m_SoundOutput;
+		clan::DisplayWindow m_DisplayWindow;
+
+		clan::Canvas m_Canvas;
+
+		clan::SoundOutput m_SoundOutput;
 
 		std::shared_ptr<InputManager> m_InputManager;
 
@@ -172,7 +175,7 @@ namespace FusionEngine
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;
 
-		CL_Slot m_GotFocusSlot;
+		clan::Slot m_GotFocusSlot;
 
 		void ReadOptions(const ClientOptions& options);
 

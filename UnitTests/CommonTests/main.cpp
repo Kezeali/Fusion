@@ -19,9 +19,9 @@ struct CommonTestsEnv : public testing::Environment
 	virtual void SetUp()
 	{
 		auto dataFolder = std::string("UnitTestData") + PHYSFS_getDirSeparator();
-		auto writep = std::string(CL_System::get_exe_path()) + dataFolder + "write_dir";
+		auto writep = std::string(clan::System::get_exe_path()) + dataFolder + "write_dir";
 
-		SetupPhysFS::init(CL_System::get_exe_path().c_str());
+		SetupPhysFS::init(clan::System::get_exe_path().c_str());
 		ASSERT_TRUE(PHYSFS_setWriteDir(writep.c_str()) != 0);
 		ASSERT_TRUE(PHYSFS_mkdir(s_LogfilePath.c_str()) != 0);
 		ASSERT_TRUE(SetupPhysFS::mount(dataFolder, "", "zip"));
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 {
 	testing::InitGoogleTest(&argc, argv);
 
-	CL_SetupCore core;
+	clan::SetupCore core;
 
 	testing::AddGlobalTestEnvironment(new CommonTestsEnv);
 

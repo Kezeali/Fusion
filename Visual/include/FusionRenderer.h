@@ -59,39 +59,28 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		Renderer(const CL_GraphicContext &gc);
+		Renderer(const clan::Canvas &canvas);
 		//! Destructor
 		virtual ~Renderer();
 
-		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
-		void CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
-		static void CalculateScreenArea(const CL_GraphicContext& gc, CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
+		void CalculateScreenArea(clan::Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
+		void CalculateScreenArea(clan::Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
+		static void CalculateScreenArea(const clan::GraphicContext& gc, clan::Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 
 		//! Returns the GC object used by this renderer
-		const CL_GraphicContext& GetGraphicContext() const;
+		const clan::Canvas& GetCanvas() const;
 
 		int GetContextWidth() const;
 		int GetContextHeight() const;
 
-		//! Sets up the given GC to render within the given viewport
-		/*!
-		* \param gc The CL_GraphicContext to set up
-		* \param viewport The viewport which will be rendered
-		* \param draw_area The area of the game world that should be drawn (in 3D this would be a frustum)
-		*/
-		CL_GraphicContext& SetupDraw(CL_GraphicContext& gc, const ViewportPtr& viewport, CL_Rectf* draw_area = nullptr);
-		//! Resets the given GC to as it was before SetupDraw was called, assuming SetupDraw has been called
-		void PostDraw(CL_GraphicContext& gc);
-
 		//! Sets up the GC to render within the given viewport
-		CL_GraphicContext& SetupDraw(const ViewportPtr& viewport, CL_Rectf* draw_area = nullptr);
+		void SetupDraw(const ViewportPtr& viewport, clan::Rectf* draw_area = nullptr);
 		//! Resets the GC to as it was before SetupDraw was called, assuming SetupDraw has been called
 		void PostDraw();
 
 	protected:
 
-		CL_GraphicContext m_GC;
-
+		clan::Canvas m_Canvas;
 	};
 
 }

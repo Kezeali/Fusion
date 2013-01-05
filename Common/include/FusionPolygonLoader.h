@@ -55,9 +55,9 @@ namespace FusionEngine
 	};
 
 	//! Polygon resource loader callback
-	void LoadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! SpriteAnimation resource unloader callback
-	void UnloadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	
 }
 

@@ -37,7 +37,7 @@
 #include "FusionStreamingManager.h"
 
 #include <array>
-#include <boost/thread.hpp>
+//#include <boost/thread.hpp>
 #include <ClanLib/Core/System/event.h>
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <memory>
@@ -45,6 +45,11 @@
 #include <tuple>
 #include <tbb/concurrent_queue.h>
 #include <tbb/concurrent_hash_map.h>
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 #include "FusionCellDataSource.h"
 #include "FusionCellFileManager.h"
@@ -115,28 +120,28 @@ namespace FusionEngine
 		//! Retrieves the given cell
 		std::shared_ptr<Cell> Retrieve(int32_t x, int32_t y);
 
-		typedef boost::recursive_mutex TransactionMutex_t;
+		typedef std::recursive_mutex TransactionMutex_t;
 
-		boost::mutex m_CellsBeingLoadedMutex;
+		std::mutex m_CellsBeingLoadedMutex;
 
 		struct TransactionLock
 		{
-			TransactionLock(TransactionMutex_t& mutex, CL_Event& ev);
+			TransactionLock(TransactionMutex_t& mutex, clan::Event& ev);
 			//TransactionLock(TransactionLock&& other)
 			//	: lock(std::move(other.lock)),
 			//	endEvent(std::move(other.endEvent))
 			//{
 			//}
 			~TransactionLock();
-			TransactionMutex_t::scoped_lock lock;
-			CL_Event& endEvent;
+			std::lock_guard<TransactionMutex_t> lock;
+			clan::Event& endEvent;
 		};
 
 		std::unique_ptr<TransactionLock> MakeTransaction();
 		void BeginTransaction();
 		void EndTransaction();
 
-		boost::thread m_Thread;
+		std::thread m_Thread;
 
 		void Start();
 
@@ -377,15 +382,15 @@ namespace FusionEngine
 		tbb::concurrent_queue<std::shared_ptr<UpdateJob>> m_ObjectUpdateQueue;
 
 		tbb::concurrent_queue<std::string> m_SaveQueue;
-		boost::mutex m_SaveToLoadMutex;
+		std::mutex m_SaveToLoadMutex;
 		std::string m_SaveToLoad;
 
-		CL_Event m_NewData;
-		CL_Event m_TransactionEnded;
-		CL_Event m_Quit;
+		clan::Event m_NewData;
+		clan::Event m_TransactionEnded;
+		clan::Event m_Quit;
 
 #ifdef _DEBUG
-		boost::thread::id m_ControllerThreadId;
+		std::thread::id m_ControllerThreadId;
 #endif
 	};
 

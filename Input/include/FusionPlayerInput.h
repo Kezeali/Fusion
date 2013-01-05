@@ -35,7 +35,7 @@
 #include "FusionCommon.h"
 
 #include "FusionInputDefinitionLoader.h"
-#include <RakNetTypes.h>
+#include <RakNet/RakNetTypes.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/random_access_index.hpp>

@@ -34,6 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
+//#include "FusionCommonAppTypes.h"
+
 #include <string>
 
 namespace FusionEngine
@@ -43,27 +45,44 @@ namespace FusionEngine
 	{
 
 		template <typename T>
-		struct AppType
+		struct RegisteredAppType
 		{
 			static int type_id;
 			static std::string name;
 		};
 
 		template <typename T>
-		int AppType<T>::type_id = 0;
+		int RegisteredAppType<T>::type_id = 0;
 		template <typename T>
-		std::string AppType<T>::name = "";
+		std::string RegisteredAppType<T>::name = "";
 
 		template <typename T>
 		void DefineAppType(int type_id, const std::string& name)
 		{
-			AppType<T>::type_id = type_id;
-			AppType<T>::name = name;
+			RegisteredAppType<T>::type_id = type_id;
+			RegisteredAppType<T>::name = name;
 			
 			typedef typename std::add_pointer<T>::type pointer_type;
-			AppType<pointer_type>::type_id = asTYPEID_OBJHANDLE | type_id;
-			AppType<pointer_type>::name = name + "@";
+			RegisteredAppType<pointer_type>::type_id = asTYPEID_OBJHANDLE | type_id;
+			RegisteredAppType<pointer_type>::name = name + "@";
 		}
+
+		//template <typename B, typename E>
+		//struct my_for_each {
+		//	my_for_each<B, E>() {
+		//		typedef typename B::type T;      // vector member
+		//		typedef void (Foo::*FunPtr)(T&); // pointer to Foo member function
+		//		FunPtr funPtr = &Foo::read<T>;   // cause instantiation?
+		//	}
+
+		//	my_for_each<typename boost::mpl::next<B>::type, E> next;
+		//};
+
+		//template<typename E>
+		//struct my_for_each<E, E> {};
+
+		//static my_for_each< boost::mpl::begin<types>::type,
+		//	boost::mpl::end<types>::type > first;
 
 	}
 

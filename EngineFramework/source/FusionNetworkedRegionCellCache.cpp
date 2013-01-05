@@ -35,7 +35,7 @@
 #include "FusionRakNetwork.h"
 #include "FusionRegionFileLoadedCallbackHandle.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 #include <physfs.h>
 
 namespace FusionEngine

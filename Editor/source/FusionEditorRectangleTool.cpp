@@ -226,33 +226,33 @@ namespace FusionEngine
 			return false;
 	}
 
-	void EditorRectangleTool::Draw(CL_GraphicContext& gc)
+	void EditorRectangleTool::Draw(clan::Canvas& canvas)
 	{
-		const CL_Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
-		const CL_Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
-		const CL_Colorf lineColour(0.98f, 0.98f, 0.6f, 0.6f);
+		const clan::Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
+		const clan::Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
+		const clan::Colorf lineColour(0.98f, 0.98f, 0.6f, 0.6f);
 
 		{
 			const Vector2 topLeft = m_Center - m_HalfSize;
 			const Vector2 bottomRight = m_Center + m_HalfSize;
-			CL_Quadf quad(CL_Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
-			quad.rotate(CL_Vec2f(m_Center.x, m_Center.y), CL_Angle(m_Angle, cl_radians));
+			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
+			quad.rotate(clan::Vec2f(m_Center.x, m_Center.y), clan::Angle(m_Angle, clan::angle_radians));
 
-			CL_Draw::triangle(gc, quad.p, quad.q, quad.s, currentShapeColour);
-			CL_Draw::triangle(gc, quad.q, quad.r, quad.s, currentShapeColour);
-			CL_Draw::line(gc, m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
+			canvas.triangle(quad.p, quad.q, quad.s, currentShapeColour);
+			canvas.triangle(quad.q, quad.r, quad.s, currentShapeColour);
+			canvas.line(m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
 		}
 
 		if (m_MouseDown && m_Action != Action::None)
 		{
 			const Vector2 topLeft = m_FeedbackCenter - m_FeedbackHalfSize;
 			const Vector2 bottomRight = m_FeedbackCenter + m_FeedbackHalfSize;
-			CL_Quadf quad(CL_Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
-			quad.rotate(CL_Vec2f(m_FeedbackCenter.x, m_FeedbackCenter.y), CL_Angle(m_FeedbackAngle, cl_radians));
+			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
+			quad.rotate(clan::Vec2f(m_FeedbackCenter.x, m_FeedbackCenter.y), clan::Angle(m_FeedbackAngle, clan::angle_radians));
 
-			CL_Draw::triangle(gc, quad.p, quad.q, quad.s, modificationColour);
-			CL_Draw::triangle(gc, quad.q, quad.r, quad.s, modificationColour);
-			CL_Draw::line(gc, m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
+			canvas.triangle(quad.p, quad.q, quad.s, modificationColour);
+			canvas.triangle(quad.q, quad.r, quad.s, modificationColour);
+			canvas.line(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
 		}
 	}
 

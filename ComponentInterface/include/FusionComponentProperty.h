@@ -37,7 +37,7 @@
 #include "FusionPropertySignalingSystem.h"
 #include "FusionRefCounted.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 namespace FusionEngine
 {
@@ -59,10 +59,9 @@ namespace FusionEngine
 		virtual void Deserialise(RakNet::BitStream& stream) = 0;
 		virtual bool IsContinuous() const = 0;
 
-		virtual void Set(void* value, int type_id) = 0;
-		virtual void* GetRef() = 0;
-
 		virtual int GetTypeId() const { return -1; }
+		virtual void* GetRef() = 0;
+		virtual void SetAny(void* value, int type_id) = 0;
 
 		virtual bool IsEqual(IComponentProperty*) const { return false; }
 	};
@@ -113,7 +112,7 @@ namespace FusionEngine
 		void Set(void* ref)
 		{
 			FSN_ASSERT(GetImpl()->GetTypeId() > 0);
-			GetImpl()->Set(ref, GetImpl()->GetTypeId());
+			GetImpl()->SetAny(ref, GetImpl()->GetTypeId());
 		}
 		void* Get()
 		{

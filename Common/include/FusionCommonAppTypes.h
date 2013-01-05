@@ -58,7 +58,7 @@ namespace FusionEngine
 
 		typedef boost::mpl::list<bool, std::int8_t, std::int16_t, std::int32_t, std::int64_t, std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t> IntTypes;
 		typedef boost::mpl::list<float, double> FloatTypes;
-		typedef boost::mpl::list<std::string, Vector2, CL_Colorf, CL_Rectf> AppTypes;
+		typedef boost::mpl::list<std::string, Vector2, clan::Colorf, clan::Rectf, clan::Origin> AppTypes;
 
 		typedef boost::mpl::insert_range<IntTypes,
 			boost::mpl::end<IntTypes>::type,

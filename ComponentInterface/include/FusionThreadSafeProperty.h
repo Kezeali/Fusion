@@ -40,7 +40,7 @@
 #include <functional>
 #include <type_traits>
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 #define FSN_TSP_SIGNALS2
 
@@ -287,7 +287,7 @@ namespace FusionEngine
 		{}
 
 	public:
-		typedef ThreadSafeProperty<T, Writer, Serialiser> This_t;
+		typedef typename ThreadSafeProperty<T, Writer, Serialiser> This_t;
 
 		ThreadSafeProperty()
 			: m_PropertyID(-1),
@@ -350,7 +350,7 @@ namespace FusionEngine
 
 		PropertyID GetID() const { return m_PropertyID; }
 
-		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
+		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id) override
 		{
 			//m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
 			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, [this]()->const T& { this->Synchronise(); return this->Get(); });
@@ -358,7 +358,7 @@ namespace FusionEngine
 			m_SubscriptionAgent.ActivateSubscription(system);
 		}
 
-		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
+		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id) override
 		{
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
@@ -366,7 +366,7 @@ namespace FusionEngine
 			}
 		}
 
-		void Synchronise()
+		void Synchronise() override
 		{
 			FSN_ASSERT(m_GetSetCallbacks);
 
@@ -381,7 +381,7 @@ namespace FusionEngine
 			}
 		}
 
-		void Serialise(RakNet::BitStream& stream)
+		void Serialise(RakNet::BitStream& stream) override
 		{
 			// Non-writable properties don't need to be synched
 			//  (one assumes that they represent some dependent
@@ -393,7 +393,7 @@ namespace FusionEngine
 			}
 		}
 
-		void Deserialise(RakNet::BitStream& stream)
+		void Deserialise(RakNet::BitStream& stream) override
 		{
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
@@ -415,7 +415,7 @@ namespace FusionEngine
 			}
 		}
 
-		bool IsContinuous() const
+		bool IsContinuous() const override
 		{
 			return Serialiser::IsContinuous();
 		}
@@ -431,13 +431,13 @@ namespace FusionEngine
 			m_Writer.Write(reinterpret_cast<bool>(value));
 		}
 
-		void* GetRef()
+		void* GetRef() override
 		{
 			return &m_Value;
 		}
-		void Set(void* value, int type_id)
+		void SetAny(void* value, int type_id) override
 		{
-			if (Scripting::AppType<T>::type_id == type_id)
+			if (Scripting::RegisteredAppType<T>::type_id == type_id)
 			{
 				SetSpecific<T>(value);
 
@@ -446,9 +446,9 @@ namespace FusionEngine
 			}
 		}
 
-		int GetTypeId() const
+		int GetTypeId() const override
 		{
-			return Scripting::AppType<T>::type_id;
+			return Scripting::RegisteredAppType<T>::type_id;
 		}
 
 		//bool IsEqual(IComponentProperty* other) const

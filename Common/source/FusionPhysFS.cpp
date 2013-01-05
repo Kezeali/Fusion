@@ -214,14 +214,16 @@ namespace FusionEngine
 		std::vector<std::string> regex_find(const std::string& path, const std::regex& expression, bool recursive)
 		{
 			return find_all(path,
-				std::bind(&std::regex_match<std::char_traits<char>, std::allocator<char>, char, std::regex_traits<char>>, std::placeholders::_1, expression, std::regex_constants::match_default),
-				recursive);
+				[expression](const std::string& filepath)
+				{
+					return std::regex_match(filepath, expression);
+				}, recursive);
 		}
 	}
 
 	SetupPhysFS::SetupPhysFS()
 	{
-		CL_String8 path = CL_StringHelp::text_to_local8(CL_System::get_exe_path());
+		std::string path = clan::StringHelp::text_to_local8(clan::System::get_exe_path());
 		init(path.c_str());
 	}
 

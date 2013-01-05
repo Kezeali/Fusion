@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011-2012 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-//#include <BitStream.h>
+//#include <RakNet/BitStream.h>
 #include <ClanLib/core.h>
 
 #include "FusionEntityComponent.h"
@@ -70,11 +70,7 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode);
 		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, SerialiseMode mode);
 
-		static void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode)
-		{
-			std::vector<uint32_t> notUsed;
-			DeserialiseOccasional(in, notUsed, entity, mode);
-		}
+		void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode);
 
 		//! Deserialises and returns the position data from the given state, if it contains such data
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);

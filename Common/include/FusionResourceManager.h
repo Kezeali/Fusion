@@ -60,7 +60,7 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources.
 	 *
-	 * \sa ResourceContainer | ResourcePointer | ResourceLoader
+	 * \sa ResourceContainer | ResourceLoader
 	 */
 	class ResourceManager : public Singleton<ResourceManager>
 	{
@@ -70,11 +70,11 @@ namespace FusionEngine
 		* \param[in] gc
 		* GraphicContext of the current thread
 		*/
-		ResourceManager(const CL_GraphicContext &gc);
+		ResourceManager(const clan::GraphicContext& gc);
 		//! Destructor
 		~ResourceManager();
 
-		const CL_GraphicContext& GetGC() const;
+		const clan::GraphicContext& GetGC() const;
 
 		//! Assigns the given ResourceLoader to its relevant resource type
 		void AddResourceLoader(const ResourceLoader& resourceLoader);
@@ -142,14 +142,14 @@ namespace FusionEngine
 		* \param[in] gc
 		* GraphicContext for the render thread
 		*/
-		void UnloadResource(const std::string &path, CL_GraphicContext &gc);
+		void UnloadResource(const std::string &path, clan::GraphicContext &gc);
 
 		//! Unloads and deletes all resources
 		/*!
 		* \param[in] gc
 		* GraphicContext for the render thread
 		*/
-		void DeleteAllResources(CL_GraphicContext &gc);
+		void DeleteAllResources(clan::GraphicContext &gc);
 
 		//! Prevent resources of the given type from unloading, even if they are unused
 		void PauseUnload(const std::string& resource_type);
@@ -299,11 +299,11 @@ namespace FusionEngine
 		typedef tbb::concurrent_priority_queue<ResourceToLoadData> ToLoadQueue;
 		typedef tbb::concurrent_queue<ResourceContainer*> ToUnloadQueue;
 
-		CL_Event m_StopEvent; // Set to stop the worker thread
-		CL_Event m_ToLoadEvent; // Set when there is more data to load
-		CL_Event m_ToUnloadEvent;
-		CL_Event m_CheckForChangesEvent; // For hot-reloading
-		CL_Thread m_Thread;
+		clan::Event m_StopEvent; // Set to stop the worker thread
+		clan::Event m_ToLoadEvent; // Set when there is more data to load
+		clan::Event m_ToUnloadEvent;
+		clan::Event m_CheckForChangesEvent; // For hot-reloading
+		clan::Thread m_Thread;
 		bool m_Running;
 		bool m_Clearing;
 		bool m_FinishLoadingBeforeStopping;
@@ -313,29 +313,29 @@ namespace FusionEngine
 
 		boost::signals2::signal<void (void)> m_SigCheckingForChanges;
 
-		CL_GraphicContext m_GC;
+		clan::GraphicContext m_GC;
 
-		//CL_Mutex m_ToLoadMutex;
+		//clan::Mutex m_ToLoadMutex;
 		ToLoadQueue m_ToLoad;
 
-		//CL_Mutex m_ToUnloadMutex;
+		//clan::Mutex m_ToUnloadMutex;
 		ToUnloadQueue m_ToUnload;
 		ToUnloadQueue m_ToUnloadUsingGC;
 
 		// Resources
 		ResourceMap m_Resources;
 
-		//CL_Mutex m_UnreferencedMutex;
+		//clan::Mutex m_UnreferencedMutex;
 		
 		UnreferencedResourceSet m_Unreferenced;
 
-		//CL_Mutex m_ToDeliverMutex;
+		//clan::Mutex m_ToDeliverMutex;
 		ResourceQueue m_ToDeliver;
 
 		ReloadEventQueue m_HotReloadEventsQueue;
 		ResourceQueue m_ToReload;
 
-		//CL_Mutex m_LoaderMutex;
+		//clan::Mutex m_LoaderMutex;
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 

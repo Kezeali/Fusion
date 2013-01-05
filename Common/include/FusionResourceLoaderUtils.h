@@ -45,13 +45,13 @@ namespace FusionEngine
 		std::uint32_t checksum;
 	};
 
-	std::uint32_t checksumClanLibDevice(CL_IODevice& device);
+	std::uint32_t checksumClanLibDevice(clan::IODevice& device);
 	std::uint32_t checksumStream(std::istream& stream);
 
 	FileMetadata CreateFileMetadata(const std::string& path, std::istream& stream);
 
 	//! Returns true when a resource using FileMetadata has changed
-	bool FileMetadataResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 }
 
 #endif

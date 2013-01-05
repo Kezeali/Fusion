@@ -236,7 +236,7 @@ namespace FusionEngine
 
 		void append_buffer(const std::string &string);
 	protected:
-		CL_Mutex m_HeadingCrapMutex;
+		clan::Mutex m_HeadingCrapMutex;
 		std::string m_LastHeading;
 
 		std::string::size_type m_LastNewlineInBuffer;
@@ -244,7 +244,7 @@ namespace FusionEngine
 		std::string::size_type m_LengthToNextSignal;
 		std::string::size_type m_CharInterval;
 
-		CL_Mutex m_BufferMutex;
+		clan::Mutex m_BufferMutex;
 
 		std::string::size_type m_BufferLength;
 		std::string m_Buffer;

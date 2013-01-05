@@ -311,7 +311,7 @@ namespace FusionEngine
 		return m_Document != nullptr;
 	}
 
-	void MenuItem::SetBGColour(const CL_Color& colour)
+	void MenuItem::SetBGColour(const clan::Color& colour)
 	{
 		std::stringstream colourStr;
 		colourStr << "rgba(" << colour.get_red() << "," << colour.get_green() << "," << colour.get_blue() << "," << colour.get_alpha() << ")";
@@ -542,7 +542,7 @@ namespace FusionEngine
 	void ContextMenu::OnRawInput(const RawInput &input)
 	{
 		if (m_AutoHide &&
-			input.ButtonPressed && input.InputType == RawInput::Button && input.Code == CL_MOUSE_LEFT &&
+			input.ButtonPressed && input.InputType == RawInput::Button && input.Code == mouse_left &&
 			!isPseudoClassSetOnAnyChild("hover"))
 		{
 			Hide();

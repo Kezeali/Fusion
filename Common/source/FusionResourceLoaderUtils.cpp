@@ -36,7 +36,7 @@
 namespace FusionEngine
 {
 
-	std::uint32_t checksumClanLibDevice(CL_IODevice& device)
+	std::uint32_t checksumClanLibDevice(clan::IODevice& device)
 	{
 		boost::crc_32_type crc;
 		std::array<char, 1 << 15> buffer;
@@ -79,7 +79,7 @@ namespace FusionEngine
 		return metadata;
 	}
 
-	bool ResourceModTimeHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, const FileMetadata& metadata)
+	bool ResourceModTimeHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, const FileMetadata& metadata)
 	{
 		const auto path = resource->GetPath();
 
@@ -88,9 +88,9 @@ namespace FusionEngine
 		return currentModTime != metadata.modTime;
 	}
 
-	bool ResourceContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, const FileMetadata& metadata)
+	bool ResourceContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, const FileMetadata& metadata)
 	{
-		CL_IODevice device = vdir.open_file_read(resource->GetPath());
+		clan::IODevice device = vdir.open_file_read(resource->GetPath());
 
 		// Compare length
 		if (device.get_size() != metadata.length)
@@ -102,7 +102,7 @@ namespace FusionEngine
 		return newChecksum != metadata.checksum;
 	}
 
-	bool FileMetadataResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		FileMetadata metadata;
 		if (resource->TryGetMetadata(metadata))

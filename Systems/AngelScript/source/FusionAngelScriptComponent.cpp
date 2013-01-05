@@ -29,36 +29,29 @@
 
 #include "FusionAngelScriptComponent.h"
 
+#include "FusionCommonAppTypes.h"
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
-#include "FusionComponentProperty.h"
+#include "FusionException.h"
+#include "FusionLogger.h"
 #include "FusionProfiling.h"
+#include "FusionSerialisationError.h"
+#include "FusionScriptAnyProperty.h"
 
 #include "FusionB2ContactListenerASScript.h"
 
-#include "FusionException.h"
-#include "FusionLogger.h"
-
 #include "scriptany.h"
 
-#include <ScriptUtils/Inheritance/TypeTraits.h>
-#include <StringCompressor.h>
+#include <ScriptUtils/Calling/Caller.h>
 
-#include "FusionCommonAppTypes.h"
+#include <RakNet/StringCompressor.h>
+
+#include <boost/mpl/for_each.hpp>
 
 namespace FusionEngine
 {
 
 	int ASScript::s_ASScriptTypeId = -1;
-
-	// Since these aren't built-in, a static type-id (for use when serialising) has to be defined for them
-	namespace ASScriptSerialisaiton
-	{
-		static const int s_EntityTypeID = -1;
-		static const int s_CompressedStringTypeID = -2;
-
-		static const size_t s_MaxStringLength = 2048;
-	}
 
 	CLBinaryStream::CLBinaryStream(const std::string& filename, CLBinaryStream::OpenMode open_mode)
 		: m_File(nullptr)
@@ -97,7 +90,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, std::string("Couldn't write to file: ") + PHYSFS_getLastError());
 	}
 
-	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
@@ -143,7 +136,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -239,7 +232,7 @@ namespace FusionEngine
 		template <typename T>
 		void operator() (T)
 		{
-			if (Scripting::AppType<T>::type_id == param0_type_id)
+			if (Scripting::RegisteredAppType<T>::type_id == param0_type_id)
 			{
 				Generate<T>();
 			}
@@ -253,421 +246,6 @@ namespace FusionEngine
 		}
 		ASScript::ScriptMethodData& method_data;
 		int param0_type_id;
-	};
-
-	//! Like ThreadSafeProperty
-	class ScriptAnyTSP : public IComponentProperty
-	{
-	public:
-		ScriptAnyTSP(boost::intrusive_ptr<asIScriptObject> obj, size_t index, int entity_wrapper_type_id)
-			: m_Object(obj.get()),
-			m_Index(index),
-			m_EntityWrapperTypeId(entity_wrapper_type_id)
-		{
-			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
-			m_Name = m_Object->GetPropertyName(m_Index);
-
-			//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-			//new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
-			auto any = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
-			m_Value = any;
-			any->Release(); // Assigning the intrusive-ptr above increments the ref-count
-			//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
-
-			GeneratePersistentFollower();
-		}
-
-		//void SetOwner(EntityComponent* com)
-		//{
-		//	m_Owner = com;
-		//}
-
-		~ScriptAnyTSP()
-		{
-			//m_Value->Release();
-		}
-
-		int GetTypeId() const { return m_TypeId; }
-		const std::string& GetName() const { return m_Name; }
-
-		struct SignalGeneratorAquisitionFactory
-		{
-			SignalGeneratorAquisitionFactory(PropertySignalingSystem_t& sys, ScriptAnyTSP* this_prop_, PropertyID own_id_)
-				: system(sys),
-				this_prop(this_prop_),
-				own_id(own_id_)
-			{}
-			template <typename T>
-			void operator() (T)
-			{
-				if (Scripting::AppType<T>::type_id == this_prop->GetTypeId())
-				{
-					auto propVar = this_prop; // Because lamdas can't capture member vars (bah)
-					int typeId = Scripting::AppType<T>::type_id;
-					auto getter = [propVar, typeId]()->T
-					{
-						FSN_ASSERT(propVar->GetTypeId() == typeId); // Type ID shouldn't have changed
-
-						propVar->Synchronise();
-
-						auto scriptAny = propVar->Get();
-						T value;
-						scriptAny->Retrieve(&value, typeId);
-						return value;
-					};
-					this_prop->m_ChangedCallback = system.MakeGenerator<T>(own_id, getter);
-				}
-			}
-			PropertySignalingSystem_t& system;
-			ScriptAnyTSP* this_prop;
-			PropertyID own_id;
-		};
-
-		struct PropertyFollowerFactory
-		{
-			PropertyFollowerFactory(ScriptAnyTSP* this_prop_)
-				: this_prop(this_prop_)
-			{}
-			template <typename T>
-			void operator() (T)
-			{
-				if (Scripting::AppType<T>::type_id == this_prop->GetTypeId())
-				{
-					auto propVar = this_prop; // Because lamdas can't capture member vars (bah)
-					int typeId = Scripting::AppType<T>::type_id;
-					auto setter = [propVar, typeId](T value)
-					{
-						propVar->Set(static_cast<void*>(&value), typeId);
-					};
-					this_prop->m_PersistentFollower = std::make_shared<PersistentConnectionAgent<T>>(setter);
-				}
-			}
-			ScriptAnyTSP* this_prop;
-		};
-
-		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
-		{
-			FSN_PROFILE("ScriptPropAquireSignalGenerator");
-			//if (m_TypeId > 0 && m_TypeId <= asTYPEID_DOUBLE)
-			//{
-			//	switch (m_TypeId)
-			//	{
-			//	case asTYPEID_BOOL:
-			//		m_ChangedCallback = system.MakeGenerator<bool>(IComponentProperty::GetID(),
-			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			//		break;
-			//	case asTYPEID_INT8:
-			//		m_ChangedCallback = system.MakeGenerator<std::int8_t>(IComponentProperty::GetID(),
-			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			//		break;
-			//	case asTYPEID_INT16:
-			//		m_ChangedCallback = system.MakeGenerator<std::int16_t>(IComponentProperty::GetID(),
-			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			//		break;
-			//	case asTYPEID_INT32:
-			//		m_ChangedCallback = system.MakeGenerator<std::int32_t>(IComponentProperty::GetID(),
-			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			//		break;
-			//	case asTYPEID_INT64:
-			//		m_ChangedCallback = system.MakeGenerator<std::int64_t>(IComponentProperty::GetID(),
-			//			[this]()->boost::intrusive_ptr<CScriptAny> { return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			//		break;
-			//	}
-			//}
-			// TODO: Vector2, etc.
-			SignalGeneratorAquisitionFactory factory(system, this, own_id);
-			boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
-			// Fall back on the any callback
-			if (!m_ChangedCallback)
-			{
-				m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(own_id,
-					[this]()->boost::intrusive_ptr<CScriptAny> { this->Synchronise(); return boost::intrusive_ptr<CScriptAny>(this->Get()); });
-			}
-		}
-
-		void GeneratePersistentFollower()
-		{
-			PropertyFollowerFactory factory(this);
-			boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
-
-			if (!m_PersistentFollower)
-			{
-				using namespace std::placeholders;
-				m_PersistentFollower = std::make_shared<PersistentConnectionAgent<boost::intrusive_ptr<CScriptAny>>>(std::bind(&ScriptAnyTSP::Set, this, _1));
-			}
-		}
-
-		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
-		{
-			//using namespace std::placeholders;
-
-			m_PersistentFollower->Subscribe(system, id);
-			//m_FollowConnection = system.AddHandler<boost::intrusive_ptr<CScriptAny>>(id, std::bind(&ScriptAnyTSP::Set, this, _1));
-		}
-
-		bool IsDirty()
-		{
-			if (m_Value->value.typeId == m_TypeId)
-			{
-				if (m_TypeId & asTYPEID_OBJHANDLE)
-				{
-					return (*(void**)m_Object->GetAddressOfProperty(m_Index)) != (/**(void**)*/m_Value->value.valueObj);
-					//memcmp(/**(void**)*/m_Object->GetAddressOfProperty(m_Index), /**(void**)*/ref, sizeof(uintptr_t));
-				}
-				else
-				{
-					if (m_TypeId & asTYPEID_MASK_OBJECT)
-					{
-						size_t size = m_Object->GetEngine()->GetObjectTypeById(m_TypeId)->GetSize();
-						return memcmp(m_Object->GetAddressOfProperty(m_Index), m_Value->value.valueObj, size) != 0;
-					}
-					else
-					{
-						size_t size = m_Object->GetEngine()->GetSizeOfPrimitiveType(m_TypeId);
-						return memcmp(m_Object->GetAddressOfProperty(m_Index), &m_Value->value.valueInt, size) != 0;
-					}
-				}
-			}
-			else
-				return true;
-		}
-
-		bool MarkForSerialisationIfDirty()
-		{
-			if (!IsDirty())
-				return false;
-			else
-			{
-				m_ChangedSinceSerialised = true;
-				if (m_ChangedCallback)
-					m_ChangedCallback();
-				return true;
-			}
-		}
-
-		void Unmark()
-		{
-			m_ChangedSinceSerialised = false;
-		}
-
-		bool HasChangedSinceSerialised() const
-		{
-			return m_ChangedSinceSerialised;
-		}
-
-		void Synchronise()
-		{
-			if (m_Writer.DumpWrittenValue(m_Value))
-			{
-				m_Value->Retrieve(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
-
-				m_ChangedSinceSerialised = true; // The property was changed using Set(...)
-			}
-			else
-			{
-				m_Value->Store(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
-			}
-		}
-
-		void Serialise(RakNet::BitStream& stream)
-		{
-			m_PersistentFollower->SaveSubscription(stream);
-
-			// Save prop data
-			FSN_ASSERT(m_Value);
-
-			auto& val = m_Value->value;
-			FSN_ASSERT((m_TypeId & asTYPEID_OBJHANDLE) == 0 || m_TypeId == m_EntityWrapperTypeId);
-
-			if (m_TypeId == m_EntityWrapperTypeId)
-			{
-				auto temp = m_TypeId;
-				m_TypeId = ASScriptSerialisaiton::s_EntityTypeID;
-				stream.Write(m_TypeId);
-				m_TypeId = temp;
-
-				if (val.valueObj)
-				{
-					auto propAsScriptObj = static_cast<asIScriptObject*>(val.valueObj);
-					//FSN_ASSERT(propAsScriptObj && std::string(propAsScriptObj->GetPropertyName(0)) == "app_obj");
-					//auto app_obj = *static_cast<EntityPtr*>(propAsScriptObj->GetAddressOfProperty(0));
-					//if (app_obj)
-					//	stream.Write(app_obj->GetID());
-					//else
-					//	stream.Write(ObjectID(0));
-
-					FSN_ASSERT(propAsScriptObj && std::string(propAsScriptObj->GetPropertyName(2)) == "pointer_id");
-					auto pointer_id = *static_cast<uint32_t*>(propAsScriptObj->GetAddressOfProperty(2));
-					//FSN_ASSERT(pointer_id != 0);
-					stream.Write(pointer_id);
-				}
-				else
-				{
-					//stream.Write(ObjectID(0));
-					stream.Write(uint32_t(0));
-				}
-			}
-			else if (m_TypeId == ScriptManager::getSingleton().GetStringTypeId())
-			{
-				stream.Write(ASScriptSerialisaiton::s_CompressedStringTypeID);
-
-				std::string strVal;
-				m_Value->Retrieve(&strVal, val.typeId);
-				if (strVal.length() > ASScriptSerialisaiton::s_MaxStringLength)
-				{
-					FSN_EXCEPT(SerialisationError, "String value too long");
-				}
-				RakNet::StringCompressor::Instance()->EncodeString(strVal.c_str(), strVal.length() + 1, &stream);
-			}
-			else if ((m_TypeId & asTYPEID_SCRIPTOBJECT) != 0)
-			{
-				auto objectType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(m_TypeId);
-
-				asIScriptObject* object;
-				if (m_Value->Retrieve(&object, m_TypeId))
-				{
-					auto serialisableInterfaceType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeByName("ISerialisable");
-					if (ScriptUtils::Inheritance::base_implements(objectType, serialisableInterfaceType))
-					{
-						// TODO: replace this with static ISerialiseable::getSingleton().Serialise(obj, stream);
-						auto serialiseMethod = objectType->GetMethodByDecl("void Serialise(BitStream@)");
-						auto ser = ScriptUtils::Calling::Caller::CallerForMethodFuncId(object, serialiseMethod->GetId());
-						ser(&stream);
-					}
-					else // Not ISerialiseable
-					{
-					}
-				}
-			}
-			else if ((val.typeId & asTYPEID_APPOBJECT) != 0)
-			{
-				FSN_EXCEPT(SerialisationError, "Can't serialise app objects");
-				// TODO: Scripting::AppTypeSerialiser (singleton) ::RegististerSerialiser(type_id, function<void (BitStream, void*)>)
-				// Scripting::AppTypeSerialiser::getSingleton().Serialise(m_TypeId, val.valueObj);
-			}
-			else
-			{
-				FSN_ASSERT((val.typeId & asTYPEID_MASK_OBJECT) == 0);
-
-				stream.Write(val.typeId);
-				stream.Write(val.valueInt);
-			}
-		}
-
-		void Deserialise(RakNet::BitStream& stream)
-		{
-			// Load subscription
-			m_PersistentFollower->LoadSubscription(stream);
-
-			// Load prop data
-			stream.Read(m_TypeId);
-
-			if (m_TypeId == ASScriptSerialisaiton::s_EntityTypeID)
-			{
-				m_Value->value.valueObj = 0;
-
-				//stream.Read(m_EntityID);
-				stream.Read(m_PointerID);
-			}
-			else if (m_TypeId == ASScriptSerialisaiton::s_CompressedStringTypeID)
-			{
-				RakNet::RakString rakStringVal;
-				if (RakNet::StringCompressor::Instance()->DecodeString(&rakStringVal, ASScriptSerialisaiton::s_MaxStringLength, &stream))
-				{
-					auto actualTypeId = ScriptManager::getSingleton().GetStringTypeId();
-					std::string strVal(rakStringVal.C_String());
-
-					m_Value->Store(&strVal, actualTypeId);
-				}
-				else
-				{
-					FSN_EXCEPT(SerialisationError, "Compressed string value seems to be too long");
-				}
-			}
-			else
-			{
-				auto v = m_Value->value.valueInt;
-				stream.Read(v);
-				m_Value->Store(&v, m_Value->value.typeId);
-			}
-		}
-
-		bool IsContinuous() const
-		{
-			return false;
-		}
-
-		void* GetRef()
-		{
-			if ((m_Value->GetTypeId() & asTYPEID_OBJHANDLE) || (m_Value->GetTypeId() & asTYPEID_MASK_OBJECT))
-				return m_Value->value.valueObj;
-			else
-			{
-				switch (m_Value->GetTypeId())
-				{
-				case asTYPEID_FLOAT:
-				case asTYPEID_DOUBLE:
-					return &m_Value->value.valueFlt;
-				default:
-					return &m_Value->value.valueInt;
-				}
-			}
-		}
-
-		CScriptAny* Get() const
-		{
-			return m_Value.get();
-		}
-
-		void Set(void* ref, int typeId)
-		{
-			if (typeId == m_TypeId)
-			{
-				//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-				//m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
-				auto any = new CScriptAny(ref, typeId, m_Object->GetEngine());
-				m_Writer.Write(any);
-				any->Release();
-
-				if (m_ChangedCallback)
-					m_ChangedCallback();
-			}
-			else
-				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
-		}
-
-		void Set(const boost::intrusive_ptr<CScriptAny>& any)
-		{
-			if (any->GetTypeId() == m_TypeId)
-			{
-				m_Writer.Write(any);
-
-				if (m_ChangedCallback)
-					m_ChangedCallback();
-			}
-			else
-				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
-		}
-
-	protected:
-		asIScriptObject* m_Object;
-		unsigned int m_Index;
-		std::string m_Name;
-
-		int m_TypeId;
-
-		int m_EntityWrapperTypeId;
-
-		PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
-
-		PersistentFollowerPtr m_PersistentFollower;
-
-		// Stores the pointer-id if this property is an entity pointer which needs to be resolved
-		std::uint32_t m_PointerID;
-		boost::intrusive_ptr<CScriptAny> m_Value;
-		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
-
-		bool m_ChangedSinceSerialised;
 	};
 
 	ASScript::ScriptInterface::ScriptInterface(ASScript* owner, asIScriptObject* script_object)
@@ -1288,7 +866,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				scriptProperty->Set(ref, typeId);
+				scriptProperty->SetAny(ref, typeId);
 			}
 			catch (InvalidArgumentException& e)
 			{

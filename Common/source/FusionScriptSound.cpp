@@ -8,7 +8,7 @@ namespace FusionEngine
 
 	///////////////
 	// SoundOutput
-	SoundOutput::SoundOutput(CL_SoundOutput &output)
+	SoundOutput::SoundOutput(clan::SoundOutput &output)
 		: m_SoundOutput(output)
 	{
 	}
@@ -50,7 +50,7 @@ namespace FusionEngine
 
 	/////////////////
 	// SoundSession
-	SoundSession::SoundSession(CL_SoundBuffer_Session &session)
+	SoundSession::SoundSession(clan::SoundBuffer_Session &session)
 		: m_Session(session),
 		m_PausedPosition(0)
 	{
@@ -105,7 +105,7 @@ namespace FusionEngine
 	{
 		if (m_SoundBuffer.IsLoaded())
 		{
-			CL_SoundBuffer_Session session = m_SoundBuffer->play();
+			clan::SoundBuffer_Session session = m_SoundBuffer->play();
 			return new SoundSession(session);
 		}
 		else return NULL;
@@ -123,7 +123,7 @@ namespace FusionEngine
 	{
 		if (m_SoundBuffer.IsLoaded())
 		{
-			CL_SoundBuffer_Session session = m_SoundBuffer->prepare(looping);
+			clan::SoundBuffer_Session session = m_SoundBuffer->prepare(looping);
 			return new SoundSession(session);
 		}
 		else return NULL;

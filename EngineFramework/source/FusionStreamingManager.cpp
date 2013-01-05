@@ -57,11 +57,11 @@ namespace FusionEngine
 
 	const float s_DefaultDeactivationTime = 0.1f;
 
-	static const float s_DefaultPollArchiveInterval = 0.25f;
+	const float s_DefaultPollArchiveInterval = 0.25f;
 
-	static const unsigned int s_MaxCellsProcessedPerFrameWhenCameraStationary = 50;
+	const unsigned int s_MaxCellsProcessedPerFrameWhenCameraStationary = 50;
 
-	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
+	const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
 //#define FSN_CELL_LOG
 
@@ -174,7 +174,7 @@ namespace FusionEngine
 		reader.Read(num);
 		for (size_t i = 0; i < num; ++i)
 		{
-			CL_Rect activeCellRange;
+			clan::Rect activeCellRange;
 			reader.Read(activeCellRange.left);
 			reader.Read(activeCellRange.top);
 			reader.Read(activeCellRange.right);
@@ -183,66 +183,71 @@ namespace FusionEngine
 	}
 
 #ifndef STREAMING_USEMAP
-	//! Finds and removes entry for the given Entity from the given cell
-	static inline void removeEntityFromCell(Cell* cell, const EntityPtr& entity)
+	namespace
 	{
-		if (!cell->objects.empty())
+
+		//! Finds and removes entry for the given Entity from the given cell
+		void removeEntityFromCell(Cell* cell, const EntityPtr& entity)
 		{
-			auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
+			if (!cell->objects.empty())
+			{
+				auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
+					return pair.first == entity;
+				});
+				cell->objects.erase(newEnd);
+			}
+		}
+
+		//! Finds and removes the given entity from the given cell, starting the search from the end of the list
+		void rRemoveEntityFromCell(Cell* cell, const EntityPtr& entity)
+		{
+			if (cell->objects.size() > 1)
+			{
+				auto rEntry = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
+					return pair.first == entity;
+				});
+				FSN_ASSERT(rEntry != cell->objects.rend());
+				if (rEntry != cell->objects.rend())
+					cell->objects.erase((++rEntry).base());
+			}
+			else if (!cell->objects.empty())
+				cell->objects.pop_back();
+		}
+
+		//! Finds the entry for the given Entity in the given cell
+		Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const EntityPtr& entity)
+		{
+			return std::find_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
 				return pair.first == entity;
 			});
-			cell->objects.erase(newEnd);
 		}
-	}
 
-	//! Finds and removes the given entity from the given cell, starting the search from the end of the list
-	static inline void rRemoveEntityFromCell(Cell* cell, const EntityPtr& entity)
-	{
-		if (cell->objects.size() > 1)
+		//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
+		Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const EntityPtr& entity)
 		{
-			auto rEntry = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
+			auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
 				return pair.first == entity;
 			});
-			FSN_ASSERT(rEntry != cell->objects.rend());
-			if (rEntry != cell->objects.rend())
-				cell->objects.erase((++rEntry).base());
+			FSN_ASSERT(rWhere != cell->objects.rend());
+			if (rWhere != cell->objects.rend())
+				return rWhere.base() - 1;
+			else
+				return cell->objects.end();
 		}
-		else if (!cell->objects.empty())
-			cell->objects.pop_back();
-	}
 
-	//! Finds the entry for the given Entity in the given cell
-	static inline Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const EntityPtr& entity)
-	{
-		return std::find_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
-			return pair.first == entity;
-		});
-	}
+		//! Creates an entry for the given Entity in the given cell
+		CellEntry& createEntry(Cell* cell, const EntityPtr& entity, const CellEntry& copy_entry)
+		{
+			cell->objects.push_back( std::make_pair(entity, copy_entry) );
+			return cell->objects.back().second;
+		}
 
-	//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
-	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const EntityPtr& entity)
-	{
-		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
-			return pair.first == entity;
-		});
-		FSN_ASSERT(rWhere != cell->objects.rend());
-		if (rWhere != cell->objects.rend())
-			return rWhere.base() - 1;
-		else
-			return cell->objects.end();
-	}
+		//! Creates an entry for the given Entity in the given cell
+		CellEntry& createEntry(Cell* cell, const EntityPtr& entity)
+		{
+			return createEntry(cell, entity, CellEntry());
+		}
 
-	//! Creates an entry for the given Entity in the given cell
-	static inline CellEntry& createEntry(Cell* cell, const EntityPtr& entity, const CellEntry& copy_entry)
-	{
-		cell->objects.push_back( std::make_pair(entity, copy_entry) );
-		return cell->objects.back().second;
-	}
-
-	//! Creates an entry for the given Entity in the given cell
-	static inline CellEntry& createEntry(Cell* cell, const EntityPtr& entity)
-	{
-		return createEntry(cell, entity, CellEntry());
 	}
 #endif
 
@@ -352,9 +357,9 @@ namespace FusionEngine
 		return m_Range;
 	}
 
-	//CL_Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
+	//clan::Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
 	//{
-	//	CL_Rectf area;
+	//	clan::Rectf area;
 
 	//	StreamingCameraMap::const_iterator _where = m_Cameras.find(net_idx);
 	//	if (_where != m_Cameras.end())
@@ -514,14 +519,14 @@ namespace FusionEngine
 	{
 		const unsigned int waitLimit = 60000;
 		unsigned int timeWaiting = 0;
-		unsigned int lastTick = CL_System::get_time();
+		unsigned int lastTick = clan::System::get_time();
 
 		while (!m_TheVoid.objects.empty())
 		{
-			CL_System::sleep(60);
+			clan::System::sleep(60);
 			Update(Default);
 
-			const auto currentTick = CL_System::get_time();
+			const auto currentTick = clan::System::get_time();
 			if (currentTick > lastTick)
 				timeWaiting += currentTick - lastTick;
 			lastTick = currentTick;
@@ -820,22 +825,25 @@ namespace FusionEngine
 		}
 	}
 
-	static bool findEntityById(EntityPtr& out, CellEntry*& out2, Cell* cell, ObjectID id)
+	namespace
 	{
-		FSN_ASSERT(cell);
+		bool findEntityById(EntityPtr& out, CellEntry*& out2, Cell* cell, ObjectID id)
+		{
+			FSN_ASSERT(cell);
 
-		auto found = std::find_if(cell->objects.begin(), cell->objects.end(), [id](const Cell::EntityEntryPair& entry)
-		{
-			return entry.first->GetID() == id;
-		});
-		if (found != cell->objects.end())
-		{
-			out = found->first;
-			out2 = &found->second;
-			return true;
+			auto found = std::find_if(cell->objects.begin(), cell->objects.end(), [id](const Cell::EntityEntryPair& entry)
+			{
+				return entry.first->GetID() == id;
+			});
+			if (found != cell->objects.end())
+			{
+				out = found->first;
+				out2 = &found->second;
+				return true;
+			}
+			else
+				return false;
 		}
-		else
-			return false;
 	}
 
 	void StreamingManager::UpdateInactiveEntity(ObjectID id, const Vector2& position, const std::shared_ptr<RakNet::BitStream>& continuous_data, const std::shared_ptr<RakNet::BitStream>& occasional_data)
@@ -1081,7 +1089,7 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(camera);
 
-		CL_Vec2f camPos = camera->GetPosition();
+		clan::Vec2f camPos = camera->GetPosition();
 		camPos *= s_SimUnitsPerGameUnit;
 		//Vector2 camPos = camera->GetSimPosition();
 
@@ -1115,7 +1123,7 @@ namespace FusionEngine
 		return pointChanged;
 	}
 
-	void StreamingManager::getCellRange(CL_Rect& range, const Vector2& pos, const float cam_range)
+	void StreamingManager::getCellRange(clan::Rect& range, const Vector2& pos, const float cam_range)
 	{
 		// Expand range a little bit to make sure all relevant cells are checked
 		const auto expandedRange = cam_range + 0.001f;
@@ -1127,7 +1135,7 @@ namespace FusionEngine
 		range.bottom = (int)std::ceil((pos.y + expandedRange) * m_InverseCellSize);
 	}
 
-	void StreamingManager::deactivateCells(const CL_Rect& inactiveRange)
+	void StreamingManager::deactivateCells(const clan::Rect& inactiveRange)
 	{
 		int iy = inactiveRange.top;
 		int ix = inactiveRange.left;
@@ -1253,62 +1261,65 @@ namespace FusionEngine
 		}
 	}
 
-	static bool inclusiveOverlap(const CL_Rect& l, const CL_Rect& r)
+	namespace
 	{
-		return (r.left <= l.right && r.right >= l.left && r.top <= l.bottom && r.bottom >= l.top);
-	}
-
-	template <class T>
-	static inline void clipRange(T&& out_it, CL_Rect& inactiveRange, const CL_Rect& activeRange)
-	{
-		// Partial overlap
-		//if (inactiveRange.is_overlapped(activeRange))
-		if (inclusiveOverlap(inactiveRange, activeRange))
+		bool inclusiveOverlap(const clan::Rect& l, const clan::Rect& r)
 		{
-			// Fully overlapped: inactive range obliterated!
-			// Note that this checks if inactive range is inside active active
-			//  range, despite what the syntax of the statement suggests (oh, ClanLib -_-)
-			if (activeRange.is_inside(inactiveRange))
-				return;
+			return (r.left <= l.right && r.right >= l.left && r.top <= l.bottom && r.bottom >= l.top);
+		}
 
-			enum RangeSide : size_t
+		template <class T>
+		void clipRange(T&& out_it, clan::Rect& inactiveRange, const clan::Rect& activeRange)
+		{
+			// Partial overlap
+			//if (inactiveRange.is_overlapped(activeRange))
+			if (inclusiveOverlap(inactiveRange, activeRange))
 			{
-				Left = 0, Top, Right, Bottom
-			};
+				// Fully overlapped: inactive range obliterated!
+				// Note that this checks if inactive range is inside active active
+				//  range, despite what the syntax of the statement suggests (oh, ClanLib -_-)
+				if (activeRange.is_inside(inactiveRange))
+					return;
 
-			std::array<CL_Rect, 4> clippedInactiveRange;
-			clippedInactiveRange.fill(inactiveRange);
-
-			// + 1 / - 1 are due to the ranges being used inclusively when processed
-
-			clippedInactiveRange[Top].bottom = activeRange.top - 1;
-			clippedInactiveRange[Bottom].top = activeRange.bottom + 1;
-
-			clippedInactiveRange[Left].right = activeRange.left - 1;
-			clippedInactiveRange[Right].left = activeRange.right + 1;
-
-			// Exclude cells from the side ranges that are covered by the top & bottom ranges
-			clippedInactiveRange[Left].top = clippedInactiveRange[Right].top = activeRange.top;
-			clippedInactiveRange[Left].bottom = clippedInactiveRange[Right].bottom = activeRange.bottom;
-
-			for (auto it = clippedInactiveRange.begin(), end = clippedInactiveRange.end(); it != end; ++it)
-			{
-				// Output the ranges that still include cells
-				if (it->get_width() >= 0 && it->get_height() >= 0)
+				enum RangeSide : size_t
 				{
-					FSN_ASSERT(!inclusiveOverlap(*it, activeRange));
-					*out_it++ = *it;
+					Left = 0, Top, Right, Bottom
+				};
+
+				std::array<clan::Rect, 4> clippedInactiveRange;
+				clippedInactiveRange.fill(inactiveRange);
+
+				// + 1 / - 1 are due to the ranges being used inclusively when processed
+
+				clippedInactiveRange[Top].bottom = activeRange.top - 1;
+				clippedInactiveRange[Bottom].top = activeRange.bottom + 1;
+
+				clippedInactiveRange[Left].right = activeRange.left - 1;
+				clippedInactiveRange[Right].left = activeRange.right + 1;
+
+				// Exclude cells from the side ranges that are covered by the top & bottom ranges
+				clippedInactiveRange[Left].top = clippedInactiveRange[Right].top = activeRange.top;
+				clippedInactiveRange[Left].bottom = clippedInactiveRange[Right].bottom = activeRange.bottom;
+
+				for (auto it = clippedInactiveRange.begin(), end = clippedInactiveRange.end(); it != end; ++it)
+				{
+					// Output the ranges that still include cells
+					if (it->get_width() >= 0 && it->get_height() >= 0)
+					{
+						FSN_ASSERT(!inclusiveOverlap(*it, activeRange));
+						*out_it++ = *it;
+					}
 				}
 			}
-		}
-		// No overlap
-		else
-		{
-			*out_it++ = inactiveRange;
+			// No overlap
+			else
+			{
+				*out_it++ = inactiveRange;
+			}
 		}
 	}
 
-	void StreamingManager::MergeRange(std::list<CL_Rect>& inactiveRanges, std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, CL_Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam)
+	void StreamingManager::MergeRange(std::list<clan::Rect>& inactiveRanges, std::list<std::tuple<clan::Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, clan::Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam)
 	{
 		bool merged = false;
 		for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
@@ -1474,8 +1485,8 @@ namespace FusionEngine
 		// Each vector element represents a range of cells to update - overlapping areas
 		//  are split / merged into no-overlapping sub-regions (to avoid processing cells
 		//  twice in a step)
-		std::list<CL_Rect> inactiveRanges;
-		std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>> activeRanges;
+		std::list<clan::Rect> inactiveRanges;
+		std::list<std::tuple<clan::Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>> activeRanges;
 		// Used to process The Void
 		LocalStreamPositionsList_t allLocalStreamPositions;
 		RemoteStreamPositionsList_t allRemoteStreamPositions;
@@ -1523,14 +1534,14 @@ namespace FusionEngine
 						allRemoteStreamPositions.push_back(std::make_pair(std::make_pair(cam.streamPosition, cam.range), cam.owner));
 
 					// Update the (in)active cell ranges for this camera
-					CL_Rect inactiveRange;
+					clan::Rect inactiveRange;
 					// Use the previously calculated range if it seems to be correct:
-					if (cam.activeCellRange.contains(CL_Vec2f(oldPosition.x, oldPosition.y)))
+					if (cam.activeCellRange.contains(clan::Vec2f(oldPosition.x, oldPosition.y)))
 						inactiveRange = cam.activeCellRange;
 					else // Recalculate the inactive cell range
 						getCellRange(inactiveRange, oldPosition, cam.range);
 
-					CL_Rect& activeRange = cam.activeCellRange;
+					clan::Rect& activeRange = cam.activeCellRange;
 					getCellRange(activeRange, newPosition, cam.range);
 
 					if (inactiveRange != activeRange && (inactiveRange.get_width() != 0 && inactiveRange.get_height() != 0))
@@ -1558,14 +1569,14 @@ namespace FusionEngine
 		// This set is just used to make sure cells are processed if they finish loading after the camera that requested them stops moving (see else clause below):
 		if (!allActiveRangesStale)
 		{
-			std::list<CL_Rect> clippedInactiveRanges;
+			std::list<clan::Rect> clippedInactiveRanges;
 			{
 				FSN_PROFILE("ClipInactiveCellRanges");
 				// Clip inactive ranges against all active ranges
-				std::deque<CL_Rect> toProcess(inactiveRanges.begin(), inactiveRanges.end());
+				std::deque<clan::Rect> toProcess(inactiveRanges.begin(), inactiveRanges.end());
 				while (!toProcess.empty())
 				{
-					CL_Rect inactiveRange = toProcess.back();
+					clan::Rect inactiveRange = toProcess.back();
 					toProcess.pop_back();
 					bool hasOverlap = false;
 					for (auto ait = activeRanges.begin(), aend = activeRanges.end(); ait != aend; ++ait)
@@ -1586,7 +1597,7 @@ namespace FusionEngine
 			{
 				FSN_PROFILE("SortInactiveCellRanges");
 			// Sort to improve iteration speed
-			clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
+			clippedInactiveRanges.sort([this](const clan::Rect& a, const clan::Rect& b)
 			{
 				return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);
 			});
@@ -1600,7 +1611,7 @@ namespace FusionEngine
 #ifdef _DEBUG
 				// Make sure there is no overlap (overlapping ranges should have been clipped above)
 				const bool noOverlap = std::all_of(activeRanges.begin(), activeRanges.end(),
-					[it](const std::tuple<CL_Rect, std::list<std::pair<Vector2, float>>, std::list<std::pair<std::pair<Vector2, float>, PlayerID>>>& v)
+					[it](const std::tuple<clan::Rect, std::list<std::pair<Vector2, float>>, std::list<std::pair<std::pair<Vector2, float>, PlayerID>>>& v)
 				{ return !inclusiveOverlap(*it, std::get<0>(v)); });
 				FSN_ASSERT(noOverlap);
 #endif

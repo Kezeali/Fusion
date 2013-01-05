@@ -127,7 +127,7 @@ namespace FusionEngine
 		//! Returns the default range
 		float GetRange() const;
 
-		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
+		//clan::Rectf CalculateActiveArea(PlayerID net_idx) const;
 
 		//unsigned int GetNumCellsAcross() const { return m_XCellCount; }
 		//float GetMapWidth() const { return m_Bounds.x * 2.f; }
@@ -248,7 +248,7 @@ namespace FusionEngine
 			bool defaultRange;
 
 			//! The rect. of cells activated by this camera last time it was processed
-			CL_Rect activeCellRange;
+			clan::Rect activeCellRange;
 
 			//! Position last time this camera was updated
 			Vector2 lastPosition;
@@ -353,13 +353,13 @@ namespace FusionEngine
 		typedef std::pair<Vector2, float> StreamPosition_t;
 		typedef std::list<StreamPosition_t> LocalStreamPositionsList_t;
 		typedef std::list<std::pair<StreamPosition_t, PlayerID>> RemoteStreamPositionsList_t;
-		void MergeRange(std::list<CL_Rect>& inactiveRanges, std::list<std::tuple<CL_Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, CL_Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam);
+		void MergeRange(std::list<clan::Rect>& inactiveRanges, std::list<std::tuple<clan::Rect, LocalStreamPositionsList_t, RemoteStreamPositionsList_t>>& activeRanges, clan::Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam);
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
 
-		void getCellRange(CL_Rect& out, const Vector2& pos, const float camera_range);
+		void getCellRange(clan::Rect& out, const Vector2& pos, const float camera_range);
 
-		void deactivateCells(const CL_Rect& inactiveRange);
+		void deactivateCells(const clan::Rect& inactiveRange);
 
 		// TODO: replace the pair here with a struct CamToProcess { Vec2, float }
 		void processCell(const CellHandle& cell_location, Cell& cell, const std::list<std::pair<Vector2, float>>& cam_position, const std::list<std::pair<std::pair<Vector2, float>, PlayerID>>& remote_positions);

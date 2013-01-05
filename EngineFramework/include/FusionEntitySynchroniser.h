@@ -34,8 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
-#include <BitStream.h>
-#include <RakNetTypes.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/RakNetTypes.h>
 
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
@@ -81,10 +81,10 @@ namespace FusionEngine
 
 	};
 
-	static const unsigned int s_EntitiesPerPacket = 8;
-	static const unsigned int s_BodiesPerPacket = 12;
+	const unsigned int s_EntitiesPerPacket = 8;
+	const unsigned int s_BodiesPerPacket = 12;
 
-	static const RakNet::BitSize_t s_MaxDataPerTick = 4000;
+	const RakNet::BitSize_t s_MaxDataPerTick = 4000;
 
 	class EntitySynchroniser : public PacketHandler
 	{

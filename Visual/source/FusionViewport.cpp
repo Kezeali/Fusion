@@ -12,18 +12,18 @@ namespace FusionEngine
 		: m_Area(0.f, 0.f, 1.f, 1.f)
 	{}
 
-	Viewport::Viewport(const CL_Rectf &area)
+	Viewport::Viewport(const clan::Rectf &area)
 		: m_Area(area)
 	{
 	}
 
-	Viewport::Viewport(const CL_Rectf &area, const CameraPtr &camera)
+	Viewport::Viewport(const clan::Rectf &area, const CameraPtr &camera)
 		: m_Area(area),
 		m_Camera(camera)
 	{
 	}
 
-	void Viewport::SetArea(const CL_Rectf &area)
+	void Viewport::SetArea(const clan::Rectf &area)
 	{
 		m_Area = area;
 	}
@@ -48,15 +48,15 @@ namespace FusionEngine
 		m_Area.set_height(height);
 	}
 
-	const CL_Rectf &Viewport::GetArea() const
+	const clan::Rectf &Viewport::GetArea() const
 	{
 		return m_Area;
 	}
-	CL_Pointf Viewport::GetPosition() const
+	clan::Pointf Viewport::GetPosition() const
 	{
 		return m_Area.get_top_left();
 	}
-	CL_Sizef Viewport::GetSize() const
+	clan::Sizef Viewport::GetSize() const
 	{
 		return m_Area.get_size();
 	}
@@ -72,12 +72,12 @@ namespace FusionEngine
 
 	void Viewport_ctor1(float left, float top, float right, float bottom, void* ptr)
 	{
-		new (ptr) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom)));
+		new (ptr) ViewportPtr(new Viewport(clan::Rectf(left, top, right, bottom)));
 	}
 
 	void Viewport_ctor2(float left, float top, float right, float bottom, CameraPtr camera, void* ptr)
 	{
-		new (ptr) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom), camera));
+		new (ptr) ViewportPtr(new Viewport(clan::Rectf(left, top, right, bottom), camera));
 	}
 
 	void Viewport_SetCamera(CameraPtr camera, ViewportPtr *viewport)

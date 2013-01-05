@@ -30,12 +30,12 @@
 #include "FusionPrerequisites.h"
 
 // RakNet
-#include <RakPeerInterface.h>
-#include <RakNetTypes.h>
-#include <MessageIdentifiers.h>
+#include <RakNet/RakPeerInterface.h>
+#include <RakNet/RakNetTypes.h>
+#include <RakNet/MessageIdentifiers.h>
 // Plugins
-#include <FullyConnectedMesh2.h>
-#include <ConnectionGraph2.h>
+#include <RakNet/FullyConnectedMesh2.h>
+#include <RakNet/ConnectionGraph2.h>
 
 #include <tbb/atomic.h>
 #include <tbb/spin_mutex.h>

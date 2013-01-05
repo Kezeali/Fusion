@@ -44,9 +44,9 @@ namespace FusionEngine
 	{
 	public:
 		B2DebugDraw() : b2Draw() {}
-		B2DebugDraw(CL_GraphicContext gc);
+		B2DebugDraw(clan::GraphicContext gc);
 
-		void SetGraphicContext(CL_GraphicContext gc);
+		void SetGraphicContext(clan::GraphicContext gc);
 		void SetViewport(const ViewportPtr &viewport);
 
 		void SetupView();
@@ -67,7 +67,7 @@ namespace FusionEngine
 		void DrawTransform(const b2Transform& xf);
 
 	protected:
-		CL_GraphicContext m_gc;
+		clan::GraphicContext m_gc;
 		ViewportPtr m_Viewport;
 	};
 

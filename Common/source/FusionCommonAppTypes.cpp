@@ -39,17 +39,6 @@ namespace FusionEngine { namespace Scripting
 
 	void RegisterCommonAppTypes(asIScriptEngine* engine)
 	{
-		//FSN_REGISTER_APPTYPE(bool, asTYPEID_BOOL);
-		//FSN_REGISTER_APPTYPE(std::int8_t, asTYPEID_INT8);
-		//FSN_REGISTER_APPTYPE(std::int16_t, asTYPEID_INT16);
-		//FSN_REGISTER_APPTYPE(std::int32_t, asTYPEID_INT32);
-		//FSN_REGISTER_APPTYPE(std::int64_t, asTYPEID_INT64);
-		//FSN_REGISTER_APPTYPE(std::uint8_t, asTYPEID_UINT8);
-		//FSN_REGISTER_APPTYPE(std::uint16_t, asTYPEID_UINT16);
-		//FSN_REGISTER_APPTYPE(std::uint32_t, asTYPEID_UINT32);
-		//FSN_REGISTER_APPTYPE(std::uint64_t, asTYPEID_UINT64);
-		//FSN_REGISTER_APPTYPE(float, asTYPEID_FLOAT);
-		//FSN_REGISTER_APPTYPE(double, asTYPEID_DOUBLE);
 		DefineAppType<bool>(asTYPEID_BOOL, "bool");
 		DefineAppType<std::int8_t>(asTYPEID_INT8, "int8");
 		DefineAppType<std::int16_t>(asTYPEID_INT16, "int16");

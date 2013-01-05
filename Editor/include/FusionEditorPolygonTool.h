@@ -55,7 +55,7 @@ namespace FusionEngine
 	typedef std::function<void (const std::vector<Vector2>&)> PolygonToolCallback_t;
 	typedef std::function<void (const std::vector<Vector2>&, const PolygonToolCallback_t&)> PolygonToolExecutor_t;
 
-	//! Polig'n'al tool
+	//! Polig' n' al-tool
 	class EditorPolygonTool : public ShapeTool
 	{
 	public:
@@ -77,7 +77,7 @@ namespace FusionEngine
 		bool MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 		bool MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 
-		void Draw(CL_GraphicContext& gc);
+		void Draw(clan::Canvas& canvas) override;
 
 	private:
 		Mode m_Mode;

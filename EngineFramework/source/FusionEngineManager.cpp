@@ -83,7 +83,7 @@
 namespace FusionEngine
 {
 
-	EngineManager::EngineManager(const std::vector<CL_String>& args)
+	EngineManager::EngineManager(const std::vector<std::string>& args)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
 		m_Fullscreen(false),
@@ -127,7 +127,7 @@ namespace FusionEngine
 			// Enable native console
 			//if (m_NativeConsole)
 			{
-				//m_ConsoleWindow = CL_ConsoleWindow("Console", 80, 10);
+				//m_ConsoleWindow = clan::ConsoleWindow("Console", 80, 10);
 				m_CoutWriter.reset(new ConsoleStdOutWriter());
 				m_CoutWriter->Enable();
 			}
@@ -136,10 +136,12 @@ namespace FusionEngine
 			m_Log = Logger::getSingleton().OpenLog(g_LogGeneral);
 
 			// Init the display window
-			m_DisplayWindow = CL_DisplayWindow("Fusion", m_DisplayDimensions.x, m_DisplayDimensions.y, m_Fullscreen, !m_Fullscreen);
+			m_DisplayWindow = clan::DisplayWindow("Fusion", m_DisplayDimensions.x, m_DisplayDimensions.y, m_Fullscreen, !m_Fullscreen);
+
+			m_Canvas = clan::Canvas(m_DisplayWindow);
 
 			// Init sound
-			m_SoundOutput = CL_SoundOutput(44100);
+			m_SoundOutput = clan::SoundOutput(44100);
 
 			// Init ScriptManager
 			m_ScriptManager = std::make_shared<ScriptManager>();
@@ -156,12 +158,12 @@ namespace FusionEngine
 			m_InputManager->Initialise();
 
 			// Init resource manager
-			m_ResourceManager.reset(new ResourceManager(m_DisplayWindow.get_gc()));
+			m_ResourceManager.reset(new ResourceManager(m_Canvas.get_gc()));
 			// Resource manager options
 			m_ResourceManager->SetHotReloadingAllowed(options->GetOption_bool("hot_reload"));
 
 			// Init GUI
-			m_GUI.reset(new GUI(m_DisplayWindow));
+			m_GUI.reset(new GUI(m_Canvas));
 			m_GUI->Initialise();
 
 			m_ScriptSoundOutput = std::make_shared<SoundOutput>(m_SoundOutput);
@@ -449,7 +451,7 @@ namespace FusionEngine
 
 	Vector2 Viewport_ScreenToWorld(Vector2 position, ViewportPtr* obj)
 	{
-		CL_Rectf worldArea, screenArea;
+		clan::Rectf worldArea, screenArea;
 		Renderer::CalculateScreenArea(EngineManager::getSingleton().GetDisplayWindow().get_gc(), worldArea, *obj, true);
 		Renderer::CalculateScreenArea(EngineManager::getSingleton().GetDisplayWindow().get_gc(), screenArea, *obj, false);
 
@@ -489,12 +491,12 @@ namespace FusionEngine
 		engine->RegisterObjectMethod("Game", "void save(const string &in, bool quick = false)", asMETHOD(EngineManager, EnqueueSave), asCALL_THISCALL);
 		engine->RegisterObjectMethod("Game", "void load(const string &in)", asMETHOD(EngineManager, EnqueueLoad), asCALL_THISCALL);
 
-		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
+		RegisterValueType<clan::Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
 		struct ScriptRect
 		{
 			static void CTOR1(float left, float top, float right, float bottom, void* ptr)
 			{
-				new (ptr) CL_Rectf(left, top, right, bottom);
+				new (ptr) clan::Rectf(left, top, right, bottom);
 			}
 		};
 		engine->RegisterObjectBehaviour("Rect", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(ScriptRect::CTOR1), asCALL_CDECL_OBJLAST);
@@ -532,7 +534,7 @@ namespace FusionEngine
 	void EngineManager::AddResourceLoaders()
 	{
 		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, &FileMetadataResourceHasChanged));
-		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTexture2DResource, &LoadTexture2DResourceIntoGC, &FileMetadataResourceHasChanged));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource, &FileMetadataResourceHasChanged));
 
@@ -547,17 +549,22 @@ namespace FusionEngine
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource, &FileMetadataResourceHasChanged));
 	}
 
-	const CL_DisplayWindow& EngineManager::GetDisplayWindow() const
+	const clan::DisplayWindow& EngineManager::GetDisplayWindow() const
 	{
 		return m_DisplayWindow;
 	}
 
-	const CL_GraphicContext& EngineManager::GetGC() const
+	const clan::Canvas& EngineManager::GetCanvas() const
+	{
+		return m_Canvas;
+	}
+
+	const clan::GraphicContext& EngineManager::GetGC() const
 	{
 		return m_DisplayWindow.get_gc();
 	}
 
-	const CL_SoundOutput& EngineManager::GetSoundOutput() const
+	const clan::SoundOutput& EngineManager::GetSoundOutput() const
 	{
 		return m_SoundOutput;
 	}
@@ -687,7 +694,7 @@ namespace FusionEngine
 			auto closeSig = m_DisplayWindow.sig_window_close().connect_functor([&quit]() { quit = true; });
 			while (!quit)
 			{
-				CL_KeepAlive::process();
+				clan::KeepAlive::process();
 
 				const tbb::tick_count now = tbb::tick_count::now();
 				dt = now - time;

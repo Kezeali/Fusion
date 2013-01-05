@@ -38,7 +38,7 @@
 namespace FusionEngine
 {
 
-	ClanLibTiXmlFile::ClanLibTiXmlFile(CL_IODevice file)
+	ClanLibTiXmlFile::ClanLibTiXmlFile(clan::IODevice file)
 		: m_File(file),
 		m_WriteFailed(false)
 	{
@@ -100,12 +100,12 @@ namespace FusionEngine
 	}
 
 
-	ticpp::Document OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
+	ticpp::Document OpenXml(const std::string &filename, clan::VirtualDirectory vdir)
 	{
 		ticpp::Document doc;
 		try
 		{
-			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
+			clan::IODevice in = vdir.open_file(filename, clan::File::open_existing, clan::File::access_read);
 
 			std::string filebuffer;
 			filebuffer.resize(in.get_size());
@@ -113,7 +113,7 @@ namespace FusionEngine
 
 			doc.Parse(filebuffer, 0, TIXML_ENCODING_UTF8);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
@@ -125,17 +125,17 @@ namespace FusionEngine
 		return doc;
 	}
 
-	std::string &OpenString(std::string &content, const std::string &filename, CL_VirtualDirectory vdir)
+	std::string &OpenString(std::string &content, const std::string &filename, clan::VirtualDirectory vdir)
 	{
 		try
 		{
-			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
+			clan::IODevice in = vdir.open_file(filename, clan::File::open_existing, clan::File::access_read);
 
 			int len = in.get_size();
 			content.resize(len);
 			in.read(&content[0], len);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
@@ -143,18 +143,18 @@ namespace FusionEngine
 		return content;
 	}
 
-	std::string OpenString(const std::string &filename, CL_VirtualDirectory vdir)
+	std::string OpenString(const std::string &filename, clan::VirtualDirectory vdir)
 	{
 		std::string content;
 		try
 		{
-			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
+			clan::IODevice in = vdir.open_file(filename, clan::File::open_existing, clan::File::access_read);
 
 			int len = in.get_size();
 			content.resize(len);
 			in.read(&content[0], len);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
@@ -162,30 +162,30 @@ namespace FusionEngine
 		return content;
 	}
 
-	void SaveXml(const ticpp::Document& doc, const std::string &filename, CL_VirtualDirectory vdir)
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::VirtualDirectory vdir)
 	{
 		try
 		{
-			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
+			clan::IODevice out = vdir.open_file(filename, clan::File::create_always, clan::File::access_write);
 
 			ClanLibTiXmlFile fileIntf(out);
 			doc.SaveFile(&fileIntf);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 		}
 	}
 
-	void SaveString(const std::string &content, const std::string &filename, CL_VirtualDirectory vdir)
+	void SaveString(const std::string &content, const std::string &filename, clan::VirtualDirectory vdir)
 	{
 		try
 		{
-			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
+			clan::IODevice out = vdir.open_file(filename, clan::File::create_always, clan::File::access_write);
 
 			out.write(content.c_str(), content.length());
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 		}
@@ -194,7 +194,7 @@ namespace FusionEngine
 	ticpp::Document OpenXml_PhysFS(const std::string &filename)
 	{
 		// Make a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		return OpenXml(filename, vdir);
 	}
@@ -202,7 +202,7 @@ namespace FusionEngine
 	std::string OpenString_PhysFS(const std::string &filename)
 	{
 		// Make a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		return OpenString(filename, vdir);
 	}
@@ -210,7 +210,7 @@ namespace FusionEngine
 	std::string &OpenString_PhysFS(std::string& content, const std::string &filename)
 	{
 		// Make a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		return OpenString(content, filename, vdir);
 	}
@@ -218,7 +218,7 @@ namespace FusionEngine
 	void SaveXml_PhysFS(const ticpp::Document& doc, const std::string &filename)
 	{
 		// make a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		SaveXml(doc, filename, vdir);
 	}
@@ -226,7 +226,7 @@ namespace FusionEngine
 	void SaveString_PhysFS(const std::string &content, const std::string &filename)
 	{
 		// make a vdir
-		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		SaveString(content, filename, vdir);
 	}

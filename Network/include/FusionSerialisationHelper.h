@@ -33,7 +33,7 @@
 #include <boost/preprocessor.hpp>
 #include <boost/mpl/vector.hpp>
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 #include <bitset>
 #include <tuple>
 
@@ -68,7 +68,7 @@ namespace FusionEngine
 		}
 
 		template <>
-		inline void write(RakNet::BitStream& stream, const CL_Colorf& new_value)
+		inline void write(RakNet::BitStream& stream, const clan::Colorf& new_value)
 		{
 			stream.Write(new_value.a);
 			stream.Write(new_value.r);
@@ -104,7 +104,7 @@ namespace FusionEngine
 		}
 
 		template <>
-		inline void read(RakNet::BitStream& stream, CL_Colorf& new_value)
+		inline void read(RakNet::BitStream& stream, clan::Colorf& new_value)
 		{
 			stream.Read(new_value.a);
 			stream.Read(new_value.r);
@@ -203,14 +203,7 @@ namespace FusionEngine
 	template <BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, typename T, = sh_none BOOST_PP_INTERCEPT)>
 	struct SerialisationHelper
 	{
-		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(8, T)> data_type;
-		//typedef std::tuple<BOOST_PP_ENUM(n, REF_PARAM, ~)> reference_type;
 		typedef boost::mpl::vector<BOOST_PP_ENUM_PARAMS(MAX_SerialisationHelper_PROPS, T)> types;
-
-		//BOOST_PP_REPEAT(n, VAL_PROP, m_V)
-		//data_type m_SerialisedValues;
-
-		//BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, DATA_TYPE, ~)
 
 		static const size_t NumParams = MAX_SerialisationHelper_PROPS;
 
@@ -229,7 +222,7 @@ namespace FusionEngine
 			m_Changed.set(i);
 		}
 
-		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, const T, &v))//const data_type& new_values)
+		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, const T, &v))
 		{
 			if (!force_all && !m_Changed.any())
 				return false;
@@ -238,12 +231,12 @@ namespace FusionEngine
 			return true;
 		}
 
-		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))//data_type& new_values)
+		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))
 		{
 			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_DSER_REP_FORCE, ~)
 		}
 
-		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<MAX_SerialisationHelper_PROPS>& changes, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))//data_type& new_values)
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<MAX_SerialisationHelper_PROPS>& changes, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))
 		{
 			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_DSER_REP, ~)
 		}
@@ -284,7 +277,6 @@ namespace FusionEngine
 		BOOST_PP_ENUM(BOOST_PP_SUB(MAX_SerialisationHelper_PROPS,n), FSN_PP_PRINT, sh_none)
 	>
 	{
-		typedef std::tuple<BOOST_PP_ENUM_PARAMS(BOOST_PP_MIN(n, 10), T)> data_type;
 		typedef boost::mpl::vector<BOOST_PP_ENUM_PARAMS(n, T)> types;
 
 		static const size_t NumParams = n;
@@ -322,23 +314,6 @@ namespace FusionEngine
 		{
 			BOOST_PP_REPEAT(n, FSN_DSER_REP, ~)
 		}
-
-//#if (n < 10)
-//		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, data_type& values)
-//		{
-//			BOOST_PP_REPEAT(n, FSN_DSER_REP, ~)
-//		}
-//#endif
-//#define PARAM_CALLBACK_FN(z, n, data) void BOOST_PP_LPAREN() BOOST_PP_CAT(C::*f, n) BOOST_PP_RPAREN() BOOST_PP_LPAREN() BOOST_PP_CAT(T, n) BOOST_PP_RPAREN()
-//
-//		template <class C>
-//		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, C* obj, BOOST_PP_ENUM(n, PARAM_CALLBACK_FN, _))
-//		{
-//			FSN_ASSERT(obj);
-//			BOOST_PP_REPEAT(n, FSN_DSER_CALLBACKS_REP, ~)
-//		}
-//
-//#undef PARAM_CALLBACK_FN
 
 		static void copyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 		{

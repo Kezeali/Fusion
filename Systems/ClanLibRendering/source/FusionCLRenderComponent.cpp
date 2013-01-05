@@ -61,9 +61,9 @@ namespace FusionEngine
 		//m_InterpAngle(0.f),
 		//m_LastAngle(0.f)
 	{
-		m_Colour = CL_Colorf::white;
-		AlignmentOrigin.m_Value = origin_center;
-		RotationOrigin.m_Value = origin_center;
+		m_Colour = clan::Colorf::white;
+		AlignmentOrigin.m_Value = clan::origin_center;
+		RotationOrigin.m_Value = clan::origin_center;
 		Alpha.m_Value = 1.f;
 		Scale.m_Value = Vector2(1.f, 1.0f);
 		BaseAngle.m_Value = 0.f;
@@ -85,7 +85,7 @@ namespace FusionEngine
 		//m_DepthChangeConnection.disconnect();
 	}
 
-	std::shared_ptr<SpriteDefinition> SpriteDefinitionCache::GetSpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
+	std::shared_ptr<SpriteDefinition> SpriteDefinitionCache::GetSpriteDefinition(const ResourcePointer<clan::Texture2D>& texture, const ResourcePointer<SpriteAnimation>& animation)
 	{
 		std::shared_ptr<SpriteDefinition> spriteDefinition;
 
@@ -134,7 +134,7 @@ namespace FusionEngine
 		switch (ev)
 		{
 		case ResourceContainer::HotReloadEvent::Validate:
-			//m_Sprite = CL_Sprite(); // This seems to cause a crash
+			//m_Sprite = clan::Sprite(); // This seems to cause a crash
 			m_SpriteDef.reset();
 			m_ImageResource.Release();
 			break;
@@ -199,7 +199,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				m_Sprite = CL_Sprite();
+				m_Sprite = clan::Sprite();
 				m_SpriteDef.reset();
 				m_ImageResource.Release();
 			}
@@ -261,9 +261,13 @@ namespace FusionEngine
 
 		if (!m_Sprite.is_null())
 		{
+			// Update the colour property
+			m_Colour = m_Sprite.get_color();
+
+			// Update the angle prop
 			if (m_Sprite.get_angle().to_radians() != m_Angle)
 			{
-				auto normalisedAngle = CL_Angle(m_Angle, cl_radians).normalize();
+				auto normalisedAngle = clan::Angle(m_Angle, clan::angle_radians).normalize();
 				m_Sprite.set_angle(normalisedAngle);
 				m_Angle = normalisedAngle.to_radians();
 			}
@@ -287,30 +291,30 @@ namespace FusionEngine
 			// update AABB for the current frame / transform
 			m_AABB.left = ToRender(m_Position.x);
 			m_AABB.top = ToRender(m_Position.y);
-			m_AABB.set_size(CL_Sizef(m_Sprite.get_size()));
+			m_AABB.set_size(clan::Sizef(m_Sprite.get_size()));
 
-			CL_Origin origin;
+			clan::Origin origin;
 			int x, y;
 			m_Sprite.get_alignment(origin, x, y);
 
-			m_AABB.translate(-CL_Vec2f::calc_origin(origin, m_AABB.get_size()) - CL_Vec2f((float)x, (float)y));
+			m_AABB.translate(-clan::Vec2f::calc_origin(origin, m_AABB.get_size()) - clan::Vec2f((float)x, (float)y));
 			//m_AABB.apply_alignment(origin, (float)x, (float)y);
 
-			CL_Angle draw_angle = m_Sprite.get_angle() - m_Sprite.get_base_angle();
+			clan::Angle draw_angle = m_Sprite.get_angle() - m_Sprite.get_base_angle();
 			//draw_angle.normalize();
 			if (!fe_fzero(draw_angle.to_degrees()))
 			{
 				m_Sprite.get_rotation_hotspot(origin, x, y);
 
-				CL_Quadf bb(m_AABB);
-				bb.rotate(CL_Vec2f::calc_origin(origin, m_AABB.get_size()) + m_AABB.get_top_left() + CL_Vec2f((float)x, (float)y), draw_angle);
+				clan::Quadf bb(m_AABB);
+				bb.rotate(clan::Vec2f::calc_origin(origin, m_AABB.get_size()) + m_AABB.get_top_left() + clan::Vec2f((float)x, (float)y), draw_angle);
 
 				m_AABB = bb.get_bounds();
 			}
 		}
 	}
 
-	void CLSprite::CreateSpriteIfNecessary(CL_GraphicContext& gc)
+	void CLSprite::CreateSpriteIfNecessary(clan::GraphicContext& gc)
 	{
 		if (m_RecreateSprite && m_SpriteDef)
 		{
@@ -321,9 +325,9 @@ namespace FusionEngine
 			m_Sprite.set_color(m_Colour);
 			m_Sprite.set_alpha(Alpha.Get());
 			m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+			m_Sprite.set_base_angle(clan::Angle(BaseAngle.Get(), clan::angle_radians));
 
-			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
+			m_Sprite.set_angle(clan::Angle(m_Angle, clan::angle_radians));
 
 			m_Sprite.set_frame(AnimationFrame.Get());
 
@@ -333,22 +337,22 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
+	void CLSprite::Draw(clan::Canvas& canvas, const Vector2& camera_pos)
 	{
-		CreateSpriteIfNecessary(gc);
+		CreateSpriteIfNecessary(canvas.get_gc());
 
 		if (!m_Sprite.is_null())
 		{
 //#ifdef _DEBUG
-//			const CL_Colorf authColours[] = {
-//				CL_Colorf::white,
-//				CL_Colorf::blue,
-//				CL_Colorf::red,
-//				CL_Colorf::yellow,
-//				CL_Colorf::green,
-//				CL_Colorf::brown,
-//				CL_Colorf::purple,
-//				CL_Colorf::orange
+//			const clan::Colorf authColours[] = {
+//				clan::Colorf::white,
+//				clan::Colorf::blue,
+//				clan::Colorf::red,
+//				clan::Colorf::yellow,
+//				clan::Colorf::green,
+//				clan::Colorf::brown,
+//				clan::Colorf::purple,
+//				clan::Colorf::orange
 //			};
 //			PlayerID auth = GetParent()->GetAuthority();
 //			if (auth < 8)
@@ -356,27 +360,27 @@ namespace FusionEngine
 //#endif
 
 			Vector2 draw_pos = ToRender(m_Position) + m_Offset;
-			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
+			m_Sprite.draw(canvas, draw_pos.x, draw_pos.y);
 
 			//auto size = m_AABB.get_size();
 			//if (size.width > 0.0f)
 			//{
 			//	auto drawAABB = m_AABB;
 			//	drawAABB.translate(-camera_pos.x, -camera_pos.y);
-			//	CL_Draw::box(gc, drawAABB, CL_Colorf::purple);
+			//	clan::Draw::box(gc, drawAABB, clan::Colorf::purple);
 			//}
 
 			//if (m_Interpolate)
 			//{
 			//	if (m_DebugFont.is_null())
-			//		m_DebugFont = CL_Font(gc, "Lucida Console", 12);
+			//		m_DebugFont = clan::Font(gc, "Lucida Console", 12);
 
 			//	if (m_CurrentTick == m_InterpTick)
-			//		m_DebugFont.draw_text(gc, draw_pos.x, draw_pos.y, "Interpolating", CL_Colorf::deepskyblue);
+			//		m_DebugFont.draw_text(gc, draw_pos.x, draw_pos.y, "Interpolating", clan::Colorf::deepskyblue);
 
 			//	//std::stringstream str;
 			//	//str << m_LastAngle << " | " << m_InterpAngle << " | " << m_Angle;
-			//	//m_DebugFont.draw_text(gc, draw_pos.x, draw_pos.y + 14.f, str.str(), CL_Colorf::cyan);
+			//	//m_DebugFont.draw_text(gc, draw_pos.x, draw_pos.y + 14.f, str.str(), clan::Colorf::cyan);
 			//}
 		}
 	}
@@ -449,7 +453,7 @@ namespace FusionEngine
 		if (m_ReloadAnimation)
 			AnimationPath.MarkChanged();
 
-		if (!m_Sprite.is_null()) // Copy the changes to the CL_Sprite, if it is loaded
+		if (!m_Sprite.is_null()) // Copy the changes to the clan::Sprite, if it is loaded
 		{
 			if (changed[PropsIdx::AlignmentOrigin] || changed[PropsIdx::AlignmentOffset])
 				m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
@@ -462,7 +466,7 @@ namespace FusionEngine
 			if (changed[PropsIdx::Scale])
 				m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
 			if (changed[PropsIdx::BaseAngle])
-				m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+				m_Sprite.set_base_angle(clan::Angle(BaseAngle.Get(), clan::angle_radians));
 
 			m_Sprite.set_frame(AnimationFrame.Get());
 		}
@@ -479,14 +483,14 @@ namespace FusionEngine
 		//	m_ReloadAnimation = true;
 		//}
 
-		//if (!m_Sprite.is_null()) // Copy the changes to the CL_Sprite, if it is loaded
+		//if (!m_Sprite.is_null()) // Copy the changes to the clan::Sprite, if it is loaded
 		//{
 		//	m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
 		//	m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
 		//	m_Sprite.set_color(Colour.Get());
 		//	m_Sprite.set_alpha(Alpha.Get());
 		//	m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-		//	m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+		//	m_Sprite.set_base_angle(clan::Angle(BaseAngle.Get(), clan::angle_radians));
 
 		//	m_Sprite.set_frame(AnimationFrame.Get());
 		//}
@@ -581,11 +585,11 @@ namespace FusionEngine
 		return m_AnimationPath;
 	}
 
-	void CLSprite::SetAlignmentOrigin(CL_Origin origin)
+	void CLSprite::SetAlignmentOrigin(clan::Origin origin)
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin ignore; int x, y;
+			clan::Origin ignore; int x, y;
 			m_Sprite.get_alignment(ignore, x, y);
 			m_Sprite.set_alignment(origin, x, y);
 		}
@@ -593,11 +597,11 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::AlignmentOrigin);
 	}
 	
-	CL_Origin CLSprite::GetAlignmentOrigin() const
+	clan::Origin CLSprite::GetAlignmentOrigin() const
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin origin; int x, y;
+			clan::Origin origin; int x, y;
 			m_Sprite.get_alignment(origin, x, y);
 			return origin;
 		}
@@ -609,7 +613,7 @@ namespace FusionEngine
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin origin; int x, y;
+			clan::Origin origin; int x, y;
 			m_Sprite.get_alignment(origin, x, y);
 			m_Sprite.set_alignment(origin, offset.x, offset.y);
 		}
@@ -621,7 +625,7 @@ namespace FusionEngine
 	{
 		if (!m_Sprite.is_null())
 		{
-			Vector2i off; CL_Origin ignore;
+			Vector2i off; clan::Origin ignore;
 			m_Sprite.get_alignment(ignore, off.x, off.y);
 			return off;
 		}
@@ -629,11 +633,11 @@ namespace FusionEngine
 			return AlignmentOffset.Get();
 	}
 
-	void CLSprite::SetRotationOrigin(CL_Origin origin)
+	void CLSprite::SetRotationOrigin(clan::Origin origin)
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin ignore; int x, y;
+			clan::Origin ignore; int x, y;
 			m_Sprite.get_rotation_hotspot(ignore, x, y);
 			m_Sprite.set_rotation_hotspot(origin, x, y);
 		}
@@ -641,11 +645,11 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::RotationOrigin);
 	}
 
-	CL_Origin CLSprite::GetRotationOrigin() const
+	clan::Origin CLSprite::GetRotationOrigin() const
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin origin; int x, y;
+			clan::Origin origin; int x, y;
 			m_Sprite.get_rotation_hotspot(origin, x, y);
 			return origin;
 		}
@@ -657,7 +661,7 @@ namespace FusionEngine
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Origin origin; int x, y;
+			clan::Origin origin; int x, y;
 			m_Sprite.get_rotation_hotspot(origin, x, y);
 			m_Sprite.set_rotation_hotspot(origin, offset.x, offset.y);
 		}
@@ -669,7 +673,7 @@ namespace FusionEngine
 	{
 		if (!m_Sprite.is_null())
 		{
-			Vector2i off; CL_Origin ignore;
+			Vector2i off; clan::Origin ignore;
 			m_Sprite.get_rotation_hotspot(ignore, off.x, off.y);
 			return off;
 		}
@@ -677,7 +681,7 @@ namespace FusionEngine
 			return RotationOffset.Get();
 	}
 
-	void CLSprite::SetColour(const CL_Colorf& val)
+	void CLSprite::SetColour(const clan::Colorf& val)
 	{
 		if (!m_Sprite.is_null())
 			m_Sprite.set_color(val);
@@ -687,11 +691,10 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::Colour);
 	}
 
-	const CL_Colorf &CLSprite::GetColour() const
+	const clan::Colorf &CLSprite::GetColour() const
 	{
 		if (!m_Sprite.is_null())
 		{
-			m_Colour = m_Sprite.get_color();
 			return m_Colour;
 		}
 		else
@@ -737,7 +740,7 @@ namespace FusionEngine
 	void CLSprite::SetBaseAngle(float val)
 	{
 		if (!m_Sprite.is_null())
-			m_Sprite.set_base_angle(CL_Angle(val, cl_radians));
+			m_Sprite.set_base_angle(clan::Angle(val, clan::angle_radians));
 
 		m_SerialisationHelper.markChanged(PropsIdx::BaseAngle);
 	}
@@ -746,7 +749,7 @@ namespace FusionEngine
 	{
 		if (!m_Sprite.is_null())
 		{
-			CL_Angle angle = m_Sprite.get_base_angle();
+			clan::Angle angle = m_Sprite.get_base_angle();
 			return angle.to_radians();
 		}
 		else

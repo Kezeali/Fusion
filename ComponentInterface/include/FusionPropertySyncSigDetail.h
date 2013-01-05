@@ -45,17 +45,17 @@ namespace FusionEngine
 			class Impl
 			{
 			public:
-				typedef typename std::function<T (void)> CallbackFn_t;
-				typedef typename std::function<void (void)> GeneratorFn_t;
+				typedef typename std::function<T (void)> Arg_t;
+				typedef typename std::function<void ()> GeneratorFn_t;
 
-				CallbackFn_t callback;
+				Arg_t getEvent;
 				bool hasEvent;
 
 				Impl() : hasEvent(false) {}
 
 				void OnDispose()
 				{
-					callback = CallbackFn_t();
+					getEvent = Arg_t();
 				}
 
 				bool HasMore()
@@ -65,15 +65,15 @@ namespace FusionEngine
 
 				T GetEvent()
 				{
-					FSN_ASSERT(callback);
+					FSN_ASSERT(getEvent);
 					hasEvent = false;
-					return callback();
+					return getEvent();
 				}
 
-				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback, CallbackFn_t event_callback)
+				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback, Arg_t event_getter)
 				{
-					FSN_ASSERT(event_callback);
-					callback = event_callback;
+					FSN_ASSERT(event_getter);
+					getEvent = event_getter;
 					return [this, trigger_callback]() { this->hasEvent = true; trigger_callback(); };
 				}
 			};

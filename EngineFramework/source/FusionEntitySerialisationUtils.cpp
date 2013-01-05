@@ -37,11 +37,12 @@
 #include "FusionEntityManager.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionResourceManager.h"
+#include "FusionSerialisationError.h"
 
 #include "FusionBinaryStream.h"
 
-#include <BitStream.h>
-#include <StringCompressor.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/StringCompressor.h>
 
 #include <boost/crc.hpp>
 
@@ -642,6 +643,12 @@ namespace FusionEngine
 			}
 		}
 
+		void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, SerialiseMode mode)
+		{
+			std::vector<uint32_t> notUsed;
+			DeserialiseOccasional(in, notUsed, entity, mode);
+		}
+
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius)
 		{
 			// First bit indicates presence of position data, as some
@@ -665,67 +672,70 @@ namespace FusionEngine
 		//	sf(out, origin, radius);
 		//}
 
-		static void MergeComponentData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
+		namespace
 		{
-			CellStreamReader in(&instr);
-			CellStreamWriter out(&outstr);
-
-			auto existingConDataBytes = in.ReadValue<uint16_t>();
-			auto existingOccDataBytes = in.ReadValue<uint16_t>();
-
-			auto conDataBits = ReadStateLength(continuous);
-			RakNet::BitStream tempStream;
-			if (conDataBits > 0)
+			void MergeComponentData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
 			{
-				continuous.Read(tempStream, conDataBits);
+				CellStreamReader in(&instr);
+				CellStreamWriter out(&outstr);
 
-				out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
-				
-				tempStream.Reset();
-			}
-			else
-			{
-				std::vector<char> tempData(existingConDataBytes);
-				instr.read(tempData.data(), existingConDataBytes);
+				auto existingConDataBytes = in.ReadValue<uint16_t>();
+				auto existingOccDataBytes = in.ReadValue<uint16_t>();
 
-				out.WriteAs<uint16_t>(existingConDataBytes);
-				outstr.write(tempData.data(), existingConDataBytes);
-			}
-
-			auto occDataBits = ReadStateLength(occasional);
-			if (occDataBits > 0)
-			{
-				occasional.Read(tempStream, occDataBits);
-
-				out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
-			}
-			else
-			{
-				std::vector<char> tempData(existingOccDataBytes);
-				instr.read(tempData.data(), existingOccDataBytes);
-
-				out.WriteAs<uint16_t>(existingOccDataBytes);
-				outstr.write(reinterpret_cast<char*>(tempData.data()), existingOccDataBytes);
-			}
-		}
-
-		static bool WritePositionDataIfAvailable(OCellStream& outstr, RakNet::BitStream& incomming)
-		{
-			CellStreamWriter out(&outstr);
-
-			auto result = DeserialisePosition(incomming, Vector2(), 0);
-			if (result.first)
-			{
+				auto conDataBits = ReadStateLength(continuous);
 				RakNet::BitStream tempStream;
-				StdSerialisePosition(tempStream, result.second, Vector2(), 0);
+				if (conDataBits > 0)
+				{
+					continuous.Read(tempStream, conDataBits);
 
-				out.Write(tempStream.GetNumberOfBytesUsed());
-				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+					out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+
+					tempStream.Reset();
+				}
+				else
+				{
+					std::vector<char> tempData(existingConDataBytes);
+					instr.read(tempData.data(), existingConDataBytes);
+
+					out.WriteAs<uint16_t>(existingConDataBytes);
+					outstr.write(tempData.data(), existingConDataBytes);
+				}
+
+				auto occDataBits = ReadStateLength(occasional);
+				if (occDataBits > 0)
+				{
+					occasional.Read(tempStream, occDataBits);
+
+					out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+				}
+				else
+				{
+					std::vector<char> tempData(existingOccDataBytes);
+					instr.read(tempData.data(), existingOccDataBytes);
+
+					out.WriteAs<uint16_t>(existingOccDataBytes);
+					outstr.write(reinterpret_cast<char*>(tempData.data()), existingOccDataBytes);
+				}
 			}
-			
-			return result.first;
+
+			bool WritePositionDataIfAvailable(OCellStream& outstr, RakNet::BitStream& incomming)
+			{
+				CellStreamWriter out(&outstr);
+
+				auto result = DeserialisePosition(incomming, Vector2(), 0);
+				if (result.first)
+				{
+					RakNet::BitStream tempStream;
+					StdSerialisePosition(tempStream, result.second, Vector2(), 0);
+
+					out.Write(tempStream.GetNumberOfBytesUsed());
+					outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+				}
+
+				return result.first;
+			}
 		}
 
 		std::streamsize MergeEntityData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
@@ -1047,7 +1057,7 @@ namespace FusionEngine
 
 			std::shared_ptr<boost::signals2::scoped_connection> m_ResourceLoaderCnx;
 
-			CL_Event m_GotResult;
+			clan::Event m_GotResult;
 		};
 
 		ArchetypalEntityFuture::ArchetypalEntityFuture(std::shared_ptr<ICellStream>&& cell_data_stream, const std::string& archetype_id, const std::function<EntityPtr (const std::shared_ptr<ICellStream>&, const ResourceDataPtr&)>& finalise)
@@ -1067,7 +1077,7 @@ namespace FusionEngine
 
 		EntityPtr ArchetypalEntityFuture::get_entity()
 		{
-			CL_Event::wait(m_GotResult);
+			clan::Event::wait(m_GotResult);
 
 			if (m_Resource)
 				return m_FinaliseFn(m_Stream, m_Resource);
@@ -1077,7 +1087,7 @@ namespace FusionEngine
 
 		std::shared_ptr<ICellStream> ArchetypalEntityFuture::get_file()
 		{
-			CL_Event::wait(m_GotResult);
+			clan::Event::wait(m_GotResult);
 
 			if (m_Resource)
 				return std::move(m_Stream);
@@ -1087,7 +1097,7 @@ namespace FusionEngine
 
 		std::pair<EntityPtr, std::shared_ptr<ICellStream>> ArchetypalEntityFuture::get()
 		{
-			CL_Event::wait(m_GotResult);
+			clan::Event::wait(m_GotResult);
 
 			if (m_Resource)
 			{

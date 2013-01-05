@@ -30,10 +30,10 @@
 #include "FusionRakNetwork.h"
 
 // Core raknet stuff
-#include <RakNetStatistics.h>
+#include <RakNet/RakNetStatistics.h>
 // Utilities
-#include <BitStream.h>
-#include <GetTime.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/GetTime.h>
 
 #include "FusionAssert.h"
 #include "FusionExceptionFactory.h"

@@ -2,9 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="include\FusionEditor.h" />
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionInspectorBase.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
@@ -69,6 +66,12 @@
     <ClInclude Include="include\FusionResourceEditorFactory.h">
       <Filter>ResourceEditors</Filter>
     </ClInclude>
+    <ClInclude Include="source\PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionInspectorTypeUtils.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -85,9 +88,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp">
       <Filter>Inspectors</Filter>
@@ -134,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="source\FusionArchetypeResourceEditor.cpp">
       <Filter>ResourceEditors</Filter>
+    </ClCompile>
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

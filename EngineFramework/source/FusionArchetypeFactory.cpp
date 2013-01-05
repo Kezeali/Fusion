@@ -49,7 +49,7 @@ namespace bio = boost::iostreams;
 namespace FusionEngine
 {
 
-	static const size_t s_DefaultVolatileCapacity = 100;
+	const size_t s_DefaultVolatileCapacity = 100;
 
 	//! Implements ResourceSustainer
 	class SimpleResourceSustainer : public ResourceSustainer
@@ -300,7 +300,7 @@ namespace FusionEngine
 		data.Archetype->StreamIn();
 	}
 
-	void LoadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -315,7 +315,7 @@ namespace FusionEngine
 
 		try
 		{
-			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
+			auto dev = vdir.open_file(resource->GetPath(), clan::File::open_existing, clan::File::access_read);
 			auto stream = std::make_shared<IO::CLStream>(dev);
 
 			factory->Load(stream, ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
@@ -323,7 +323,7 @@ namespace FusionEngine
 			// Add the metadata that will be used to detect changes to this resource
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), *stream));
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			delete factory;
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
@@ -340,7 +340,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadArchetypeResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

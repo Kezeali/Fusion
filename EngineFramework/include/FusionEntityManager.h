@@ -34,8 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
-#include <BitStream.h>
-#include <RakNetTypes.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/RakNetTypes.h>
 
 #include "FusionComponentUniverse.h"
 #include "FusionEntity.h"

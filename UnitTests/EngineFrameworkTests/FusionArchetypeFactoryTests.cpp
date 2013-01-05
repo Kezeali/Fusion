@@ -32,7 +32,7 @@ struct archetype_f : public testing::Test
 		manager.reset();
 	}
 
-	std::vector<CL_String> args;
+	std::vector<std::string> args;
 	std::unique_ptr<EngineManager> manager;
 	std::unique_ptr<ArchetypeFactory> factory;
 };

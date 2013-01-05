@@ -47,7 +47,7 @@
 #include "FusionProfiling.h"
 #include "FusionNetworkManager.h"
 #include "FusionRakNetwork.h"
-#include <RakNetStatistics.h>
+#include <RakNet/RakNetStatistics.h>
 
 #include "FusionPhysicsDebugDraw.h"
 
@@ -60,8 +60,8 @@
 
 namespace FusionEngine
 {
-	CLRenderSystem::CLRenderSystem(const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
-		: m_DisplayWindow(window),
+	CLRenderSystem::CLRenderSystem(const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
+		: m_Canvas(canvas),
 		m_CameraSynchroniser(camera_sync)
 	{
 	}
@@ -73,19 +73,19 @@ namespace FusionEngine
 
 	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
 	{
-		return std::make_shared<CLRenderWorld>(this, m_DisplayWindow, m_CameraSynchroniser);
+		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);
 	}
 
-	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_DisplayWindow& window, CameraSynchroniser* camera_sync)
+	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
 		: ISystemWorld(system),
 		m_PhysWorld(nullptr),
 		m_PhysDebugDrawEnabled(false),
 		m_DebugTextEnabled(false),
 		m_CameraManager(camera_sync)
 	{
-		m_Renderer = new Renderer(window.get_gc());
+		m_Renderer = new Renderer(canvas);
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
-		m_GUITask = new CLRenderGUITask(this, window, m_Renderer);
+		m_GUITask = new CLRenderGUITask(this, canvas, m_Renderer);
 
 		m_SpriteDefinitionCache = std::make_shared<SpriteDefinitionCache>();
 
@@ -149,14 +149,14 @@ namespace FusionEngine
 		m_Extensions.insert(std::make_pair(vp, extension));
 	}
 
-	void CLRenderWorld::RunExtensions(const ViewportPtr& vp, const CL_GraphicContext& gc)
+	void CLRenderWorld::RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas)
 	{
 		std::vector<ViewportPtr> removed;
 		auto range = m_Extensions.equal_range(vp);
 		for (auto it = range.first; it != range.second; ++it)
 		{
 			if (auto extension = it->second.lock())
-				extension->Draw(gc);
+				extension->Draw(canvas);
 			else
 				removed.push_back(vp);
 		}
@@ -311,9 +311,9 @@ namespace FusionEngine
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer)
 	{
-		auto gc = m_Renderer->GetGraphicContext();
-		m_DebugFont = CL_Font(gc, "Lucida Console", 14);
-		m_DebugFont2 = CL_Font(gc, "Lucida Console", 10);
+		auto canvas = m_Renderer->GetCanvas();
+		m_DebugFont = clan::Font(canvas, "Lucida Console", 14);
+		m_DebugFont2 = clan::Font(canvas, "Lucida Console", 10);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -425,20 +425,23 @@ namespace FusionEngine
 		Draw();
 	}
 
-	static void DrawSegment(Vector2 p1, Vector2 p2, CL_GraphicContext& gc)
+	namespace
 	{
-		CL_Colorf clcolor(1.f, 0.5f, 0.9f, 1.0f);
-
-		CL_Vec2i positions[] =
+		void DrawSegment(Vector2 p1, Vector2 p2, clan::GraphicContext& gc)
 		{
-			CL_Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
-			CL_Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
-		};
+			clan::Colorf clcolor(1.f, 0.5f, 0.9f, 1.0f);
 
-		CL_PrimitivesArray vertex_data(gc);
-		vertex_data.set_attributes(0, positions);
-		vertex_data.set_attribute(1, clcolor);
-		gc.draw_primitives(cl_lines, 2, vertex_data);
+			clan::Vec2i positions[] =
+			{
+				clan::Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
+				clan::Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
+			};
+
+			clan::PrimitivesArray vertex_data(gc);
+			vertex_data.set_attributes(clan::attrib_position, clan::VertexArrayVector<clan::Vec2i>(gc, &positions[0], 2));
+			vertex_data.set_attributes(clan::attrib_color, clan::VertexArrayVector<clan::Vec4f>(gc, &clcolor, 1));
+			gc.draw_primitives(clan::type_lines, 2, vertex_data);
+		}
 	}
 
 	void CLRenderTask::Draw()
@@ -446,7 +449,7 @@ namespace FusionEngine
 		FSN_PROFILE("Draw");
 		auto& drawables = m_RenderWorld->GetDrawables();
 
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		clan::Canvas canvas = m_Renderer->GetCanvas();
 
 		auto& viewports = m_RenderWorld->GetViewports();
 		auto worldGUICtx = Rocket::Core::GetContext("world");
@@ -456,7 +459,7 @@ namespace FusionEngine
 
 			const auto& camera = vp->GetCamera();
 
-			CL_Rectf drawArea;
+			clan::Rectf drawArea;
 			m_Renderer->SetupDraw(vp, &drawArea);
 
 			const auto& p = camera->GetPosition();
@@ -468,7 +471,7 @@ namespace FusionEngine
 				auto& drawable = *dit;
 				if (!drawable->HasAABB() || drawArea.is_overlapped(drawable->GetAABB()))
 				{
-					drawable->Draw(gc, camera_pos);
+					drawable->Draw(canvas, camera_pos);
 				}
 			}
 
@@ -477,7 +480,7 @@ namespace FusionEngine
 				worldGUICtx->Render();
 			}
 
-			m_RenderWorld->RunExtensions(vp, gc);
+			m_RenderWorld->RunExtensions(vp, canvas);
 
 			m_Renderer->PostDraw();
 		}
@@ -504,23 +507,23 @@ namespace FusionEngine
 				str.str("");
 				str << viewports.size();
 				debug_text += "\nViewports: " + str.str();
-				m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
+				m_DebugFont.draw_text(canvas, clan::Pointf(10.f, 40.f), debug_text);
 
-				CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
-				CL_Rectf fill = bar;
+				clan::Rectf bar(clan::Pointf(10.f, 4.f), clan::Sizef((float)(canvas.get_width() - 20), 14.f));
+				clan::Rectf fill = bar;
 				fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
-				CL_Colorf c1 = CL_Colorf::aqua;
-				CL_Colorf c0 = c1;
+				clan::Colorf c1 = clan::Colorf::aqua;
+				clan::Colorf c0 = c1;
 				c0.set_alpha(0.25f);
 				c1.set_alpha(DeltaTime::GetInterpolationAlpha());
-				CL_Draw::box(gc, bar, CL_Colorf::silver);
-				CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
+				canvas.box(bar, clan::Colorf::silver);
+				canvas.gradient_fill(fill, clan::Gradient(c0, c1, c0, c1));
 			}
 
 #ifdef FSN_PROFILING_ENABLED
 			{
 				const auto pf = Profiling::getSingleton().GetTimes();
-				CL_Pointf pfLoc(10.f, 110.f);
+				clan::Pointf pfLoc(10.f, 110.f);
 				for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 				{
 					std::stringstream secStr, percentStr;
@@ -537,9 +540,9 @@ namespace FusionEngine
 						line += " (" + percentStr.str() + "%)";
 					}
 
-					m_DebugFont.draw_text(gc, pfLoc, line);
+					m_DebugFont.draw_text(canvas, pfLoc, line);
 
-					pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
+					pfLoc.y += m_DebugFont.get_text_size(canvas.get_gc(), line).height;
 				}
 			}
 #endif
@@ -549,7 +552,7 @@ namespace FusionEngine
 
 				if (network->IsConnected())
 				{
-					CL_Pointf pfLoc(400.f, 40.f);
+					clan::Pointf pfLoc(400.f, 40.f);
 
 					unsigned short numberSystems = network->GetPeerInterface()->GetMaximumNumberOfPeers();
 					network->GetPeerInterface()->GetConnectionList(nullptr, &numberSystems);
@@ -597,8 +600,8 @@ namespace FusionEngine
 
 						for (auto it = lines.begin(), end = lines.end(); it != end; ++it)
 						{
-							m_DebugFont2.draw_text(gc, pfLoc, *it);
-							pfLoc.y += m_DebugFont2.get_text_size(gc, *it).height;
+							m_DebugFont2.draw_text(canvas, pfLoc, *it);
+							pfLoc.y += m_DebugFont2.get_text_size(canvas.get_gc(), *it).height;
 						}
 					}
 				}
@@ -607,7 +610,7 @@ namespace FusionEngine
 
 		if (!m_PhysDebugDraw)
 		{
-			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
+			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetCanvas()));
 			if (m_RenderWorld->m_PhysWorld)
 				m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
 			m_PhysDebugDraw->SetFlags(B2DebugDraw::e_centerOfMassBit | B2DebugDraw::e_jointBit | B2DebugDraw::e_pairBit | B2DebugDraw::e_shapeBit);
@@ -623,7 +626,7 @@ namespace FusionEngine
 
 			// Draw cell division lines
 			static const float cellSize = 5.0f;
-			CL_Rectf area;
+			clan::Rectf area;
 			m_Renderer->CalculateScreenArea(area, viewports.front(), true);
 			area.top *= s_SimUnitsPerGameUnit; area.right *= s_SimUnitsPerGameUnit; area.bottom *= s_SimUnitsPerGameUnit; area.left *= s_SimUnitsPerGameUnit;
 			//auto center = area.get_center();
@@ -633,17 +636,17 @@ namespace FusionEngine
 				for (auto ix = (int)std::floor(area.left / cellSize) * cellSize; ix < area.right; ix += cellSize)
 				{
 					//auto x = std::floor(ix / 8) * 8, y = std::floor(iy / 8) * 8;
-					DrawSegment(Vector2(ix, iy), Vector2(ix + cellSize, iy), gc);
-					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + cellSize), gc);
+					DrawSegment(Vector2(ix, iy), Vector2(ix + cellSize, iy), canvas.get_gc());
+					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + cellSize), canvas.get_gc());
 				}
 			}
-			const auto textHeight = m_DebugFont2.get_text_size(gc, "1").height;
+			const auto textHeight = m_DebugFont2.get_text_size(canvas, "1").height;
 			for (auto iy = (int)std::floor(area.top / cellSize) * cellSize; iy < area.bottom; iy += cellSize)
 			{
 				for (auto ix = (int)std::floor(area.left / cellSize) * cellSize; ix < area.right; ix += cellSize)
 				{
 					std::stringstream str; str << (ix / cellSize) << "," << (iy / cellSize);
-					m_DebugFont2.draw_text(gc, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
+					m_DebugFont2.draw_text(canvas, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), clan::Colorf::bisque);
 				}
 			}
 
@@ -658,7 +661,7 @@ namespace FusionEngine
 
 	void CLRenderWorld_AddViewport(const CameraPtr& camera, CLRenderWorld* obj)
 	{
-		auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+		auto viewport = std::make_shared<Viewport>(clan::Rectf(0.f, 0.f, 1.f, 1.f), camera);
 		obj->AddViewport(viewport);
 	}
 
@@ -669,20 +672,20 @@ namespace FusionEngine
 	}
 
 
-	CLRenderGUITask::CLRenderGUITask(CLRenderWorld* sysworld, const CL_DisplayWindow& window, Renderer* const renderer)
+	CLRenderGUITask::CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer)
 		: ISystemTask(sysworld),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer),
-		m_DisplayWindow(window)
+		m_Canvas(canvas)
 	{
-		m_MouseMoveSlot = window.get_ic().get_mouse().sig_pointer_move().connect(this, &CLRenderGUITask::onMouseMove);
+		m_MouseMoveSlot = canvas.get_window().get_ic().get_mouse().sig_pointer_move().connect(this, &CLRenderGUITask::onMouseMove);
 	}
 
 	CLRenderGUITask::~CLRenderGUITask()
 	{
 	}
 
-	inline int getRktModifierFlags(const CL_InputEvent &ev)
+	inline int getRktModifierFlags(const clan::InputEvent &ev)
 	{
 		int modifier = 0;
 		if (ev.alt)
@@ -701,7 +704,7 @@ namespace FusionEngine
 		auto& viewports = m_RenderWorld->GetViewports();
 		while (!m_BufferedEvents.empty())
 		{
-			CL_InputEvent ev = m_BufferedEvents.front();
+			clan::InputEvent ev = m_BufferedEvents.front();
 			m_BufferedEvents.pop_front();
 
 			auto mousePos = ev.mouse_pos;
@@ -712,13 +715,13 @@ namespace FusionEngine
 				const auto& camera = (*it)->GetCamera();
 
 				// Calculate the area on-screen that the viewport takes up
-				CL_Rectf screenArea;
+				clan::Rectf screenArea;
 				m_Renderer->CalculateScreenArea(screenArea, *it, false);
 
-				if (screenArea.contains(CL_Vec2i(mousePos.x, mousePos.y)))
+				if (screenArea.contains(clan::Vec2i(mousePos.x, mousePos.y)))
 				{
 					// Calculate the offset within the world of the viewport
-					CL_Rectf worldArea;
+					clan::Rectf worldArea;
 					m_Renderer->CalculateScreenArea(worldArea, *it, true);
 
 					mousePos.x += (int)worldArea.left;
@@ -735,7 +738,7 @@ namespace FusionEngine
 		context->Update();
 	}
 
-	void CLRenderGUITask::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
+	void CLRenderGUITask::onMouseMove(const clan::InputEvent &ev)
 	{
 		//if (m_ClickPause <= 0)
 		//	m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));

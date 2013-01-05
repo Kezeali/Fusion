@@ -39,23 +39,29 @@
 namespace FusionEngine
 {
 	//! Image (pixel-buffer) resource loader callback
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Image resource unloader callback
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
-	//! Texture resource loader callback
-	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	//! Texture resource loader
+	/*
+	*  Just loads the image data into memory, them marks it as requiring GC load
+	*/
+	void LoadTextureResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Texture resource unloader
-	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-	//! Loads a texture resource into GFX RAM
-	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data);
-	//! Returns true when a texture has changed
-	bool ResourceHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadTexture2DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	//! Loads a texture resource (creates the, possibly GFX memory resident, texture object)
+	void LoadTexture2DResourceIntoGC(ResourceContainer* resource, clan::GraphicContext& gc, boost::any user_data);
+
+	//! 3D Texture resource unloader
+	void UnloadTexture3DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	//! 3D Texture resource loader callback
+	void LoadTexture3DResourceIntoGC(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 	//! Sprite resource loader callback
-	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Sprite resource unloader callback
-	void UnloadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 }
 

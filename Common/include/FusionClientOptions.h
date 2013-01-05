@@ -39,6 +39,7 @@
 #include "FusionXML.h"
 
 #include <ClanLib/Core/System/mutex.h>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -100,7 +101,7 @@ namespace FusionEngine
 		bool GetPlayerOption(unsigned int player, const std::string& name, std::string *val) const;
 
 	protected:
-		mutable CL_Mutex m_Mutex;
+		mutable clan::Mutex m_Mutex;
 
 		std::string m_Type;
 		//! Last opened options file

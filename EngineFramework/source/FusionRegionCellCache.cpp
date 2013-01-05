@@ -50,9 +50,9 @@ namespace io = boost::iostreams;
 
 namespace FusionEngine
 {
-	static const uint8_t s_CellDataVersion = 2;
+	const uint8_t s_CellDataVersion = 2;
 
-	static std::array<char, RegionFile::s_SectorSize> s_EmptySectorData;
+	std::array<char, RegionFile::s_SectorSize> EmptySectorData;
 
 	struct CellBuffer : public SmartArrayDevice
 	{
@@ -521,7 +521,7 @@ namespace FusionEngine
 				file->seekp(0, std::ios::end);
 				for (size_t i = 0; i < sectorsNeeded; ++i)
 				{
-					file->write(s_EmptySectorData.data(), s_SectorSize);
+					file->write(EmptySectorData.data(), s_SectorSize);
 				}
 				
 				write(startingSector, toScalarIndex(cell_index), data);
@@ -974,7 +974,7 @@ namespace FusionEngine
 
 	namespace RegionMap
 	{
-		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+		void LoadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{
@@ -1001,7 +1001,7 @@ namespace FusionEngine
 			}
 		}
 
-		void UnloadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+		void UnloadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{
@@ -1011,7 +1011,7 @@ namespace FusionEngine
 			resource->SetDataPtr(nullptr);
 		}
 
-		void LoadStaticMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+		void LoadStaticMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{

@@ -68,7 +68,7 @@ namespace FusionEngine
 				IO::PhysFSStream file(m_Resource.GetTarget()->GetPath(), IO::Write);
 				m_Resource->Save(file);
 			}
-			catch (CL_Exception& e)
+			catch (clan::Exception& e)
 			{
 				SendToConsole("Failed to save archetype resource '" + m_Resource.GetTarget()->GetPath() + "': " + e.what());
 				if (m_ErrorCallback)

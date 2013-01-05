@@ -178,12 +178,12 @@ namespace FusionEngine
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", ImagePath);
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", AnimationPath);
 
-		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Origin, "PointOrigin", AlignmentOrigin);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, clan::Origin, "PointOrigin", AlignmentOrigin);
 		//FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2i, "VectorInt", AlignmentOffset);
-		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Origin, "PointOrigin", RotationOrigin);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, clan::Origin, "PointOrigin", RotationOrigin);
 		//FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2i, "VectorInt", RotationOffset);
 
-		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Colorf, "Colour", Colour);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, clan::Colorf, "Colour", Colour);
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, float, "float", Alpha);
 
 		FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2, "Vector", Scale);
@@ -216,7 +216,7 @@ namespace FusionEngine
 
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, ICamera::SyncTypes, "SyncType", SyncType);
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, bool, "bool", ViewportEnabled);
-		FSN_REGISTER_PROP_ACCESSOR(ICamera, CL_Rectf, "Rect", ViewportRect);
+		FSN_REGISTER_PROP_ACCESSOR(ICamera, clan::Rectf, "Rect", ViewportRect);
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, bool, "bool", AngleEnabled);
 	}
 

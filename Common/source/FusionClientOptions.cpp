@@ -93,7 +93,7 @@ namespace FusionEngine
 			if (i == 0)
 				playerAttribute = "default";
 			else
-				playerAttribute = CL_StringHelp::int_to_local8(i);
+				playerAttribute = clan::StringHelp::int_to_local8(i);
 			player->SetAttribute("player", playerAttribute.c_str());
 
 			insertVarMapIntoDOM(player, m_PlayerVariables[i]);
@@ -106,7 +106,7 @@ namespace FusionEngine
 		{
 			SaveString_PhysFS(doc.Value(), filename);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			//FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 			return false;
@@ -120,7 +120,7 @@ namespace FusionEngine
 
 	bool ClientOptions::LoadFromFile(const std::string &filename, bool default_if_missing)
 	{
-		CL_MutexSection mutexSection(&m_Mutex);
+		clan::MutexSection mutexSection(&m_Mutex);
 		try
 		{
 			// Load the document
@@ -193,7 +193,7 @@ namespace FusionEngine
 
 	bool ClientOptions::SetPlayerOption(unsigned int player, const std::string &name, const std::string &value)
 	{
-		CL_MutexSection mutex_lock(&m_Mutex);
+		clan::MutexSection mutex_lock(&m_Mutex);
 		if (player >= m_PlayerVariables.size())
 			return false;
 		m_PlayerVariables[player][name] = value;
@@ -202,7 +202,7 @@ namespace FusionEngine
 
 	bool ClientOptions::GetOption(const std::string &name, std::string *ret) const
 	{
-		CL_MutexSection mutex_lock(&m_Mutex);
+		clan::MutexSection mutex_lock(&m_Mutex);
 		VarMap::const_iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
@@ -215,18 +215,18 @@ namespace FusionEngine
 	//  that that would be a waste of effort
 	bool ClientOptions::GetOption(const std::string &name, int *ret) const
 	{
-		CL_MutexSection mutex_lock(&m_Mutex);
+		clan::MutexSection mutex_lock(&m_Mutex);
 		VarMap::const_iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
-		*ret = CL_StringHelp::local8_to_int(itVar->second.c_str());
+		*ret = clan::StringHelp::local8_to_int(itVar->second.c_str());
 		return true;
 	}
 
 	std::string ClientOptions::GetOption_str(const std::string &name) const
 	{
-		CL_MutexSection mutex_lock(&m_Mutex);
+		clan::MutexSection mutex_lock(&m_Mutex);
 
 		VarMap::const_iterator _where = m_Variables.find(name);
 		if (_where == m_Variables.end())
@@ -248,7 +248,7 @@ namespace FusionEngine
 
 	bool ClientOptions::GetPlayerOption(unsigned int player, const std::string &name, std::string *value) const
 	{
-		CL_MutexSection mutex_lock(&m_Mutex);
+		clan::MutexSection mutex_lock(&m_Mutex);
 		if (player >= m_PlayerVariables.size())
 			return false;
 
@@ -286,7 +286,7 @@ namespace FusionEngine
 			if (!fe_issimplenumeric(player))
 				return;
 
-			playerNum = CL_StringHelp::local8_to_int(player);
+			playerNum = clan::StringHelp::local8_to_int(player);
 		}
 
 		if (playerNum >= m_PlayerVariables.size())
@@ -297,7 +297,7 @@ namespace FusionEngine
 		ticpp::Iterator< ticpp::Element > child;
 		for ( child = child.begin( opts_root ); child != child.end(); child++ )
 		{
-			if (CL_StringHelp::compare(child->Value(), "var", true))
+			if (clan::StringHelp::compare(child->Value(), "var", true))
 			{
 				std::string name = child->GetAttribute("name");
 				if (name.empty()) continue;

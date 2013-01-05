@@ -89,7 +89,7 @@ namespace FusionEngine
 		* </p>
 		*
 		* \param argv0
-		* Pass argv[0], CL_System::get_exe_path() or NULL here.
+		* Pass argv[0], clan::System::get_exe_path() or NULL here.
 		*
 		* \returns
 		* True if initialisation was successful.

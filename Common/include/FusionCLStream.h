@@ -52,7 +52,7 @@ namespace FusionEngine { namespace IO
 		{};
 		typedef char char_type;
 
-		CLStreamDevice(CL_IODevice dev);
+		CLStreamDevice(clan::IODevice dev);
 
 		void close();
 
@@ -61,12 +61,12 @@ namespace FusionEngine { namespace IO
 		std::streampos seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way);
 
 	private:
-		CL_IODevice m_Device;
+		clan::IODevice m_Device;
 	};
 
 	typedef boost::iostreams::stream<CLStreamDevice> CLStream;
 
-	inline CLStreamDevice::CLStreamDevice(CL_IODevice dev)
+	inline CLStreamDevice::CLStreamDevice(clan::IODevice dev)
 		: m_Device(dev)
 	{
 		if (m_Device.is_null())
@@ -75,7 +75,7 @@ namespace FusionEngine { namespace IO
 
 	inline void CLStreamDevice::close()
 	{
-		m_Device = CL_IODevice();
+		m_Device = clan::IODevice();
 	}
 
 	inline std::streamsize CLStreamDevice::read(char* s, std::streamsize n)
@@ -92,17 +92,17 @@ namespace FusionEngine { namespace IO
 
 	inline std::streampos CLStreamDevice::seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way)
 	{
-		CL_IODevice::SeekMode clSeekMode;
+		clan::IODevice::SeekMode clSeekMode;
 		switch (way)
 		{
 		case std::ios_base::cur:
-			clSeekMode = CL_IODevice::seek_cur;
+			clSeekMode = clan::IODevice::seek_cur;
 			break;
 		case std::ios_base::end:
-			clSeekMode = CL_IODevice::seek_end;
+			clSeekMode = clan::IODevice::seek_end;
 			break;
 		default:
-			clSeekMode = CL_IODevice::seek_set;
+			clSeekMode = clan::IODevice::seek_set;
 			break;
 		};
 

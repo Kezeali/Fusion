@@ -40,72 +40,72 @@
 namespace FusionEngine
 {
 
-	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
+	void LoadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
-			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
 
-		//std::string& ext = CL_String::get_extension(resource->GetPath());
-		CL_SoundProvider* sp;
+		//std::string& ext = std::string::get_extension(resource->GetPath());
+		clan::SoundProvider* sp;
 		try
 		{
-			CL_IODevice file = vdir.open_file_read(resource->GetPath());
-			sp = CL_SoundProviderFactory::load(file, false, CL_PathHelp::get_extension(resource->GetPath()));
+			clan::IODevice file = vdir.open_file_read(resource->GetPath());
+			sp = clan::SoundProviderFactory::load(file, false, clan::PathHelp::get_extension(resource->GetPath()));
 
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 		
-		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
+		clan::SoundBuffer* p = new clan::SoundBuffer( sp );
 		resource->SetDataPtr(p);
 
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
+	void UnloadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
-			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(NULL);
 	}
 
-	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
+	void LoadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
-			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
 
-		//std::string& ext = CL_String::get_extension(resource->GetPath());
-		CL_SoundProvider* sp;
+		//std::string& ext = std::string::get_extension(resource->GetPath());
+		clan::SoundProvider* sp;
 		try
 		{
-			CL_IODevice file = vdir.open_file_read(resource->GetPath());
-			sp = CL_SoundProviderFactory::load(file, true, CL_PathHelp::get_extension(resource->GetPath()));
+			clan::IODevice file = vdir.open_file_read(resource->GetPath());
+			sp = clan::SoundProviderFactory::load(file, true, clan::PathHelp::get_extension(resource->GetPath()));
 
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
 		}
 		
-		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
+		clan::SoundBuffer* p = new clan::SoundBuffer( sp );
 		resource->SetDataPtr(p);
 
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any)
+	void UnloadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
 	{
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
-			delete static_cast<CL_SoundBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(NULL);
 	}

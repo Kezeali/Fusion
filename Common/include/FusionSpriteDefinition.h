@@ -39,6 +39,9 @@
 #include "FusionResourcePointer.h"
 #include "FusionXML.h"
 
+#include <string>
+#include <vector>
+
 namespace FusionEngine
 {
 
@@ -47,63 +50,63 @@ namespace FusionEngine
 	{
 	public:
 		SpriteAnimation();
-		SpriteAnimation(CL_IODevice dev);
+		SpriteAnimation(clan::IODevice dev);
 
-		void Load(CL_IODevice dev, const std::string& animation_name = std::string());
+		void Load(clan::IODevice dev, const std::string& animation_name = std::string());
 
-		std::vector<CL_Rect>& GetFrames() { return m_Frames; }
+		std::vector<clan::Rect>& GetFrames() { return m_Frames; }
 		std::vector<std::pair<int, double>>& GetFrameDelays() { return m_FrameDelays; }
 		std::vector<std::pair<int, Vector2i>>& GetFrameOffsets() { return m_FrameOffsets; }
 
 		double GetDefaultDelay() const { return m_DefaultDelay; }
 
-		CL_Sprite::ShowOnFinish GetShowOnFinish() const { return m_ShowOnFinish; }
+		clan::Sprite::ShowOnFinish GetShowOnFinish() const { return m_ShowOnFinish; }
 		bool GetPlayLoop() const { return m_PlayLoop; }
 		bool GetPlayPingPong() const { return m_PlayPingPong; }
 
 	private:
-		std::vector<CL_Rect> m_Frames;
+		std::vector<clan::Rect> m_Frames;
 		std::vector<std::pair<int, double>> m_FrameDelays;
 		std::vector<std::pair<int, Vector2i>> m_FrameOffsets;
 		double m_DefaultDelay;
-		CL_Sprite::ShowOnFinish m_ShowOnFinish;
+		clan::Sprite::ShowOnFinish m_ShowOnFinish;
 		bool m_PlayLoop;
 		bool m_PlayPingPong;
 	};
 
 	//! SpriteAnimation resource loader callback
-	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! SpriteAnimation resource unloader callback
-	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	
 	//! Sprite factory
 	/*!
-	* Used to create CL_Sprite objects from given texture and animation resources
+	* Used to create clan::Sprite objects from given texture and animation resources
 	*/
 	class SpriteDefinition
 	{
 	public:
-		SpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+		SpriteDefinition(const ResourcePointer<clan::Texture2D>& texture, const ResourcePointer<SpriteAnimation>& animation);
 		~SpriteDefinition();
 
 		void GenerateDescription();
 
-		CL_Sprite CreateSprite(CL_GraphicContext &gc);
+		clan::Sprite CreateSprite(clan::GraphicContext &gc);
 
-		ResourcePointer<CL_Texture> m_Texture;
+		ResourcePointer<clan::Texture2D> m_Texture;
 		ResourcePointer<SpriteAnimation> m_Animation;
 
-		CL_SpriteDescription m_Description;
+		clan::SpriteDescription m_Description;
 
 		std::function<void (void)> m_UnusedCallback;
 	};
 
 	//! SpriteDefinition resource prereqs loader callback
-	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! SpriteDefinition resource loader callback
-	void LoadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! SpriteDefinition resource unloader callback
-	void UnloadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 	//! Used when loading sprite files
 	class LegacySpriteDefinition
@@ -120,8 +123,8 @@ namespace FusionEngine
 				FrameAlphaCell
 			} type;
 
-			CL_String filename;
-			//CL_Rect cell;
+			std::string filename;
+			//clan::Rect cell;
 
 			int xpos, ypos, width, height;
 
@@ -133,7 +136,7 @@ namespace FusionEngine
 
 			bool free;
 
-			CL_PixelBuffer image_data;
+			clan::PixelBuffer image_data;
 
 			Image()
 				: xpos(0), ypos(0),
@@ -151,9 +154,9 @@ namespace FusionEngine
 		~LegacySpriteDefinition();
 
 		//! Load the given XML document
-		void LoadXml(const std::string &working_directory, const ticpp::Document &document, CL_VirtualDirectory &dir);
+		void LoadXml(const std::string &working_directory, const ticpp::Document &document, clan::VirtualDirectory &dir);
 
-		CL_Sprite CreateSprite(CL_GraphicContext &gc);
+		clan::Sprite CreateSprite(clan::GraphicContext &gc);
 
 		void SpriteReleased();
 
@@ -186,10 +189,10 @@ namespace FusionEngine
 		FilenameSet m_ImageFiles;
 		ImageArray m_Images;
 
-		CL_SpriteDescription m_Description;
+		clan::SpriteDescription m_Description;
 
 		// Initial Sprite settings
-		CL_Colorf m_Colour; // colour overlay
+		clan::Colorf m_Colour; // colour overlay
 
 		float m_Alpha; // image opacity
 
@@ -199,14 +202,14 @@ namespace FusionEngine
 			bool loop;
 			bool pingpong;
 			bool backward;
-			CL_Sprite::ShowOnFinish showOnFinish;
+			clan::Sprite::ShowOnFinish showOnFinish;
 		} m_Animation;
 
 		struct SpriteFrame
 		{
 			int number;
 			int delay;
-			CL_Point offset;
+			clan::Point offset;
 		};
 
 		typedef std::vector<SpriteFrame> SpriteFrameArray;
@@ -215,19 +218,19 @@ namespace FusionEngine
 
 		float m_ScaleX, m_ScaleY;
 
-		CL_Angle m_BaseAngle;
+		clan::Angle m_BaseAngle;
 
-		CL_Origin m_OffsetOrigin;
+		clan::Origin m_OffsetOrigin;
 		int m_OffsetX;
 		int m_OffsetY;
 
-		CL_Origin m_RotationOrigin;
+		clan::Origin m_RotationOrigin;
 		int m_RotationPointX;
 		int m_RotationPointY;
 	};
 
 	//! Loads the given files into a SpriteDefinition
-	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir);
+	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, clan::VirtualDirectory vdir);
 
 }
 

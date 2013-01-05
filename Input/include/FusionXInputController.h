@@ -157,11 +157,11 @@ namespace FusionEngine
 		//! Checks the controller's state and creates input events accordingly
 		void Poll();
 
-		static CL_String GetKeyName(WORD id);
+		static std::string GetKeyName(WORD id);
 
-		CL_Signal_v1<const XInputEvent &> sig_key_down;
-		CL_Signal_v1<const XInputEvent &> sig_key_up;
-		CL_Signal_v1<const XInputEvent &> sig_axis_move;
+		clan::Signal_v1<const XInputEvent &> sig_key_down;
+		clan::Signal_v1<const XInputEvent &> sig_key_up;
+		clan::Signal_v1<const XInputEvent &> sig_axis_move;
 
 	private:
 		void processThumbInput(SHORT x, int x_axis_id, SHORT y, int y_axis_id, SHORT deadzone);

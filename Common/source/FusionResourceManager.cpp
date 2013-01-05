@@ -31,7 +31,6 @@
 
 #include <ClanLib/display.h>
 #include <ClanLib/gl.h>
-#include <ClanLib/regexp.h>
 
 #include "FusionConsole.h"
 #include "FusionExceptionFactory.h"
@@ -45,7 +44,7 @@
 namespace FusionEngine
 {
 
-	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
+	ResourceManager::ResourceManager(const clan::GraphicContext& gc)
 		: m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(true),
@@ -66,7 +65,7 @@ namespace FusionEngine
 		DeleteAllResources(m_GC);
 	}
 
-	const CL_GraphicContext& ResourceManager::GetGC() const
+	const clan::GraphicContext& ResourceManager::GetGC() const
 	{
 		return m_GC;
 	}
@@ -217,7 +216,7 @@ namespace FusionEngine
 			}
 
 			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the load function
 			loader.load(resource.get(), vdir, loader.userData);
@@ -229,7 +228,7 @@ namespace FusionEngine
 	//	ResourceDataPtr toLoadRes;
 	//	dependencies.push_back(toLoadData.resource);
 
-	//	CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+	//	clan::MutexSection loaderMutexSection(&m_LoaderMutex);
 
 	//	unsigned int depth = 0;
 	//	while (!dependencies.empty());
@@ -265,7 +264,7 @@ namespace FusionEngine
 	//	}
 
 	//	// Initialize a vdir
-	//	CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+	//	clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 	//	// Run the load function
 	//	ResourceLoader &loader = _where->second;
@@ -282,7 +281,7 @@ namespace FusionEngine
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
-			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent, m_CheckForChangesEvent);
+			int receivedEvent = clan::Event::wait(m_StopEvent, m_ToUnloadEvent, m_ToLoadEvent, m_CheckForChangesEvent);
 			// 0 = stop event, -1 = error; otherwise, it is
 			//  a ToLoad / ToUnload Event, meaning the load loop below should resume
 			if (receivedEvent <= 0 && !m_FinishLoadingBeforeStopping)
@@ -342,7 +341,7 @@ namespace FusionEngine
 			// Unload
 			if (unloadTriggered || receivedEvent == 0)
 			{
-				//CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
+				//clan::MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
 				//for (auto it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
 				ResourceContainer* res;
 				while (m_ToUnload.try_pop(res))
@@ -466,7 +465,7 @@ namespace FusionEngine
 		{
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
-				//CL_MutexSection lock(&m_LoaderMutex);
+				//clan::MutexSection lock(&m_LoaderMutex);
 				auto _where = m_ResourceLoaders.find(res->GetType());
 				if (_where != m_ResourceLoaders.end())
 				{
@@ -618,12 +617,12 @@ namespace FusionEngine
 		return onLoadConnection;
 	}
 
-	void ResourceManager::UnloadResource(const std::string &path, CL_GraphicContext &gc)
+	void ResourceManager::UnloadResource(const std::string &path, clan::GraphicContext &gc)
 	{
 		getAndUnloadResource(path);
 	}
 
-	void ResourceManager::DeleteAllResources(CL_GraphicContext &gc)
+	void ResourceManager::DeleteAllResources(clan::GraphicContext &gc)
 	{
 		m_Clearing = true;
 		m_ToLoad.clear();
@@ -638,7 +637,7 @@ namespace FusionEngine
 		//  be invalidated by the previous step. In any case, the following
 		//  step means all ResourceContainers will be deleted ASAP.
 		m_Resources.clear();
-		//CL_MutexSection lock(&m_UnreferencedMutex);
+		//clan::MutexSection lock(&m_UnreferencedMutex);
 		//m_Unreferenced.clear();
 		m_Clearing = false;
 	}
@@ -709,90 +708,6 @@ namespace FusionEngine
 		return list;
 	}
 
-	std::string ResourceManager::FindFirst(const std::string &expression, bool recursive, bool case_sensitive)
-	{
-		return FindFirst("", expression, 0, case_sensitive, recursive);
-	}
-
-	std::string ResourceManager::FindFirst(const std::string &path, const std::string &expression, int depth, bool recursive, bool case_sensitive)
-	{
-		if (SetupPhysFS::is_init())
-		{
-			// Compile the regular expression
-			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));
-
-			char **files = PHYSFS_enumerateFiles(path.c_str());
-			if (files != NULL)
-			{
-				char **i;
-				for (i = files; *i != NULL; i++)
-				{
-					std::string file(*i);
-					if (regexp.search(file.c_str(), file.length()).is_match())
-						return file;
-				}
-
-				// If recursive is set (or depth > 0), search within sub-folders
-				if (recursive || depth--)
-				{
-					for (i = files; *i != NULL; i++)
-					{
-						if (PHYSFS_isDirectory(*i))
-						{
-							std::string subMatch = FindFirst(std::string(*i), expression, depth, case_sensitive, recursive);
-							if (!subMatch.empty())
-								return subMatch;
-						}
-					}
-				}
-
-				PHYSFS_freeList(files);
-			}
-		}
-
-		return "";
-	}
-
-	StringVector ResourceManager::Find(const std::string &expression, bool recursive, bool case_sensitive)
-	{
-		return Find("", expression, 0, case_sensitive, recursive);
-	}
-
-	StringVector ResourceManager::Find(const std::string &path, const std::string &expression, int depth, bool recursive, bool case_sensitive)
-	{
-		StringVector list;
-
-		if (SetupPhysFS::is_init())
-		{
-			// Compile the regular expression
-			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));
-
-			char **files = PHYSFS_enumerateFiles(path.c_str());
-			if (files != NULL)
-			{
-				int file_count;
-				char **i;
-				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
-				{
-					// If recursive is set (or depth > 0), search within sub-folders
-					if ((recursive || depth--) && PHYSFS_isDirectory(*i))
-					{
-						StringVector subList = Find(std::string(*i), expression, depth, case_sensitive, recursive);
-						list.insert(list.end(), subList.begin(), subList.end());
-					}
-
-					std::string file(*i);
-					if (regexp.search(file.c_str(), file.length()).is_match())
-						list.push_back(file);
-				}
-
-				PHYSFS_freeList(files);
-			}
-		}
-
-		return list;
-	}
-
 	void ResourceManager::_resourceUnreferenced(ResourceContainer* resource)
 	{
 		if (!m_Clearing)
@@ -840,7 +755,7 @@ namespace FusionEngine
 	{
 		if (!resource->IsLoaded())
 		{
-			//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+			//clan::MutexSection loaderMutexSection(&m_LoaderMutex);
 			ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 			if (_where == m_ResourceLoaders.end())
 			{
@@ -848,7 +763,7 @@ namespace FusionEngine
 			}
 
 			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the load function
 			ActiveResourceLoader& loader = _where->second;
@@ -865,13 +780,13 @@ namespace FusionEngine
 
 	bool ResourceManager::unloadResource(const ResourceDataPtr& resource)
 	{
-		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		//clan::MutexSection loaderMutexSection(&m_LoaderMutex);
 
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where != m_ResourceLoaders.end())
 		{
 			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the load function
 			ActiveResourceLoader& loader = _where->second;
@@ -889,7 +804,7 @@ namespace FusionEngine
 		if (entry != m_ResourceLoaders.end())
 		{
 			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			// Run the function
 			ActiveResourceLoader& loader = entry->second;
@@ -908,7 +823,7 @@ namespace FusionEngine
 		if (entry != m_ResourceLoaders.end())
 		{
 			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 			ActiveResourceLoader& loader = entry->second;
 			// Only run if the loader has a hasChanged function, and Reload is allowed for this type at the moment

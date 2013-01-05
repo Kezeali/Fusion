@@ -62,7 +62,7 @@ namespace FusionEngine
 
 		virtual void Update(unsigned int tick, const float delta, const float alpha) {}
 		//virtual void Interpolate(const float alpha) {}
-		virtual void Draw(CL_GraphicContext& gc, const Vector2& offset) = 0;
+		virtual void Draw(clan::Canvas& canvas, const Vector2& offset) = 0;
 
 		virtual int GetEntityDepth() const = 0;
 		virtual int GetLocalDepth() const = 0;
@@ -70,13 +70,13 @@ namespace FusionEngine
 		virtual Vector2 GetPosition() const = 0;
 
 		virtual bool HasAABB() const { return false; }
-		virtual CL_Rectf GetAABB() { return CL_Rectf(); }
+		virtual clan::Rectf GetAABB() { return clan::Rectf(); }
 	};
 
 	class SpriteDefinitionCache : Singleton<SpriteDefinitionCache>
 	{
 	public:
-		static std::shared_ptr<SpriteDefinition> GetSpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+		static std::shared_ptr<SpriteDefinition> GetSpriteDefinition(const ResourcePointer<clan::Texture2D>& texture, const ResourcePointer<SpriteAnimation>& animation);
 
 		typedef tbb::concurrent_hash_map<std::pair<std::string, std::string>, std::weak_ptr<SpriteDefinition>> SpriteDefinitionMap_t;
 		SpriteDefinitionMap_t m_SpriteDefinitions;
@@ -102,8 +102,8 @@ namespace FusionEngine
 		typedef SerialisationHelper<
 			Vector2, int, // offset, depth
 			std::string, bool, std::string, bool, // image path, animation path
-			CL_Origin, Vector2i, CL_Origin, Vector2i, // Alignment, rotation hotspot
-			CL_Colorf, // colour
+			clan::Origin, Vector2i, clan::Origin, Vector2i, // Alignment, rotation hotspot
+			clan::Colorf, // colour
 			float, // alpha
 			Vector2, float, // scale, base-angle
 			int> // animation frame
@@ -130,9 +130,9 @@ namespace FusionEngine
 		void SetAngle(float angle);
 		
 		// IDrawable
-		void Draw(CL_GraphicContext& gc, const Vector2& offset);
+		void Draw(clan::Canvas& canvas, const Vector2& offset);
 
-		void CreateSpriteIfNecessary(CL_GraphicContext& gc);
+		void CreateSpriteIfNecessary(clan::GraphicContext& gc);
 
 		void DefineSpriteIfNecessary();
 
@@ -154,12 +154,12 @@ namespace FusionEngine
 		int m_LocalDepth;
 
 		bool HasAABB() const { return !m_Sprite.is_null(); }
-		CL_Rectf GetAABB()
+		clan::Rectf GetAABB()
 		{
 			return m_AABB;
 		}
 
-		CL_Rectf m_AABB;
+		clan::Rectf m_AABB;
 
 		// EntityComponent
 		std::string GetType() const { return "CLSprite"; }
@@ -182,21 +182,21 @@ namespace FusionEngine
 		void SetAnimationPath(const std::string& value);
 		const std::string &GetAnimationPath() const;
 
-		void SetAlignmentOrigin(CL_Origin origin);
-		CL_Origin GetAlignmentOrigin() const;
+		void SetAlignmentOrigin(clan::Origin origin);
+		clan::Origin GetAlignmentOrigin() const;
 
 		void SetAlignmentOffset(const Vector2i& offset);
 		Vector2i GetAlignmentOffset() const;
 
-		void SetRotationOrigin(CL_Origin origin);
-		CL_Origin GetRotationOrigin() const;
+		void SetRotationOrigin(clan::Origin origin);
+		clan::Origin GetRotationOrigin() const;
 
 		void SetRotationOffset(const Vector2i& offset);
 		Vector2i GetRotationOffset() const;
 
-		mutable CL_Colorf m_Colour; // mutable since CL_Sprite::get_color returns by value (for no good reason)
-		void SetColour(const CL_Colorf& val);
-		const CL_Colorf &GetColour() const;
+		clan::Colorf m_Colour;
+		void SetColour(const clan::Colorf& val);
+		const clan::Colorf &GetColour() const;
 		
 		void SetAlpha(float val);
 		float GetAlpha() const;
@@ -223,7 +223,7 @@ namespace FusionEngine
 		boost::mutex m_Mutex;
 
 		boost::signals2::scoped_connection m_ImageLoadConnection;
-		ResourcePointer<CL_Texture> m_ImageResource;
+		ResourcePointer<clan::Texture2D> m_ImageResource;
 
 		boost::signals2::scoped_connection m_AnimationLoadConnection;
 		ResourcePointer<SpriteAnimation> m_AnimationResource;
@@ -231,7 +231,7 @@ namespace FusionEngine
 		void redefineSprite();
 		//std::unique_ptr<SpriteDefinition> m_SpriteDef;
 		std::shared_ptr<SpriteDefinition> m_SpriteDef;
-		CL_Sprite m_Sprite;
+		clan::Sprite m_Sprite;
 
 		int m_AnimationFrame; // Calculated whenever Update is called
 		int m_InterpAnimationFrame;
@@ -247,7 +247,7 @@ namespace FusionEngine
 		unsigned int m_InterpTick; // Tick for which interpolation needs to happen (i.e. when the sim values changed)
 		unsigned int m_CurrentTick;
 
-		CL_Font m_DebugFont;
+		clan::Font m_DebugFont;
 
 		SyncSig::HandlerConnection_t m_PositionChangeConnection;
 		Vector2 m_NewPosition; // Set by SetPosition

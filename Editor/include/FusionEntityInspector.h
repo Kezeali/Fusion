@@ -37,6 +37,7 @@
 #include "FusionTypes.h"
 
 #include <Rocket/Core/Element.h>
+#include <Rocket/Core/Factory.h>
 
 #include <deque>
 #include <functional>

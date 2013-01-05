@@ -44,98 +44,98 @@ namespace FusionEngine
 
 	//! Fusion SlotContainer
 	/*!
-	 * Essentually the same as CL_SlotContainer, but with added features
+	 * Essentually the same as clan::SlotContainer, but with added features
 	 * which make it much more useable. Namely the ability to clear the
 	 * the held slots (disconnect_all()).
 	 */
 	class SlotContainer
 	{
 	public:
-		//! Connect a slot to a CL_Signal_v0 signal.
+		//! Connect a slot to a clan::Signal_v0 signal.
 		template<class SigClass>
 		void connect(SigClass &sig, void (*func)())
 		{
 			m_Slots.push_back(sig.connect(func));
 		}
 
-		//! Connect a slot to a CL_Signal_v0 signal.
+		//! Connect a slot to a clan::Signal_v0 signal.
 		template<class SigClass, class Class>
 		void connect(SigClass &sig, Class *self, void(Class::*func)())
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v0 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v0 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(UserData), UserData user_data)
 		{
 			m_Slots.push_back(sig.connect(self, func, user_data));
 		}
 
-		//! Connect a slot to a CL_Signal_v1 signal.
+		//! Connect a slot to a clan::Signal_v1 signal.
 		template<class SigClass, class Class, class Param1>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1))
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v1 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v1 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class Param1, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, UserData), UserData user_data)
 		{
 			m_Slots.push_back(sig.connect(self, func, user_data));
 		}
 
-		//! Connect a slot to a CL_Signal_v2 signal.
+		//! Connect a slot to a clan::Signal_v2 signal.
 		template<class SigClass, class Class, class Param1, class Param2>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2))
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v2 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v2 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class Param1, class Param2, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, UserData), UserData user_data)
 		{
 			m_Slots.push_back(sig.connect(self, func, user_data));
 		}
 
-		//! Connect a slot to a CL_Signal_v3 signal.
+		//! Connect a slot to a clan::Signal_v3 signal.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3))
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v3 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v3 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3, UserData), UserData user_data)
 		{
 			m_Slots.push_back(sig.connect(self, func, user_data));
 		}
 
-		//! Connect a slot to a CL_Signal_v4 signal.
+		//! Connect a slot to a clan::Signal_v4 signal.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3, class Param4>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3, Param4))
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v4 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v4 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3, class Param4, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3, Param4, UserData user_data), UserData user_data)
 		{
 			m_Slots.push_back(sig.connect(self, func, user_data));
 		}
 
-		//! Connect a slot to a CL_Signal_v5 signal.
+		//! Connect a slot to a clan::Signal_v5 signal.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3, class Param4, class Param5>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3, Param4, Param5))
 		{
 			m_Slots.push_back(sig.connect(self, func));
 		}
 
-		//! Connect a slot to a CL_Signal_v5 signal with an user data parameter passed along.
+		//! Connect a slot to a clan::Signal_v5 signal with an user data parameter passed along.
 		template<class SigClass, class Class, class Param1, class Param2, class Param3, class Param4, class Param5, class UserData>
 		void connect(SigClass &sig, Class *self, void(Class::*func)(Param1, Param2, Param3, Param4, Param5, UserData user_data), UserData user_data)
 		{
@@ -156,7 +156,7 @@ namespace FusionEngine
 		}
 
 	private:
-		std::list<CL_Slot> m_Slots;
+		std::list<clan::Slot> m_Slots;
 	};
 
 }

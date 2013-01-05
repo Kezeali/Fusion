@@ -31,8 +31,8 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/crc.hpp>
-#include <BitStream.h>
-#include <RakNetStatistics.h>
+#include <RakNet/BitStream.h>
+#include <RakNet/RakNetStatistics.h>
 
 #include "FusionBinaryStream.h"
 #include "FusionRegionMapLoader.h"
@@ -256,29 +256,32 @@ namespace FusionEngine
 	typedef std::vector<std::tuple<ObjectID, PlayerID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
 #endif
 
-	static void writeStates(RakNet::BitStream& packetData, const DataToSend_t& dataToSend)
+	namespace
 	{
-		auto numStates = (unsigned short)dataToSend.size();
-		packetData.Write(numStates);
-		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
+		void writeStates(RakNet::BitStream& packetData, const DataToSend_t& dataToSend)
 		{
-			ObjectID id = std::get<0>(*it);
-			PlayerID authority = std::get<1>(*it);
-			auto& state = std::get<2>(*it);
-
-			state->ResetReadPointer();
-
-			const auto bitsUsed = state->GetNumberOfBitsUsed();
-			if (bitsUsed < std::numeric_limits<uint16_t>::max())
+			auto numStates = (unsigned short)dataToSend.size();
+			packetData.Write(numStates);
+			for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
 			{
-				const uint16_t bitsUsed16 = uint16_t(bitsUsed);
+				ObjectID id = std::get<0>(*it);
+				PlayerID authority = std::get<1>(*it);
+				auto& state = std::get<2>(*it);
 
-				packetData.Write(id);
-				packetData.Write(authority);
-				packetData.Write(bitsUsed16);
-				packetData.Write(*state, state->GetNumberOfBitsUsed());
+				state->ResetReadPointer();
+
+				const auto bitsUsed = state->GetNumberOfBitsUsed();
+				if (bitsUsed < std::numeric_limits<uint16_t>::max())
+				{
+					const uint16_t bitsUsed16 = uint16_t(bitsUsed);
+
+					packetData.Write(id);
+					packetData.Write(authority);
+					packetData.Write(bitsUsed16);
+					packetData.Write(*state, state->GetNumberOfBitsUsed());
+				}
+				FSN_ASSERT_MSG(bitsUsed < std::numeric_limits<uint16_t>::max(), "Entity state is too big");
 			}
-			FSN_ASSERT_MSG(bitsUsed < std::numeric_limits<uint16_t>::max(), "Entity state is too big");
 		}
 	}
 
@@ -613,8 +616,6 @@ namespace FusionEngine
 		return true;
 	}
 
-	static RakNet::Time nextPacketTime = 0;
-
 	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager)
 	{
 		FSN_PROFILE("ProcessNetworkQueues");
@@ -706,20 +707,23 @@ namespace FusionEngine
 	//	m_PacketData.Reset();
 	//}
 
-	static void readState(RakNet::BitStream& sourceStr, std::shared_ptr<RakNet::BitStream>& state)
+	namespace
 	{
-		if (state)
-			state->Reset();
-		else
-			state = std::make_shared<RakNet::BitStream>();
+		void readState(RakNet::BitStream& sourceStr, std::shared_ptr<RakNet::BitStream>& state)
+		{
+			if (state)
+				state->Reset();
+			else
+				state = std::make_shared<RakNet::BitStream>();
 
-		uint16_t dataLength;
-		sourceStr.Read(dataLength);
-		sourceStr.Read(*state, dataLength);
+			uint16_t dataLength;
+			sourceStr.Read(dataLength);
+			sourceStr.Read(*state, dataLength);
 #ifdef _DEBUG
-		FSN_ASSERT(state->ReadBit());
-		state->ResetReadPointer();
+			FSN_ASSERT(state->ReadBit());
+			state->ResetReadPointer();
 #endif
+		}
 	}
 
 #ifdef _DEBUG
@@ -2002,16 +2006,19 @@ namespace FusionEngine
 		}
 	}
 
-	static const uint32_t s_ReferenceDatafileRange = (1 << 16) / 4u;
-	static const size_t s_MaxCachedReferences = (1 << 16) / 2u;
+	const uint32_t s_ReferenceDatafileRange = (1 << 16) / 4u;
+	const size_t s_MaxCachedReferences = (1 << 16) / 2u;
 
-	static std::string fileContainingReferenceToken(uint32_t token)
+	namespace
 	{
-		size_t fileIndex = token / s_ReferenceDatafileRange;
+		std::string fileContainingReferenceToken(uint32_t token)
+		{
+			size_t fileIndex = token / s_ReferenceDatafileRange;
 
-		std::stringstream str;
-		str << fileIndex;
-		return "stored_references" + str.str();
+			std::stringstream str;
+			str << fileIndex;
+			return "stored_references" + str.str();
+		}
 	}
 
 	void EntityManager::saveReferenceData()

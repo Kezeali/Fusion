@@ -60,9 +60,6 @@
     <ClCompile Include="source\FusionRocketInterface.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionP2PEntityInstantiator.cpp">
       <Filter>Instantiation</Filter>
     </ClCompile>
@@ -96,6 +93,9 @@
     </ClCompile>
     <ClCompile Include="source\FusionProgressDisplay.cpp">
       <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -145,9 +145,6 @@
     </ClInclude>
     <ClInclude Include="include\FusionRocketInterface.h">
       <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionP2PEntityInstantiator.h">
       <Filter>Instantiation</Filter>
@@ -207,6 +204,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionCellFileManager.h">
       <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="source\PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

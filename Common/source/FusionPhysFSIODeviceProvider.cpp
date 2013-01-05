@@ -65,7 +65,7 @@ int PhysFSIODeviceProvider::send(const void *data, int len, bool send_all)
 {
 	PHYSFS_sint64 lenRet = PHYSFS_write(m_Handle, data, sizeof(char), len);
 	if (lenRet == -1)
-		throw CL_Exception("PhysFS: Failed to write to file");
+		throw clan::Exception("PhysFS: Failed to write to file");
 
 	return (int)lenRet;
 }
@@ -77,7 +77,7 @@ int PhysFSIODeviceProvider::receive(void *buffer, int size, bool receive_all)
 
 	PHYSFS_sint64 lenRet = PHYSFS_read(m_Handle, buffer, 1, size);
 	if (lenRet == -1)
-		throw CL_Exception("PhysFS: Failed to read file"  + std::string(PHYSFS_getLastError()));
+		throw clan::Exception("PhysFS: Failed to read file"  + std::string(PHYSFS_getLastError()));
 
 	return (int)lenRet;
 }
@@ -89,38 +89,51 @@ int PhysFSIODeviceProvider::peek(void *data, int len)
 	int seekRet = PHYSFS_seek(m_Handle, startPos);
 
 	if (lengthRead == -1 || seekRet == -1)
-		throw CL_Exception("PhysFS: Failed to read file or return to original position during peek operation");
+		throw clan::Exception("PhysFS: Failed to read file or return to original position during peek operation");
 
 	return (int)lengthRead;
 }
 
-bool PhysFSIODeviceProvider::seek(int seek_pos, CL_IODevice::SeekMode mode)
+bool PhysFSIODeviceProvider::seek(int seek_pos, clan::IODevice::SeekMode mode)
 {
-	cl_long absolute_pos = 0;
-	cl_long curPos = (cl_long)PHYSFS_tell(m_Handle);
+	PHYSFS_uint64 absolute_pos = 0;
+	
 	switch (mode)
 	{
-	case CL_IODevice::seek_set:
-		absolute_pos = seek_pos;
+	case clan::IODevice::seek_set:
+		if (seek_pos < 0)
+			return false;
+		absolute_pos = static_cast<PHYSFS_uint64>(seek_pos);
 		break;
 
-	case CL_IODevice::seek_cur:
-		if (curPos == -1)
-			return false;
- 		absolute_pos = curPos + seek_pos;
+	case clan::IODevice::seek_cur:
+		{
+			const auto curPos = PHYSFS_tell(m_Handle);
+			if (curPos == -1) // Indicates error
+				return false;
+ 			const auto newPos = curPos + seek_pos;
+			if (newPos >= 0)
+				absolute_pos = static_cast<PHYSFS_uint64>(newPos);
+			else
+				return false;
+		}
 		break;
 
-	case CL_IODevice::seek_end:
-		if (seek_pos > 0)
-			return false;
-		absolute_pos = PHYSFS_fileLength(m_Handle) + seek_pos;
+	case clan::IODevice::seek_end:
+		{
+			const auto end = PHYSFS_fileLength(m_Handle);
+			if (seek_pos <= 0 && end + seek_pos > 0)
+				absolute_pos = PHYSFS_fileLength(m_Handle) + seek_pos;
+			else
+				return false;
+		}
 		break;
 	}
 
 	return PHYSFS_seek(m_Handle, absolute_pos) != 0;
 }
 
-CL_IODeviceProvider *PhysFSIODeviceProvider::duplicate()
+clan::IODeviceProvider *PhysFSIODeviceProvider::duplicate()
 {
 	PhysFSIODeviceProvider *new_provider = new PhysFSIODeviceProvider(m_Handle);
 	return new_provider;
@@ -134,5 +147,5 @@ void PhysFSIODeviceProvider::init()
 void PhysFSIODeviceProvider::deinit()
 {
 	if (PHYSFS_close(m_Handle) == 0)
-		throw CL_Exception("File failed to close");
+		throw clan::Exception("File failed to close");
 }

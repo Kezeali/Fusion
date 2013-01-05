@@ -30,6 +30,7 @@
 #include "FusionImageLoader.h"
 
 #include <ClanLib/Core/IOData/path_help.h>
+#include <ClanLib/display.h>
 
 #include "FusionExceptionFactory.h"
 #include "FusionResourceLoaderUtils.h"
@@ -38,20 +39,20 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
-			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
 		}
 
-		CL_String ext = CL_PathHelp::get_extension(resource->GetPath());
-		CL_PixelBuffer sp;
+		std::string ext = clan::PathHelp::get_extension(resource->GetPath());
+		clan::PixelBuffer sp;
 		try
 		{
-			CL_IODevice file = vdir.open_file_read(resource->GetPath());
+			clan::IODevice file = vdir.open_file_read(resource->GetPath());
 			// Load the image
-			sp = CL_ImageProviderFactory::load(file, ext);
+			sp = clan::ImageProviderFactory::load(file, ext);
 			// Create the resource metadata
 			file.seek(0);
 			FileMetadata metadata;
@@ -60,29 +61,29 @@ namespace FusionEngine
 			metadata.checksum = checksumClanLibDevice(file);
 			resource->SetMetadata(metadata);
 
-			CL_PixelBuffer *data = new CL_PixelBuffer(sp);
+			clan::PixelBuffer *data = new clan::PixelBuffer(sp);
 			resource->SetDataPtr(data);
 
 			resource->setLoaded(true);
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			resource->setLoaded(false);
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
 	}
 
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
-			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadTextureResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		LoadImageResource(resource, vdir, user_data);
 		if (resource->IsLoaded())
@@ -92,38 +93,75 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadTexture2DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
 			resource->setRequiresGC(false);
-			delete static_cast<CL_Texture*>(resource->GetDataPtr());
+			delete static_cast<clan::Texture2D*>(resource->GetDataPtr());
 		}
 		else if (resource->RequiresGC())
 		{
 			resource->setRequiresGC(false);
-			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			delete static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, boost::any user_data)
+	void LoadTexture2DResourceIntoGC(ResourceContainer* resource, clan::GraphicContext& gc, boost::any user_data)
 	{
 		if (!resource->IsLoaded() && resource->RequiresGC())
 		{
-			CL_PixelBuffer* pre_gc_data = static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
-			FSN_ASSERT(pre_gc_data);
-			CL_Texture* data = new CL_Texture(gc, pre_gc_data->get_width(), pre_gc_data->get_height(), pre_gc_data->get_format());
-			data->set_image(*pre_gc_data);
-			delete pre_gc_data;
+			clan::PixelBuffer* imageData = static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
+			FSN_ASSERT(imageData);
+
+			clan::Texture2D* data = new clan::Texture2D();
+			data->set_image(gc, *imageData);
+
+			delete imageData;
+
 			resource->SetDataPtr(data);
 			//resource->setRequiresGC(false);
 			resource->setLoaded(true);
 		}
 	}
 
-	void LoadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadTexture3DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	{
+		if (resource->IsLoaded())
+		{
+			resource->setLoaded(false);
+			resource->setRequiresGC(false);
+			delete static_cast<clan::Texture3D*>(resource->GetDataPtr());
+		}
+		else if (resource->RequiresGC())
+		{
+			resource->setRequiresGC(false);
+			delete static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
+		}
+		resource->SetDataPtr(nullptr);
+	}
+
+	void LoadTexture3DResourceIntoGC(ResourceContainer* resource, clan::GraphicContext& gc, boost::any user_data)
+	{
+		if (!resource->IsLoaded() && resource->RequiresGC())
+		{
+			clan::PixelBuffer* imageData = static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
+			FSN_ASSERT(imageData);
+
+			clan::Texture3D* data = new clan::Texture3D();
+			data->set_image(gc, *imageData, 0);
+
+			delete imageData;
+
+			resource->SetDataPtr(data);
+			//resource->setRequiresGC(false);
+			resource->setLoaded(true);
+		}
+	}
+
+	void LoadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -135,7 +173,7 @@ namespace FusionEngine
 		{
 			LoadSpriteDefinition(*def, resource->GetPath(), vdir);
 		}
-		catch (CL_Exception&)
+		catch (clan::Exception&)
 		{
 			delete def;
 			resource->SetDataPtr(nullptr);
@@ -147,7 +185,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadLegacySpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

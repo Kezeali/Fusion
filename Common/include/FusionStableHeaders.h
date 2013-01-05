@@ -7,6 +7,14 @@
 
 #if defined (_MSC_VER) || defined (__APPLE_CC__)
 
+#include "FusionPrerequisites.h"
+
+#if defined (_MSC_VER)
+// This header makes sure to include windows network headers in the right order so they don't explode in the
+//  viscus pile of poorly named C macro conflicts and missing types. I'd rather delegate maintaining that to it ;)
+#include <RakNet/WindowsIncludes.h>
+#endif
+
 #include <angelscript.h>
 
 #include <boost/intrusive_ptr.hpp>
@@ -32,13 +40,13 @@
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionHashable.h"
-#include "FusionSerialisationHelper.h"
 #include "FusionSlotContainer.h"
 #include "FusionStdHeaders.h"
 #include "FusionStringFormatting.h"
 #include "FusionVector2.h"
 #include "FusionVectorTypes.h"
-#include "FusionXML.h"
+
+
 
 #endif
 

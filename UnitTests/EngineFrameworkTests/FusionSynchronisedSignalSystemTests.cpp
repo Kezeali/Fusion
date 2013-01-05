@@ -5,6 +5,7 @@
 #include "FusionSynchronisedSignalingSystem.h"
 #include "FusionPropertySyncSigDetail.h"
 #include <string>
+#include <queue>
 
 #include "FusionRefCounted.h"
 #include "FusionScriptManager.h"
@@ -15,6 +16,48 @@
 
 using namespace FusionEngine;
 using namespace FusionEngine::SyncSig;
+
+class GeneratorWithUserdata
+{
+public:
+	template <class T>
+	struct Impl
+	{
+		typedef typename std::function<void (T)> GeneratorFn_t;
+		typedef T Arg_t;
+
+		Arg_t userdata;
+
+		void OnDispose() {}
+
+		void OnGenerate(T value)
+		{
+			queued_events.push(value);
+		}
+
+		bool HasMore()
+		{
+			return !queued_events.empty();
+		}
+
+		T GetEvent()
+		{
+			T next = queued_events.front();
+			queued_events.pop();
+			return std::move(next);
+		}
+
+		GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback, Arg_t user_data)
+		{
+			userdata = user_data;
+			//ASSERT_EQ(1234, user_data);
+			return [this, trigger_callback](T value) { this->OnGenerate(value); trigger_callback(); };
+		}
+
+		typedef std::queue<T> EventQueue_t;
+		EventQueue_t queued_events;
+	};
+};
 
 struct synchsig_f : public testing::Test
 {
@@ -34,6 +77,24 @@ struct synchsig_f : public testing::Test
 	std::unique_ptr<SynchronisedSignalingSystem<std::string>> sigsys;
 };
 
+struct synchsig_withuserdata_f : public testing::Test
+{
+	synchsig_withuserdata_f()
+	{
+	}
+
+	virtual void SetUp()
+	{
+		sigsys.reset(new SynchronisedSignalingSystem<std::string, GeneratorWithUserdata>);
+	}
+	virtual void TearDown()
+	{
+		sigsys.reset();
+	}
+
+	std::unique_ptr<SynchronisedSignalingSystem<std::string, GeneratorWithUserdata>> sigsys;
+};
+
 TEST_F(synchsig_f, addRemoveGenerator)
 {
 	const std::string handlerKey = "test_signal";
@@ -43,6 +104,27 @@ TEST_F(synchsig_f, addRemoveGenerator)
 
 	{
 		auto generatorCallback = sigsys->MakeGenerator<int>(handlerKey);
+		ASSERT_TRUE( generatorCallback );
+
+		ASSERT_NO_THROW( connection = sigsys->AddHandler<int>(handlerKey, handlerFn) );
+		ASSERT_TRUE( connection->connected() );
+	} // generatorCallback should be destroyed here, which should result in the generator being removed
+
+	ASSERT_THROW( connection = sigsys->AddHandler<int>(handlerKey, handlerFn), InvalidArgumentException );
+	ASSERT_FALSE( connection->connected() );
+}
+
+TEST_F(synchsig_withuserdata_f, generator2)
+{
+	const std::string handlerKey = "test_signal";
+
+	HandlerConnection_t connection;
+	auto handlerFn = [&](int v){ ASSERT_EQ(2409, v); };
+
+	{
+		int genUserData = 1234;
+		auto generatorCallback = sigsys->MakeGenerator2<int>(handlerKey, genUserData);
+		GeneratorWithUserdata::Impl<int>::Arg_t test = genUserData;
 		ASSERT_TRUE( generatorCallback );
 
 		ASSERT_NO_THROW( connection = sigsys->AddHandler<int>(handlerKey, handlerFn) );

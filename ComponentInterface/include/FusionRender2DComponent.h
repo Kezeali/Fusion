@@ -71,12 +71,12 @@ namespace FusionEngine
 			((FSN_GET_SET)(ImagePath)(std::string))
 			((FSN_GET_SET)(AnimationPath)(std::string))
 
-			((FSN_GET_SET)(AlignmentOrigin)(CL_Origin))
+			((FSN_GET_SET)(AlignmentOrigin)(clan::Origin))
 			((FSN_GET_SET)(AlignmentOffset)(Vector2i))
-			((FSN_GET_SET)(RotationOrigin)(CL_Origin))
+			((FSN_GET_SET)(RotationOrigin)(clan::Origin))
 			((FSN_GET_SET)(RotationOffset)(Vector2i))
 
-			((FSN_GET_SET)(Colour)(CL_Colorf))
+			((FSN_GET_SET)(Colour)(clan::Colorf))
 			((FSN_GET_SET)(Alpha)(float))
 			((FSN_GET_SET)(Scale)(Vector2))
 			((FSN_GET_SET)(BaseAngle)(float))
@@ -95,20 +95,20 @@ namespace FusionEngine
 		virtual void SetAnimationPath(const std::string& value) = 0;
 		virtual const std::string& GetAnimationPath() const = 0;
 
-		virtual void SetAlignmentOrigin(CL_Origin origin) = 0;
-		virtual CL_Origin GetAlignmentOrigin() const = 0;
+		virtual void SetAlignmentOrigin(clan::Origin origin) = 0;
+		virtual clan::Origin GetAlignmentOrigin() const = 0;
 
 		virtual void SetAlignmentOffset(const Vector2i& offset) = 0;
 		virtual Vector2i GetAlignmentOffset() const = 0;
 
-		virtual void SetRotationOrigin(CL_Origin origin) = 0;
-		virtual CL_Origin GetRotationOrigin() const = 0;
+		virtual void SetRotationOrigin(clan::Origin origin) = 0;
+		virtual clan::Origin GetRotationOrigin() const = 0;
 
 		virtual void SetRotationOffset(const Vector2i& offset) = 0;
 		virtual Vector2i GetRotationOffset() const = 0;
 
-		virtual void SetColour(const CL_Colorf& val) = 0;
-		virtual const CL_Colorf &GetColour() const = 0;
+		virtual void SetColour(const clan::Colorf& val) = 0;
+		virtual const clan::Colorf &GetColour() const = 0;
 
 		virtual void SetAlpha(float val) = 0;
 		virtual float GetAlpha() const = 0;
@@ -148,7 +148,7 @@ namespace FusionEngine
 		FSN_COIFACE_PROPS(ICamera,
 			((FSN_GET_SET)(SyncType)(SyncTypes))
 			((FSN_IS_SET)(ViewportEnabled)(bool))
-			((FSN_GET_SET)(ViewportRect)(CL_Rectf))
+			((FSN_GET_SET)(ViewportRect)(clan::Rectf))
 			((FSN_IS_SET)(AngleEnabled)(bool)) )
 
 		virtual ViewportPtr GetViewport() const = 0;
@@ -160,8 +160,8 @@ namespace FusionEngine
 		virtual void SetViewportEnabled(bool value) = 0;
 		virtual bool IsViewportEnabled() const = 0;
 
-		virtual void SetViewportRect(const CL_Rectf& value) = 0;
-		virtual const CL_Rectf& GetViewportRect() const = 0;
+		virtual void SetViewportRect(const clan::Rectf& value) = 0;
+		virtual const clan::Rectf& GetViewportRect() const = 0;
 
 		virtual void SetAngleEnabled(bool value) = 0;
 		virtual bool IsAngleEnabled() const = 0;

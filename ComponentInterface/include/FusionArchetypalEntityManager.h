@@ -35,7 +35,7 @@
 #include "FusionResource.h"
 #include "FusionSynchronisedSignalingSystem.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 #include <cstdint>
 #include <functional>

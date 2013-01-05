@@ -37,14 +37,41 @@
 
 #include <yaml-cpp/yaml.h>
 
+namespace YAML
+{
+   template<>
+   struct convert<b2Vec2>
+	 {
+      static Node encode(const b2Vec2& value)
+			{
+         Node node;
+         node.push_back(value.x);
+         node.push_back(value.y);
+         return node;
+      }
+
+      static bool decode(const Node& node, b2Vec2& value)
+			{
+         if(!node.IsSequence())
+            return false;
+         if(node.size() != 2)
+            return false;
+
+         value.x = node[0].as<float>();
+         value.y = node[1].as<float>();
+         return true;
+      }
+   };
+}
+
 namespace FusionEngine
 {
 
-	void operator >> (const YAML::Node& node, b2Vec2& vec)
-	{
-		node[0] >> vec.x;
-		node[1] >> vec.y;
-	}
+	//void operator >> (const YAML::Node& node, b2Vec2& vec)
+	//{
+	//	node[0] >> vec.x;
+	//	node[1] >> vec.y;
+	//}
 
 	YAML::Emitter& operator << (YAML::Emitter& out, const b2Vec2& vec)
 	{
@@ -59,7 +86,7 @@ namespace FusionEngine
 		{
 			YAML::Parser p(stream);
 			YAML::Node doc;
-			if (p.GetNextDocument(doc))
+			if (p)
 			{
 				if (doc.begin() == doc.end())
 					return std::unique_ptr<b2PolygonShape>(new b2PolygonShape());
@@ -79,7 +106,7 @@ namespace FusionEngine
 					auto& vertNode = *it;
 
 					b2Vec2 vert;
-					vertNode >> vert;
+					vert = vertNode.as<b2Vec2>();
 					verts.push_back(vert);
 				}
 
@@ -141,7 +168,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -150,13 +177,13 @@ namespace FusionEngine
 		std::unique_ptr<b2PolygonShape> data;
 		try
 		{
-			//auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
+			//auto dev = vdir.open_file(resource->GetPath(), clan::File::open_existing, clan::File::access_read);
 			IO::PhysFSStream stream(resource->GetPath(), IO::Read);
 			data = PolygonResource::Load(stream);
 
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), stream));
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
 		}
@@ -170,7 +197,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadPolygonResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

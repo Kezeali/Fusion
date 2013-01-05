@@ -44,7 +44,7 @@
 namespace FusionEngine
 {
 
-	//! libRocket SystemInterface implementaiton
+	//! libRocket SystemInterface implementation
 	class RocketSystem : public Rocket::Core::SystemInterface
 	{
 	public:
@@ -59,14 +59,14 @@ namespace FusionEngine
 		virtual void Release();
 	};
 
-	//! libRocket RenderInterface implmentation
+	//! libRocket RenderInterface implementation
 	class RocketRenderer : public Rocket::Core::RenderInterface
 	{
 	public:
-		RocketRenderer(const CL_GraphicContext &gc);
+		RocketRenderer(const clan::Canvas &canvas);
 
-		typedef std::unordered_map<CL_String, CL_Texture> TextureMap;
-		typedef std::list<CL_VertexArrayBuffer> GeometryMap;
+		typedef std::unordered_map<std::string, clan::Texture> TextureMap;
+		typedef std::list<clan::VertexArrayBuffer> GeometryMap;
 
 		//! Called by Rocket when it wants to render geometry that it does not wish to optimise.
 		virtual void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation);
@@ -91,9 +91,9 @@ namespace FusionEngine
 		virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
 
 	protected:
-		CL_GraphicContext m_gc;
+		clan::Canvas m_Canvas;
 
-		CL_BlendMode m_BlendMode;
+		clan::BlendFunc m_BlendMode;
 
 		int m_Scissor_left;
 		int m_Scissor_top;

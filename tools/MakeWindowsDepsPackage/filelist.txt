@@ -2,6 +2,7 @@ angelscriptDev\sdk\add_on\scriptany
 angelscriptDev\sdk\angelscript\include
 angelscriptDev\sdk\angelscript\lib
 bin
+ClanLib-3.0
 include
 kyotocabinet
 lib

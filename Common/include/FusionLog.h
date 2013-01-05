@@ -142,7 +142,7 @@ namespace FusionEngine
 		std::string m_Filename;
 		LogSeverity m_Threshold;
 
-		CL_Mutex m_LogFilesMutex;
+		clan::Mutex m_LogFilesMutex;
 		LogFileList m_LogFiles;
 		
 	};

@@ -137,8 +137,8 @@ namespace FusionEngine
 		}
 	}
 
-	static const size_t s_NumSystemTypeCombinations = 6;
-	static const uint8_t s_SystemTypeCombinations[s_NumSystemTypeCombinations] =
+	const size_t s_NumSystemTypeCombinations = 6;
+	const uint8_t s_SystemTypeCombinations[s_NumSystemTypeCombinations] =
 	{
 		SystemType::Simulation,
 		SystemType::Rendering,
@@ -206,10 +206,13 @@ namespace FusionEngine
 		SortTasks();
 	}
 
-	template <typename Pred>
-	static void sortTaskVector(std::vector<ISystemTask*>& vec, Pred pred)
+	namespace
 	{
-		std::sort(vec.begin(), vec.end(), pred);
+		template <typename Pred>
+		void sortTaskVector(std::vector<ISystemTask*>& vec, Pred pred)
+		{
+			std::sort(vec.begin(), vec.end(), pred);
+		}
 	}
 
 	void TaskScheduler::SortTasks()
@@ -229,7 +232,7 @@ namespace FusionEngine
 	{
 		FSN_PROFILE("Executing Tasks");
 
-		auto currentTime = CL_System::get_time();
+		auto currentTime = clan::System::get_time();
 		if (m_LastTime == 0)
 			m_LastTime = currentTime;
 		auto timePassed = currentTime - m_LastTime;

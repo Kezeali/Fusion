@@ -6,13 +6,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecompiledHeaders.cpp">
+    <ClCompile Include="source\FusionApp.cpp" />
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
-    <ClCompile Include="source\FusionApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PrecompiledHeaders.h">
+    <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>

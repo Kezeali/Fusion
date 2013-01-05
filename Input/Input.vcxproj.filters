@@ -9,7 +9,7 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="PrecompiledHeaders">
+    <Filter Include="Source Files\PrecompiledHeaders">
       <UniqueIdentifier>{a8562d6c-fe55-4d34-ac9d-3a1be83b7c97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -26,8 +26,8 @@
     <ClCompile Include="source\FusionXInputController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <Filter>PrecompiledHeaders</Filter>
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <Filter>Source Files\PrecompiledHeaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43,8 +43,8 @@
     <ClInclude Include="include\FusionPlayerInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
+    <ClInclude Include="source\PrecompiledHeaders.h">
+      <Filter>Source Files\PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

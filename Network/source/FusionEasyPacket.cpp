@@ -31,7 +31,7 @@
 
 #include "FusionAssert.h"
 
-#include <MessageIdentifiers.h>
+#include <RakNet/MessageIdentifiers.h>
 
 namespace FusionEngine
 {

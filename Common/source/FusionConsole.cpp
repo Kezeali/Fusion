@@ -169,7 +169,7 @@ namespace FusionEngine
 		// Fire new data signal
 		OnNewData(message);
 
-		CL_MutexSection lock(&m_BufferMutex);
+		clan::MutexSection lock(&m_BufferMutex);
 
 		// Fire newline signal
 		if (!OnNewLine.empty())
@@ -222,7 +222,7 @@ namespace FusionEngine
 
 	void Console::append_buffer(const std::string &string)
 	{
-		CL_MutexSection lock(&m_BufferMutex);
+		clan::MutexSection lock(&m_BufferMutex);
 		if (string.length() >= m_BufferLength)
 		{
 			// The last character in the string should end up as the last
@@ -265,13 +265,13 @@ namespace FusionEngine
 
 	void Console::Add(const std::wstring &message)
 	{
-		Add(CL_StringHelp::ucs2_to_local8(message));
+		Add(clan::StringHelp::ucs2_to_local8(message));
 	}
 
 	void Console::Add(const std::string &message)
 	{
 		{
-			CL_MutexSection lock(&m_HeadingCrapMutex);
+			clan::MutexSection lock(&m_HeadingCrapMutex);
 			// Close the grouped entries section
 			if (!m_LastHeading.empty())
 			{
@@ -309,7 +309,7 @@ namespace FusionEngine
 
 	void Console::Add(const std::string& heading, const std::string& message)
 	{
-		CL_MutexSection lock(&m_HeadingCrapMutex);
+		clan::MutexSection lock(&m_HeadingCrapMutex);
 		if (heading != m_LastHeading)
 		{
 			lock.unlock();
@@ -539,7 +539,7 @@ namespace FusionEngine
 	// TODO: void add(const std::string &string, bool append_newline)
 	void Console::Print(const std::string &string)
 	{
-		CL_MutexSection lock(&m_HeadingCrapMutex);
+		clan::MutexSection lock(&m_HeadingCrapMutex);
 		// Close the grouped entries section
 		if (!m_LastHeading.empty())
 		{
@@ -555,7 +555,7 @@ namespace FusionEngine
 	// TODO: void add(const std::string &heading, const std::string &string, bool append_newline)
 	void Console::Print(const std::string &heading, const std::string &string)
 	{
-		CL_MutexSection lock(&m_HeadingCrapMutex);
+		clan::MutexSection lock(&m_HeadingCrapMutex);
 		if (heading != m_LastHeading)
 		{
 			lock.unlock();
@@ -583,17 +583,17 @@ namespace FusionEngine
 
 	void Console::PrintLn(int message)
 	{
-		Add(CL_StringHelp::int_to_local8(message));
+		Add(clan::StringHelp::int_to_local8(message));
 	}
 
 	void Console::PrintLn(double message)
 	{
-		Add(CL_StringHelp::double_to_local8(message));
+		Add(clan::StringHelp::double_to_local8(message));
 	}
 
 	void Console::Clear()
 	{
-		CL_MutexSection lock(&m_BufferMutex);
+		clan::MutexSection lock(&m_BufferMutex);
 		if (!m_Buffer.empty())
 		{
 			m_Buffer.clear();

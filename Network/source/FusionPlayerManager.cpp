@@ -29,7 +29,7 @@
 
 #include "FusionPlayerManager.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 #include "FusionNetDestinationHelpers.h"
 #include "FusionNetworkManager.h"

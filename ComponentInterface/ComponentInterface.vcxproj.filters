@@ -19,9 +19,6 @@
       <Filter>Entity</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionDeltaTime.cpp" />
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionArchetypalEntityManager.cpp">
       <Filter>Entity</Filter>
     </ClCompile>
@@ -33,6 +30,9 @@
     </ClCompile>
     <ClCompile Include="source\FusionComponentTypeInfo.cpp">
       <Filter>Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,9 +59,6 @@
     <ClInclude Include="include\FusionComponentSystem.h" />
     <ClInclude Include="include\FusionDeltaTime.h" />
     <ClInclude Include="include\FusionEntityRepo.h" />
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionComponentFactory.h" />
     <ClInclude Include="include\FusionEntityInstantiator.h" />
     <ClInclude Include="include\FusionComponentProperty.h">
@@ -81,5 +78,9 @@
     <ClInclude Include="include\FusionComponentTypeInfo.h">
       <Filter>Entity</Filter>
     </ClInclude>
+    <ClInclude Include="source\PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionSerialisationError.h" />
   </ItemGroup>
 </Project>

@@ -60,7 +60,7 @@ namespace FusionEngine
 
 	void Log::addFooterToAll()
 	{
-		CL_MutexSection lock(&m_LogFilesMutex);
+		clan::MutexSection lock(&m_LogFilesMutex);
 		for (auto it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			addFooter(it->second);
@@ -111,7 +111,7 @@ namespace FusionEngine
 		addHeader(log_file);
 
 		{
-			CL_MutexSection lock(&m_LogFilesMutex);
+			clan::MutexSection lock(&m_LogFilesMutex);
 			m_LogFiles[log_file->GetType()] = log_file;
 		}
 	}
@@ -123,7 +123,7 @@ namespace FusionEngine
 
 	void Log::DetachLogFile(const std::string& type)
 	{
-		CL_MutexSection lock(&m_LogFilesMutex);
+		clan::MutexSection lock(&m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		if (_where != m_LogFiles.end())
 		{
@@ -139,14 +139,14 @@ namespace FusionEngine
 
 	bool Log::HasLogFileType(const std::string &type)
 	{
-		CL_MutexSection lock(&m_LogFilesMutex);
+		clan::MutexSection lock(&m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		return _where != m_LogFiles.end();
 	}
 
 	void Log::AddVerbatim(const std::string& text)
 	{
-		CL_MutexSection lock(&m_LogFilesMutex);
+		clan::MutexSection lock(&m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			it->second->Write(text);
@@ -175,7 +175,7 @@ namespace FusionEngine
 
 			const std::string entry = tempStream.str();
 
-			CL_MutexSection lock(&m_LogFilesMutex);
+			clan::MutexSection lock(&m_LogFilesMutex);
 			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			{
 				it->second->Write(entry);
@@ -186,7 +186,7 @@ namespace FusionEngine
 
 	void Log::Flush()
 	{
-		CL_MutexSection lock(&m_LogFilesMutex);
+		clan::MutexSection lock(&m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			it->second->Flush();
 	}

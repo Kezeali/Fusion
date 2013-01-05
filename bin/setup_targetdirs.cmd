@@ -1,11 +1,11 @@
-robocopy "..\..\FusionDependencies\RakNet_PC-4.033\Lib" "..\debug" RakNetDebug.dll RakNetDebug.pdb
-robocopy "..\..\FusionDependencies\RakNet_PC-4.033\Lib" "..\release" RakNet.dll RakNet.pdb
+robocopy "..\..\FusionDependencies\RakNet\Lib" "..\debug" RakNetDLLd.dll RakNetDLLd.pdb
+robocopy "..\..\FusionDependencies\RakNet\Lib" "..\release" RakNetDLL.dll RakNetDLL.pdb
 
 robocopy "..\..\FusionDependencies\libRocket\bin" "..\debug" *_d.dll *_d.pdb
 robocopy "..\..\FusionDependencies\libRocket\bin" "..\release" *.dll *.pdb /XF *_d.dll *_d.pdb
 
-robocopy "..\..\FusionDependencies\tbb_oss\bin\ia32\vc10" "..\debug" tbb_debug.* tbbmalloc_debug.*
-robocopy "..\..\FusionDependencies\tbb_oss\bin\ia32\vc10" "..\release" tbb.* tbbmalloc.*
+robocopy "..\..\FusionDependencies\tbb_oss\bin\ia32\vc11" "..\debug" tbb_debug.* tbbmalloc_debug.*
+robocopy "..\..\FusionDependencies\tbb_oss\bin\ia32\vc11" "..\release" tbb.* tbbmalloc.*
 
 robocopy "..\..\FusionDependencies\angelscriptDev\sdk\angelscript\lib" "..\debug" *d.dll *d.pdb
 robocopy "..\..\FusionDependencies\angelscriptDev\sdk\angelscript\lib" "..\release" *.dll /XF *d.dll

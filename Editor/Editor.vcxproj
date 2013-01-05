@@ -23,18 +23,21 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -112,6 +115,7 @@
     <ClInclude Include="include\FusionEntityInspector.h" />
     <ClInclude Include="include\FusionFixtureInspector.h" />
     <ClInclude Include="include\FusionInspectorBase.h" />
+    <ClInclude Include="include\FusionInspectorTypeUtils.h" />
     <ClInclude Include="include\FusionInspectorUtils.h" />
     <ClInclude Include="include\FusionPolygonResourceEditor.h" />
     <ClInclude Include="include\FusionPolygonShapeInspector.h" />
@@ -121,14 +125,9 @@
     <ClInclude Include="include\FusionRigidBodyInspector.h" />
     <ClInclude Include="include\FusionSpriteInspector.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />
-    <ClInclude Include="PrecompiledHeaders.h" />
+    <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PrecompiledHeaders.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="source\FusionArchetypeResourceEditor.cpp" />
     <ClCompile Include="source\FusionASScriptInspector.cpp" />
     <ClCompile Include="source\FusionCircleShapeInspector.cpp" />
@@ -146,6 +145,9 @@
     <ClCompile Include="source\FusionRigidBodyInspector.cpp" />
     <ClCompile Include="source\FusionSpriteInspector.cpp" />
     <ClCompile Include="source\FusionTransformInspector.cpp" />
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

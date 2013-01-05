@@ -31,8 +31,8 @@
 
 #include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
-#include <RakNetTypes.h>
-#include <StringCompressor.h>
+#include <RakNet/RakNetTypes.h>
+#include <RakNet/StringCompressor.h>
 
 #include "FusionCellCache.h"
 #include "FusionCellFileManager.h"
@@ -88,11 +88,10 @@ namespace FusionEngine
 	
 			try
 			{
-				YAML::Parser p(stream);
-				YAML::Node doc;
-				if (p.GetNextDocument(doc))
+				YAML::Node doc = YAML::Load(stream);
+				if (doc)
 				{
-					doc["cell_size"] >> m_CellSize;
+					m_CellSize = doc[std::string("cell_size")].as<float>();
 				}
 			}
 			catch (YAML::ParserException&)
@@ -341,7 +340,7 @@ namespace FusionEngine
 				else
 					SendToConsole("Host map is different to local map.");
 			}
-			catch (CL_Exception& ex)
+			catch (clan::Exception& ex)
 			{
 				SendToConsole("Failed to load host map: " + std::string(ex.what()));
 			}

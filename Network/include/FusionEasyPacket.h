@@ -37,7 +37,7 @@
 // TODO: why is functional needed here?
 #include <functional>
 #include <memory>
-#include <RakNetTypes.h>
+#include <RakNet/RakNetTypes.h>
 
 namespace FusionEngine
 {

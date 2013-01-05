@@ -108,26 +108,29 @@ namespace FusionEngine
 		}
 	};
 
-	Rocket::Core::String stringToEString(std::string *obj)
+	namespace
 	{
-		return Rocket::Core::String(obj->c_str());
-	}
+		Rocket::Core::String stringToEString(std::string *obj)
+		{
+			return Rocket::Core::String(obj->c_str());
+		}
 
-	static void stdstringCtor_FromEMPString(const Rocket::Core::String &copy, std::string* ptr)
-	{
-		new(ptr) std::string(copy.CString());
-	}
+		void stdstringCtor_FromEMPString(const Rocket::Core::String &copy, std::string* ptr)
+		{
+			new(ptr) std::string(copy.CString());
+		}
 
-	std::string &stdstringAssignEMPString(const Rocket::Core::String &value, std::string &obj)
-	{
-		obj = value.CString();
-		return obj;
-	}
+		std::string &stdstringAssignEMPString(const Rocket::Core::String &value, std::string &obj)
+		{
+			obj = value.CString();
+			return obj;
+		}
 
-	std::string &stdstringAddAssignEMPString(const Rocket::Core::String &value, std::string &obj)
-	{
-		obj += value.CString();
-		return obj;
+		std::string &stdstringAddAssignEMPString(const Rocket::Core::String &value, std::string &obj)
+		{
+			obj += value.CString();
+			return obj;
+		}
 	}
 
 	GUIContext::GUIContext()
@@ -138,7 +141,7 @@ namespace FusionEngine
 	{
 	}
 
-	GUIContext::GUIContext(Rocket::Core::Context* context, CL_InputContext ic, bool enable_mouse)
+	GUIContext::GUIContext(Rocket::Core::Context* context, clan::InputContext ic, bool enable_mouse)
 		: m_Context(context),
 		m_MouseShowPeriod(4.f),
 		m_ShowMouseTimer(m_MouseShowPeriod),
@@ -156,7 +159,7 @@ namespace FusionEngine
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUIContext::onKeyUp);
 	}
 
-	GUIContext::GUIContext(const std::string& name, CL_InputContext ic, const Vector2i& size, bool enable_mouse)
+	GUIContext::GUIContext(const std::string& name, clan::InputContext ic, const Vector2i& size, bool enable_mouse)
 		: m_Context(nullptr),
 		m_MouseShowPeriod(4.f),
 		m_ShowMouseTimer(m_MouseShowPeriod),
@@ -237,7 +240,7 @@ namespace FusionEngine
 		m_Context->ProcessMouseMove(x, y, modifier);
 	}
 
-	inline int getRktModifierFlags(const CL_InputEvent &ev)
+	inline int getRktModifierFlags(const clan::InputEvent &ev)
 	{
 		int modifier = 0;
 		if (ev.alt)
@@ -249,71 +252,71 @@ namespace FusionEngine
 		return modifier;
 	}
 
-	void GUIContext::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
+	void GUIContext::onMouseDown(const clan::InputEvent &ev)
 	{
 		m_ClickPause = s_ClickPausePeriod;
 
 		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
-		case CL_MOUSE_LEFT:
+		case mouse_left:
 			m_Context->ProcessMouseButtonDown(0, modifier);
 			break;
-		case CL_MOUSE_RIGHT:
+		case mouse_right:
 			m_Context->ProcessMouseButtonDown(1, modifier);
 			break;
-		case CL_MOUSE_MIDDLE:
+		case mouse_middle:
 			m_Context->ProcessMouseButtonDown(2, modifier);
 			break;
-		case CL_MOUSE_XBUTTON1:
+		case mouse_xbutton1:
 			m_Context->ProcessMouseButtonDown(3, modifier);
 			break;
-		case CL_MOUSE_XBUTTON2:
+		case mouse_xbutton2:
 			m_Context->ProcessMouseButtonDown(4, modifier);
 			break;
-		case CL_MOUSE_WHEEL_UP:
+		case mouse_wheel_up:
 			m_Context->ProcessMouseWheel(-1, modifier);
 			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
-		case CL_MOUSE_WHEEL_DOWN:
+		case mouse_wheel_down:
 			m_Context->ProcessMouseWheel(1, modifier);
 			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
 		}
 	}
 
-	void GUIContext::onMouseUp(const CL_InputEvent &ev, const CL_InputState &state)
+	void GUIContext::onMouseUp(const clan::InputEvent &ev)
 	{
 		m_ClickPause = s_ClickPausePeriod;
 
 		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
-		case CL_MOUSE_LEFT:
+		case mouse_left:
 			m_Context->ProcessMouseButtonUp(0, modifier);
 			break;
-		case CL_MOUSE_RIGHT:
+		case mouse_right:
 			m_Context->ProcessMouseButtonUp(1, modifier);
 			break;
-		case CL_MOUSE_MIDDLE:
+		case mouse_middle:
 			m_Context->ProcessMouseButtonUp(2, modifier);
 			break;
-		case CL_MOUSE_XBUTTON1:
+		case mouse_xbutton1:
 			m_Context->ProcessMouseButtonUp(3, modifier);
 			break;
-		case CL_MOUSE_XBUTTON2:
+		case mouse_xbutton2:
 			m_Context->ProcessMouseButtonUp(4, modifier);
 			break;
-		case CL_MOUSE_WHEEL_UP:
+		case mouse_wheel_up:
 			m_Context->ProcessMouseWheel(0, modifier);
 			break;
-		case CL_MOUSE_WHEEL_DOWN:
+		case mouse_wheel_down:
 			m_Context->ProcessMouseWheel(0, modifier);
 			break;
 		}
 	}
 
-	void GUIContext::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
+	void GUIContext::onMouseMove(const clan::InputEvent &ev)
 	{
 		if (m_ClickPause <= 0)
 			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));
@@ -327,10 +330,10 @@ namespace FusionEngine
 
 	inline bool isNonDisplayKey(int id)
 	{
-		return id != CL_KEY_BACKSPACE && id != CL_KEY_ESCAPE && id != CL_KEY_DELETE;
+		return id != keycode_backspace && id != keycode_escape && id != keycode_delete;
 	}
 
-	void GUIContext::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
+	void GUIContext::onKeyDown(const clan::InputEvent &ev)
 	{
 		// Grab characters
 		if (!ev.alt && !ev.ctrl && !ev.str.empty() && isNonDisplayKey(ev.id))
@@ -344,7 +347,7 @@ namespace FusionEngine
 		//SendToConsole("Key Down");
 	}
 
-	void GUIContext::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
+	void GUIContext::onKeyUp(const clan::InputEvent &ev)
 	{
 		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
 
@@ -362,11 +365,11 @@ namespace FusionEngine
 		initScripting(ScriptManager::getSingletonPtr());
 	}
 
-	GUI::GUI(CL_DisplayWindow window)
+	GUI::GUI(clan::Canvas canvas)
 		: m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
 		m_ClickPause(0),
-		m_Display(window),
+		m_Canvas(canvas),
 		m_DebuggerInitialized(false),
 		m_Initialised(false),
 		m_ConsoleDocument(nullptr)
@@ -398,7 +401,7 @@ namespace FusionEngine
 		m_DebuggerInitialized = false;
 
 		m_RocketFileSys.reset(new RocketFileSystem());
-		m_RocketRenderer.reset(new RocketRenderer(m_Display.get_gc()));
+		m_RocketRenderer.reset(new RocketRenderer(m_Canvas));
 		m_RocketSystem.reset(new RocketSystem());
 		
 		Rocket::Core::SetFileInterface(m_RocketFileSys.get());
@@ -415,8 +418,8 @@ namespace FusionEngine
 		m_DataSources.push_back(std::make_shared<FilesystemDataSource>());
 		m_DataFormatters.push_back(std::make_shared<FilesystemDataFormatter>());
 
-		CL_GraphicContext gc = m_Display.get_gc();
-		CL_InputContext ic = m_Display.get_ic();
+		clan::GraphicContext gc = m_Canvas.get_window().get_gc();
+		clan::InputContext ic =  m_Canvas.get_window().get_ic();
 
 		// Create the world context, no input
 		m_Contexts["world"] = std::make_shared<GUIContext>("world", ic, Vector2i(gc.get_width(), gc.get_height()), false);
@@ -429,9 +432,9 @@ namespace FusionEngine
 
 		m_MessageBoxMaker.reset(new MessageBoxMaker(screenCtx->m_Context));
 
-		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
+		m_Slots.connect(m_Canvas.get_window().sig_resize(), this, &GUI::onResize);
 
-		//m_Display.hide_cursor();
+		//m_Canvas.get_window().hide_cursor();
 
 		m_Initialised = true;
 
@@ -512,7 +515,7 @@ namespace FusionEngine
 			//m_Context = nullptr;
 			m_Contexts.clear();
 
-			m_Display.show_cursor();
+			m_Canvas.get_window().show_cursor();
 
 			m_Initialised = false;
 		}
@@ -547,8 +550,8 @@ namespace FusionEngine
 	const std::shared_ptr<GUIContext>& GUI::CreateContext(const std::string& name, Vector2i size)
 	{
 		if (size.x == 0 && size.y == 0)
-			size.set(m_Display.get_gc().get_width(), m_Display.get_gc().get_height());
-		return m_Contexts[name] = std::make_shared<GUIContext>(name, m_Display.get_ic(), size);
+			size.set(m_Canvas.get_gc().get_width(), m_Canvas.get_gc().get_height());
+		return m_Contexts[name] = std::make_shared<GUIContext>(name, m_Canvas.get_window().get_ic(), size);
 	}
 
 	Rocket::Core::Context *GUI::GetContext(const std::string& name) const

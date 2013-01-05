@@ -44,14 +44,14 @@ namespace FusionEngine
 {
 
 	//! Fn. pointer for loading resources
-	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
+	typedef void (*resource_load)(ResourceContainer* res, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Fn. pointer for unloading resources
-	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
+	typedef void (*resource_unload)(ResourceContainer* res, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Fn. pointer for loading stuff into a GC (textures)
-	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, boost::any user_data);
+	typedef void (*resource_gcload)(ResourceContainer* res, clan::GraphicContext& gc, boost::any user_data);
 
 	//! Fn. pointer for checking for changes
-	typedef bool (*resource_has_changed)(ResourceContainer* res, CL_VirtualDirectory vdir, boost::any user_data);
+	typedef bool (*resource_has_changed)(ResourceContainer* res, clan::VirtualDirectory vdir, boost::any user_data);
 
 	typedef std::vector< std::pair< std::string, std::string > > DepsList;
 	//! Fn. pointer - should return a list of resources that this resource needs access to

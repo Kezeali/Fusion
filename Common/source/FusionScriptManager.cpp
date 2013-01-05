@@ -223,7 +223,7 @@ namespace FusionEngine
 	static void TimeoutCallback(asIScriptContext *ctx, unsigned int* timeoutTime)
 	{
 		// If the time out is reached, abort the script
-		if( *timeoutTime < CL_System::get_time() )
+		if( *timeoutTime < clan::System::get_time() )
 			ctx->Abort();
 	}
 
@@ -715,18 +715,18 @@ namespace FusionEngine
 		asIScriptEngine *engine = ctx->GetEngine();
 
 		std::string desc =
-			CL_StringHelp::text_to_local8( cl_format("Script Exception:\n %1\n", ctx->GetExceptionString()) );
+			clan::StringHelp::text_to_local8( clan::string_format("Script Exception:\n %1\n", ctx->GetExceptionString()) );
 
 		const asIScriptFunction *function = ctx->GetExceptionFunction();
 		int column = 0;
-		desc += CL_StringHelp::text_to_local8(
-			cl_format(" In function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
+		desc += clan::StringHelp::text_to_local8(
+			clan::string_format(" In function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
 			);
-		desc += CL_StringHelp::text_to_local8( 
-			cl_format(" In module:   %1\n", function->GetModuleName())
+		desc += clan::StringHelp::text_to_local8( 
+			clan::string_format(" In module:   %1\n", function->GetModuleName())
 			);
-		desc += CL_StringHelp::text_to_local8(
-			cl_format(" In section:  %1\n", function->GetScriptSectionName())
+		desc += clan::StringHelp::text_to_local8(
+			clan::string_format(" In section:  %1\n", function->GetScriptSectionName())
 			);
 
 		desc += "Call Trace (if available):\n";
@@ -804,7 +804,7 @@ namespace FusionEngine
 		if( msg->type == asMSGTYPE_WARNING ) msgType = "Warning";
 		if( msg->type == asMSGTYPE_INFORMATION ) msgType = "Info   ";
 
-		std::string formatted(cl_format("ScriptingManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
+		std::string formatted(clan::string_format("ScriptingManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
 		SendToConsole(formatted);
 	}
 
@@ -872,7 +872,7 @@ namespace FusionEngine
 		Scripting::RegisterCommonAppTypes(m_asEngine);
 		Scripting::DefineAppType<std::string>(m_StringTypeId, "string");
 		Scripting::DefineAppType<Vector2>(m_VectorTypeId, "Vector");
-		Scripting::DefineAppType<CL_Colorf>(m_asEngine->GetTypeIdByDecl("Colour"), "Colour");
+		Scripting::DefineAppType<clan::Colorf>(m_asEngine->GetTypeIdByDecl("Colour"), "Colour");
 
 		//RefCounted::RegisterType<DebugEvent>(m_asEngine, "DebugEvent");
 

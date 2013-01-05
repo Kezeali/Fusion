@@ -34,7 +34,7 @@
 #include "FusionPacketDispatcher.h"
 #include "FusionRakNetwork.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 namespace FusionEngine
 {

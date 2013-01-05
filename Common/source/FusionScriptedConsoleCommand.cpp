@@ -36,7 +36,7 @@
 //#include <boost/range/iterator_range.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <ClanLib/regexp.h>
+#include <regex>
 
 #include <ScriptUtils/Calling/Caller.h>
 
@@ -151,9 +151,9 @@ namespace FusionEngine
 
 		std::string expressionString = "";
 		constructSignatureExpression(returnType, parameters, is_const, expressionString);
-		// Build and compile the expression
-		CL_RegExp expression( expressionString.c_str() );
-		return expression.search(function_declaration.c_str(), function_declaration.length()).is_match();
+		// Run the expression
+		std::regex expression(expressionString);
+		return std::regex_match(function_declaration, expression);
 	}
 
 	void Scr_BindConsoleCommand(const std::string &command, const std::string &func_name, Console *obj)

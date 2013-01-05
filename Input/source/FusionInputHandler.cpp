@@ -105,7 +105,7 @@ namespace FusionEngine
 		m_Log = Logger::getSingletonPtr()->OpenLog(g_LogGeneral);
 	}
 
-	InputManager::InputManager(const CL_DisplayWindow &window)
+	InputManager::InputManager(const clan::DisplayWindow &window)
 		: m_SuspendRequests(0)
 	{
 		m_DefinitionLoader = new InputDefinitionLoader();
@@ -120,7 +120,7 @@ namespace FusionEngine
 		delete m_DefinitionLoader;
 	}
 
-	void InputManager::SetDisplayWindow(CL_DisplayWindow window)
+	void InputManager::SetDisplayWindow(clan::DisplayWindow window)
 	{
 		m_DisplayWindow = window;
 		m_InputContext = window.get_ic();
@@ -339,7 +339,7 @@ namespace FusionEngine
 		std::string player = bindsElem->GetAttribute("player");
 		if (!fe_issimplenumeric(player))
 			return;
-		unsigned int playerNum = CL_StringHelp::local8_to_uint(player.c_str()) - 1;
+		unsigned int playerNum = clan::StringHelp::local8_to_uint(player.c_str()) - 1;
 
 		ticpp::Iterator< ticpp::Element > child("bind");
 		for ( child = child.begin( bindsElem ); child != child.end(); child++ )
@@ -399,7 +399,7 @@ namespace FusionEngine
 					if (contrlName == "any")
 						ctrlNum = s_AnyControlerNumber;
 					else
-						ctrlNum = CL_StringHelp::local8_to_uint(contrlName.c_str());
+						ctrlNum = clan::StringHelp::local8_to_uint(contrlName.c_str());
 				}
 			}
 			else
@@ -432,7 +432,7 @@ namespace FusionEngine
 			if (DeviceNameToID(inline_DevName) != s_DevNothing)
 			{
 				const std::string& inline_KeyCode = keyInfoTokens[1];
-				int keyCodeInt = CL_StringHelp::local8_to_int(inline_KeyCode.c_str());
+				int keyCodeInt = clan::StringHelp::local8_to_int(inline_KeyCode.c_str());
 
 				KeyInfoMap::value_type mapping(keyName, KeyInfo(keyName, inline_DevName, keyCodeInt, keyName));
 				std::pair<KeyInfoMap::iterator, bool> pib = m_KeyInfo.insert( mapping );
@@ -519,7 +519,7 @@ namespace FusionEngine
 		if (!m_DefinitionLoader->IsDefined(input))
 			FSN_EXCEPT(ExCode::InvalidArgument, input + " doesn't exist");
 
-		//std::string playerStr(CL_StringHelp::int_to_local8(player));
+		//std::string playerStr(clan::StringHelp::int_to_local8(player));
 		KeyInfoMap::iterator _where = findOrAddKeyInfo(key_shortname);
 		if (_where != m_KeyInfo.end())
 		{
@@ -564,37 +564,7 @@ namespace FusionEngine
 		return m_MouseSensitivity;
 	}
 
-	// Checks which key is actually being pressed for keys with multiple locations
-	// TODO: catch these by calling GetAsyncKeyState in InputManager::Update(...)
-	static int specifySide(int id)
-	{
-#ifdef _WIN32
-		switch (id)
-		{
-		case CL_KEY_SHIFT:
-			if (GetKeyState(VK_LSHIFT))
-				id = VK_LSHIFT;
-			else if (GetKeyState(VK_RSHIFT))
-				id = VK_RSHIFT;
-			break;
-		case CL_KEY_CONTROL:
-			if (GetKeyState(VK_LCONTROL))
-				id = VK_LCONTROL;
-			else if (GetKeyState(VK_RCONTROL))
-				id = VK_RCONTROL;
-			break;
-		case CL_KEY_MENU:
-			if (GetKeyState(VK_LMENU))
-				id = VK_LMENU;
-			else if (GetKeyState(VK_RMENU))
-				id = VK_RMENU;
-			break;
-		}		
-#endif
-		return id;
-	}
-
-	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onKeyDown(const clan::InputEvent& event)
 	{
 		if (event.repeat_count == 0)
 		{
@@ -616,7 +586,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onKeyUp(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onKeyUp(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -635,7 +605,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onMouseDown(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onMouseDown(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -654,7 +624,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onMouseUp(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onMouseUp(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -673,7 +643,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onMousePointerMove(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onMousePointerMove(const clan::InputEvent& event)
 	{
 		// Check for pointer-x bindings
 		{
@@ -767,12 +737,12 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onMouseBallMove(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onMouseBallMove(const clan::InputEvent& event)
 	{
 		// Mouse ball events are never fired in the Windows impl. of ClanLib, so this is useless
 	}
 
-	void InputManager::onGamepadPress(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onGamepadPress(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -791,7 +761,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onGamepadRelease(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onGamepadRelease(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -810,7 +780,7 @@ namespace FusionEngine
 		}
 	}
 
-	void InputManager::onGamepadAxisMove(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onGamepadAxisMove(const clan::InputEvent& event)
 	{
 		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad_Axis, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
@@ -891,21 +861,21 @@ namespace FusionEngine
 	}
 #endif
 
-	void InputManager::fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData dev_info)
+	void InputManager::fireRawInput(const clan::InputEvent &ev, RawInputUserData dev_info)
 	{
 		if (!SignalRawInput.empty() || !m_KeySignals.empty())
 		{
 			RawInput rawInput;
 			rawInput.DeviceType = DeviceIDToName(dev_info.Type);
 			rawInput.DeviceIndex = dev_info.Index;
-			rawInput.DeviceName = CL_StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
+			rawInput.DeviceName = clan::StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
 
 			rawInput.Shift = ev.shift;
 			rawInput.Control = ev.ctrl;
 			rawInput.Alt = ev.alt;
 			// TODO: capslock, numlock, scrolllock
 
-			if (ev.type == CL_InputEvent::pointer_moved)
+			if (ev.type == clan::InputEvent::pointer_moved)
 			{
 				rawInput.InputType = RawInput::Pointer;
 				rawInput.Code = 0;
@@ -914,7 +884,7 @@ namespace FusionEngine
 				//rawInput.AxisPosition = 0.0;
 				//rawInput.ButtonPressed = false;
 			}
-			else if (ev.type == CL_InputEvent::axis_moved)
+			else if (ev.type == clan::InputEvent::axis_moved)
 			{
 				rawInput.InputType = RawInput::Axis;
 				rawInput.Code = ev.id;
@@ -923,27 +893,27 @@ namespace FusionEngine
 				rawInput.AxisPosition = ev.axis_pos;
 				//rawInput.ButtonPressed = false;
 			}
-			else if (ev.type == CL_InputEvent::pressed)
+			else if (ev.type == clan::InputEvent::pressed)
 			{
 				rawInput.InputType = RawInput::Button;
 				rawInput.Code = ev.id;
 
-				if (ev.device.get_type() == CL_InputDevice::pointer)
+				if (ev.device.get_type() == clan::InputDevice::pointer)
 					rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
 				//rawInput.AxisPosition = 0.0;
 				rawInput.ButtonPressed = true;
 			}
-			else if (ev.type == CL_InputEvent::released)
+			else if (ev.type == clan::InputEvent::released)
 			{
 				rawInput.InputType = RawInput::Button;
 				rawInput.Code = ev.id;
 
-				if (ev.device.get_type() == CL_InputDevice::pointer)
+				if (ev.device.get_type() == clan::InputDevice::pointer)
 					rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
 				//rawInput.AxisPosition = 0.0;
 				rawInput.ButtonPressed = false;
 			}
-			else if (ev.type == CL_InputEvent::doubleclick)
+			else if (ev.type == clan::InputEvent::doubleclick)
 			{
 				rawInput.InputType = RawInput::Button;
 				rawInput.Code = ev.id;

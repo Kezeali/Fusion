@@ -133,11 +133,13 @@ namespace FusionEngine
 			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyForceImpl(force, point);
 		}
+
 		void ApplyForce(const Vector2& force)
 		{
 			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
-			ApplyForceImpl(force, GetCenterOfMass());
+			ApplyForceToCenterImpl(force);
 		};
+
 		void ApplyTorque(float torque)
 		{
 			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
@@ -202,7 +204,7 @@ namespace FusionEngine
 		virtual void SetFixedRotation(bool value) = 0;
 
 		virtual void ApplyForceImpl(const Vector2& force, const Vector2& point) = 0;
-		//virtual void ApplyForceImpl(const Vector2& force) = 0;
+		virtual void ApplyForceToCenterImpl(const Vector2& force) = 0;
 		virtual void ApplyTorqueImpl(float torque) = 0;
 
 		virtual void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point) = 0;

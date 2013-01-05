@@ -52,7 +52,7 @@ namespace FusionEngine
 
 	float RocketSystem::GetElapsedTime()
 	{
-		return (float)CL_System::get_time() / 1000.f;
+		return (float)clan::System::get_time() / 1000.f;
 	}
 
 	bool RocketSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message)
@@ -81,140 +81,74 @@ namespace FusionEngine
 	// RocketRenderer
 	struct GeometryVertex
 	{
-		CL_Vec2f position;
-		CL_Vec4f color;
-		CL_Vec2f tex_coord;
+		clan::Vec2f position;
+		clan::Vec4f color;
+		clan::Vec2f tex_coord;
 	};
 
-	struct RocketCL_Texture
+	struct RocketCLTexture
 	{
-		RocketCL_Texture(CL_Texture tex) : texture(tex) {}
-		CL_Texture texture;
+		RocketCLTexture(clan::Texture2D tex) : texture(tex) {}
+		clan::Texture2D texture;
 	};
 
 	struct GeometryData
 	{
 		int num_verticies;
-		CL_VertexArrayBuffer vertex_buffer;
-		RocketCL_Texture* texture;
+		clan::VertexArrayBuffer vertex_buffer;
+		RocketCLTexture* texture;
 	};
 
 
-	RocketRenderer::RocketRenderer(const CL_GraphicContext &gc)
-		: m_gc(gc),
+	RocketRenderer::RocketRenderer(const clan::Canvas& canvas)
+		: m_Canvas(canvas),
 		m_ClipEnabled(false)
 	{
 	}
 
 	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
-		const std::unique_ptr<CL_Vec2f[]> polygon(new CL_Vec2f[num_indices]);
-		const std::unique_ptr<CL_Vec4f[]> vert_colour(new CL_Vec4f[num_indices]);
-		const std::unique_ptr<CL_Vec2f[]> tex_cords(new CL_Vec2f[num_indices]);
-		for (int i = 0; i < num_indices; i++)
-		{
-			int vertex_index = indices[i];
-			polygon[i].x = vertices[vertex_index].position.x;
-			polygon[i].y = vertices[vertex_index].position.y;
+		auto compiledGeometry = CompileGeometry(vertices, num_vertices, indices, num_indices, texture);
 
-			//vert_colour[i] = CL_Colorf(
-			//	vertices[vertex_index].colour.red,
-			//	vertices[vertex_index].colour.green,
-			//	vertices[vertex_index].colour.blue,
-			//	vertices[vertex_index].colour.alpha);
-			vert_colour[i].r = vertices[vertex_index].colour.red / 255.f;
-			vert_colour[i].g = vertices[vertex_index].colour.green / 255.f;
-			vert_colour[i].b = vertices[vertex_index].colour.blue / 255.f;
-			vert_colour[i].a = vertices[vertex_index].colour.alpha / 255.f;
+		RenderCompiledGeometry(compiledGeometry, translation);
 
-			tex_cords[i].x = vertices[vertex_index].tex_coord.x;
-			tex_cords[i].y = vertices[vertex_index].tex_coord.y;
-		}
-
-		m_gc.push_modelview();
-		m_gc.set_translate(translation.x, translation.y);
-
-		m_gc.set_map_mode(cl_map_2d_upper_left);
-		if (texture != NULL)
-			m_gc.set_texture(0, reinterpret_cast<RocketCL_Texture*>(texture)->texture);
-
-		CL_PrimitivesArray prim_array(m_gc);
-		if (texture != NULL)
-		{
-			prim_array.set_attributes(0, polygon.get());
-			prim_array.set_attributes(1, vert_colour.get());
-			prim_array.set_attributes(2, tex_cords.get());
-
-			m_gc.set_program_object(cl_program_single_texture);
-		}
-		else
-		{
-			prim_array.set_attributes(0, polygon.get());
-			prim_array.set_attributes(1, vert_colour.get());
-
-			m_gc.set_program_object(cl_program_color_only);
-		}
-
-		if (m_ClipEnabled)
-			m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
-
-		m_gc.draw_primitives(cl_triangles, num_indices, prim_array);
-
-		if (m_ClipEnabled)
-			m_gc.pop_cliprect();
-
-		//delete[] polygon;
-		//delete[] vert_colour;
-		//delete[] tex_cords;
-
-		m_gc.reset_program_object();
-		if (texture != NULL)
-			m_gc.reset_texture(0);
-
-		//m_gc.reset_blend_mode();
-		//m_gc.reset_buffer_control();
-
-		m_gc.pop_modelview();
+		ReleaseCompiledGeometry(compiledGeometry);
 	}
 
 	Rocket::Core::CompiledGeometryHandle RocketRenderer::CompileGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture)
 	{
 		using namespace Rocket;
 
-		CL_VertexArrayBuffer buffer(m_gc, num_indices * sizeof(GeometryVertex));
-
-		buffer.lock(cl_access_write_only);
-		GeometryVertex* buffer_data = (GeometryVertex*) buffer.get_data();
-
+		std::vector<GeometryVertex> data(num_indices);
 		for (int i = 0; i < num_indices; i++)
 		{
 			int vertex_index = indices[i];
-			buffer_data[i].position.x = vertices[vertex_index].position.x;
-			buffer_data[i].position.y = vertices[vertex_index].position.y;
+			data[i].position.x = vertices[vertex_index].position.x;
+			data[i].position.y = vertices[vertex_index].position.y;
 
-			//buffer_data[i].color = CL_Colorf(
-			//	vertices[vertex_index].colour.red,
-			//	vertices[vertex_index].colour.green,
-			//	vertices[vertex_index].colour.blue,
-			//	vertices[vertex_index].colour.alpha);
-			buffer_data[i].color.r = vertices[vertex_index].colour.red / 255.f;
-			buffer_data[i].color.g = vertices[vertex_index].colour.green / 255.f;
-			buffer_data[i].color.b = vertices[vertex_index].colour.blue / 255.f;
-			buffer_data[i].color.a = vertices[vertex_index].colour.alpha / 255.f;
+			data[i].color = clan::Colorf(
+				vertices[vertex_index].colour.red,
+				vertices[vertex_index].colour.green,
+				vertices[vertex_index].colour.blue,
+				vertices[vertex_index].colour.alpha);
+			//data[i].color.r = vertices[vertex_index].colour.red / 255.f;
+			//data[i].color.g = vertices[vertex_index].colour.green / 255.f;
+			//data[i].color.b = vertices[vertex_index].colour.blue / 255.f;
+			//data[i].color.a = vertices[vertex_index].colour.alpha / 255.f;
 
-			buffer_data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
-			buffer_data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
+			data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
+			data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
 		}
 
-		buffer.unlock();
+		clan::VertexArrayBuffer buffer(m_Canvas.get_gc(), data.data(), sizeof(GeometryVertex) * num_indices);
 
-		GeometryData* data = new GeometryData;
-		data->num_verticies = num_indices;
-		data->vertex_buffer = buffer;
-		data->texture = (RocketCL_Texture*)texture;
+		GeometryData* compiledGeometry = new GeometryData;
+		compiledGeometry->num_verticies = num_indices;
+		compiledGeometry->vertex_buffer = buffer;
+		compiledGeometry->texture = reinterpret_cast<RocketCLTexture*>(texture);
 
 		//m_Geometry.push_back(buffer);
-		return reinterpret_cast<Core::CompiledGeometryHandle>(data);
+		return reinterpret_cast<Core::CompiledGeometryHandle>(compiledGeometry);
 	}
 
 	void RocketRenderer::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f& translation)
@@ -222,54 +156,54 @@ namespace FusionEngine
 		using namespace Rocket;
 
 		GeometryData* data = (GeometryData*)geometry;
-		CL_VertexArrayBuffer vertex_buffer = data->vertex_buffer;
+		clan::VertexArrayBuffer vertex_buffer = data->vertex_buffer;
 
 
-		m_gc.push_modelview();
+		m_Canvas.push_modelview();
 
-		//m_gc.set_map_mode(cl_map_2d_upper_left);
+		//m_Canvas.set_map_mode(cl_map_2d_upper_left);
 
-		m_gc.mult_translate(translation.x, translation.y);
-		//m_gc.set_translate(translation.x, translation.y);
+		m_Canvas.mult_translate(translation.x, translation.y);
+		//m_Canvas.set_translate(translation.x, translation.y);
 
-		if (data->texture)
-			m_gc.set_texture(0, data->texture->texture);
+		//m_Canvas.set_blend_mode(m_BlendMode);
 
-		//m_gc.set_blend_mode(m_BlendMode);
-
-		CL_PrimitivesArray prim_array(m_gc);
-		if (data->texture != NULL)
+		clan::PrimitivesArray prim_array(m_Canvas);
+		if (data->texture != nullptr)
 		{
-			prim_array.set_attributes(0, vertex_buffer, 2, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-			prim_array.set_attributes(1, vertex_buffer, 4, cl_type_float, &static_cast<GeometryVertex*>(0)->color, sizeof(GeometryVertex));
-			prim_array.set_attributes(2, vertex_buffer, 2, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
+			prim_array.set_attributes(clan::attrib_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, position), sizeof(GeometryVertex));
+			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
+			prim_array.set_attributes(clan::attrib_texture_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, tex_coord), sizeof(GeometryVertex));
 
-			m_gc.set_program_object(cl_program_single_texture);
+			m_Canvas.get_gc().set_program_object(clan::program_single_texture);
 		}
 		else
 		{
-			prim_array.set_attributes(0, vertex_buffer, 2, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-			prim_array.set_attributes(1, vertex_buffer, 4, cl_type_float, &static_cast<GeometryVertex*>(0)->color, sizeof(GeometryVertex));
+			prim_array.set_attributes(clan::attrib_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, position), sizeof(GeometryVertex));
+			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
 
-			m_gc.set_program_object(cl_program_color_only);
+			m_Canvas.get_gc().set_program_object(clan::program_color_only);
 		}
 
-		if (m_ClipEnabled)
-			m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
-
-		m_gc.draw_primitives(cl_triangles, data->num_verticies, prim_array);
-
-		if (m_ClipEnabled)
-			m_gc.pop_cliprect();
-
-		m_gc.reset_program_object();
 		if (data->texture)
-			m_gc.reset_texture(0);
+			m_Canvas.get_gc().set_texture(0, data->texture->texture);
 
-		//m_gc.reset_blend_mode();
-		//m_gc.reset_buffer_control();
+		if (m_ClipEnabled)
+			m_Canvas.push_cliprect(clan::Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 
-		m_gc.pop_modelview();
+		m_Canvas.get_gc().draw_primitives(clan::type_triangles, data->num_verticies, prim_array);
+
+		if (m_ClipEnabled)
+			m_Canvas.pop_cliprect();
+
+		if (data->texture)
+			m_Canvas.get_gc().reset_texture(0);
+		m_Canvas.get_gc().reset_program_object();
+
+		//m_Canvas.reset_blend_mode();
+		//m_Canvas.reset_buffer_control();
+
+		m_Canvas.pop_modelview();
 
 	}
 
@@ -281,11 +215,6 @@ namespace FusionEngine
 	// Called by Rocket when it wants to enable or disable scissoring to clip content.
 	void RocketRenderer::EnableScissorRegion(bool enable)
 	{
-		//if (!enable)
-		//	m_gc.reset_cliprect();
-		//else
-		//	m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
-
 		m_ClipEnabled = enable;
 	}
 
@@ -298,24 +227,20 @@ namespace FusionEngine
 		m_Scissor_bottom = y + height;
 
 		EnableScissorRegion(m_ClipEnabled);
-		//m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 	}
 
 	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, Rocket::Core::Vector2i& texture_dimensions, const Rocket::Core::String& source)
 	{
 		using namespace Rocket::Core;
 
-		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		clan::VirtualDirectory physfsDir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		try
 		{
-			CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), physfsDir );
-			if (image.is_null())
-				return false;
+			auto filename = std::string(source.CString(), source.Length());
 
-			CL_Texture texture(m_gc, cl_texture_2d);
-			texture.set_image(image);
-			texture.set_min_filter(cl_filter_linear);
-			texture.set_mag_filter(cl_filter_linear);
+			clan::Texture2D texture(m_Canvas.get_gc(), physfsDir.open_file_read(filename), clan::PathHelp::get_extension(filename));
+			texture.set_min_filter(clan::filter_linear);
+			texture.set_mag_filter(clan::filter_linear);
 
 			if (texture.is_null())
 				return false;
@@ -323,10 +248,10 @@ namespace FusionEngine
 			texture_dimensions.x = texture.get_width();
 			texture_dimensions.y = texture.get_height();
 
-			texture_handle = reinterpret_cast<TextureHandle>(new RocketCL_Texture(texture));
+			texture_handle = reinterpret_cast<TextureHandle>(new RocketCLTexture(texture));
 			return true;
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ("CLRocketRenderer couldn't load a texture from \"" + source + "\"").CString());
 			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ex.what());
@@ -339,20 +264,20 @@ namespace FusionEngine
 	{
 		try
 		{
-			CL_PixelBuffer rgbaImage = CL_PixelBuffer(source_dimensions.x, source_dimensions.y, cl_abgr8, (const void*)source).to_format(cl_rgba8);
+			clan::PixelBuffer rgbaImage = clan::PixelBuffer(source_dimensions.x, source_dimensions.y, clan::tf_rgba8, (const void*)source);
 
-			CL_Texture texture(m_gc, cl_texture_2d);
-			texture.set_image(rgbaImage);
-			texture.set_min_filter(cl_filter_linear);
-			texture.set_mag_filter(cl_filter_linear);
+			clan::Texture2D texture;
+			texture.set_image(m_Canvas.get_gc(), rgbaImage);
+			texture.set_min_filter(clan::filter_linear);
+			texture.set_mag_filter(clan::filter_linear);
 
 			if (texture.is_null())
 				return false;
 
-			texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketCL_Texture(texture));
+			texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketCLTexture(texture));
 			return true;
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, "CLRocketRenderer failed to generate a texture");
 			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ex.what());
@@ -363,7 +288,7 @@ namespace FusionEngine
 	// Called by Rocket when a loaded texture is no longer required.
 	void RocketRenderer::ReleaseTexture(Rocket::Core::TextureHandle texture)
 	{
-		delete ((RocketCL_Texture*)texture);
+		delete ((RocketCLTexture*)texture);
 	}
 
 	void RocketRenderer::Release()

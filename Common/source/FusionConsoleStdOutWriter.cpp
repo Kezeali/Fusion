@@ -15,7 +15,7 @@ namespace FusionEngine
 		// Use the singleton
 		m_ConsoleOnNewLineSlot = Console::getSingleton().OnNewData.connect([this](const std::string& data) {
 			if (m_Active)
-				CL_Console::write( data.c_str() );
+				clan::Console::write( data.c_str() );
 		});
 	}
 
@@ -25,7 +25,7 @@ namespace FusionEngine
 		// Use the given Console
 		m_ConsoleOnNewLineSlot = console->OnNewData.connect([this](const std::string& data) {
 			if (m_Active)
-				CL_Console::write( data.c_str() );
+				clan::Console::write( data.c_str() );
 		});
 	}
 
@@ -57,8 +57,8 @@ namespace FusionEngine
 		//std::string e_marker = Console::getSingleton().GetExceptionMarker();
 		//std::string w_marker = Console::getSingleton().GetWarningMarker();
 
-		std::string linemessage = "-- " + CL_StringHelp::local8_to_text(message.c_str());
-		CL_Console::write_line( linemessage.c_str() );
+		std::string linemessage = "-- " + clan::StringHelp::local8_to_text(message.c_str());
+		clan::Console::write_line( linemessage.c_str() );
 		//std::cout << "--  " << message << std::endl;
 	}
 

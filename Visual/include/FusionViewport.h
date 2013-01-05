@@ -50,15 +50,15 @@ namespace FusionEngine
 	public:
 		Viewport();
 		//! Sets the area of the viewport
-		Viewport(const CL_Rectf &area_ratio);
+		Viewport(const clan::Rectf &area_ratio);
 		//! Sets the area of the viewport, and the camera
-		Viewport(const CL_Rectf &area_ratio, const CameraPtr &camera);
+		Viewport(const clan::Rectf &area_ratio, const CameraPtr &camera);
 
 		//! Sets the area of the viewport (relative to the graphics context)
 		/*!
 		* \see SetArea(float, float, float, float)
 		*/
-		void SetArea(const CL_Rectf &area);
+		void SetArea(const clan::Rectf &area);
 		//! Sets the area of the viewport (relative to the graphics context)
 		/*!
 		* All parameters should be [0, 1) - these values will be multiplied
@@ -71,9 +71,9 @@ namespace FusionEngine
 		//! Sets the size of the render area
 		void SetSize(float width, float height);
 
-		const CL_Rectf &GetArea() const;
-		CL_Pointf GetPosition() const;
-		CL_Sizef GetSize() const;
+		const clan::Rectf &GetArea() const;
+		clan::Pointf GetPosition() const;
+		clan::Sizef GetSize() const;
 
 		void SetCamera(const CameraPtr &camera);
 		const CameraPtr &GetCamera() const;
@@ -81,7 +81,7 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		CL_Rectf m_Area;
+		clan::Rectf m_Area;
 		CameraPtr m_Camera;
 	};
 

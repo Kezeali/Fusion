@@ -121,7 +121,7 @@ namespace FusionEngine
 		bool IsMenu() const;
 		
 		//! Set colour
-		void SetBGColour(const CL_Color& colour);
+		void SetBGColour(const clan::Color& colour);
 
 		void onHideTimeout();
 
@@ -147,7 +147,7 @@ namespace FusionEngine
 
 		int m_SelectedItem;
 
-		CL_Timer m_HideTimer;
+		clan::Timer m_HideTimer;
 
 		Rocket::Core::ElementDocument *m_Document;
 		Rocket::Core::Context *m_Context;

@@ -217,11 +217,11 @@ namespace FusionEngine
 	namespace RegionMap
 	{
 		//! Region resource loader callback
-		void LoadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+		void LoadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 		//! Region resource unloader callback - writes data
-		void UnloadMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+		void UnloadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 		//! Region resource loader callback
-		void LoadStaticMapRegionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+		void LoadStaticMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	}
 
 }

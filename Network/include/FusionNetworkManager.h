@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include <RakNetTypes.h>
+#include <RakNet/RakNetTypes.h>
 #include <boost/signals2.hpp>
 
 #include "FusionPacketHandler.h"

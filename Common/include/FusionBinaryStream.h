@@ -52,7 +52,7 @@ namespace FusionEngine
 
 				BinaryStreamReader(std::basic_istream<char_type>* stream)
 					: m_Stream(stream),
-					m_LittleEndian(!CL_Endian::is_system_big())
+					m_LittleEndian(!clan::Endian::is_system_big())
 				{
 				}
 
@@ -61,9 +61,9 @@ namespace FusionEngine
 				{
 					if (m_Stream->read(reinterpret_cast<char_type*>(&out), sizeof(out)))
 					{
-						if (m_LittleEndian == CL_Endian::is_system_big())
+						if (m_LittleEndian == clan::Endian::is_system_big())
 						{
-							CL_Endian::swap(&out, sizeof(out));
+							clan::Endian::swap(&out, sizeof(out));
 						}
 						return true;
 					}
@@ -100,9 +100,9 @@ namespace FusionEngine
 					if (m_Stream->read(reinterpret_cast<char_type*>(&value), sizeof(value)))
 					{
 						// If neccessary, convert from source endianness to native endianness
-						if (m_LittleEndian == CL_Endian::is_system_big())
+						if (m_LittleEndian == clan::Endian::is_system_big())
 						{
-							CL_Endian::swap(&value, sizeof(value));
+							clan::Endian::swap(&value, sizeof(value));
 						}
 						return value;
 					}
@@ -126,7 +126,7 @@ namespace FusionEngine
 
 				BinaryStreamWriter(std::basic_ostream<char_type>* stream)
 					: m_Stream(stream),
-					m_LittleEndian(!CL_Endian::is_system_big())
+					m_LittleEndian(!clan::Endian::is_system_big())
 				{
 				}
 				
@@ -148,10 +148,10 @@ namespace FusionEngine
 				bool Write(const T& val)
 				{
 					// If neccessary, convert from source endianness to native endianness
-					if (m_LittleEndian == CL_Endian::is_system_big())
+					if (m_LittleEndian == clan::Endian::is_system_big())
 					{
 						T swappedVal = val;
-						CL_Endian::swap(&swappedVal, sizeof(swappedVal));
+						clan::Endian::swap(&swappedVal, sizeof(swappedVal));
 						return WriteImpl(swappedVal);
 					}
 					else
@@ -172,9 +172,9 @@ namespace FusionEngine
 				{
 					T casted = T(out);
 					// If neccessary, convert from source endianness to native endianness
-					if (m_LittleEndian == CL_Endian::is_system_big())
+					if (m_LittleEndian == clan::Endian::is_system_big())
 					{
-						CL_Endian::swap(&casted, sizeof(casted));
+						clan::Endian::swap(&casted, sizeof(casted));
 					}
 					if (m_Stream->write(reinterpret_cast<char_type*>(&casted), sizeof(casted)))
 					{

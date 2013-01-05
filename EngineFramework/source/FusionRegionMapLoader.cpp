@@ -70,82 +70,87 @@ using namespace FusionEngine::CellSerialisationUtils;
 namespace FusionEngine
 {
 
-	static const size_t s_DefaultRegionSize = 4;
+	const size_t s_DefaultRegionSize = 4;
 
 	extern void AddHist(const CellHandle& loc, const std::string& l, unsigned int n = -1);
 
-	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
+	namespace
 	{
-		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
 
-		// Convert to little-endian
-		if (CL_Endian::is_system_big())
+		void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
 		{
-			CL_Endian::swap((void*)new_loc.x, sizeof(new_loc.x));
-			CL_Endian::swap((void*)new_loc.y, sizeof(new_loc.y));
-			CL_Endian::swap((void*)offset, sizeof(offset));
-			CL_Endian::swap((void*)length, sizeof(length));
-		}
+			std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
 
-		// Copy the values into a buffer
-		std::memcpy(data.data(), (char*)&new_loc, sizeof(new_loc));
-		std::memcpy(&data[sizeof(new_loc)], (char*)&offset, sizeof(offset));
-		std::memcpy(&data[sizeof(new_loc) + sizeof(offset)], (char*)&length, sizeof(length));
+			// Convert to little-endian
+			if (clan::Endian::is_system_big())
+			{
+				clan::Endian::swap((void*)new_loc.x, sizeof(new_loc.x));
+				clan::Endian::swap((void*)new_loc.y, sizeof(new_loc.y));
+				clan::Endian::swap((void*)offset, sizeof(offset));
+				clan::Endian::swap((void*)length, sizeof(length));
+			}
+
+			// Copy the values into a buffer
+			std::memcpy(data.data(), (char*)&new_loc, sizeof(new_loc));
+			std::memcpy(&data[sizeof(new_loc)], (char*)&offset, sizeof(offset));
+			std::memcpy(&data[sizeof(new_loc) + sizeof(offset)], (char*)&length, sizeof(length));
 
 #ifdef _DEBUG
-		// Make sure the cell-location data is stored as expected
-		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
-		{
-			FSN_ASSERT(std::memcmp(&new_loc.x, data.data(), sizeof(new_loc.x)) == 0);
-		}
+			// Make sure the cell-location data is stored as expected
+			FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
+			{
+				FSN_ASSERT(std::memcmp(&new_loc.x, data.data(), sizeof(new_loc.x)) == 0);
+			}
 #endif
 
-		// Write the buffer to the DB
-		db.set((const char*)&id, sizeof(id), data.data(), data.size());
-	}
-
-	static bool getEntityLocation(kyotocabinet::HashDB& db, CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
-	{
-		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
-
-		auto retrieved = db.get((const char*)&id, sizeof(id), data.data(), data.size());
-
-		if (retrieved == data.size())
-		{
-			std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
-			std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
-			std::memcpy((void*)&data_length, &data[sizeof(cell_loc) + sizeof(data_offset)], sizeof(data_length));
-
-			if (CL_Endian::is_system_big())
-			{
-				CL_Endian::swap((void*)cell_loc.x, sizeof(cell_loc.x));
-				CL_Endian::swap((void*)cell_loc.y, sizeof(cell_loc.y));
-				CL_Endian::swap((void*)data_offset, sizeof(data_offset));
-				CL_Endian::swap((void*)data_length, sizeof(data_length));
-			}
-
-			return true;
+			// Write the buffer to the DB
+			db.set((const char*)&id, sizeof(id), data.data(), data.size());
 		}
-		else
+
+		bool getEntityLocation(kyotocabinet::HashDB& db, CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
 		{
-			switch (db.error().code())
+			std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
+
+			auto retrieved = db.get((const char*)&id, sizeof(id), data.data(), data.size());
+
+			if (retrieved == data.size())
 			{
-			case kyotocabinet::BasicDB::Error::NOREC:
-				AddLogEntry(db.error().message(), LOG_INFO); // Missing record is an expected error, since this method is called for every retrieval
-				break;
-			default:
-				AddLogEntry(db.error().message(), LOG_NORMAL);
-				break;
+				std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
+				std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
+				std::memcpy((void*)&data_length, &data[sizeof(cell_loc) + sizeof(data_offset)], sizeof(data_length));
+
+				if (clan::Endian::is_system_big())
+				{
+					clan::Endian::swap((void*)cell_loc.x, sizeof(cell_loc.x));
+					clan::Endian::swap((void*)cell_loc.y, sizeof(cell_loc.y));
+					clan::Endian::swap((void*)data_offset, sizeof(data_offset));
+					clan::Endian::swap((void*)data_length, sizeof(data_length));
+				}
+
+				return true;
 			}
+			else
+			{
+				switch (db.error().code())
+				{
+				case kyotocabinet::BasicDB::Error::NOREC:
+					AddLogEntry(db.error().message(), LOG_INFO); // Missing record is an expected error, since this method is called for every retrieval
+					break;
+				default:
+					AddLogEntry(db.error().message(), LOG_NORMAL);
+					break;
+				}
 
-			return false;
+				return false;
+			}
 		}
-	}
 
-	inline void setupTuning(kyotocabinet::HashDB* db)
-	{
-		db->tune_defrag(8);
-		db->tune_map(2LL << 20); // 2MB memory-map
+		void setupTuning(kyotocabinet::HashDB* db)
+		{
+			db->tune_defrag(8);
+			db->tune_map(2LL << 20); // 2MB memory-map
+		}
+
 	}
 
 	RegionCellArchivist::RegionCellArchivist(bool edit_mode, const std::string& cache_path)
@@ -325,7 +330,7 @@ namespace FusionEngine
 		return cell;
 	}
 
-	RegionCellArchivist::TransactionLock::TransactionLock(RegionCellArchivist::TransactionMutex_t& mutex, CL_Event& ev)
+	RegionCellArchivist::TransactionLock::TransactionLock(RegionCellArchivist::TransactionMutex_t& mutex, clan::Event& ev)
 		: lock(mutex),
 		endEvent(ev)
 	{}
@@ -356,7 +361,7 @@ namespace FusionEngine
 		m_Running = true;
 
 		m_Quit.reset();
-		m_Thread = boost::thread(&RegionCellArchivist::Run, this);
+		m_Thread = std::thread(&RegionCellArchivist::Run, this);
 #ifdef _WIN32
 		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
 #endif
@@ -892,7 +897,7 @@ namespace FusionEngine
 		bool retrying = false;
 		while (true)
 		{
-			const int eventId = CL_Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
+			const int eventId = clan::Event::wait(m_Quit, m_TransactionEnded, m_NewData, retrying ? 100 : -1);
 
 			if (eventId == 1) // TransactionEnded
 			{
@@ -1554,7 +1559,7 @@ namespace FusionEngine
 
 		// TODO: replace all SendToConsole calls with signals
 		{
-			boost::mutex::scoped_lock lock(m_SaveToLoadMutex);
+			std::lock_guard<std::mutex> lock(m_SaveToLoadMutex);
 			//saveName = m_SaveToLoad;
 			m_SaveToLoad.clear();
 		}
@@ -1562,10 +1567,10 @@ namespace FusionEngine
 		namespace bfs = boost::filesystem;
 		using namespace IO;
 
-		FSN_ASSERT(boost::this_thread::get_id() != m_Thread.get_id());
+		FSN_ASSERT(std::this_thread::get_id() != m_Thread.get_id());
 
 		{
-			boost::mutex::scoped_lock lock(m_SaveToLoadMutex);
+			std::lock_guard<std::mutex> lock(m_SaveToLoadMutex);
 			m_SaveToLoad = saveName;
 		}
 
@@ -1826,103 +1831,108 @@ namespace FusionEngine
 		}
 	}
 
-	typedef std::array<char, 4096> CopyBuffer_t;
-
-	static inline void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest)
+	namespace
 	{
-		while (!source.eof())
+
+		typedef std::array<char, 4096> CopyBuffer_t;
+
+		void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest)
 		{
-			source.read(buffer.data(), std::streamsize(buffer.size()));
-			const auto gcount = source.gcount();
-			dest.write(buffer.data(), gcount);
-		}
-	}
-
-	static inline void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest, std::streamsize remaining_length)
-	{
-		while (remaining_length > 0 && !source.eof())
-		{
-			source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
-			const auto gcount = source.gcount();
-			dest.write(buffer.data(), gcount);
-
-			FSN_ASSERT(gcount <= remaining_length);
-			remaining_length -= gcount;
-		}
-	}
-
-	static inline void SkipData(CopyBuffer_t& buffer, ICellStream& source, std::streamsize remaining_length)
-	{
-		while (remaining_length > 0 && !source.eof())
-		{
-			source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
-			const auto gcount = source.gcount();
-
-			FSN_ASSERT(gcount <= remaining_length);
-			remaining_length -= gcount;
-		}
-	}
-
-	static inline size_t RemoveID(std::vector<ObjectID>& objects_displaced, ObjectID id_to_remove, ICellStream& source_in, OCellStream& source_out)
-	{
-		IO::Streams::CellStreamReader src_reader(&source_in);
-		IO::Streams::CellStreamWriter src_writer(&source_out);
-
-		// Read the ID list from the source and figure out what entity data will be offset by deleting this data
-		size_t numEntsInSource = src_reader.ReadValue<size_t>();
-		bool encounteredId = false;
-		for (size_t i = 0; i < numEntsInSource; ++i)
-		{
-			const ObjectID iID = src_reader.ReadValue<ObjectID>();
-			if (iID != id_to_remove)
+			while (!source.eof())
 			{
+				source.read(buffer.data(), std::streamsize(buffer.size()));
+				const auto gcount = source.gcount();
+				dest.write(buffer.data(), gcount);
+			}
+		}
+
+		void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest, std::streamsize remaining_length)
+		{
+			while (remaining_length > 0 && !source.eof())
+			{
+				source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
+				const auto gcount = source.gcount();
+				dest.write(buffer.data(), gcount);
+
+				FSN_ASSERT(gcount <= remaining_length);
+				remaining_length -= gcount;
+			}
+		}
+
+		void SkipData(CopyBuffer_t& buffer, ICellStream& source, std::streamsize remaining_length)
+		{
+			while (remaining_length > 0 && !source.eof())
+			{
+				source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
+				const auto gcount = source.gcount();
+
+				FSN_ASSERT(gcount <= remaining_length);
+				remaining_length -= gcount;
+			}
+		}
+
+		size_t RemoveID(std::vector<ObjectID>& objects_displaced, ObjectID id_to_remove, ICellStream& source_in, OCellStream& source_out)
+		{
+			IO::Streams::CellStreamReader src_reader(&source_in);
+			IO::Streams::CellStreamWriter src_writer(&source_out);
+
+			// Read the ID list from the source and figure out what entity data will be offset by deleting this data
+			size_t numEntsInSource = src_reader.ReadValue<size_t>();
+			bool encounteredId = false;
+			for (size_t i = 0; i < numEntsInSource; ++i)
+			{
+				const ObjectID iID = src_reader.ReadValue<ObjectID>();
+				if (iID != id_to_remove)
+				{
+					src_writer.Write(iID);
+					if (encounteredId)
+						objects_displaced.push_back(iID);
+				}
+				else
+				{
+					FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
+					encounteredId = true;
+				}
+			}
+			return numEntsInSource;
+		}
+
+		void CopyIDList(std::vector<ObjectID>& objects_displaced, size_t numEnts, ObjectID id_causing_displacement, ICellStream& source_in, OCellStream& source_out)
+		{
+			IO::Streams::CellStreamReader src_reader(&source_in);
+			IO::Streams::CellStreamWriter src_writer(&source_out);
+
+			// Read the ID list from the source and figure out what entity data will be offset by modifying this data
+			bool encounteredId = false;
+			for (size_t i = 0; i < numEnts; ++i)
+			{
+				const ObjectID iID = src_reader.ReadValue<ObjectID>();
 				src_writer.Write(iID);
 				if (encounteredId)
 					objects_displaced.push_back(iID);
-			}
-			else
-			{
-				FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
-				encounteredId = true;
+				if (iID == id_causing_displacement)
+				{
+					FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
+					encounteredId = true;
+				}
 			}
 		}
-		return numEntsInSource;
-	}
 
-	static inline void CopyIDList(std::vector<ObjectID>& objects_displaced, size_t numEnts, ObjectID id_causing_displacement, ICellStream& source_in, OCellStream& source_out)
-	{
-		IO::Streams::CellStreamReader src_reader(&source_in);
-		IO::Streams::CellStreamWriter src_writer(&source_out);
-
-		// Read the ID list from the source and figure out what entity data will be offset by modifying this data
-		bool encounteredId = false;
-		for (size_t i = 0; i < numEnts; ++i)
+		void CopyEditModePseudoEntityData(CopyBuffer_t& buffer, ICellStream& source_in, ICellStream& dest_in, OCellStream& dest_out)
 		{
-			const ObjectID iID = src_reader.ReadValue<ObjectID>();
-			src_writer.Write(iID);
-			if (encounteredId)
-				objects_displaced.push_back(iID);
-			if (iID == id_causing_displacement)
-			{
-				FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
-				encounteredId = true;
-			}
+			IO::Streams::CellStreamReader src_reader(&source_in);
+			IO::Streams::CellStreamReader dst_reader(&dest_in);
+
+			if (source_in != dest_in)
+				src_reader.ReadValue<std::streamsize>();
+			std::streamsize unsynchedDataLength = dst_reader.ReadValue<std::streamsize>();
+
+			FSN_ASSERT(unsynchedDataLength >= 0 && unsynchedDataLength < (1 << 24));
+
+			CopyData(buffer, dest_in, dest_out, unsynchedDataLength);
 		}
-	}
 
-	inline void CopyEditModePseudoEntityData(CopyBuffer_t& buffer, ICellStream& source_in, ICellStream& dest_in, OCellStream& dest_out)
-	{
-		IO::Streams::CellStreamReader src_reader(&source_in);
-		IO::Streams::CellStreamReader dst_reader(&dest_in);
-
-		if (source_in != dest_in)
-			src_reader.ReadValue<std::streamsize>();
-		std::streamsize unsynchedDataLength = dst_reader.ReadValue<std::streamsize>();
-
-		FSN_ASSERT(unsynchedDataLength >= 0 && unsynchedDataLength < (1 << 24));
-
-		CopyData(buffer, dest_in, dest_out, unsynchedDataLength);
-	}
+	} // anon namespace
 
 	std::streamsize RegionCellArchivist::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest_out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
 	{

@@ -18,10 +18,10 @@ class resource_manager_f;
 
 namespace FusionEngine { namespace Test
 {
-	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-	bool ResourceFileDateHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
-	bool TextContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	bool TextContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 }}
 	
 using namespace FusionEngine;
@@ -150,7 +150,7 @@ protected:
 	std::set<std::string> files;
 
 	std::shared_ptr<ResourceManager> manager;
-	CL_GraphicContext gc;
+	clan::GraphicContext gc;
 	std::shared_ptr<Logger> logger;
 	std::shared_ptr<Profiling> profiling;
 };
@@ -205,7 +205,7 @@ namespace FusionEngine { namespace Test
 		return checksummer.checksum();
 	}
 
-	void UnloadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		//ASSERT_TRUE(resource->IsLoaded());
 
@@ -217,7 +217,7 @@ namespace FusionEngine { namespace Test
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadFakeTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadFakeTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		// TODO: should the resource manager be allowed to request reloads like this?
 		//UnloadTextResource(resource, vdir, userData);
@@ -243,7 +243,7 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	void LoadTextResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		// Resource manager should never attempt to load a resource that's already loaded
 		ASSERT_FALSE(resource->IsLoaded());
@@ -273,14 +273,14 @@ namespace FusionEngine { namespace Test
 			resource->SetDataPtr(content);
 			resource->setLoaded(true);
 		}
-		catch (CL_Exception& e)
+		catch (clan::Exception& e)
 		{
 			delete content;
 			FSN_EXCEPT(FileSystemException, "Failed to load test resource: " + std::string(e.what()));
 		}
 	}
 
-	bool ResourceFileDateHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -295,7 +295,7 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	bool TextContentHasChanged(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	bool TextContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -506,11 +506,11 @@ TEST_F(resource_manager_f, hot_reload)
 
 	manager->CheckForChanges();
 
-	auto startTime = CL_System::get_time();
+	auto startTime = clan::System::get_time();
 	// Wait for reload, but give up after a few seconds
-	while (!resourceToThatWillBeChanged->reloaded && (CL_System::get_time() - startTime) < 10000)
+	while (!resourceToThatWillBeChanged->reloaded && (clan::System::get_time() - startTime) < 10000)
 	{
-		CL_System::sleep(100);
+		clan::System::sleep(100);
 		manager->DeliverLoadedResources();
 		manager->UnloadUnreferencedResources();
 	}

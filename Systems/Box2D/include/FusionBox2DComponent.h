@@ -42,9 +42,8 @@
 
 #include "FusionSerialisationHelper.h"
 
-#include <boost/mpl/for_each.hpp>
 #include <Box2D/Box2D.h>
-#include <tbb/atomic.h>
+#include <atomic>
 
 #define FSN_PHYS_COMPRESS_STATE
 
@@ -113,7 +112,7 @@ namespace FusionEngine
 		b2BodyDef m_Def;
 		b2Body* m_Body;
 
-		tbb::atomic<bool> m_FixtureMassDirty;
+		std::atomic<bool> m_FixtureMassDirty;
 		std::set<boost::intrusive_ptr<Box2DFixture>> m_Fixtures;
 
 		bool m_InteractingWithPlayer;
@@ -165,7 +164,7 @@ namespace FusionEngine
 		NonDynamicDeltaSerialiser_t m_NonDynamicDeltaSerialisationHelper;
 
 		// RigidBody interface
-		BodyType GetBodyType() const
+		BodyType GetBodyType() const override
 		{
 			const b2BodyType type = m_Body ? m_Body->GetType() : m_Def.type;
 			switch (type)
@@ -181,8 +180,8 @@ namespace FusionEngine
 			}
 		}
 
-		Vector2 GetPosition() const { return m_Interpolate ? m_InterpPosition : (m_Body ? b2v2(m_Body->GetPosition()) : b2v2(m_Def.position)); }
-		void SetPosition(const Vector2& position)
+		Vector2 GetPosition() const override { return m_Interpolate ? m_InterpPosition : (m_Body ? b2v2(m_Body->GetPosition()) : b2v2(m_Def.position)); }
+		void SetPosition(const Vector2& position) override
 		{
 			if (m_Body) m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle());
 			else
@@ -192,8 +191,8 @@ namespace FusionEngine
 			}
 		}
 
-		float GetAngle() const { return m_Interpolate ? m_InterpAngle : (m_Body ? m_Body->GetAngle() : m_Def.angle); }
-		void SetAngle(float angle)
+		float GetAngle() const override { return m_Interpolate ? m_InterpAngle : (m_Body ? m_Body->GetAngle() : m_Def.angle); }
+		void SetAngle(float angle) override
 		{
 			if (m_Body) m_Body->SetTransform(m_Body->GetPosition(), angle);
 			else
@@ -203,28 +202,28 @@ namespace FusionEngine
 			}
 		}
 
-		int GetDepth() const { return m_Depth; }
-		void SetDepth(int depth) { m_Depth = depth; }
+		int GetDepth() const override { return m_Depth; }
+		void SetDepth(int depth) override { m_Depth = depth; }
 
-		bool GetInterpolate() const { return m_Interpolate; }
-		void SetInterpolate(bool value) { m_Interpolate = value; }
+		bool GetInterpolate() const override { return m_Interpolate; }
+		void SetInterpolate(bool value) override { m_Interpolate = value; }
 
-		float GetMass() const { return m_Body ? m_Body->GetMass() : 0.f; }
+		float GetMass() const override { return m_Body ? m_Body->GetMass() : 0.f; }
 
-		float GetInertia() const { return m_Body ? m_Body->GetInertia() : 0.f; }
+		float GetInertia() const override { return m_Body ? m_Body->GetInertia() : 0.f; }
 
-		Vector2 GetCenterOfMass() const { return m_Body ? b2v2(m_Body->GetWorldCenter()) : Vector2(); }
+		Vector2 GetCenterOfMass() const override { return m_Body ? b2v2(m_Body->GetWorldCenter()) : Vector2(); }
 
 		Vector2 GetLocalCenterOfMass() const { return m_Body ? b2v2(m_Body->GetLocalCenter()) : Vector2(); }
 
-		Vector2 GetVelocity() const { return b2v2(m_Body ? m_Body->GetLinearVelocity() : m_Def.linearVelocity); }
-		void SetVelocity(const Vector2& vel) { m_Body ? m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)) : m_Def.linearVelocity.Set(vel.x, vel.y); }
+		Vector2 GetVelocity() const override { return b2v2(m_Body ? m_Body->GetLinearVelocity() : m_Def.linearVelocity); }
+		void SetVelocity(const Vector2& vel) override { m_Body ? m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)) : m_Def.linearVelocity.Set(vel.x, vel.y); }
 
-		float GetAngularVelocity() const { return m_Body ? m_Body->GetAngularVelocity() : m_Def.angularVelocity; }
-		void SetAngularVelocity(float vel) { if (m_Body) m_Body->SetAngularVelocity(vel); else m_Def.angularVelocity = vel; }
+		float GetAngularVelocity() const override { return m_Body ? m_Body->GetAngularVelocity() : m_Def.angularVelocity; }
+		void SetAngularVelocity(float vel) override { if (m_Body) m_Body->SetAngularVelocity(vel); else m_Def.angularVelocity = vel; }
 
-		float GetLinearDamping() const { return m_Body ? m_Body->GetLinearDamping() : m_Def.linearDamping; }
-		void SetLinearDamping(float val)
+		float GetLinearDamping() const override { return m_Body ? m_Body->GetLinearDamping() : m_Def.linearDamping; }
+		void SetLinearDamping(float val) override
 		{
 			FSN_ASSERT(val >= 0.0f);
 			if (m_Body)
@@ -234,8 +233,8 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::LinearDamping );
 		};
 
-		float GetAngularDamping() const { return m_Body ? m_Body->GetAngularDamping() : m_Def.angularVelocity; }
-		void SetAngularDamping(float val)
+		float GetAngularDamping() const override { return m_Body ? m_Body->GetAngularDamping() : m_Def.angularVelocity; }
+		void SetAngularDamping(float val) override
 		{
 			FSN_ASSERT(val >= 0.0f);
 			if (m_Body)
@@ -245,8 +244,8 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx:: AngularDamping );
 		};
 
-		float GetGravityScale() const { return m_Body ? m_Body->GetGravityScale() : m_Def.gravityScale; }
-		void SetGravityScale(float val)
+		float GetGravityScale() const override { return m_Body ? m_Body->GetGravityScale() : m_Def.gravityScale; }
+		void SetGravityScale(float val) override
 		{
 			if (m_Body)
 				m_Body->SetGravityScale(val);
@@ -255,8 +254,8 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx:: GravityScale );
 		};
 
-		bool IsActive() const { return m_Body ? m_Body->IsActive() : m_Def.active; }
-		void SetActive(bool value)
+		bool IsActive() const override { return m_Body ? m_Body->IsActive() : m_Def.active; }
+		void SetActive(bool value) override
 		{
 			if (m_Body)
 				m_Body->SetActive(value);
@@ -265,8 +264,8 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::Active);
 		}
 
-		bool IsSleepingAllowed() const { return m_Body ? m_Body->IsSleepingAllowed() : m_Def.allowSleep; }
-		void SetSleepingAllowed(bool value)
+		bool IsSleepingAllowed() const override { return m_Body ? m_Body->IsSleepingAllowed() : m_Def.allowSleep; }
+		void SetSleepingAllowed(bool value) override
 		{
 			if (m_Body)
 				m_Body->SetSleepingAllowed(value);
@@ -275,10 +274,10 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::SleepingAllowed);
 		}
 
-		bool IsAwake() const { return m_Body ? m_Body->IsAwake() : m_Def.awake; }
+		bool IsAwake() const override { return m_Body ? m_Body->IsAwake() : m_Def.awake; }
 
-		bool IsBullet() const { return m_Body ? m_Body->IsBullet() : m_Def.bullet; }
-		void SetBullet(bool value)
+		bool IsBullet() const override { return m_Body ? m_Body->IsBullet() : m_Def.bullet; }
+		void SetBullet(bool value) override
 		{
 			if (m_Body)
 				m_Body->SetBullet(value);
@@ -287,8 +286,8 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::Bullet);
 		}
 
-		bool IsFixedRotation() const { return m_Body ? m_Body->IsFixedRotation() : m_Def.fixedRotation; }
-		void SetFixedRotation(bool value)
+		bool IsFixedRotation() const override { return m_Body ? m_Body->IsFixedRotation() : m_Def.fixedRotation; }
+		void SetFixedRotation(bool value) override
 		{
 			if (m_Body)
 				m_Body->SetFixedRotation(value);
@@ -297,28 +296,34 @@ namespace FusionEngine
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::FixedRotation);
 		}
 
-		void ApplyForceImpl(const Vector2& force, const Vector2& point)
+		void ApplyForceImpl(const Vector2& force, const Vector2& point) override
 		{
 			if (m_Body)
-				m_Body->ApplyForce(b2Vec2(force.x, force.y), b2Vec2(point.x, point.y));
+				m_Body->ApplyForce(b2Vec2(force.x, force.y), b2Vec2(point.x, point.y), true);
 		}
 
-		void ApplyTorqueImpl(float force)
+		void ApplyForceToCenterImpl(const Vector2& force) override
 		{
 			if (m_Body)
-				m_Body->ApplyTorque(force);
+				m_Body->ApplyForceToCenter(b2Vec2(force.x, force.y), true);
 		}
 
-		void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point)
+		void ApplyTorqueImpl(float force) override
 		{
 			if (m_Body)
-				m_Body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(point.x, point.y));
+				m_Body->ApplyTorque(force, true);
 		}
 
-		void ApplyAngularImpulseImpl(float impulse)
+		void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point) override
 		{
 			if (m_Body)
-				m_Body->ApplyAngularImpulse(impulse);
+				m_Body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(point.x, point.y), true);
+		}
+
+		void ApplyAngularImpulseImpl(float impulse) override
+		{
+			if (m_Body)
+				m_Body->ApplyAngularImpulse(impulse, true);
 		}
 	};
 

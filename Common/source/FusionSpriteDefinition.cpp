@@ -40,79 +40,209 @@
 namespace FusionEngine
 {
 
+	struct FrameInfo
+	{
+		clan::Rect frameRect;
+		double delay;
+		Vector2 offset;
+	};
+
+}
+
+namespace YAML
+{
+   template<>
+   struct convert<FusionEngine::Vector2>
+	 {
+      static Node encode(const FusionEngine::Vector2& value)
+			{
+         Node node;
+         node.push_back(value.x);
+         node.push_back(value.y);
+         return node;
+      }
+
+      static bool decode(const Node& node, FusionEngine::Vector2& value)
+			{
+         if(!node.IsSequence())
+            return false;
+         if(node.size() != 2)
+            return false;
+
+         value.x = node[0].as<float>();
+         value.y = node[1].as<float>();
+         return true;
+      }
+   };
+
+	 template<>
+   struct convert<clan::Rect>
+	 {
+      static Node encode(const clan::Rect& value)
+			{
+         Node node;
+         node.push_back(value.left);
+         node.push_back(value.top);
+				 node.push_back(value.right);
+         node.push_back(value.bottom);
+         return node;
+      }
+
+      static bool decode(const Node& node, clan::Rect& value)
+			{
+         if(!node.IsSequence())
+            return false;
+         if(node.size() != 4)
+            return false;
+
+         value.left = node[0].as<int>();
+         value.top = node[1].as<int>();
+				 value.right = node[1].as<int>();
+				 value.bottom = node[1].as<int>();
+         return true;
+      }
+   };
+
+	 template<>
+   struct convert<FusionEngine::FrameInfo>
+	 {
+      static Node encode(const FusionEngine::FrameInfo& value)
+			{
+         Node node;
+         node.push_back(value.frameRect);
+         node.push_back(value.delay);
+				 node.push_back(value.offset);
+         return node;
+      }
+
+      static bool decode(const Node& node, FusionEngine::FrameInfo& value)
+			{
+         if(!node.IsMap())
+            return false;
+
+         value.frameRect = node[std::string("cell")].as<clan::Rect>();
+         value.delay = node[std::string("delay")].as<double>();
+				 value.offset = node[std::string("offset")].as<FusionEngine::Vector2>();
+         return true;
+      }
+   };
+
+	 template<>
+   struct convert<clan::Sprite::ShowOnFinish>
+	 {
+      static Node encode(const clan::Sprite::ShowOnFinish& value)
+			{
+				Node node;
+				switch (value)
+				{
+				case clan::Sprite::show_blank:
+					node = "blank";
+					break;
+				case clan::Sprite::show_last_frame:
+					node = "last";
+					break;
+				case clan::Sprite::show_first_frame:
+					node = "first";
+					break;
+				default:
+					node = "last";
+					break;
+				}
+         node.push_back(value);
+         return node;
+      }
+
+      static bool decode(const Node& node, clan::Sprite::ShowOnFinish& value)
+			{
+         if(!node.IsScalar())
+            return false;
+
+				 auto string = node.as<std::string>();
+				 if (string == "none" || string == "blank")
+					 value = clan::Sprite::show_blank;
+				 else if (string == "last")
+					 value = clan::Sprite::show_last_frame;
+				 else if (string == "first")
+					 value = clan::Sprite::show_first_frame;
+
+         return true;
+      }
+   };
+
+}
+
+namespace FusionEngine
+{
+
 	SpriteAnimation::SpriteAnimation()
 		: m_DefaultDelay(0.0f)
 	{
 	}
 
-	SpriteAnimation::SpriteAnimation(CL_IODevice dev)
+	SpriteAnimation::SpriteAnimation(clan::IODevice dev)
 		: m_DefaultDelay(0.0f)
 	{
 		Load(dev);
 	}
 
-	void operator >> (const YAML::Node& node, CL_Rect& rect)
+	//void operator >> (const YAML::Node& node, clan::Rect& rect)
+	//{
+	//	node[0] >> rect.left;
+	//	node[1] >> rect.top;
+	//	node[2] >> rect.right;
+	//	node[3] >> rect.bottom;
+	//}
+
+	//void operator >> (const YAML::Node& node, Vector2& vec)
+	//{
+	//	node[0] >> vec.x;
+	//	node[1] >> vec.y;
+	//}
+
+	//void operator >> (const YAML::Node& node, FrameInfo& frame_info)
+	//{
+	//	node["cell"] >> frame_info.frameRect;
+	//	node["delay"] >> frame_info.delay;
+	//	node["offset"] >> frame_info.offset;
+	//}
+
+	//void operator >> (const YAML::Node& node, clan::Sprite::ShowOnFinish& on_finish)
+	//{
+	//	if (node == "none" || node == "blank")
+	//		on_finish = clan::Sprite::show_blank;
+	//	else if (node == "last")
+	//		on_finish = clan::Sprite::show_last_frame;
+	//	else if (node == "first")
+	//		on_finish = clan::Sprite::show_first_frame;
+	//}
+
+	// Just pretend this is implemented w/ varadic template :P
+	YAML::Node FindFirstOf(const YAML::Node& parent, const std::string& k0, const std::string& k1, const std::string& k2 = std::string(), const std::string& k3 = std::string(), const std::string& k4 = std::string())
 	{
-		node[0] >> rect.left;
-		node[1] >> rect.top;
-		node[2] >> rect.right;
-		node[3] >> rect.bottom;
+		if (parent.IsMap())
+		{
+			if (auto node = parent[k0])
+				return node;
+			else if (auto node = parent[k1])
+				return node;
+			else if (auto node = parent[k2])
+				return node;
+			else if (auto node = parent[k3])
+				return node;
+			else if (auto node = parent[k4])
+				return node;
+		}
+
+		return YAML::Node();
 	}
 
-	void operator >> (const YAML::Node& node, Vector2& vec)
-	{
-		node[0] >> vec.x;
-		node[1] >> vec.y;
-	}
-
-	struct FrameInfo
-	{
-		CL_Rect frameRect;
-		double delay;
-		Vector2 offset;
-	};
-
-	void operator >> (const YAML::Node& node, FrameInfo& frame_info)
-	{
-		node["cell"] >> frame_info.frameRect;
-		node["delay"] >> frame_info.delay;
-		node["offset"] >> frame_info.offset;
-	}
-
-	void operator >> (const YAML::Node& node, CL_Sprite::ShowOnFinish& on_finish)
-	{
-		if (node == "none" || node == "blank")
-			on_finish = CL_Sprite::show_blank;
-		else if (node == "last")
-			on_finish = CL_Sprite::show_last_frame;
-		else if (node == "first")
-			on_finish = CL_Sprite::show_first_frame;
-	}
-
-	inline const YAML::Node* FindValueOf(const YAML::Node& parent, const std::string& k0, const std::string& k1, const std::string& k2 = std::string(), const std::string& k3 = std::string(), const std::string& k4 = std::string())
-	{
-		if (auto node = parent.FindValue(k0))
-			return node;
-		else if (auto node = parent.FindValue(k1))
-			return node;
-		else if (auto node = parent.FindValue(k2))
-			return node;
-		else if (auto node = parent.FindValue(k3))
-			return node;
-		else if (auto node = parent.FindValue(k4))
-			return node;
-		else
-			return nullptr;
-	}
-
-	void SpriteAnimation::Load(CL_IODevice dev, const std::string& animation_name)
+	void SpriteAnimation::Load(clan::IODevice dev, const std::string& animation_name)
 	{
 		try
 		{
 			IO::CLStream stream(dev);
-			YAML::Parser p(stream);
-			YAML::Node doc;
-			if (p.GetNextDocument(doc))
+			YAML::Node doc = YAML::Load(stream);
+			if (doc)
 			{
 				if (doc.begin() == doc.end())
 					return;
@@ -124,10 +254,10 @@ namespace FusionEngine
 					auto it = doc.begin();
 					for (; it != doc.end(); ++it)
 					{
-						if (auto node = it->FindValue("name"))
+						if (auto node = (*it)[std::string("name")])
 						{
 							std::string name;
-							*node >> name;
+							name = node.as<std::string>();
 							if (name == animation_name)
 							{
 								currentAnimationNode = &(*it);
@@ -142,61 +272,57 @@ namespace FusionEngine
 					return;
 
 
-				if (auto node = FindValueOf(*currentAnimationNode, "default_delay", "default_frame_time", "default_duration"))
-					*node >> m_DefaultDelay;
-				else if (auto node = currentAnimationNode->FindValue("framerate"))
+				if (auto node = FindFirstOf(*currentAnimationNode, "default_delay", "default_frame_time", "default_duration"))
+					m_DefaultDelay = node.as<double>();
+				else if (auto node = (*currentAnimationNode)[std::string("framerate")])
 				{
-					double framerate;
-					*node >> framerate;
+					const double framerate = node.as<double>();
 					m_DefaultDelay = 1.0 / framerate;
 				}
 
-				if (auto node = currentAnimationNode->FindValue("showOnFinish"))
+				if (auto node = (*currentAnimationNode)[std::string("showOnFinish")])
 				{
-					*node >> m_ShowOnFinish;
+					m_ShowOnFinish = node.as<clan::Sprite::ShowOnFinish>();
 				}
 
-				if (auto node = currentAnimationNode->FindValue("loop"))
+				if (auto node = (*currentAnimationNode)[std::string("loop")])
 				{
-					*node >> m_PlayLoop;
+					m_PlayLoop = node.as<bool>();
 				}
 
-				if (auto node = currentAnimationNode->FindValue("pingpong"))
+				if (auto node = (*currentAnimationNode)[std::string("pingpong")])
 				{
-					*node >> m_PlayPingPong;
+					m_PlayPingPong = node.as<bool>();
 				}
 
-				auto& framesNode = (*currentAnimationNode)["frames"];
+				auto& framesNode = (*currentAnimationNode)[std::string("frames")];
+				FSN_ASSERT(framesNode.IsSequence());
 				m_Frames.resize(framesNode.size());
-				for (unsigned i = 0; i < framesNode.size(); ++i)
+				for (unsigned i = 0; i < m_Frames.size(); ++i)
 				{
 					auto& frameNode = framesNode[i];
 
-					if (frameNode.GetType() == YAML::CONTENT_TYPE::CT_SEQUENCE)
+					if (frameNode.IsSequence())
 					{
-						auto& frameRect = m_Frames.at(i);
-						frameNode >> frameRect;
+						m_Frames[i] = frameNode.as<clan::Rect>();
 					}
 					else
 					{
-						if (auto node = FindValueOf(frameNode, "rect", "frame"))
+						if (auto node = FindFirstOf(frameNode, "rect", "frame"))
 						{
-							auto& frameRect = m_Frames.at(i);
-							*node >> frameRect;
+							m_Frames[i] = node.as<clan::Rect>();
 						}
 
-						if (auto node = FindValueOf(frameNode, "delay", "duration", "frame_time"))
+						if (auto node = FindFirstOf(frameNode, "delay", "duration", "frame_time"))
 						{
-							double delay;
-							*node >> delay;
+							const double delay = node.as<double>();
 							m_FrameDelays.push_back(std::make_pair(i, delay));
 						}
 
-						if (auto node = frameNode.FindValue("offset"))
+						if (auto node = frameNode[std::string("offset")])
 						{
-							// TODO: ?make this Vector2i
-							Vector2 offset;
-							*node >> offset;
+							// TODO: ? make this Vector2i
+							const Vector2 offset = node.as<Vector2>();
 							m_FrameOffsets.push_back(std::make_pair(i, offset));
 						}
 					}
@@ -216,7 +342,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -228,12 +354,12 @@ namespace FusionEngine
 			const auto pathEnd = resource->GetPath().find(":");
 			const auto path = resource->GetPath().substr(0, pathEnd);
 			const auto animationName = pathEnd != std::string::npos ? resource->GetPath().substr(pathEnd + 1) : "";
-			auto dev = vdir.open_file(path, CL_File::open_existing, CL_File::access_read);
+			auto dev = vdir.open_file(path, clan::File::open_existing, clan::File::access_read);
 			data->Load(dev, animationName);
 
 			resource->SetMetadata(CreateFileMetadata(path, IO::CLStream(dev)));
 		}
-		catch (CL_Exception& ex)
+		catch (clan::Exception& ex)
 		{
 			delete data;
 			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
@@ -249,7 +375,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -272,14 +398,14 @@ namespace FusionEngine
 			dependencies.push_back(std::make_pair("TEXTURE", path));
 	}
 
-	void LoadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
 			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
 		}
 
-		ResourcePointer<CL_Texture> texture;
+		ResourcePointer<clan::Texture2D> texture;
 		ResourcePointer<SpriteAnimation> animation;
 
 		const auto& deps = resource->GetDependencies();
@@ -297,7 +423,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadSpriteDefinitionResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data)
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -308,7 +434,7 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	SpriteDefinition::SpriteDefinition(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
+	SpriteDefinition::SpriteDefinition(const ResourcePointer<clan::Texture2D>& texture, const ResourcePointer<SpriteAnimation>& animation)
 		: m_Texture(texture),
 		m_Animation(animation)
 	{
@@ -327,7 +453,7 @@ namespace FusionEngine
 		{
 			if (!m_Animation.IsLoaded())
 			{
-				m_Description.add_frame(*m_Texture.Get());
+ 				m_Description.add_frame(*m_Texture.Get());
 			}
 			else
 			{
@@ -347,16 +473,16 @@ namespace FusionEngine
 		}
 	}
 
-	CL_Sprite SpriteDefinition::CreateSprite(CL_GraphicContext &gc)
+	clan::Sprite SpriteDefinition::CreateSprite(clan::GraphicContext &gc)
 	{
-		CL_Sprite sprite(gc, m_Description);
+		clan::Sprite sprite(gc, m_Description);
 		if (m_Animation.IsLoaded())
 		{
 			sprite.set_delay((int)(m_Animation->GetDefaultDelay() * 1000 + 0.5));
 			auto& frameOffsets = m_Animation->GetFrameOffsets();
 			for (auto it = frameOffsets.begin(), end = frameOffsets.end(); it != end; ++it)
 			{
-				sprite.set_frame_offset(it->first, CL_Point(it->second.x, it->second.y));
+				sprite.set_frame_offset(it->first, clan::Point(it->second.x, it->second.y));
 			}
 			sprite.set_play_loop(m_Animation->GetPlayLoop());
 			sprite.set_play_pingpong(m_Animation->GetPlayPingPong());
@@ -365,26 +491,26 @@ namespace FusionEngine
 		return sprite;
 	}
 
-	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir)
+	void LoadSpriteDefinition(LegacySpriteDefinition &def, const std::string &filepath, clan::VirtualDirectory vdir)
 	{
 		ticpp::Document document = OpenXml(filepath, vdir);
-		CL_String workingDirectory = vdir.get_path() + CL_PathHelp::get_basepath(filepath.c_str(), CL_PathHelp::path_type_virtual);
+		std::string workingDirectory = vdir.get_path() + clan::PathHelp::get_basepath(filepath.c_str(), clan::PathHelp::path_type_virtual);
 
 		if (workingDirectory[workingDirectory.length()-1] == '/')
 			workingDirectory.erase(workingDirectory.length()-1);
 		
-		def.LoadXml(CL_StringHelp::text_to_local8( workingDirectory ), document, vdir);
+		def.LoadXml(clan::StringHelp::text_to_local8( workingDirectory ), document, vdir);
 	}
 
 	LegacySpriteDefinition::LegacySpriteDefinition()
 		: m_Users(0),
 		m_ScaleX(1.f), m_ScaleY(1.f),
-		m_BaseAngle(0.f, cl_radians),
-		m_OffsetOrigin(origin_top_left),
+		m_BaseAngle(0.f, clan::angle_radians),
+		m_OffsetOrigin(clan::origin_top_left),
 		m_OffsetX(0), m_OffsetY(0),
-		m_RotationOrigin(origin_center),
+		m_RotationOrigin(clan::origin_center),
 		m_RotationPointX(0), m_RotationPointY(0),
-		m_Colour(CL_Color::white),
+		m_Colour(clan::Color::white),
 		m_Alpha(1.0f)
 	{
 	}
@@ -394,7 +520,7 @@ namespace FusionEngine
 		ClearImageData();
 	}
 
-	void LegacySpriteDefinition::LoadXml(const std::string &working_directory, const ticpp::Document& document, CL_VirtualDirectory &dir)
+	void LegacySpriteDefinition::LoadXml(const std::string &working_directory, const ticpp::Document& document, clan::VirtualDirectory &dir)
 	{
 		m_WorkingDirectory = working_directory;
 
@@ -406,7 +532,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileTypeException, "Not a sprite definition.");
 
 		// Load id
-		//m_ID = CL_StringHelp::text_to_int(attribute_text);
+		//m_ID = clan::StringHelp::text_to_int(attribute_text);
 
 		loadImageElements(root);
 		loadMoreOptions(root);
@@ -416,9 +542,9 @@ namespace FusionEngine
 			// Load image data if necessary
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
 			if (it->image_data.is_null())
-				it->image_data = CL_ImageProviderFactory::load(it->filename, dir);
+				it->image_data = clan::ImageProviderFactory::load(it->filename, dir);
 #else
-			CL_PixelBuffer image_data = CL_ImageProviderFactory::load(it->filename, dir);
+			clan::PixelBuffer image_data = clan::ImageProviderFactory::load(it->filename, dir);
 #endif
 
 			if (it->type == Image::FrameFile)
@@ -464,9 +590,9 @@ namespace FusionEngine
 		}
 	}
 
-	CL_Sprite LegacySpriteDefinition::CreateSprite(CL_GraphicContext &gc)
+	clan::Sprite LegacySpriteDefinition::CreateSprite(clan::GraphicContext &gc)
 	{
-		CL_Sprite sprite(gc, m_Description);
+		clan::Sprite sprite(gc, m_Description);
 
 		sprite.set_alignment(m_OffsetOrigin, m_OffsetX, m_OffsetY);
 		sprite.set_rotation_hotspot(m_RotationOrigin, m_RotationPointX, m_RotationPointY);
@@ -507,7 +633,7 @@ namespace FusionEngine
 		// Drop all refs to frame pixelbuffers
 		for (ImageArray::iterator it = m_Images.begin(), end = m_Images.end(); it != end; ++it)
 		{
-			it->image_data = CL_PixelBuffer();
+			it->image_data = clan::PixelBuffer();
 		}
 	}
 
@@ -593,28 +719,28 @@ namespace FusionEngine
 					int start_index = 0;
 					std::string attribute_text = element->GetAttribute("start_index");
 					if (!attribute_text.empty())
-						start_index = CL_StringHelp::local8_to_int(attribute_text);
+						start_index = clan::StringHelp::local8_to_int(attribute_text);
 
 					int skip_index = 1;
 					attribute_text = element->GetAttribute("skip_index");
 					if (!attribute_text.empty())
-						skip_index = CL_StringHelp::text_to_int(attribute_text);
+						skip_index = clan::StringHelp::text_to_int(attribute_text);
 
 					int leading_zeroes = 0;
 					attribute_text = element->GetAttribute("leading_zeroes");
 					if (!attribute_text.empty())
-						leading_zeroes =  CL_StringHelp::text_to_int(attribute_text);
+						leading_zeroes =  clan::StringHelp::text_to_int(attribute_text);
 
 					std::string prefix = element->GetAttribute("filesequence");
 					std::string suffix = std::string(".") +
-						CL_StringHelp::text_to_local8( CL_PathHelp::get_extension(CL_String(prefix.c_str()), CL_PathHelp::path_type_virtual) ).c_str();
+						clan::StringHelp::text_to_local8( clan::PathHelp::get_extension(std::string(prefix.c_str()), clan::PathHelp::path_type_virtual) ).c_str();
 					prefix.erase(prefix.length() - suffix.length(), prefix.length()); //remove the extension
 
 					for (int i = start_index;; i += skip_index)
 					{
 						std::string file_name = prefix;
 
-						std::string  frame_text = CL_StringHelp::int_to_local8(i);
+						std::string  frame_text = clan::StringHelp::int_to_local8(i);
 						for (int zeroes_to_add = (leading_zeroes+1) - frame_text.length(); zeroes_to_add > 0; zeroes_to_add--)
 							file_name += "0";
 
@@ -661,30 +787,30 @@ namespace FusionEngine
 								int height = 0;
 
 								std::string attribute_text = cur_child->GetAttribute("size");
-								std::vector<CL_String> image_size = CL_StringHelp::split_text(CL_String(attribute_text), ",");
+								std::vector<std::string> image_size = clan::StringHelp::split_text(std::string(attribute_text), ",");
 								if (image_size.size() > 0)
-									width = CL_StringHelp::text_to_int(image_size[0]);
+									width = clan::StringHelp::text_to_int(image_size[0]);
 								if (image_size.size() > 1)
-									height = CL_StringHelp::text_to_int(image_size[1]);
+									height = clan::StringHelp::text_to_int(image_size[1]);
 
 								attribute_text = cur_child->GetAttribute("pos");
 								if (!attribute_text.empty())
 								{
-									std::vector<CL_String> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), ",");
+									std::vector<std::string> image_pos = clan::StringHelp::split_text(std::string(attribute_text), ",");
 									if (image_pos.size() > 0)
-										xpos = CL_StringHelp::text_to_int(image_pos[0]);
+										xpos = clan::StringHelp::text_to_int(image_pos[0]);
 									if (image_pos.size() > 1)
-										ypos = CL_StringHelp::text_to_int(image_pos[1]);
+										ypos = clan::StringHelp::text_to_int(image_pos[1]);
 								}
 
 								attribute_text = cur_child->GetAttribute("array");
 								if (!attribute_text.empty())
 								{
-									std::vector<CL_String> image_array = CL_StringHelp::split_text(CL_String(attribute_text), ",");
+									std::vector<std::string> image_array = clan::StringHelp::split_text(std::string(attribute_text), ",");
 									if (image_array.size() == 2)
 									{
-										xarray = CL_StringHelp::text_to_int(image_array[0]);
-										yarray = CL_StringHelp::text_to_int(image_array[1]);
+										xarray = clan::StringHelp::text_to_int(image_array[0]);
+										yarray = clan::StringHelp::text_to_int(image_array[1]);
 									}
 									else
 									{
@@ -696,15 +822,15 @@ namespace FusionEngine
 								attribute_text = cur_child->GetAttribute("array_skipframes");
 								if (!attribute_text.empty())
 								{
-									array_skipframes = CL_StringHelp::text_to_int( CL_String(attribute_text) );
+									array_skipframes = clan::StringHelp::text_to_int( std::string(attribute_text) );
 								}
 
 								attribute_text = cur_child->GetAttribute("spacing");
 								if (!attribute_text.empty())
 								{
-									std::vector<CL_String> image_spacing = CL_StringHelp::split_text(CL_String(attribute_text), ",");
-									xspacing = CL_StringHelp::text_to_int(image_spacing[0]);
-									yspacing = CL_StringHelp::text_to_int(image_spacing[1]);
+									std::vector<std::string> image_spacing = clan::StringHelp::split_text(std::string(attribute_text), ",");
+									xspacing = clan::StringHelp::text_to_int(image_spacing[0]);
+									yspacing = clan::StringHelp::text_to_int(image_spacing[1]);
 								}
 
 								addImage(image_name, xpos, ypos, width, height, xarray, yarray, array_skipframes, xspacing, yspacing);
@@ -718,15 +844,15 @@ namespace FusionEngine
 								std::string attribute_text = cur_child->GetAttribute("pos");
 								if (!attribute_text.empty())
 								{
-									std::vector<CL_String> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), ",");
-									xpos = CL_StringHelp::text_to_int(image_pos[0]);
-									ypos = CL_StringHelp::text_to_int(image_pos[1]);
+									std::vector<std::string> image_pos = clan::StringHelp::split_text(std::string(attribute_text), ",");
+									xpos = clan::StringHelp::text_to_int(image_pos[0]);
+									ypos = clan::StringHelp::text_to_int(image_pos[1]);
 								}
 
 								attribute_text = cur_child->GetAttribute("trans_limit");
 								if (!attribute_text.empty())
 								{
-									trans_limit = CL_StringHelp::text_to_float(CL_String(attribute_text));
+									trans_limit = clan::StringHelp::text_to_float(std::string(attribute_text));
 								}
 
 								if (cur_child->HasAttribute("free"))
@@ -760,29 +886,29 @@ namespace FusionEngine
 			FSN_EXCEPT(FileTypeException, "Sprite resource contained no frames!");
 	}
 
-	CL_Origin readOrigin(std::string attribute_text, CL_Origin default_)
+	clan::Origin readOrigin(std::string attribute_text, clan::Origin default_)
 	{
 		if (!attribute_text.empty())
 		{
 			std::string originAttribute = std::string(attribute_text);
 			if(originAttribute == "center")
-				return origin_center;
+				return clan::origin_center;
 			else if(originAttribute == "top_left")
-				return origin_top_left;
+				return clan::origin_top_left;
 			else if(originAttribute == "top_center")
-				return origin_top_center;
+				return clan::origin_top_center;
 			else if(originAttribute == "top_right")
-				return origin_top_right;
+				return clan::origin_top_right;
 			else if(originAttribute == "center_left")
-				return origin_center_left;
+				return clan::origin_center_left;
 			else if(originAttribute == "center_right")
-				return origin_center_right;
+				return clan::origin_center_right;
 			else if(originAttribute == "bottom_left")
-				return origin_bottom_left;
+				return clan::origin_bottom_left;
 			else if(originAttribute == "bottom_center")
-				return origin_bottom_center;
+				return clan::origin_bottom_center;
 			else if(originAttribute == "bottom_right")
-				return origin_bottom_right;
+				return clan::origin_bottom_right;
 		}
 
 		return default_;
@@ -803,42 +929,42 @@ namespace FusionEngine
 			{
 				attribute_text = element->GetAttribute("name");
 				if (!attribute_text.empty())
-					m_Colour = CL_Colorf( CL_Color::find_color(attribute_text) );
+					m_Colour = clan::Colorf( clan::Color::find_color(attribute_text) );
 
 				attribute_text = element->GetAttribute("red");
 				if (!attribute_text.empty())
-					m_Colour.r = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
+					m_Colour.r = (float)clan::StringHelp::text_to_float(std::string(attribute_text));
 
 				attribute_text = element->GetAttribute("green");
 				if (!attribute_text.empty())
-					m_Colour.g = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
+					m_Colour.g = (float)clan::StringHelp::text_to_float(std::string(attribute_text));
 
 				attribute_text = element->GetAttribute("blue");
 				if (!attribute_text.empty())
-					m_Colour.b = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
+					m_Colour.b = (float)clan::StringHelp::text_to_float(std::string(attribute_text));
 				
 				attribute_text = element->GetAttribute("alpha");
 				if (!attribute_text.empty())
-					m_Colour.a = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
+					m_Colour.a = (float)clan::StringHelp::text_to_float(std::string(attribute_text));
 			}
 			// <animation speed="integer" loop="[yes,no]" pingpong="[yes,no]" direction="[backward,forward]" on_finish="[blank,last_frame,first_frame]"/>
 			else if (tag_name == "animation")
 			{
 				attribute_text = element->GetAttribute("speed");
 				if (!attribute_text.empty())
-					m_Animation.delay = CL_StringHelp::text_to_int(CL_String(attribute_text));
+					m_Animation.delay = clan::StringHelp::text_to_int(std::string(attribute_text));
 				else
 					m_Animation.delay = 60;
 
 				attribute_text = element->GetAttribute("loop");
 				if (!attribute_text.empty())
-					m_Animation.loop = CL_StringHelp::local8_to_bool(attribute_text);
+					m_Animation.loop = clan::StringHelp::local8_to_bool(attribute_text);
 				else
 					m_Animation.loop = true;
 
 				attribute_text = element->GetAttribute("pingpong");
 				if (!attribute_text.empty())
-					m_Animation.pingpong = CL_StringHelp::local8_to_bool(attribute_text);
+					m_Animation.pingpong = clan::StringHelp::local8_to_bool(attribute_text);
 				else
 					m_Animation.pingpong = false;
 
@@ -855,40 +981,40 @@ namespace FusionEngine
 					on_finish_Valid = true;
 					std::string on_finish(attribute_text);
 					if (on_finish == "first_frame")
-						m_Animation.showOnFinish = CL_Sprite::show_first_frame;
+						m_Animation.showOnFinish = clan::Sprite::show_first_frame;
 					else if(on_finish == "last_frame")
-						m_Animation.showOnFinish = CL_Sprite::show_last_frame;
+						m_Animation.showOnFinish = clan::Sprite::show_last_frame;
 					else
 						on_finish_Valid = false;
 				}
 				if (!on_finish_Valid)
-					m_Animation.showOnFinish = CL_Sprite::show_blank;
+					m_Animation.showOnFinish = clan::Sprite::show_blank;
 			}
 			// <scale x="float" y="float />
 			else if (tag_name == "scale")
 			{
 				attribute_text = element->GetAttribute("x");
-				if (!attribute_text.empty()) m_ScaleX = CL_StringHelp::local8_to_float(attribute_text);
+				if (!attribute_text.empty()) m_ScaleX = clan::StringHelp::local8_to_float(attribute_text);
 				else m_ScaleX = 1.f;
 
 				attribute_text = element->GetAttribute("y");
-				if (!attribute_text.empty()) m_ScaleY = CL_StringHelp::local8_to_float(attribute_text);
+				if (!attribute_text.empty()) m_ScaleY = clan::StringHelp::local8_to_float(attribute_text);
 				else m_ScaleY = 1.f;
 			}
 			// <translation origin="string" x="integer" y="integer" />
 			else if (tag_name == "translation")
 			{
 				std::string attribute_text = element->GetAttribute("origin");
-				m_OffsetOrigin = readOrigin(attribute_text, origin_top_left);
+				m_OffsetOrigin = readOrigin(attribute_text, clan::origin_top_left);
 
 				attribute_text = element->GetAttribute("x");
 				if (!attribute_text.empty())
-					m_OffsetX = CL_StringHelp::local8_to_int(attribute_text);
+					m_OffsetX = clan::StringHelp::local8_to_int(attribute_text);
 				else m_OffsetX = 0;
 
 				attribute_text = element->GetAttribute("y");
 				if (!attribute_text.empty())
-					m_OffsetY = CL_StringHelp::local8_to_int(attribute_text);
+					m_OffsetY = clan::StringHelp::local8_to_int(attribute_text);
 				else m_OffsetY = 0;
 
 			}
@@ -897,19 +1023,19 @@ namespace FusionEngine
 			{
 				std::string attribute_text = element->GetAttribute("base_angle");
 				if (!attribute_text.empty())
-					m_BaseAngle = CL_Angle(CL_StringHelp::local8_to_float(attribute_text), cl_degrees);
+					m_BaseAngle = clan::Angle(clan::StringHelp::local8_to_float(attribute_text), clan::angle_degrees);
 				
 				attribute_text = element->GetAttribute("origin");
-				m_RotationOrigin = readOrigin(attribute_text, origin_center);
+				m_RotationOrigin = readOrigin(attribute_text, clan::origin_center);
 
 				attribute_text = element->GetAttribute("x");
 				if (!attribute_text.empty())
-					m_OffsetX = CL_StringHelp::local8_to_int(attribute_text);
+					m_OffsetX = clan::StringHelp::local8_to_int(attribute_text);
 				else m_OffsetX = 0;
 
 				attribute_text = element->GetAttribute("y");
 				if (!attribute_text.empty())
-					m_RotationPointX = CL_StringHelp::local8_to_int(attribute_text);
+					m_RotationPointX = clan::StringHelp::local8_to_int(attribute_text);
 				else m_RotationPointY = 0;
 			}
 			// <frame nr="integer" speed="integer" x="integer" y="integer" />
@@ -920,22 +1046,22 @@ namespace FusionEngine
 
 				std::string attribute_text = element->GetAttribute("number");
 				if (!attribute_text.empty())
-					frame.number = CL_StringHelp::local8_to_int(attribute_text);
+					frame.number = clan::StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->GetAttribute("speed");
 				frame.delay = 60;
 				if (!attribute_text.empty())
-					frame.delay = CL_StringHelp::local8_to_int(attribute_text);
+					frame.delay = clan::StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->GetAttribute("x");
 				frame.offset.x = 0;
 				if (!attribute_text.empty())
-					frame.offset.x = CL_StringHelp::local8_to_int(attribute_text);
+					frame.offset.x = clan::StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->GetAttribute("y");
 				frame.offset.y = 0;
 				if (!attribute_text.empty())
-					frame.offset.y = CL_StringHelp::local8_to_int(attribute_text);
+					frame.offset.y = clan::StringHelp::local8_to_int(attribute_text);
 
 				m_Frames.push_back(frame);
 			}
@@ -945,7 +1071,7 @@ namespace FusionEngine
 	}
 
 	/*void SpriteDefinition::addGridclippedFrames(
-		const CL_Texture &texture, 
+		const clan::Texture &texture, 
 		int xpos, int ypos, 
 		int width, int height, 
 		int xarray, int yarray, 
@@ -962,9 +1088,9 @@ namespace FusionEngine
 					break;
 
 				if(xstart + width > texture.get_width() || ystart + height > texture.get_height())
-					throw CL_Exception("add_gridclipped_frames: Outside texture bounds");
+					throw clan::Exception("add_gridclipped_frames: Outside texture bounds");
 
-				impl->frames.push_back(CL_SpriteDescriptionFrame(texture, CL_Rect(xstart, ystart, xstart + width, ystart + height)));
+				impl->frames.push_back(clan::SpriteDescriptionFrame(texture, clan::Rect(xstart, ystart, xstart + width, ystart + height)));
 				xstart += width + xspace;
 			}
 			ystart += height + yspace;

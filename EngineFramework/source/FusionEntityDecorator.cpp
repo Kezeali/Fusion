@@ -51,25 +51,25 @@ namespace FusionEngine
 
 	Rocket::Core::DecoratorDataHandle EntityDecorator::GenerateElementData(Rocket::Core::Element* element)
 	{
-		//CL_Rectf&& bounding_box = m_Entity->CalculateOnScreenAABB();
+		//clan::Rectf&& bounding_box = m_Entity->CalculateOnScreenAABB();
 
-		//CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		//CL_Texture offtex(gc, bounding_box.get_width(), bounding_box.get_height());
+		//clan::GraphicContext gc = m_Renderer->GetGraphicContext();
+		//clan::Texture offtex(gc, bounding_box.get_width(), bounding_box.get_height());
 
-		//CL_FrameBuffer offscreen(gc);
+		//clan::FrameBuffer offscreen(gc);
 		//offscreen.attach_color_buffer(0, offtex);
 		//gc.set_frame_buffer(offscreen);
 
 		//// The main selection box
-		//gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
+		//gc.clear(clan::Colorf(0.0f, 0.0f, 0.0f, 0.0f));
 
 		//m_Renderer->DrawEntity(m_Entity);
 
-		//CL_Sprite texture;
+		//clan::Sprite texture;
 		//{
-		//	CL_SpriteDescription spriteDesc;
+		//	clan::SpriteDescription spriteDesc;
 		//	spriteDesc.add_frame(offtex);
-		//	texture = CL_Sprite(gc, spriteDesc);
+		//	texture = clan::Sprite(gc, spriteDesc);
 		//}
 
 		//gc.reset_frame_buffer();
@@ -99,13 +99,13 @@ namespace FusionEngine
 	{
 		//m_Geometry->Render(element->GetAbsoluteOffset(Rocket::Core::Box::PADDING));
 		Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		gc.push_modelview();
-		gc.set_translate( offset.x, offset.y );
+		clan::Canvas canvas = m_Renderer->GetCanvas();
+		canvas.push_modelview();
+		canvas.set_translate( offset.x, offset.y );
 
 		//m_Renderer->DrawEntity(m_Entity);
 
-		gc.pop_modelview();
+		canvas.pop_modelview();
 	}
 
 	DynamicEntityDecorator::DynamicEntityDecorator(const EntityManager* const manager, Renderer* renderer)
@@ -140,13 +140,13 @@ namespace FusionEngine
 		if (entity != nullptr)
 		{
 			Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
-			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-			gc.push_modelview();
-			gc.set_translate(offset.x, offset.y);
+			clan::Canvas canvas = m_Renderer->GetCanvas();
+			canvas.push_modelview();
+			canvas.set_translate(offset.x, offset.y);
 
 			//m_Renderer->DrawEntity(entity->shared_from_this());
 
-			gc.pop_modelview();
+			canvas.pop_modelview();
 		}
 	}
 

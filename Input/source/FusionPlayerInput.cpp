@@ -29,7 +29,7 @@
 
 #include "FusionPlayerInput.h"
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 #ifdef _DEBUG
 #include "FusionConsole.h"

@@ -33,10 +33,10 @@
 
 #include "FusionPhysFSIODeviceProvider.h"
 
-class CL_VirtualDirectoryListingEntry;
+class clan::VirtualDirectoryListingEntry;
 
 
-class VirtualFileSource_PhysFS : public CL_VirtualFileSource
+class VirtualFileSource_PhysFS : public clan::VirtualFileSource
 {
 //! \name Construction
 //! \{
@@ -53,33 +53,33 @@ public:
 public:
 	//! \brief Open a zip file
 	/*! param: filename = The filename to use
-	    param: mode = CL_File::OpenMode modes
-	    param: access = CL_File::AccessFlags flags
-	    param: share = CL_File::ShareFlags flags
-	    param: flags = CL_File::Flags flags
-	    \return The CL_IODevice*/
-	CL_IODevice open_file(
-		const CL_String &filename,
-		CL_File::OpenMode mode = CL_File::open_existing,
-		unsigned int access = CL_File::access_read | CL_File::access_write,
-		unsigned int share = CL_File::share_all,
+	    param: mode = clan::File::OpenMode modes
+	    param: access = clan::File::AccessFlags flags
+	    param: share = clan::File::ShareFlags flags
+	    param: flags = clan::File::Flags flags
+	    \return The clan::IODevice*/
+	clan::IODevice open_file(
+		const std::string &filename,
+		clan::File::OpenMode mode = clan::File::open_existing,
+		unsigned int access = clan::File::access_read | clan::File::access_write,
+		unsigned int share = clan::File::share_all,
 		unsigned int flags = 0);
 
-	bool initialize_directory_listing(const CL_String &path);
+	bool initialize_directory_listing(const std::string &path);
 
-	bool next_file(CL_VirtualDirectoryListingEntry &entry);
+	bool next_file(clan::VirtualDirectoryListingEntry &entry);
 
-	CL_String get_path() const;
-	CL_String get_identifier() const;
+	std::string get_path() const;
+	std::string get_identifier() const;
 
 //! \}
 //! \name Implementation
 //! \{
 
 private:
-	CL_String m_Path;
+	std::string m_Path;
 
-	std::vector<CL_String> m_FileList;
+	std::vector<std::string> m_FileList;
 
 	// Index of the current file being iterated
 	//  (why the ClanLib devs didn't give next_file() an 

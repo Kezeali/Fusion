@@ -45,7 +45,7 @@ namespace FusionEngine
 	static ComponentProperty* ComponentPropertyT_opAssign(ComponentProperty* other, ComponentProperty* obj)
 	{
 		if (other->GetImpl()->GetTypeId() == obj->GetImpl()->GetTypeId())
-			obj->GetImpl()->Set(other->Get(), obj->GetImpl()->GetTypeId());
+			obj->GetImpl()->SetAny(other->Get(), obj->GetImpl()->GetTypeId());
 		else
 			asGetActiveContext()->SetException("Incompatible Property types for opAssign ('prop = prop')");
 		return obj;
@@ -53,7 +53,7 @@ namespace FusionEngine
 	
 	static ComponentProperty* ComponentPropertyT_opAssign(void* ref, ComponentProperty* obj)
 	{
-		obj->GetImpl()->Set(ref, obj->GetImpl()->GetTypeId());
+		obj->GetImpl()->SetAny(ref, obj->GetImpl()->GetTypeId());
 		return obj;
 	}
 

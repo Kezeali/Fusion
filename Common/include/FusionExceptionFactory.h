@@ -92,7 +92,7 @@ namespace FusionEngine
 #ifdef _DEBUG
 				file,
 #else
-				CL_PathHelp::get_filename(file).c_str(),
+				clan::PathHelp::get_filename(file).c_str(),
 #endif
 				line);
 		}
@@ -103,14 +103,14 @@ namespace FusionEngine
 		{
 #ifdef _DEBUG
 			std::string relativeFile;
-			std::string basePath = CL_PathHelp::get_basepath( CL_PathHelp::normalize( __FILE__ ) );
-			relativeFile = CL_PathHelp::make_relative(basePath, file);
+			std::string basePath = clan::PathHelp::get_basepath( clan::PathHelp::normalize( __FILE__ ) );
+			relativeFile = clan::PathHelp::make_relative(basePath, file);
 #endif
 			return Create(ExceptionClass<ExID>(), origin, message,
 #ifdef _DEBUG
 				relativeFile.c_str(),
 #else
-				CL_PathHelp::get_filename(file).c_str(),
+				clan::PathHelp::get_filename(file).c_str(),
 #endif
 				line);
 		}

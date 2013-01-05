@@ -30,44 +30,37 @@
 class EntryPoint
 {
 public:
-	static int main(const std::vector<CL_String> &args)
+	static int main(const std::vector<std::string> &args)
 	{
 		using namespace FusionEngine;
 
 		// Init ClanLib
-		CL_SetupCore setupCore;
-		CL_SetupDisplay setupDisplay;
-		CL_SetupGL setupGL;
-		CL_SetupSound setupSound;
-		CL_SetupVorbis setupVorbis;
+		clan::SetupCore setupCore;
+		clan::SetupDisplay setupDisplay;
+		clan::SetupGL setupGL;
+		clan::SetupSound setupSound;
+		clan::SetupVorbis setupVorbis;
 
-		SetupPhysFS setupPhysfs(CL_System::get_exe_path().c_str());
+		SetupPhysFS setupPhysfs(clan::System::get_exe_path().c_str());
 		if (!SetupPhysFS::is_init())
 			return 1;
 
-		CL_ConsoleWindow conWindow("Console", 80, 10);
+		clan::ConsoleWindow conWindow("Console", 80, 10);
 
-		try
-		{
-			EngineManager manager(args);
+		EngineManager manager(args);
 
-			manager.Initialise();
-			
-			manager.AddExtension(std::make_shared<Editor>(args));
+		manager.Initialise();
 
-			manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
-			manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
-			manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetDisplayWindow(), manager.GetCameraSynchroniser())));
+		manager.AddExtension(std::make_shared<Editor>(args));
 
-			manager.Run();
-		}
-		catch (...)
-		{
-			std::cerr << "Unhandled exception";
-			throw;
-		}
+		manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
+		manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
+		manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetCanvas(), manager.GetCameraSynchroniser())));
+
+		manager.Run();
+
 		return 0;
 	}
 };
 
-CL_ClanApplication app(&EntryPoint::main);
+clan::Application app(&EntryPoint::main);

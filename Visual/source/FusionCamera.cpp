@@ -79,7 +79,7 @@ namespace FusionEngine
 		m_Scale = scale;
 	}
 
-	const CL_Vec2f &Camera::GetPosition() const
+	const clan::Vec2f &Camera::GetPosition() const
 	{
 		return m_Position;
 	}

@@ -3,19 +3,21 @@
   <ItemGroup>
     <ClCompile Include="source\FusionAngelScriptComponent.cpp" />
     <ClCompile Include="source\FusionAngelScriptSystem.cpp" />
-    <ClCompile Include="PrecompiledHeaders.cpp">
+    <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionScriptAnyProperty.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptInputEvent.h" />
     <ClInclude Include="include\FusionAngelScriptComponent.h" />
     <ClInclude Include="include\FusionAngelScriptSystem.h" />
-    <ClInclude Include="PrecompiledHeaders.h">
-      <Filter>PrecompiledHeaders</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionScriptCollisionEvent.h" />
     <ClInclude Include="include\FusionB2ContactListenerASScript.h" />
+    <ClInclude Include="source\PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FusionScriptAnyProperty.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

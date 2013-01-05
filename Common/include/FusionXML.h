@@ -65,7 +65,7 @@ namespace FusionEngine
 	class ClanLibTiXmlFile : public TiXmlFileInterface
 	{
 	public:
-		ClanLibTiXmlFile(CL_IODevice file);
+		ClanLibTiXmlFile(clan::IODevice file);
 
 		void Write(const char *data, size_t len);
 		void Print(const char *ste);
@@ -74,7 +74,7 @@ namespace FusionEngine
 		bool Ok() const;
 
 	protected:
-		CL_IODevice m_File;
+		clan::IODevice m_File;
 		bool m_WriteFailed;
 	};
 
@@ -98,15 +98,15 @@ namespace FusionEngine
 	 * \brief
 	 * Opens an xml file using the given VirtualDirectory object
 	 */
-	ticpp::Document OpenXml(const std::string &filename, CL_VirtualDirectory vdir);
+	ticpp::Document OpenXml(const std::string &filename, clan::VirtualDirectory vdir);
 
-	std::string &OpenString(std::string& content, const std::string &filename, CL_VirtualDirectory vdir);
+	std::string &OpenString(std::string& content, const std::string &filename, clan::VirtualDirectory vdir);
 
-	std::string OpenString(const std::string &filename, CL_VirtualDirectory vdir);
+	std::string OpenString(const std::string &filename, clan::VirtualDirectory vdir);
 	
-	void SaveXml(const ticpp::Document& doc, const std::string &filename, CL_VirtualDirectory vdir);
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::VirtualDirectory vdir);
 
-	void SaveString(const std::string &content, const std::string &filename, CL_VirtualDirectory vdir);
+	void SaveString(const std::string &content, const std::string &filename, clan::VirtualDirectory vdir);
 
 	/*!
 	 * \brief

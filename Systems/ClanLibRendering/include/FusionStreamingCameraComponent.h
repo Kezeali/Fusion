@@ -97,8 +97,8 @@ namespace FusionEngine
 		void SetViewportEnabled(bool value);
 		bool IsViewportEnabled() const;
 
-		void SetViewportRect(const CL_Rectf& value);
-		const CL_Rectf& GetViewportRect() const;
+		void SetViewportRect(const clan::Rectf& value);
+		const clan::Rectf& GetViewportRect() const;
 
 		void SetAngleEnabled(bool value);
 		bool IsAngleEnabled() const;
@@ -106,7 +106,7 @@ namespace FusionEngine
 		SyncTypes m_SyncType;
 
 		bool m_ViewportEnabled;
-		CL_Rectf m_ViewportRect;
+		clan::Rectf m_ViewportRect;
 
 		CameraPtr m_Camera;
 		ViewportPtr m_Viewport;

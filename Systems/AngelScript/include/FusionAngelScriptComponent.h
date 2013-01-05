@@ -78,9 +78,9 @@ namespace FusionEngine
 	};
 
 	//! Sprite resource loader callback
-	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void LoadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 	//! Sprite resource unloader callback
-	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, boost::any user_data);
+	void UnloadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
 	class CoroutineSemaphore
 	{
@@ -129,19 +129,19 @@ namespace FusionEngine
 
 		void SetTimeout(float seconds)
 		{
-			timeout_time = CL_System::get_time() + (unsigned int)(seconds * 1000);
+			timeout_time = clan::System::get_time() + (unsigned int)(seconds * 1000);
 		}
 
 		bool IsReady() const
 		{
 			if (!condition)
 			{
-				return timeout_time == std::numeric_limits<unsigned int>::max() || CL_System::get_time() >= timeout_time;
+				return timeout_time == std::numeric_limits<unsigned int>::max() || clan::System::get_time() >= timeout_time;
 			}
 			else
 			{
 				return condition()
-					|| (timeout_time != std::numeric_limits<unsigned int>::max() && CL_System::get_time() >= timeout_time);
+					|| (timeout_time != std::numeric_limits<unsigned int>::max() && clan::System::get_time() >= timeout_time);
 			}
 		}
 	};

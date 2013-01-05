@@ -59,42 +59,42 @@ VirtualFileSource_PhysFS::~VirtualFileSource_PhysFS()
 /////////////////////////////////////////////////////////////////////////////
 // VirtualFileSource_PhysFS Operations:
 
-CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &filename,
-	CL_File::OpenMode mode,
+clan::IODevice VirtualFileSource_PhysFS::open_file(const std::string &filename,
+	clan::File::OpenMode mode,
 	unsigned int access,
 	unsigned int share,
 	unsigned int flags)
 {
 	PHYSFS_File *file = NULL;
 	
-	if (access & CL_File::access_write)
+	if (access & clan::File::access_write)
 	{
-		if (!PHYSFS_exists(filename.c_str()) || mode == CL_File::create_always)
+		if (!PHYSFS_exists(filename.c_str()) || mode == clan::File::create_always)
 			file = PHYSFS_openWrite(filename.c_str());
 		else
 			file = PHYSFS_openAppend(filename.c_str());
 	}
-	else if (access & CL_File::access_read)
+	else if (access & clan::File::access_read)
 		file = PHYSFS_openRead(filename.c_str());
 
 	if (file == NULL)
 	{
 		const char* lastError = PHYSFS_getLastError();
-		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1': %2", filename, std::string(lastError)));
+		throw clan::Exception(clan::string_format("VirtualFileSource_PhysFS: Couldn't open the file '%1': %2", filename, std::string(lastError)));
 	}
 
-	return CL_IODevice(new PhysFSIODeviceProvider(file));
+	return clan::IODevice(new PhysFSIODeviceProvider(file));
 }
 
 
-bool VirtualFileSource_PhysFS::initialize_directory_listing(const CL_String &path)
+bool VirtualFileSource_PhysFS::initialize_directory_listing(const std::string &path)
 {
 	char **files = PHYSFS_enumerateFiles("");
 	if (files != NULL)
 	{
 		char **i;
 		for (i = files; *i != NULL; i++)
-			m_FileList.push_back( CL_String(*i) );
+			m_FileList.push_back( std::string(*i) );
 
 		PHYSFS_freeList(files);
 	}
@@ -103,7 +103,7 @@ bool VirtualFileSource_PhysFS::initialize_directory_listing(const CL_String &pat
 	return !m_FileList.empty();
 }
 
-bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
+bool VirtualFileSource_PhysFS::next_file(clan::VirtualDirectoryListingEntry &entry)
 {
 	if( m_FileList.empty() ) 
 		return false;
@@ -134,12 +134,12 @@ bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
 	return true;
 }
 
-CL_String VirtualFileSource_PhysFS::get_path() const
+std::string VirtualFileSource_PhysFS::get_path() const
 {
 	return m_Path;
 }
 
-CL_String VirtualFileSource_PhysFS::get_identifier() const
+std::string VirtualFileSource_PhysFS::get_identifier() const
 {
 	return "PhysFS";
 }

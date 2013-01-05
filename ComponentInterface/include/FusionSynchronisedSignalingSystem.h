@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -55,7 +55,7 @@ namespace FusionEngine
 			template <class T>
 			struct Impl
 			{
-				typedef std::function<void (T)> GeneratorFn_t;
+				typedef typename std::function<void (T)> GeneratorFn_t;
 
 				void OnDispose() {}
 
@@ -71,7 +71,7 @@ namespace FusionEngine
 					return next;
 				}
 
-				GeneratorFn_t MakeGenerator(std::function<void (void)> trigger_callback)
+				GeneratorFn_t  MakeGenerator(std::function<void (void)> trigger_callback)
 				{
 					return [this, trigger_callback](T value) { this->OnGenerate(value); trigger_callback(); };
 				}
@@ -113,7 +113,7 @@ namespace FusionEngine
 			}
 		public:
 			//! Generator function type provided by GeneratorDetail template param.
-			typedef GeneratorDetail GeneratorDetail_t;
+			typedef typename GeneratorDetail GeneratorDetail_t;
 			typedef KeyT Key_t;
 			typedef SerialisationMechanism SerialisationMechanism_t;
 			typedef typename SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism> This_t;
@@ -134,7 +134,7 @@ namespace FusionEngine
 
 			//! Adds a hander for the given generator key
 			/*!
-			* \Throws if the generator's return type isn't equivilent to the given handler's argument type
+			* \Throws if the generator's return type isn't equivalent to the given handler's argument type
 			*/
 			template <class T>
 			HandlerConnection_t AddHandler(KeyT key, std::function<void (T)> handler_fn)
@@ -148,17 +148,17 @@ namespace FusionEngine
 					typedef typename std::remove_const<value_type>::type naked_type;
 
 					// Try exact match
-					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
+					if (auto generator = std::dynamic_pointer_cast<Generator<T, GeneratorDetail_t::Impl>>(entry->second))
 					{
 						return generator->ConnectHandler(handler_fn);
 					}
 					// Try non-reference type match (match handler(const T& value) to signal->T or const T)
-					else if (auto generator = std::dynamic_pointer_cast<Generator<value_type>>(entry->second))
+					else if (auto generator = std::dynamic_pointer_cast<Generator<value_type, GeneratorDetail_t::Impl>>(entry->second))
 					{
 						return generator->ConnectHandler(handler_fn);
 					}
 					// Try non-const type match (match handler(const T& value) to signal->T)
-					else if (auto generator = std::dynamic_pointer_cast<Generator<naked_type>>(entry->second))
+					else if (auto generator = std::dynamic_pointer_cast<Generator<naked_type, GeneratorDetail_t::Impl>>(entry->second))
 					{
 						return generator->ConnectHandler(handler_fn);
 					}
@@ -178,7 +178,7 @@ namespace FusionEngine
 				}
 			}
 
-			//! Adds the given handler without trying simmilar types
+			//! Adds the given handler without trying similar types
 			/*!
 			* Useful when adding handlers for non-copyable types (where the handler takes a ref)
 			*/
@@ -191,7 +191,7 @@ namespace FusionEngine
 					const auto& entry = range.first;
 
 					// Try exact match
-					if (auto generator = std::dynamic_pointer_cast<Generator<T>>(entry->second))
+					if (auto generator = std::dynamic_pointer_cast<Generator<T, GeneratorDetail_t::Impl>>(entry->second))
 					{
 						return generator->ConnectHandler(handler_fn);
 					}
@@ -225,11 +225,61 @@ namespace FusionEngine
 			}
 
 			//! Returns a new generator functor
+			//! TODO: fix this so you can do something like GeneratorDetail_t::Impl<T>::GeneratorFn_t
 			template <class T>
-			typename GeneratorDetail::Impl<T>::GeneratorFn_t MakeGenerator(KeyT key);
-			//! Returns a new generator functor; for generators that require 1 argument
-			template <class T, class Arg0T>
-			typename GeneratorDetail::Impl<T>::GeneratorFn_t MakeGenerator(KeyT key, Arg0T arg0);
+			std::function<void (T)> MakeGenerator(KeyT key);
+			//! Returns a new generator functor, for generators that require 1 argument
+			template <class T, class ArgT>
+			std::function<void ()> MakeGenerator(KeyT key, ArgT arg);
+			//! Returns a new generator functor, for generators that require 1 argument
+			template <class T, class GeneratorFnT, class ArgT>
+			GeneratorFnT MakeGeneratorOf(KeyT key, ArgT arg);
+
+			//! Helper class for making generators
+			//! Helps by instantiating the generator's Impl template and extracting the generator-fn type from it
+			template <class T, template<class> class GeneratorImplT>
+			class MakeGeneratorHelper
+			{
+			public:
+				typedef typename GeneratorImplT<T> Impl_t;
+
+				typedef typename Impl_t::GeneratorFn_t GeneratorFn_t;
+
+				static GeneratorFn_t MakeGenerator(SynchronisedSignalingSystem& sys, Key_t key)
+				{
+					return sys.MakeGeneratorOf<T, GeneratorFn_t>(key);
+				}
+			};
+
+			//! Helper class for making generators that take an argument on construction
+			template <class T, template<class> class GeneratorImplT>
+			class MakeGeneratorWithArgHelper
+			{
+			public:
+				typedef typename GeneratorImplT<T> Impl_t;
+
+				typedef typename Impl_t::GeneratorFn_t GeneratorFn_t;
+				typedef typename Impl_t::Arg_t Arg_t;
+
+				static GeneratorFn_t MakeGenerator(SynchronisedSignalingSystem& sys, Key_t key, Arg_t arg)
+				{
+					return sys.MakeGeneratorOf<T, GeneratorFn_t>(key, arg);
+				}
+			};
+
+			//! Makes a new generator for the given type
+			template <class T>
+			typename MakeGeneratorHelper<T, GeneratorDetail_t::Impl>::GeneratorFn_t MakeGenerator2(Key_t key)
+			{
+				return MakeGeneratorHelper<T, GeneratorDetail_t::Impl>::MakeGenerator(&this, key);
+			}
+
+			//! Makes a new generator for the given type and passes it the given arg
+			template <class T>
+			typename MakeGeneratorWithArgHelper<T, GeneratorDetail_t::Impl>::GeneratorFn_t MakeGenerator2(Key_t key, typename MakeGeneratorWithArgHelper<T, GeneratorDetail_t::Impl>::Arg_t user_data)
+			{
+				return MakeGeneratorWithArgHelper<T, GeneratorDetail_t::Impl>::MakeGenerator(*this, key, user_data);
+			}
 
 			//! Don't call this manually
 			/*!
@@ -325,22 +375,18 @@ namespace FusionEngine
 				std::function<void ()> trigger_fn;
 			};
 
-			template <typename T>
-			class Generator : public GeneratorPlaceholder, public GeneratorDetail::Impl<T>
+			template <class T, template <class> class GeneratorImplT>
+			class Generator : public GeneratorPlaceholder
 			{
-			private:
-				Generator(const Generator& other) {}
-			
-				typedef boost::signals2::signal<void (T)> Signal_t;
-				std::unique_ptr<Signal_t> signal;
-
 			public:
+				typedef typename GeneratorImplT<T> Impl_t;
+
 				Generator()
 				{}
 
 				void Dispose()
 				{
-					OnDispose();
+					impl.OnDispose();
 				}
 
 				void Trigger()
@@ -353,14 +399,16 @@ namespace FusionEngine
 				{
 					if (signal)
 					{
-						while (HasMore())
+						while (impl.HasMore())
 						{
-							T v = GetEvent();
+							T v = impl.GetEvent();
 							serialiser.WriteEvent<T>(v);
 							(*signal)(v);
 						}
 					}
 				}
+
+				Impl_t& GetImpl() { return impl; }
 
 				HandlerConnection_t ConnectListener(const std::function<void ()>& listener)
 				{
@@ -375,6 +423,15 @@ namespace FusionEngine
 						signal.reset(new Signal_t);
 					return std::make_shared<boost::signals2::scoped_connection>( signal->connect(handler) );
 				}
+
+			private:
+				// Noncopyable
+				Generator(const Generator& other) {}
+
+				Impl_t impl;
+			
+				typedef boost::signals2::signal<void (T)> Signal_t;
+				std::unique_ptr<Signal_t> signal;
 			};
 
 			class GeneratorAutoRemover
@@ -403,11 +460,11 @@ namespace FusionEngine
 			NewGeneratorSignalMap_t m_NewGeneratorSignals;
 
 			template <class T>
-			std::shared_ptr<Generator<T>> MakeGeneratorObj(KeyT key)
+			std::shared_ptr<Generator<T, GeneratorDetail_t::Impl>> MakeGeneratorObj(KeyT key)
 			{
 				FSN_ASSERT(m_Generators.count(key) == 0);
 
-				auto generator = std::make_shared<Generator<T>>();
+				auto generator = std::make_shared<Generator<T, GeneratorDetail_t::Impl>>();
 				generator->trigger_fn = [this, key, generator]() { this->m_TriggeredGenerators.push(std::make_pair(key, generator)); };
 				m_Generators.insert(std::make_pair(key, generator));
 
@@ -426,29 +483,44 @@ namespace FusionEngine
 
 		template <class KeyT, class GeneratorDetail, class SerialisationMechanism>
 		template <class T>
-		typename GeneratorDetail::Impl<T>::GeneratorFn_t SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key)
+		typename std::function<void (T)> SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key)
 		{
 			// This will remove the generator whey the trigger callback goes out of scope
 			AutoRemoverPtr autoRemover(new GeneratorAutoRemover(this, key));
 
 			auto generator = MakeGeneratorObj<T>(key);
 
-			auto generator_trigger = generator->MakeGenerator([generator, autoRemover]() { generator->Trigger(); });
+			auto generator_trigger = generator->GetImpl().MakeGenerator([generator, autoRemover]() { generator->Trigger(); });
 			FSN_ASSERT_MSG(autoRemover.use_count() >= 2, "The GeneratorDetail provided seems to have failed to make a copy of the trigger callback passed");
 
 			return std::move(generator_trigger);
 		}
 
 		template <class KeyT, class GeneratorDetail, class SerialisationMechanism>
-		template <class T, class Arg0T>
-		typename GeneratorDetail::Impl<T>::GeneratorFn_t SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key, Arg0T arg0)
+		template <class T, class ArgT>
+		typename std::function<void ()> SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGenerator(KeyT key, ArgT arg)
 		{
 			// This will remove the generator whey the trigger callback goes out of scope
 			AutoRemoverPtr autoRemover(new GeneratorAutoRemover(this, key));
 
 			auto generator = MakeGeneratorObj<T>(key);
 
-			auto generator_trigger = generator->MakeGenerator([generator, autoRemover]() { generator->Trigger(); }, arg0);
+			auto generator_trigger = generator->GetImpl().MakeGenerator([generator, autoRemover]() { generator->Trigger(); }, arg);
+			FSN_ASSERT_MSG(autoRemover.use_count() >= 2, "The GeneratorDetail provided seems to have failed to make a copy of the trigger callback passed");
+
+			return std::move(generator_trigger);
+		}
+
+		template <class KeyT, class GeneratorDetail, class SerialisationMechanism>
+		template <class T, class GeneratorFnT, class ArgT>
+		typename GeneratorFnT SynchronisedSignalingSystem<KeyT, GeneratorDetail, SerialisationMechanism>::MakeGeneratorOf(KeyT key, ArgT arg)
+		{
+			// This will remove the generator whey the trigger callback goes out of scope
+			AutoRemoverPtr autoRemover(new GeneratorAutoRemover(this, key));
+
+			auto generator = MakeGeneratorObj<T>(key);
+
+			auto generator_trigger = generator->GetImpl().MakeGenerator([generator, autoRemover]() { generator->Trigger(); }, arg);
 			FSN_ASSERT_MSG(autoRemover.use_count() >= 2, "The GeneratorDetail provided seems to have failed to make a copy of the trigger callback passed");
 
 			return std::move(generator_trigger);

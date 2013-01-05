@@ -73,7 +73,7 @@ namespace FusionEngine
 		// If I change the implementation such that CLRenderSystem creates the display,
 		//  this interface can be removed and getting the display can be done in OnWorldCreated
 		//  if an extension requires it
-		virtual void SetDisplay(const CL_DisplayWindow& display) {}
+		virtual void SetDisplay(const clan::DisplayWindow& display) {}
 		virtual void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) {}
 		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}

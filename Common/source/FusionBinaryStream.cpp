@@ -39,13 +39,13 @@ namespace FusionEngine
 
 			//BinaryStreamReader::BinaryStreamReader(std::istream* stream)
 			//	: m_Stream(stream),
-			//	m_LittleEndian(!CL_Endian::is_system_big())
+			//	m_LittleEndian(!clan::Endian::is_system_big())
 			//{
 			//}
 
 			//BinaryStreamWriter::BinaryStreamWriter(std::ostream* stream)
 			//	: m_Stream(stream),
-			//	m_LittleEndian(!CL_Endian::is_system_big())
+			//	m_LittleEndian(!clan::Endian::is_system_big())
 			//{
 			//}
 

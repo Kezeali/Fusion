@@ -61,7 +61,7 @@ namespace FusionEngine
 				else
 				{
 					// Wait for everybody else to finish up
-					CL_Event::wait(m_AllCallbacksInvokedEvent);
+					clan::Event::wait(m_AllCallbacksInvokedEvent);
 				}
 
 				return NULL;
@@ -78,12 +78,12 @@ namespace FusionEngine
 		protected:
 #endif
 			friend class TaskManager;
-			static CL_Event m_AllCallbacksInvokedEvent;
+			static clan::Event m_AllCallbacksInvokedEvent;
 			static std::function<void (void)> m_Callback;
 			static tbb::atomic<uint32_t> m_CallbacksRemainingToCall;
 		}; // class SynchronizeTask
 
-		CL_Event SynchronisedTask::m_AllCallbacksInvokedEvent;
+		clan::Event SynchronisedTask::m_AllCallbacksInvokedEvent;
 		std::function<void (void)> SynchronisedTask::m_Callback;
 		tbb::atomic<uint32_t> SynchronisedTask::m_CallbacksRemainingToCall;
 	}

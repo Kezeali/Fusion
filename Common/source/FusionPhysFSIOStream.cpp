@@ -52,7 +52,7 @@ namespace FusionEngine { namespace IO
 			break;
 		}
 		if (!m_File)
-			FSN_EXCEPT(FileSystemException, cl_format("Can't open %1: %2", path, std::string(PHYSFS_getLastError())));
+			FSN_EXCEPT(FileSystemException, clan::string_format("Can't open %1: %2", path, std::string(PHYSFS_getLastError())));
 	}
 
 	void PhysFSDevice::close()

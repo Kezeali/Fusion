@@ -63,7 +63,7 @@
 #include <new>
 #include <regex>
 
-#include <BitStream.h>
+#include <RakNet/BitStream.h>
 
 namespace FusionEngine
 {
