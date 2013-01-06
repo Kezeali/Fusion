@@ -30,11 +30,13 @@
 
 #include "FusionPrerequisites.h"
 
-#include <ClanLib/Display/Window/display_window.h>
+#include <ClanLib/display.h>
 
 #include <deque>
 #include <memory>
 #include <vector>
+
+class asIScriptEngine;
 
 namespace FusionEngine
 {

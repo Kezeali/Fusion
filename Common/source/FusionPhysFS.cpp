@@ -224,7 +224,8 @@ namespace FusionEngine
 	SetupPhysFS::SetupPhysFS()
 	{
 		std::string path = clan::StringHelp::text_to_local8(clan::System::get_exe_path());
-		init(path.c_str());
+		if (!init(path.c_str()))
+			FSN_EXCEPT(FileSystemException, "Failed to initialise PhysFS");
 	}
 
 	SetupPhysFS::SetupPhysFS(const char *argv0)

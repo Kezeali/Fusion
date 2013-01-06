@@ -210,16 +210,81 @@ namespace FusionEngine
 
 	};
 
-	static void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity = LOG_NORMAL)
+	//! Add a log entry
+	inline void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity = LOG_NORMAL)
 	{
 		Logger* logger = Logger::getSingletonPtr();
 		if (logger != nullptr)
 			logger->Add(entry, file_tag, severity);
 	}
 
-	static void AddLogEntry(const std::string& entry, LogSeverity severity = LOG_NORMAL)
+	//! Add a log entry to the default log file
+	inline void AddLogEntry(const std::string& entry, LogSeverity severity = LOG_NORMAL)
 	{
 		AddLogEntry(g_LogGeneral, entry, severity);
+	}
+
+	//! An object that allows the use of the stream operator to create a log entry
+	class MakeLog
+	{
+	public:
+		MakeLog(const std::string& tag, LogSeverity severity = LOG_NORMAL)
+			: severity(severity)
+		{
+			if (auto logger = Logger::getSingletonPtr())
+			{
+				log = logger->GetLog(tag);
+			}
+		}
+
+		~MakeLog()
+		{
+			if (log)
+				log->AddEntry(stream.str(), severity);
+		}
+
+		//! Stream input operator
+		template<class T>
+		MakeLog& operator<<(T const& other) { stream << other; return *this; }
+
+		MakeLog(MakeLog&& other)
+			: log(std::move(other.log)),
+			severity(other.severity)
+		{
+		}
+
+	private:
+		LogPtr log;
+		LogSeverity severity;
+
+		std::stringstream stream;
+
+		//! noncopyable
+		MakeLog(const MakeLog& other) {}
+	};
+
+	//! Make a MakeLog object
+	inline MakeLog Log(const std::string& file_tag, LogSeverity severity)
+	{
+		return MakeLog(file_tag, severity);
+	}
+
+	//! Make a MakeLog object with the default severity
+	inline MakeLog Log(const std::string& file_tag)
+	{
+		return Log(file_tag, LOG_NORMAL);
+	}
+
+	//! Make a MakeLog object for the default log file
+	inline MakeLog Log(LogSeverity severity)
+	{
+		return Log(g_LogGeneral, severity);
+	}
+
+	//! Make a MakeLog object with the default severity for the default log file
+	inline MakeLog Log()
+	{
+		return Log(g_LogGeneral, LOG_NORMAL);
 	}
 
 }

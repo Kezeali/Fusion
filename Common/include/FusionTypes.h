@@ -64,7 +64,7 @@ namespace FusionEngine
 
 
 	//! Log pointer
-	typedef std::shared_ptr<Log> LogPtr;
+	typedef std::shared_ptr<LogForTag> LogPtr;
 	typedef std::shared_ptr<Module> ModulePtr;
 
 	typedef unsigned char EntityDomain;

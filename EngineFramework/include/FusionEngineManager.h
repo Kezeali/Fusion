@@ -28,6 +28,8 @@
 #ifndef H_FusionEngineManager
 #define H_FusionEngineManager
 
+#include <Raknet/WindowsIncludes.h>
+
 #include "FusionPrerequisites.h"
 
 #include "FusionTypes.h"

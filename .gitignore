@@ -16,3 +16,7 @@ Fast Debug
 /release_package
 AS_DEBUG
 /Documentation/html
+/debug/*.config
+/EditorApp/Generated/*.cs
+/EditorDLL/generated/*.cs
+/EditorDLL/generated/*.cpp

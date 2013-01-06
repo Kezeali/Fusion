@@ -32,11 +32,14 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionException.h"
+#include "FusionTypes.h"
 
-//#define VBO_THRESHOLD 4
+#include <map>
+#include <mutex>
+#include <string>
 
 namespace FusionEngine
 {
@@ -58,7 +61,7 @@ namespace FusionEngine
 	class ILogFile
 	{
 	public:
-		//! Returns a string identifing the type
+		//! Returns a string identifying the type
 		/*!
 		 * \remarks
 		 * This is used to make sure Logs only have one LogFile of any given type.
@@ -73,29 +76,20 @@ namespace FusionEngine
 		virtual void Flush() =0;
 	};
 
-	class LogTask;
-
 	//! Represents a Log
 	/*!
-	* Call Logger#OpenLog() to create a new Log object (Log's constructor is protected.)
+	* Call Logger#OpenLog() to create a new LogForTag object (LogForTag's constructor is private.)
 	*
 	* \sa FusionEngine#Logger
 	*/
-	class Log
+	class LogForTag
 	{
 		friend class Logger;
-		friend class LogTask;
 	public:
 		typedef std::shared_ptr<ILogFile> LogFilePtr;
-		typedef std::map<std::string, LogFilePtr> LogFileList;
 
-	private:
-		//! Constructor +tag +filename +safe
-		Log(const std::string& tag, const std::string& filename);
-
-	public:
 		//! Destructor
-		~Log();
+		~LogForTag();
 
 		//! Returns the tag given to this log
 		inline const std::string& GetTag() const { return m_Tag; }
@@ -111,7 +105,7 @@ namespace FusionEngine
 		void DetachLogFile(LogFilePtr log_file);
 		//! Detaches the target with the given type
 		void DetachLogFile(const std::string& type);
-		//! Returns true if a logfile of the given type is attached
+		//! Returns true if a LogFile of the given type is attached
 		bool HasLogFileType(const std::string& type);
 
 		//! Adds the given string to the log, as is
@@ -132,6 +126,11 @@ namespace FusionEngine
 		void Flush();
 
 	private:
+		typedef std::map<std::string, LogFilePtr> LogFileList;
+
+		//! Constructor: tag, filename
+		LogForTag(const std::string& tag, const std::string& filename);
+
 		void addHeader(LogFilePtr log_file);
 		void addFooter(LogFilePtr log_file);
 
@@ -142,7 +141,7 @@ namespace FusionEngine
 		std::string m_Filename;
 		LogSeverity m_Threshold;
 
-		clan::Mutex m_LogFilesMutex;
+		std::mutex m_LogFilesMutex;
 		LogFileList m_LogFiles;
 		
 	};

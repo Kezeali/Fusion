@@ -30,7 +30,6 @@
 #include "FusionLog.h"
 
 #include <iomanip>
-//#include <time.h>
 #include <boost/date_time.hpp>
 
 #include "FusionException.h"
@@ -38,14 +37,14 @@
 namespace FusionEngine
 {
 
-	Log::Log(const std::string& tag, const std::string& filename)
+	LogForTag::LogForTag(const std::string& tag, const std::string& filename)
 		: m_Filename(filename),
 		m_Tag(tag),
 		m_Threshold(LOG_TRIVIAL)
 	{
 	}
 
-	Log::~Log()
+	LogForTag::~LogForTag()
 	{
 		addFooterToAll();
 	}
@@ -58,16 +57,16 @@ namespace FusionEngine
 	//	}
 	//}
 
-	void Log::addFooterToAll()
+	void LogForTag::addFooterToAll()
 	{
-		clan::MutexSection lock(&m_LogFilesMutex);
+		std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 		for (auto it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			addFooter(it->second);
 		}
 	}
 
-	void Log::addHeader(LogFilePtr log_file)
+	void LogForTag::addHeader(LogFilePtr log_file)
 	{
 		std::stringstream header;
 
@@ -80,7 +79,7 @@ namespace FusionEngine
 		log_file->Write(header.str());
 	}
 
-	void Log::addFooter(LogFilePtr log_file)
+	void LogForTag::addFooter(LogFilePtr log_file)
 	{
 		std::stringstream header;
 
@@ -94,36 +93,36 @@ namespace FusionEngine
 		log_file->Flush();
 	}
 
-	void Log::SetThreshold(LogSeverity threshold)
+	void LogForTag::SetThreshold(LogSeverity threshold)
 	{
 		m_Threshold = threshold;
 	}
 
-	LogSeverity Log::GetThreshold() const
+	LogSeverity LogForTag::GetThreshold() const
 	{
 		return m_Threshold;
 	}
 
-	void Log::AttachLogFile(LogFilePtr log_file)
+	void LogForTag::AttachLogFile(LogFilePtr log_file)
 	{
 		// Open the file
 		log_file->Open(m_Filename);
 		addHeader(log_file);
 
 		{
-			clan::MutexSection lock(&m_LogFilesMutex);
+			std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 			m_LogFiles[log_file->GetType()] = log_file;
 		}
 	}
 
-	void Log::DetachLogFile(LogFilePtr log_file)
+	void LogForTag::DetachLogFile(LogFilePtr log_file)
 	{
 		DetachLogFile(log_file->GetType());
 	}
 
-	void Log::DetachLogFile(const std::string& type)
+	void LogForTag::DetachLogFile(const std::string& type)
 	{
-		clan::MutexSection lock(&m_LogFilesMutex);
+		std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		if (_where != m_LogFiles.end())
 		{
@@ -137,16 +136,16 @@ namespace FusionEngine
 		}
 	}
 
-	bool Log::HasLogFileType(const std::string &type)
+	bool LogForTag::HasLogFileType(const std::string &type)
 	{
-		clan::MutexSection lock(&m_LogFilesMutex);
+		std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		return _where != m_LogFiles.end();
 	}
 
-	void Log::AddVerbatim(const std::string& text)
+	void LogForTag::AddVerbatim(const std::string& text)
 	{
-		clan::MutexSection lock(&m_LogFilesMutex);
+		std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			it->second->Write(text);
@@ -154,7 +153,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Log::AddEntry(const std::string& message, LogSeverity severity)
+	void LogForTag::AddEntry(const std::string& message, LogSeverity severity)
 	{
 		if (severity >= m_Threshold)
 		{
@@ -169,13 +168,13 @@ namespace FusionEngine
 				<< ":" << std::setw(2) << std::setfill('0') << pTime.tm_sec
 				<< "]  " << message;
 
-			// Add a new-line at the end if neccessary, otherwise just flush
+			// Add a new-line at the end if necessary, otherwise just flush
 			if (message.empty() || message[message.length()-1] != '\n')
 				tempStream << std::endl;
 
 			const std::string entry = tempStream.str();
 
-			clan::MutexSection lock(&m_LogFilesMutex);
+			std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			{
 				it->second->Write(entry);
@@ -184,9 +183,9 @@ namespace FusionEngine
 		}
 	}
 
-	void Log::Flush()
+	void LogForTag::Flush()
 	{
-		clan::MutexSection lock(&m_LogFilesMutex);
+		std::lock_guard<std::mutex> lock(m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			it->second->Flush();
 	}

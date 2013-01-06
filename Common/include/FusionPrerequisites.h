@@ -85,7 +85,7 @@ namespace FusionEngine
 	class InputDefinitionLoader;
 	class InputManager;
 	class EntityInstantiator;
-	class Log;
+	class LogForTag;
 	class Logger;
 	class MessageBox;
 	class Module;

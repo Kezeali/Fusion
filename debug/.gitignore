@@ -6,3 +6,4 @@
 *.exp
 *.exe
 *.ilk
+/Microsoft.DTfW.DHL.manifest

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Interface">
+      <UniqueIdentifier>{1cb5bb81-a009-4845-a0ba-da5501f8ab8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated">
+      <UniqueIdentifier>{f68247bb-8dc5-4384-8233-9c29d4a11f63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated\Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Interface\Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Interface\Source Files">
+      <UniqueIdentifier>{c43753b1-f9a3-4e24-8bea-e72f05edfa45}</UniqueIdentifier>
+      <Extensions>cpp</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="interface\FusionEngineManager.i">
+      <Filter>Interface</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="interface\FusionEditor.i">
+      <Filter>Interface</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="generated\FusionEngineManager_swiged.cpp">
+      <Filter>Generated\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="interface\FusionEditorWrapscallion.cpp">
+      <Filter>Interface\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="interface\FusionEngineManagerRiffwrap.cpp">
+      <Filter>Interface\Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="interface\FusionEngineManagerRiffwrap.h">
+      <Filter>Interface\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\FusionEditorWrapscallion.h">
+      <Filter>Interface\Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

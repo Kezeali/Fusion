@@ -126,8 +126,8 @@ namespace FusionEngine
 		streamsize result = (min)(n, amt);
 		if (result != 0)
 		{
-			std::copy( data->begin() + /*DataArray_t::difference_type*/(position), 
-				data->begin() + /*DataArray_t::difference_type*/(position + result), 
+			std::copy( data->begin() + DataArray_t::difference_type(position), 
+				data->begin() + DataArray_t::difference_type(position + result), 
 				s );
 			position += result;
 			return result;
@@ -146,7 +146,7 @@ namespace FusionEngine
 			streamsize amt = 
 				static_cast<streamsize>(data->size() - position);
 			result = (min)(n, amt);
-			std::copy(s, s + result, data->begin() + /*DataArray_t::difference_type*/(position));
+			std::copy(s, s + result, data->begin() + DataArray_t::difference_type(position));
 			position += result;
 		}
 		if (result < n)
@@ -397,8 +397,7 @@ namespace FusionEngine
 
 		if (dataLength > s_SectorSize * numSectors)
 		{
-			std::stringstream str; str << location.first << ", " << location.second;
-			AddLogEntry("Data length for cell [" + str.str() + "] is inconsistent with sectors used (meaning region file is corrupt)", LOG_CRITICAL);
+			Log(LOG_CRITICAL) << "Data length for cell [" << location.first << ", " << location.second << "] is inconsistent with sectors used (meaning region file is corrupt)";
 			return std::unique_ptr<ArchiveIStream>();
 		}
 
@@ -412,7 +411,6 @@ namespace FusionEngine
 		const auto scalarCellIndex = reader.ReadValue<size_t>();
 		if (scalarCellIndex != toScalarIndex(location))
 		{
-			std::stringstream str; str << location.first << ", " << location.second;
 			FSN_EXCEPT(FileTypeException, "Cell data retrieved is not for the expected cell index - the region file is probably corrupt");
 		}
 
@@ -872,8 +870,7 @@ namespace FusionEngine
 
 		regionFile->fragmentationAllowed = m_FragmentationAllowed;
 
-		std::stringstream str; str << coord.x << "," << coord.y;
-		AddLogEntry("cells_loaded", "<RegionFileLoaded [" + str.str() + "]>");
+		Log("cells_loaded") << "RegionFileLoaded [" << coord.x << "," << coord.y << "] {";
 
 		// Fulfill all the requests for this region file
 		CallbackHandles_t::const_accessor accessor;
@@ -886,7 +883,7 @@ namespace FusionEngine
 			}
 		}
 
-		AddLogEntry("cells_loaded", "</RegionFileLoaded[" + str.str() + "]>");
+		Log("cells_loaded") << "} RegionFileLoaded[" << coord.x << "," << coord.y << "]";
 	}
 
 	void RegionCellCache::GetRawCellStreamForReading(const GotCellForReadingCallback& callback, int32_t cell_x, int32_t cell_y)

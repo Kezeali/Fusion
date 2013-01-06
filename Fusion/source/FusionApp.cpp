@@ -47,17 +47,23 @@ public:
 
 		clan::ConsoleWindow conWindow("Console", 80, 10);
 
-		EngineManager manager(args);
+		try
+		{
+			EngineManager manager(args);
 
-		manager.Initialise();
+			manager.AddExtension(std::make_shared<Editor>(args));
 
-		manager.AddExtension(std::make_shared<Editor>(args));
+			manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
+			manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
+			manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetCanvas(), manager.GetCameraSynchroniser())));
 
-		manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
-		manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
-		manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetCanvas(), manager.GetCameraSynchroniser())));
-
-		manager.Run();
+			manager.Run();
+		}
+		catch (std::exception& ex)
+		{
+			std::cerr << "Unhandled exception: " << ex.what();
+			throw;
+		}
 
 		return 0;
 	}

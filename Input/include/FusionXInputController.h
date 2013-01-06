@@ -38,9 +38,10 @@
 //  thus, since core.h has to be included anyway, it is included before xinput.h
 #include <ClanLib/core.h>
 
-#include <XInput.h>
-
-#pragma comment(lib, "XInput.lib")
+#include <C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include\XInput.h>
+//#include <XInput.h>
+//
+//#pragma comment(lib, "XInput.lib")
 
 #define FSN_XINPUT_DEADZONE_LINEAR
 

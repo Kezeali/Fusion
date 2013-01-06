@@ -266,7 +266,7 @@ namespace FusionEngine
 		{
 			clan::PixelBuffer rgbaImage = clan::PixelBuffer(source_dimensions.x, source_dimensions.y, clan::tf_rgba8, (const void*)source);
 
-			clan::Texture2D texture;
+			clan::Texture2D texture(m_Canvas.get_gc(), source_dimensions.x, source_dimensions.y);
 			texture.set_image(m_Canvas.get_gc(), rgbaImage);
 			texture.set_min_filter(clan::filter_linear);
 			texture.set_mag_filter(clan::filter_linear);

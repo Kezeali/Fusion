@@ -97,7 +97,7 @@ namespace FusionEngine
 				if (currentCnsl == NULL)
 					return; // Can't add a console-logfile if the console doesn't exist :P
 
-				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
+				LogForTag::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
 				accessor->second->AttachLogFile(logFile);
 			}
 			else
@@ -117,7 +117,7 @@ namespace FusionEngine
 		{
 			if (file)
 			{
-				Log::LogFilePtr logFile(new PhysFSLogFile());
+				LogForTag::LogFilePtr logFile(new PhysFSLogFile());
 				accessor->second->AttachLogFile(logFile);
 			}
 			else if (!file)
@@ -134,7 +134,7 @@ namespace FusionEngine
 				if (currentCnsl == NULL)
 					return; // Can't add a console-logfile if the console doesn't exist :P
 
-				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
+				LogForTag::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
 				accessor->second->AttachLogFile(logFile);
 			}
 			else if (!console)
@@ -293,13 +293,13 @@ namespace FusionEngine
 		
 		else
 		{
-			LogPtr log( new Log(tag, filename(tag)) );
+			LogPtr log( new LogForTag(tag, filename(tag)) );
 			log->SetThreshold(m_DefaultThreshold);
 
 			if (m_DefaultTarget_File)
 			{
 				// Create a log file
-				Log::LogFilePtr logFile( new PhysFSLogFile() );
+				LogForTag::LogFilePtr logFile( new PhysFSLogFile() );
 				log->AttachLogFile(logFile);
 			}
 			if (m_DefaultTarget_Console)
@@ -309,7 +309,7 @@ namespace FusionEngine
 				// Can't add a console-logfile if the console doesn't exist :P
 				if (currentCnsl == NULL)
 				{
-					Log::LogFilePtr logFile( new ConsoleLogFile(currentCnsl) );
+					LogForTag::LogFilePtr logFile( new ConsoleLogFile(currentCnsl) );
 					log->AttachLogFile(logFile);
 				}
 			}

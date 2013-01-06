@@ -369,9 +369,15 @@ namespace FusionEngine
 
 	void RegionCellArchivist::Stop()
 	{
-		m_Quit.set();
-		m_Thread.join();
-
+		try
+		{
+			m_Quit.set();
+			m_Thread.join();
+		}
+		catch (std::exception& ex)
+		{
+			Log(LOG_NORMAL) << "Exception captured from region archivist thread: " << ex.what();
+		}
 		m_Running = false;
 	}
 
