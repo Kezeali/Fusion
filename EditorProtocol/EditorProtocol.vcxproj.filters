@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="thrift">
+      <UniqueIdentifier>{f908884b-c89d-40b9-a851-2a501067cc09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gen-cpp">
+      <UniqueIdentifier>{94df1550-7b80-407e-990c-27e3557735c3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\stdafx.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\targetver.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionInterprocessCommunication.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="gen-cpp\Editor.h">
+      <Filter>gen-cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="gen-cpp\Editor_constants.h">
+      <Filter>gen-cpp</Filter>
+    </ClInclude>
+    <ClInclude Include="gen-cpp\Editor_types.h">
+      <Filter>gen-cpp</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\stdafx.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionInterprocessCommunication.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="gen-cpp\Editor.cpp">
+      <Filter>gen-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="gen-cpp\Editor_constants.cpp">
+      <Filter>gen-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="gen-cpp\Editor_types.cpp">
+      <Filter>gen-cpp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="thrift\Editor.thrift">
+      <Filter>thrift</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

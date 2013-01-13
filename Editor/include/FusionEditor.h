@@ -143,6 +143,14 @@ namespace FusionEngine
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
 
+		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
+
+		void SelectEntity(const EntityPtr& entity);
+		void DeselectEntity(const EntityPtr& entity);
+		void DeselectAll();
+
+		size_t GetNumSelected() const;
+
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
 		enum Tool
@@ -297,12 +305,6 @@ namespace FusionEngine
 		Vector2 ReturnScreenToWorld(float x, float y) const;
 		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
 
-		void SelectEntity(const EntityPtr& entity);
-		void DeselectEntity(const EntityPtr& entity);
-		void DeselectAll();
-
-		size_t GetNumSelected() const;
-		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const clan::Colorf&)> fn);
 
 		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn);
