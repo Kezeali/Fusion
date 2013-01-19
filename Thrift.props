@@ -4,11 +4,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <IncludePath>$(SolutionDir)..\FusionDependencies\thrift\lib\cpp\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\FusionDependencies\thrift\lib\cpp\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
-    <Link>
-      <AdditionalDependencies>libthrift.lib;libthriftnb.lib;libevent.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
+    <Link />
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>
