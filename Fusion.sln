@@ -41,8 +41,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fusion", "Fusion\Fusion.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineFrameworkTests", "UnitTests\EngineFrameworkTests\EngineFrameworkTests.vcxproj", "{95DF64CF-3BB1-414A-8861-43F9BDF500D7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorQT", "EditorQT\EditorQT.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorProtocol", "EditorProtocol\EditorProtocol.vcxproj", "{C1164CF6-324B-49DA-98C1-9AD28D0C5D3E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorServer", "EditorServer\EditorServer.vcxproj", "{0EBFF5FA-A633-4821-BCAB-0031BAB36260}"
@@ -290,21 +288,6 @@ Global
 		{95DF64CF-3BB1-414A-8861-43F9BDF500D7}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{95DF64CF-3BB1-414A-8861-43F9BDF500D7}.Release|Win32.ActiveCfg = Release|Win32
 		{95DF64CF-3BB1-414A-8861-43F9BDF500D7}.Release|Win32.Build.0 = Release|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|Win32.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|Win32.Build.0 = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Fast Debug|Any CPU.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Fast Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Fast Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Fast Debug|Win32.ActiveCfg = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Fast Debug|Win32.Build.0 = Debug|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Any CPU.ActiveCfg = Release|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Win32.ActiveCfg = Release|Win32
-		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Win32.Build.0 = Release|Win32
 		{C1164CF6-324B-49DA-98C1-9AD28D0C5D3E}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{C1164CF6-324B-49DA-98C1-9AD28D0C5D3E}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
 		{C1164CF6-324B-49DA-98C1-9AD28D0C5D3E}.Debug|Mixed Platforms.Build.0 = Debug|Win32
