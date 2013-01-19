@@ -53,8 +53,9 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
-    <Compile Include="gen-csharp\Editor.cs" />
-    <Compile Include="gen-csharp\Test.cs" />
+    <Compile Include="gen-csharp\FusionEngine\Interprocess\Editor.cs" />
+    <Compile Include="gen-csharp\FusionEngine\Interprocess\EntityComponentData.cs" />
+    <Compile Include="gen-csharp\FusionEngine\Interprocess\EntityData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SettingsFile.cs" />
@@ -83,6 +84,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>robocopy $(SolutionDir)EditorProtocol\gen-csharp $(ProjectDir)gen-csharp /MIR

@@ -47,7 +47,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorServer", "EditorServe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EditorWinForms", "EditorWinForms\EditorWinForms.csproj", "{96EAEED1-3028-431B-93A1-A022BC183A8D}"
 	ProjectSection(ProjectDependencies) = postProject
-		{C1164CF6-324B-49DA-98C1-9AD28D0C5D3E} = {C1164CF6-324B-49DA-98C1-9AD28D0C5D3E}
+		{0EBFF5FA-A633-4821-BCAB-0031BAB36260} = {0EBFF5FA-A633-4821-BCAB-0031BAB36260}
 	EndProjectSection
 EndProject
 Global
