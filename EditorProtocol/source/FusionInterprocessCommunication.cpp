@@ -56,14 +56,37 @@ namespace FusionEngine { namespace Interprocess {
 	{
 	}
 
-	void EditorServiceHandler::test(const Test& t)
+	void EditorServiceHandler::getSelectedEntities(std::vector<EntityData> & _return)
 	{
-		SendToConsole(t.name);
-		editor->ForEachSelected([](const EntityPtr& entity)->bool
+		editor->ForEachSelected([&_return](const EntityPtr& entity)
 		{
-			SendToConsole(entity->GetName());
+			EntityData data;
+			data.id = entity->GetID();
+			data.owner = entity->GetOwnerID();
+			data.name = entity->GetName();
+
+			for (auto component : entity->GetComponents())
+			{
+				try
+				{
+					EntityComponentData componentData;
+					componentData.type = component->GetType();
+					componentData.name = component->GetIdentifier();
+					RakNet::BitStream stream;
+					component->SerialiseEditable(stream);
+					componentData.state.assign(reinterpret_cast<char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
+				}
+				catch (FusionEngine::Exception&)
+				{}
+			}
+			_return.push_back(data);
+
 			return true;
 		});
+	}
+
+	void EditorServiceHandler::selectEntity(const int32_t id)
+	{
 	}
 
 	void EditorServiceHandler::stop()

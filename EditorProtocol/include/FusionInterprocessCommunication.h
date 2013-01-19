@@ -53,7 +53,9 @@ namespace FusionEngine { namespace Interprocess
 	public:
 		EditorServiceHandler(FusionEngine::EngineManager* manager, FusionEngine::Editor* editor);
 
-		void test(const Test& t) final;
+		void getSelectedEntities(std::vector<EntityData> & _return) final;
+
+		void selectEntity(const int32_t id) final;
 
 		void stop() final;
 

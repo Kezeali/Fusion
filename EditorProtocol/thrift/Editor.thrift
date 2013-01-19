@@ -1,11 +1,20 @@
 namespace * FusionEngine.Interprocess
 
-struct Test {
-	1: i32 uid,
-	2: string name,
-	3: binary data
+struct EntityComponentData {
+	2: string type,
+	4: string name,
+	9: binary state
 }
+
+struct EntityData {
+	1: i32 id,
+	2: byte owner,
+	4: string name,
+	9: list<EntityComponentData> components
+}
+
 service Editor {
-	void test(1: Test t)
-	oneway void stop()
+	list<EntityData> getSelectedEntities();
+	oneway void selectEntity(1: i32 id);
+	oneway void stop();
 }
