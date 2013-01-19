@@ -2,12 +2,14 @@ angelscriptDev\sdk\add_on\scriptany
 angelscriptDev\sdk\angelscript\include
 angelscriptDev\sdk\angelscript\lib
 bin
-ClanLib-3.0
 include
 kyotocabinet
 lib
 libRocket
-RakNet_PC-4.033
+RakNet
 support
 tbb_oss
+thrift\lib\cpp
+thrift\lib\cpp\lib
+thrift\lib\csharp
 Visual Leak Detector
