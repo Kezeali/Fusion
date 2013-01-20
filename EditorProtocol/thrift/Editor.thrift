@@ -13,8 +13,21 @@ struct EntityData {
 	9: list<EntityComponentData> components
 }
 
+struct ResourceFile {
+	1: string filename,
+	2: string type,
+	3: bool directory
+}
+
 service Editor {
-	list<EntityData> getSelectedEntities();
-	oneway void selectEntity(1: i32 id);
-	oneway void stop();
+	string GetUserDataDirectory();
+	string GetDataDirectory();
+	list<ResourceFile> GetResources(1: string path);
+	list<ResourceFile> GetResourcesRecursive(1: string path);
+	string GetResourceType(1: string path);
+	list<EntityData> GetSelectedEntities();
+	oneway void SelectEntity(1: i32 id);
+	oneway void FocusOnEntity(1: i32 id);
+	bool CreateEntity(1: string transformType, 4: bool synced, 5: bool streamed);
+	oneway void Stop();
 }

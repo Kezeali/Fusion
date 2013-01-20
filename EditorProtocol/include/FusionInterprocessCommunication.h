@@ -53,15 +53,31 @@ namespace FusionEngine { namespace Interprocess
 	public:
 		EditorServiceHandler(FusionEngine::EngineManager* manager, FusionEngine::Editor* editor);
 
-		void getSelectedEntities(std::vector<EntityData> & _return) final;
+		void GetUserDataDirectory(std::string& _return) final;
 
-		void selectEntity(const int32_t id) final;
+		void GetDataDirectory(std::string& _return) final;
 
-		void stop() final;
+		void GetResources(std::vector<ResourceFile> & _return, const std::string& path) final;
+
+		void GetResourcesRecursive(std::vector<ResourceFile> & _return, const std::string& path) final;
+
+		void GetResourceType(std::string& _return, const std::string& path) final;
+
+		void GetSelectedEntities(std::vector<EntityData> & _return) final;
+
+		void SelectEntity(const int32_t id) final;
+
+		void FocusOnEntity(const int32_t id) final;
+
+		bool CreateEntity(const std::string& transformType, const bool synced, const bool streamed) final;
+
+		void Stop() final;
 
 	private:
 		FusionEngine::EngineManager* engineManager;
 		FusionEngine::Editor* editor;
+
+		void MakeResourceList(std::vector<ResourceFile>& out, const std::vector<std::string>& files);
 	};
 
 	class EditorServer

@@ -184,7 +184,8 @@ namespace FusionEngine
 
 				if (recursive && PHYSFS_isDirectory(filePath.c_str()))
 				{
-					find_all(filePath, predicate, recursive);
+					auto subResults = find_all(filePath + "/", predicate, recursive);
+					results.insert(results.end(), subResults.begin(), subResults.end());
 				}
 			}
 			PHYSFS_freeList(files);

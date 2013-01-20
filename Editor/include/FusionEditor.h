@@ -140,6 +140,10 @@ namespace FusionEngine
 
 		virtual std::shared_ptr<ResourceEditor> StartResourceEditor(const std::string& path, const Vector2& offset);
 
+		std::string GetResourceType(const std::string& path);
+
+		EntityPtr CreateEntity(const std::string& transform_type, const Vector2& pos, float angle, bool synced, bool streaming);
+
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
 
@@ -148,6 +152,9 @@ namespace FusionEngine
 		void SelectEntity(const EntityPtr& entity);
 		void DeselectEntity(const EntityPtr& entity);
 		void DeselectAll();
+
+		void SelectEntityWithID(const ObjectID id);
+		void GoToEntityWithID(const ObjectID id);
 
 		size_t GetNumSelected() const;
 
@@ -275,7 +282,6 @@ namespace FusionEngine
 
 		void BuildCreateEntityScript();
 
-		EntityPtr CreateEntity(const std::string& transform_type, const Vector2& pos, float angle, bool synced, bool streaming);
 		void DeleteEntity(const EntityPtr& entity);
 		void AddEntityToDelete(const EntityPtr& entity);
 

@@ -42,6 +42,8 @@
 #include "FusionEngineManager.h"
 #include "FusionEditor.h"
 #include "FusionEntity.h"
+#include "FusionViewport.h"
+#include "FusionPhysFS.h"
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -56,7 +58,47 @@ namespace FusionEngine { namespace Interprocess {
 	{
 	}
 
-	void EditorServiceHandler::getSelectedEntities(std::vector<EntityData> & _return)
+	void EditorServiceHandler::GetUserDataDirectory(std::string & _return)
+	{
+		_return = PHYSFS_getWriteDir();
+	}
+
+	void EditorServiceHandler::GetDataDirectory(std::string & _return)
+	{
+		_return = PHYSFS_getBaseDir();
+	}
+
+	void EditorServiceHandler::MakeResourceList(std::vector<ResourceFile>& out, const std::vector<std::string>& files)
+	{
+		for (auto file : files)
+		{
+			ResourceFile resource;
+			resource.filename = file;
+			resource.directory = PHYSFS_isDirectory(file.c_str()) != 0;
+			if (!resource.directory)
+				resource.type = editor->GetResourceType(file);
+			out.push_back(resource);
+		}
+	}
+	
+	void EditorServiceHandler::GetResources(std::vector<ResourceFile> & _return, const std::string& path)
+	{
+		auto files = PhysFSHelp::list_content(path);
+		MakeResourceList(_return, files);
+	}
+
+	void EditorServiceHandler::GetResourcesRecursive(std::vector<ResourceFile> & _return, const std::string& path)
+	{
+		auto files = PhysFSHelp::list_content(path, true);
+		MakeResourceList(_return, files);
+	}
+
+	void EditorServiceHandler::GetResourceType(std::string & _return, const std::string& path)
+	{
+		editor->GetResourceType(path);
+	}
+
+	void EditorServiceHandler::GetSelectedEntities(std::vector<EntityData> & _return)
 	{
 		editor->ForEachSelected([&_return](const EntityPtr& entity)
 		{
@@ -85,11 +127,27 @@ namespace FusionEngine { namespace Interprocess {
 		});
 	}
 
-	void EditorServiceHandler::selectEntity(const int32_t id)
+	void EditorServiceHandler::SelectEntity(const int32_t id)
 	{
+		editor->SelectEntityWithID(ObjectID(id));
+	}
+	
+	void EditorServiceHandler::FocusOnEntity(const int32_t id)
+	{
+		editor->GoToEntityWithID(id);
 	}
 
-	void EditorServiceHandler::stop()
+	bool EditorServiceHandler::CreateEntity(const std::string& transformType, const bool synced, const bool streamed)
+	{
+		auto camera = editor->GetViewport()->GetCamera();
+		auto entity = editor->CreateEntity(transformType, camera->GetSimPosition(), camera->GetAngle(), synced, streamed);
+		if (entity)
+			return true;
+		else
+			return false;
+	}
+
+	void EditorServiceHandler::Stop()
 	{
 		editor->RequestQuit();
 	}

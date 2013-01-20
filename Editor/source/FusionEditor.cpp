@@ -1277,6 +1277,11 @@ namespace FusionEngine
 		return StartResourceEditor(filename, offset);
 	}
 
+	std::string Editor::GetResourceType(const std::string& path)
+	{
+		return m_ResourceDatabase->GetResourceType(path);
+	}
+
 	void Editor::GoToEntity(const EntityPtr& entity)
 	{
 		const auto entityPosition = entity->GetPosition();
@@ -2239,6 +2244,20 @@ namespace FusionEngine
 		auto selectedEntities = m_SelectedEntities;
 		for (auto it = selectedEntities.begin(), end = selectedEntities.end(); it != end; ++it)
 			DeselectEntity(*it);
+	}
+
+	void Editor::SelectEntityWithID(const ObjectID id)
+	{
+		auto entity = m_EntityManager->GetEntity(id, true);
+		if (entity)
+			SelectEntity(entity);
+	}
+
+	void Editor::GoToEntityWithID(const ObjectID id)
+	{
+		auto entity = m_EntityManager->GetEntity(id, true);
+		if (entity)
+			GoToEntity(entity);
 	}
 
 	size_t Editor::GetNumSelected() const

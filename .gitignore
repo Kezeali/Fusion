@@ -17,6 +17,6 @@ Fast Debug
 AS_DEBUG
 /Documentation/html
 /debug/*.config
-/EditorApp/Generated/*.cs
-/EditorDLL/generated/*.cs
-/EditorDLL/generated/*.cpp
+/EditorProtocol/gen-cpp
+/EditorProtocol/gen-csharp
+/EditorWinForms/gen-csharp
