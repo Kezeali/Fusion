@@ -31,6 +31,7 @@
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
             this.directoryTreeView = new System.Windows.Forms.TreeView();
             this.filesListView = new System.Windows.Forms.ListView();
+            this.refreshBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
             this.mainSplitContainer.Panel2.SuspendLayout();
@@ -73,6 +74,10 @@
             this.filesListView.UseCompatibleStateImageBehavior = false;
             this.filesListView.View = System.Windows.Forms.View.Tile;
             // 
+            // refreshBackgroundWorker
+            // 
+            this.refreshBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.refreshBackgroundWorker_DoWork);
+            // 
             // ResourceBrowser
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -96,5 +101,6 @@
         private System.Windows.Forms.SplitContainer mainSplitContainer;
         private System.Windows.Forms.TreeView directoryTreeView;
         private System.Windows.Forms.ListView filesListView;
+        private System.ComponentModel.BackgroundWorker refreshBackgroundWorker;
     }
 }

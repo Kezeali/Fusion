@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.menuStripMain = new System.Windows.Forms.MenuStrip();
             this.editorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -47,6 +48,9 @@
             this.loadResourceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.waitToConnectTimer = new System.Windows.Forms.Timer(this.components);
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.editorServerProcess = new System.Diagnostics.Process();
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -191,6 +195,22 @@
             this.websiteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.websiteToolStripMenuItem.Text = "Website";
             // 
+            // waitToConnectTimer
+            // 
+            this.waitToConnectTimer.Interval = 1000;
+            this.waitToConnectTimer.Tick += new System.EventHandler(this.waitToConnectTimer_Tick);
+            // 
+            // editorServerProcess
+            // 
+            this.editorServerProcess.StartInfo.Domain = "";
+            this.editorServerProcess.StartInfo.ErrorDialog = true;
+            this.editorServerProcess.StartInfo.LoadUserProfile = false;
+            this.editorServerProcess.StartInfo.Password = null;
+            this.editorServerProcess.StartInfo.StandardErrorEncoding = null;
+            this.editorServerProcess.StartInfo.StandardOutputEncoding = null;
+            this.editorServerProcess.StartInfo.UserName = "";
+            this.editorServerProcess.SynchronizingObject = this;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -204,6 +224,7 @@
             this.Name = "MainForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Fusion Editor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStripMain.ResumeLayout(false);
             this.menuStripMain.PerformLayout();
@@ -233,6 +254,9 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem websiteToolStripMenuItem;
+        private System.Windows.Forms.Timer waitToConnectTimer;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Diagnostics.Process editorServerProcess;
     }
 }
 

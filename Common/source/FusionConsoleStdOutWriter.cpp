@@ -54,12 +54,10 @@ namespace FusionEngine
 	{
 		if (!m_Active)
 			return;
-		//std::string e_marker = Console::getSingleton().GetExceptionMarker();
-		//std::string w_marker = Console::getSingleton().GetWarningMarker();
 
-		std::string linemessage = "-- " + clan::StringHelp::local8_to_text(message.c_str());
-		clan::Console::write_line( linemessage.c_str() );
-		//std::cout << "--  " << message << std::endl;
+		auto linemessage = "-- " + clan::StringHelp::local8_to_text(message);
+		clan::Console::write_line(linemessage);
+		std::cout << message << std::endl;
 	}
 
 }

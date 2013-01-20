@@ -9,6 +9,7 @@ namespace EditorWinForms
     public class SettingsFile
     {
         string serverPath = "EditorServer.exe";
+        int maxConnectionRetries = 3;
 
         public string ServerPath
         {
@@ -20,6 +21,16 @@ namespace EditorWinForms
             }
         }
 
+        public int MaxConnectionRetries
+        {
+            get { return maxConnectionRetries; }
+            set
+            {
+                maxConnectionRetries = value;
+                Save();
+            }
+        }
+
         public SettingsFile()
         {
             try
@@ -27,6 +38,9 @@ namespace EditorWinForms
                 using (var reader = new System.IO.StreamReader("config.txt"))
                 {
                     serverPath = reader.ReadLine();
+                    string line = reader.ReadLine();
+                    if (line.Length > 0)
+                        int.TryParse(line, out maxConnectionRetries);
                 }
             }
             catch
@@ -48,6 +62,7 @@ namespace EditorWinForms
                 using (var writer = new System.IO.StreamWriter("config.txt"))
                 {
                     writer.WriteLine(serverPath);
+                    writer.WriteLine(maxConnectionRetries);
                 }
             }
             catch

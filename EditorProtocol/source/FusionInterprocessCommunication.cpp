@@ -97,6 +97,26 @@ namespace FusionEngine { namespace Interprocess {
 	{
 		editor->GetResourceType(path);
 	}
+	
+	void EditorServiceHandler::InterpretConsoleCommand(const std::string& command)
+	{
+		Console::getSingleton().Interpret(command);
+	}
+
+	void EditorServiceHandler::GetConsoleCommandSuggestions(std::vector<std::string> & _return, const std::string& command)
+	{
+		Console::getSingleton().ListPrefixedCommands(command, _return, 20);
+	}
+
+	void EditorServiceHandler::GetConsoleCommandParameterSuggestions(std::vector<std::string> & _return, const std::string& command)
+	{
+		_return = Console::getSingleton().ListPossibleCompletions(command);
+	}
+
+	void EditorServiceHandler::Autocomplete(std::string& _return, const std::string& command, const std::string& completion)
+	{
+		_return = Console::getSingleton().Autocomplete(command, completion);
+	}
 
 	void EditorServiceHandler::GetSelectedEntities(std::vector<EntityData> & _return)
 	{

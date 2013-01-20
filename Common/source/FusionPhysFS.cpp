@@ -36,10 +36,10 @@
 #include <stack>
 #include <regex>
 
-#include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/range/iterator_range.hpp>
 
 namespace FusionEngine
 {
@@ -175,7 +175,11 @@ namespace FusionEngine
 			for (auto it = files; *it != NULL; ++it)
 			{
 				std::string filename = *it;
-				std::string filePath = path + filename;
+				std::string filePath;
+				if (path.empty() || path[path.length()-1] != '/')
+					filePath = path + "/" + filename;
+				else
+					filePath = path + filename;
 
 				if (!predicate || predicate(filePath))
 				{

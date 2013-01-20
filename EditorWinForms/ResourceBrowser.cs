@@ -84,6 +84,11 @@ namespace EditorWinForms
 
         private void ResourceBrowser_Shown(object sender, EventArgs e)
         {
+            refreshBackgroundWorker.RunWorkerAsync();
+        }
+
+        private void refreshBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
             RefreshBrowser();
         }
     }

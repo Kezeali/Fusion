@@ -47,6 +47,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Console.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Console.Designer.cs">
+      <DependentUpon>Console.cs</DependentUpon>
+    </Compile>
     <Compile Include="gen-csharp\FusionEngine\Interprocess\ResourceFile.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -66,6 +72,9 @@
       <DependentUpon>ResourceBrowser.cs</DependentUpon>
     </Compile>
     <Compile Include="SettingsFile.cs" />
+    <EmbeddedResource Include="Console.resx">
+      <DependentUpon>Console.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -63,6 +63,14 @@ namespace FusionEngine { namespace Interprocess
 
 		void GetResourceType(std::string& _return, const std::string& path) final;
 
+		void InterpretConsoleCommand(const std::string& command) final;
+
+		void GetConsoleCommandSuggestions(std::vector<std::string> & _return, const std::string& command) final;
+
+		void GetConsoleCommandParameterSuggestions(std::vector<std::string> & _return, const std::string& command) final;
+
+		void Autocomplete(std::string& _return, const std::string& command, const std::string& completion) final;
+
 		void GetSelectedEntities(std::vector<EntityData> & _return) final;
 
 		void SelectEntity(const int32_t id) final;

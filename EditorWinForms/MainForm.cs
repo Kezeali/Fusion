@@ -31,40 +31,35 @@ namespace EditorWinForms
         SettingsFile settings = new SettingsFile();
 
         ResourceBrowser resourceBrowser = new ResourceBrowser();
+        Console console = new Console();
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             try
             {
-                var process = System.Diagnostics.Process.Start(settings.ServerPath);
+                editorServerProcess.StartInfo.FileName = settings.ServerPath;
+
+                editorServerProcess.OutputDataReceived += editorServerProcess_OutputDataReceived;
+                console.Show();
 
                 // Attempt to connect if the process was started successfully
-                if (process != null)
+                if (editorServerProcess.Start())
                 {
-                    // TODO: use timer control to fire this
-                    int retries = 3;
-                    while (!transport.IsOpen && --retries > 0)
-                    {
-                        transport.Open();
-                        var result = MessageBox.Show("Failed to connect to Fusion, retry?", "Failed to connect", MessageBoxButtons.RetryCancel);
-                        if (result == System.Windows.Forms.DialogResult.Cancel)
-                            break;
-                    }
-                    if (!transport.IsOpen)
-                        MessageBox.Show("Failed to connect to Fusion");
+                    waitToConnectTimer.Start();
                 }
                 else
                 {
-                    MessageBox.Show("Failed to start Fusion at (path): " + settings.ServerPath);
+                    MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath);
                 }
             }
-            catch
+            catch (FileNotFoundException)
             {
                 MessageBox.Show("Failed to find Fusion server at (path): " + settings.ServerPath);
             }
-
-            resourceBrowser.Client = client;
-            resourceBrowser.Show();
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath + ".\n\n" + ex.Message);
+            }
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -80,8 +75,61 @@ namespace EditorWinForms
 
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            client.Stop();
+            if (transport.IsOpen)
+                client.Stop();
             this.Close();
         }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (transport.IsOpen)
+                client.Stop();
+        }
+
+        private void waitToConnectTimer_Tick(object sender, EventArgs e)
+        {
+            AttemptToConnect();
+        }
+
+        int connectionAttempts = 0;
+
+        private void AttemptToConnect()
+        {
+            console.AddToConsole(string.Format("Attempting to connect. Max {0} tries", settings.MaxConnectionRetries));
+            if (!transport.IsOpen)
+            {
+                if (connectionAttempts++ < settings.MaxConnectionRetries)
+                {
+                    try
+                    {
+                        transport.Open();
+                    }
+                    catch (System.Net.Sockets.SocketException ex)
+                    {
+                        console.AddToConsole(ex.Message);
+                    }
+                }
+                else
+                {
+                    console.AddToConsole("Failed to connect");
+                    waitToConnectTimer.Stop();
+                }
+            }
+
+            if (transport.IsOpen)
+            {
+                console.AddToConsole("Connected");
+                waitToConnectTimer.Stop();
+
+                resourceBrowser.Client = client;
+                resourceBrowser.Show();
+            }
+        }
+
+        void editorServerProcess_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
+        {
+            console.AddToConsole(e.Data);
+        }
+
     }
 }
