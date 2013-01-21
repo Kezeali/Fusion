@@ -26,9 +26,8 @@ service Editor {
 	list<ResourceFile> GetResourcesRecursive(1: string path);
 	string GetResourceType(1: string path);
 	oneway void InterpretConsoleCommand(1: string command);
-	list<string> GetConsoleCommandSuggestions(1: string command);
-	list<string> GetConsoleCommandParameterSuggestions(1: string command);
-	string Autocomplete(1: string command, 2: string completion);
+	list<string> FindConsoleCommandSuggestions(1: string command);
+	string CompleteCommand(1: string command, 2: string completion);
 	list<EntityData> GetSelectedEntities();
 	oneway void SelectEntity(1: i32 id);
 	oneway void FocusOnEntity(1: i32 id);

@@ -28,9 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.consoleTextBox = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.commandTextBox = new System.Windows.Forms.TextBox();
+            this.autocompleteContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.SuspendLayout();
             // 
             // consoleTextBox
@@ -45,30 +46,27 @@
             this.consoleTextBox.Size = new System.Drawing.Size(284, 235);
             this.consoleTextBox.TabIndex = 0;
             // 
-            // textBox2
+            // commandTextBox
             // 
-            this.textBox2.Location = new System.Drawing.Point(1, 241);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(203, 20);
-            this.textBox2.TabIndex = 1;
+            this.commandTextBox.Location = new System.Drawing.Point(1, 241);
+            this.commandTextBox.Name = "commandTextBox";
+            this.commandTextBox.Size = new System.Drawing.Size(282, 20);
+            this.commandTextBox.TabIndex = 1;
+            this.commandTextBox.TextChanged += new System.EventHandler(this.commandTextBox_TextChanged);
             // 
-            // button1
+            // autocompleteContextMenuStrip
             // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(208, 239);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 2;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
+            this.autocompleteContextMenuStrip.Name = "autocompleteContextMenuStrip";
+            this.autocompleteContextMenuStrip.ShowImageMargin = false;
+            this.autocompleteContextMenuStrip.Size = new System.Drawing.Size(128, 26);
+            this.autocompleteContextMenuStrip.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.autocompleteContextMenuStrip_ItemClicked);
             // 
             // Console
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 262);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.commandTextBox);
             this.Controls.Add(this.consoleTextBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "Console";
@@ -81,8 +79,8 @@
         #endregion
 
         private System.Windows.Forms.TextBox consoleTextBox;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox commandTextBox;
+        private System.Windows.Forms.ContextMenuStrip autocompleteContextMenuStrip;
 
     }
 }

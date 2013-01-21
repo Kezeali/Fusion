@@ -140,11 +140,12 @@ namespace FusionEngine
 			data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
 		}
 
-		clan::VertexArrayBuffer buffer(m_Canvas.get_gc(), data.data(), sizeof(GeometryVertex) * num_indices);
+		clan::VertexArrayVector<GeometryVertex> vertBuffer(m_Canvas.get_gc(), data);
+		//clan::VertexArrayBuffer buffer(m_Canvas.get_gc(), data.data(), sizeof(GeometryVertex) * num_indices);
 
 		GeometryData* compiledGeometry = new GeometryData;
 		compiledGeometry->num_verticies = num_indices;
-		compiledGeometry->vertex_buffer = buffer;
+		compiledGeometry->vertex_buffer = vertBuffer;
 		compiledGeometry->texture = reinterpret_cast<RocketCLTexture*>(texture);
 
 		//m_Geometry.push_back(buffer);
@@ -158,10 +159,9 @@ namespace FusionEngine
 		GeometryData* data = (GeometryData*)geometry;
 		clan::VertexArrayBuffer vertex_buffer = data->vertex_buffer;
 
-
 		m_Canvas.push_modelview();
 
-		//m_Canvas.set_map_mode(cl_map_2d_upper_left);
+		//m_Canvas.set_map_mode(clan::map_2d_upper_left);
 
 		m_Canvas.mult_translate(translation.x, translation.y);
 		//m_Canvas.set_translate(translation.x, translation.y);
@@ -175,14 +175,14 @@ namespace FusionEngine
 			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
 			prim_array.set_attributes(clan::attrib_texture_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, tex_coord), sizeof(GeometryVertex));
 
-			m_Canvas.get_gc().set_program_object(clan::program_single_texture);
+			m_Canvas.set_program_object(clan::program_single_texture);
 		}
 		else
 		{
 			prim_array.set_attributes(clan::attrib_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, position), sizeof(GeometryVertex));
 			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
 
-			m_Canvas.get_gc().set_program_object(clan::program_color_only);
+			m_Canvas.set_program_object(clan::program_color_only);
 		}
 
 		if (data->texture)
@@ -204,7 +204,6 @@ namespace FusionEngine
 		//m_Canvas.reset_buffer_control();
 
 		m_Canvas.pop_modelview();
-
 	}
 
 	void RocketRenderer::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
@@ -264,7 +263,7 @@ namespace FusionEngine
 	{
 		try
 		{
-			clan::PixelBuffer rgbaImage = clan::PixelBuffer(source_dimensions.x, source_dimensions.y, clan::tf_rgba8, (const void*)source);
+			clan::PixelBuffer rgbaImage = clan::PixelBuffer(source_dimensions.x, source_dimensions.y, clan::tf_rgba8, reinterpret_cast<const void*>(source));
 
 			clan::Texture2D texture(m_Canvas.get_gc(), source_dimensions.x, source_dimensions.y);
 			texture.set_image(m_Canvas.get_gc(), rgbaImage);

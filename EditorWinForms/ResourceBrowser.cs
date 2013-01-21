@@ -89,7 +89,13 @@ namespace EditorWinForms
 
         private void refreshBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            RefreshBrowser();
+            try
+            {
+                RefreshBrowser();
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

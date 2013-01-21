@@ -103,17 +103,15 @@ namespace FusionEngine { namespace Interprocess {
 		Console::getSingleton().Interpret(command);
 	}
 
-	void EditorServiceHandler::GetConsoleCommandSuggestions(std::vector<std::string> & _return, const std::string& command)
+	void EditorServiceHandler::FindConsoleCommandSuggestions(std::vector<std::string> & _return, const std::string& command)
 	{
-		Console::getSingleton().ListPrefixedCommands(command, _return, 20);
+		if (command.find(' ') != std::string::npos)
+			_return = Console::getSingleton().ListPossibleCompletions(command);
+		else
+			Console::getSingleton().ListPrefixedCommands(command, _return, 20);
 	}
 
-	void EditorServiceHandler::GetConsoleCommandParameterSuggestions(std::vector<std::string> & _return, const std::string& command)
-	{
-		_return = Console::getSingleton().ListPossibleCompletions(command);
-	}
-
-	void EditorServiceHandler::Autocomplete(std::string& _return, const std::string& command, const std::string& completion)
+	void EditorServiceHandler::CompleteCommand(std::string& _return, const std::string& command, const std::string& completion)
 	{
 		_return = Console::getSingleton().Autocomplete(command, completion);
 	}
