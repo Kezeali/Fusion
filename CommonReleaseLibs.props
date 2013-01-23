@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>angelscript.lib;physfs.lib;yaml-cpp.lib;Box2D.lib;RakNetDLL.lib;ws2_32.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;kyotocabinet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscript.lib;physfs.lib;libyaml-cppmd.lib;Box2D.lib;RakNetDLL.lib;ws2_32.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;kyotocabinet.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />
