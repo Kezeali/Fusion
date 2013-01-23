@@ -542,7 +542,7 @@ namespace FusionEngine
 	void ContextMenu::OnRawInput(const RawInput &input)
 	{
 		if (m_AutoHide &&
-			input.ButtonPressed && input.InputType == RawInput::Button && input.Code == mouse_left &&
+			input.ButtonPressed && input.InputType == RawInput::Button && input.Code == clan::mouse_left &&
 			!isPseudoClassSetOnAnyChild("hover"))
 		{
 			Hide();

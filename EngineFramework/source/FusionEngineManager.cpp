@@ -544,8 +544,6 @@ namespace FusionEngine
 		// Note that this intentionally uses the same unload method
 		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, &FileMetadataResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("SPRITE", &LoadLegacySpriteResource, &UnloadLegacySpriteResource));
-
 		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource, &FileMetadataResourceHasChanged));
 
 		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource, &FileMetadataResourceHasChanged));

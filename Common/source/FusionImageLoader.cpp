@@ -160,41 +160,5 @@ namespace FusionEngine
 			resource->setLoaded(true);
 		}
 	}
-
-	void LoadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
-	{
-		if (resource->IsLoaded())
-		{
-			delete static_cast<LegacySpriteDefinition*>(resource->GetDataPtr());
-		}
-
-		LegacySpriteDefinition* def = new LegacySpriteDefinition();
-		try
-		{
-			LoadSpriteDefinition(*def, resource->GetPath(), vdir);
-		}
-		catch (clan::Exception&)
-		{
-			delete def;
-			resource->SetDataPtr(nullptr);
-			resource->setLoaded(false);
-			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
-		}
-		
-		resource->SetDataPtr(def);
-		resource->setLoaded(true);
-	}
-
-	void UnloadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
-	{
-		if (resource->IsLoaded())
-		{
-			resource->setLoaded(false);
-
-			delete static_cast<LegacySpriteDefinition*>(resource->GetDataPtr());
-		}
-
-		resource->SetDataPtr(nullptr);
-	}
 	
 };

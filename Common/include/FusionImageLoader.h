@@ -58,11 +58,6 @@ namespace FusionEngine
 	//! 3D Texture resource loader callback
 	void LoadTexture3DResourceIntoGC(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
 
-	//! Sprite resource loader callback
-	void LoadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
-	//! Sprite resource unloader callback
-	void UnloadLegacySpriteResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
-
 }
 
 #endif

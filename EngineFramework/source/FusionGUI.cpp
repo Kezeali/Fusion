@@ -259,26 +259,26 @@ namespace FusionEngine
 		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
-		case mouse_left:
+		case clan::mouse_left:
 			m_Context->ProcessMouseButtonDown(0, modifier);
 			break;
-		case mouse_right:
+		case clan::mouse_right:
 			m_Context->ProcessMouseButtonDown(1, modifier);
 			break;
-		case mouse_middle:
+		case clan::mouse_middle:
 			m_Context->ProcessMouseButtonDown(2, modifier);
 			break;
-		case mouse_xbutton1:
+		case clan::mouse_xbutton1:
 			m_Context->ProcessMouseButtonDown(3, modifier);
 			break;
-		case mouse_xbutton2:
+		case clan::mouse_xbutton2:
 			m_Context->ProcessMouseButtonDown(4, modifier);
 			break;
-		case mouse_wheel_up:
+		case clan::mouse_wheel_up:
 			m_Context->ProcessMouseWheel(-1, modifier);
 			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
-		case mouse_wheel_down:
+		case clan::mouse_wheel_down:
 			m_Context->ProcessMouseWheel(1, modifier);
 			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
@@ -292,25 +292,25 @@ namespace FusionEngine
 		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
-		case mouse_left:
+		case clan::mouse_left:
 			m_Context->ProcessMouseButtonUp(0, modifier);
 			break;
-		case mouse_right:
+		case clan::mouse_right:
 			m_Context->ProcessMouseButtonUp(1, modifier);
 			break;
-		case mouse_middle:
+		case clan::mouse_middle:
 			m_Context->ProcessMouseButtonUp(2, modifier);
 			break;
-		case mouse_xbutton1:
+		case clan::mouse_xbutton1:
 			m_Context->ProcessMouseButtonUp(3, modifier);
 			break;
-		case mouse_xbutton2:
+		case clan::mouse_xbutton2:
 			m_Context->ProcessMouseButtonUp(4, modifier);
 			break;
-		case mouse_wheel_up:
+		case clan::mouse_wheel_up:
 			m_Context->ProcessMouseWheel(0, modifier);
 			break;
-		case mouse_wheel_down:
+		case clan::mouse_wheel_down:
 			m_Context->ProcessMouseWheel(0, modifier);
 			break;
 		}
@@ -330,7 +330,7 @@ namespace FusionEngine
 
 	inline bool isNonDisplayKey(int id)
 	{
-		return id != keycode_backspace && id != keycode_escape && id != keycode_delete;
+		return id != clan::keycode_backspace && id != clan::keycode_escape && id != clan::keycode_delete;
 	}
 
 	void GUIContext::onKeyDown(const clan::InputEvent &ev)

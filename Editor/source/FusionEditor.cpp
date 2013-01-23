@@ -382,7 +382,7 @@ namespace FusionEngine
 			clan::Rectf box(clan::Sizef(50, 50));
 			box.translate(pos.x - box.get_width() * 0.5f, pos.y - box.get_height() * 0.5f);
 
-			canvas.box(box, GetColour(it));
+			canvas.draw_box(box, GetColour(it));
 		}
 
 		if (m_EditCam)
@@ -391,7 +391,7 @@ namespace FusionEngine
 			auto center = m_EditCam->GetPosition();
 			auto radius = ToRenderUnits(m_CamRange);
 			clan::Rectf camRect(center.x - radius, center.y - radius, center.x + radius, center.y + radius);
-			canvas.box(camRect, rangeColour);
+			canvas.draw_box(camRect, rangeColour);
 		}
 
 		if (m_PolygonTool && m_PolygonTool->IsActive())
@@ -418,8 +418,8 @@ namespace FusionEngine
 		{
 			auto fillC = clan::Colorf::aquamarine;
 			fillC.set_alpha(0.20f);
-			canvas.box(m_SelectionBox, clan::Colorf::white);
-			canvas.fill(m_SelectionBox, fillC);
+			canvas.draw_box(m_SelectionBox, clan::Colorf::white);
+			canvas.draw_fill(m_SelectionBox, fillC);
 		}
 	}
 
@@ -1127,15 +1127,15 @@ namespace FusionEngine
 
 		if (m_EditCam && !MouseOverUI(m_GUIContext))
 		{
-			if (!m_DisplayWindow.get_ic().get_keyboard().get_keycode(keycode_control))
+			if (!m_DisplayWindow.get_ic().get_keyboard().get_keycode(clan::keycode_control))
 			{
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(keycode_up))
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(clan::keycode_up))
 					m_CamVelocity.y = -400;
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(keycode_down))
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(clan::keycode_down))
 					m_CamVelocity.y = 400;
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(keycode_left))
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(clan::keycode_left))
 					m_CamVelocity.x = -400;
-				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(keycode_right))
+				if (m_DisplayWindow.get_ic().get_keyboard().get_keycode(clan::keycode_right))
 					m_CamVelocity.x = 400;
 			}
 			if (!v2Equal(m_CamVelocity, Vector2(0.f, 0.f)))
@@ -1145,14 +1145,14 @@ namespace FusionEngine
 				m_EditCam->SetPosition(camPos.x + camTrans.x, camPos.y + camTrans.y);
 
 				const auto kb = m_DisplayWindow.get_ic().get_keyboard();
-				if (!(kb.get_keycode(keycode_up) || kb.get_keycode(keycode_down)))
+				if (!(kb.get_keycode(clan::keycode_up) || kb.get_keycode(clan::keycode_down)))
 				{
 					if (m_CamVelocity.length() > 1.f)
 						m_CamVelocity.y *= 0.75f * dt;
 					else
 						m_CamVelocity.y = 0.f;
 				}
-				if (!(kb.get_keycode(keycode_left) || kb.get_keycode(keycode_right)))
+				if (!(kb.get_keycode(clan::keycode_left) || kb.get_keycode(clan::keycode_right)))
 				{
 					if (m_CamVelocity.length() > 1.f)
 						m_CamVelocity.x *= 0.5f * dt;
@@ -1597,20 +1597,20 @@ namespace FusionEngine
 		{
 			switch (ev.id)
 			{
-			case keycode_s:
+			case clan::keycode_s:
 				if (ev.shift || m_SaveName.empty())
 					ShowSaveDialog();
 				else
 					m_SaveMap = true;
 				break;
-			case keycode_o:
+			case clan::keycode_o:
 				ShowLoadDialog();
 				break;
 
-			case keycode_c:
+			case clan::keycode_c:
 				CopySelectedEntities();
 				break;
-			case keycode_v:
+			case clan::keycode_v:
 				{
 					Vector2 offset = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 					TranslateScreenToWorld(&offset.x, &offset.y);
@@ -1618,35 +1618,35 @@ namespace FusionEngine
 				}
 				break;
 
-			case keycode_r:
+			case clan::keycode_r:
 				{
 					ToggleResourceBrowser();
 				}
 				break;
 
-			case keycode_0:
+			case clan::keycode_0:
 				m_EditCam->SetZoom(1.0);
 				break;
 
-			case keycode_p:
+			case clan::keycode_p:
 				{
 					CreatePropertiesWindowForSelected();
 				}
 				break;
 
-			case keycode_left:
+			case clan::keycode_left:
 				if (!m_Dragging)
 					NudgeSelectedEntities(Vector2(-1.f, 0.f));
 				break;
-			case keycode_right:
+			case clan::keycode_right:
 				if (!m_Dragging)
 					NudgeSelectedEntities(Vector2(1.f, 0.f));
 				break;
-			case keycode_up:
+			case clan::keycode_up:
 				if (!m_Dragging)
 					NudgeSelectedEntities(Vector2(0.f, -1.f));
 				break;
-			case keycode_down:
+			case clan::keycode_down:
 				if (!m_Dragging)
 					NudgeSelectedEntities(Vector2(0.f, 1.f));
 				break;
@@ -1684,7 +1684,7 @@ namespace FusionEngine
 			//		m_Tool = Tool::Rectangle;
 			//	}
 			//	break;
-			case keycode_return:
+			case clan::keycode_return:
 				if (m_Tool != Tool::None)
 				{
 					if (auto& tool = m_ShapeTools[m_Tool])
@@ -1692,7 +1692,7 @@ namespace FusionEngine
 				}
 				m_Tool = Tool::None;
 				break;
-			case keycode_escape:
+			case clan::keycode_escape:
 				if (m_Tool != Tool::None)
 				{
 					if (auto& tool = m_ShapeTools[m_Tool])
@@ -1743,22 +1743,22 @@ namespace FusionEngine
 		{
 			switch (ev.id)
 			{
-			case keycode_f3:
+			case clan::keycode_f3:
 				m_RenderWorld->ToggleDebugDraw();
 				break;
-			case keycode_f5:
+			case clan::keycode_f5:
 				m_CompileMap = true;
 				break;
-			case keycode_f7:
+			case clan::keycode_f7:
 				m_RebuildScripts = true;
 				break;
-			case keycode_f9:
+			case clan::keycode_f9:
 				Console::getSingleton().Interpret("prof_savetimes on");
 				break;
-			case keycode_f10:
+			case clan::keycode_f10:
 				Console::getSingleton().Interpret("prof_savetimes off");
 				break;
-			case keycode_delete:
+			case clan::keycode_delete:
 				if (ev.shift)
 					ForEachSelected([this](const EntityPtr& entity)->bool { this->AddEntityToDelete(entity); return true; });
 				else
@@ -1766,13 +1766,13 @@ namespace FusionEngine
 					//ShowDeleteDialog();
 				}
 				break;
-			case keycode_prior:
+			case clan::keycode_prior:
 				{
 				float interval = m_StreamingManager->GetPollArchiveInterval();
 				m_StreamingManager->SetPollArchiveInterval(interval += 0.05f);
 				}
 				break;
-			case keycode_next:
+			case clan::keycode_next:
 				{
 				float interval = m_StreamingManager->GetPollArchiveInterval();
 				m_StreamingManager->SetPollArchiveInterval(interval -= 0.05f);
@@ -1781,9 +1781,9 @@ namespace FusionEngine
 			}
 		}
 		// Numbers
-		if (ev.id >= keycode_0 && ev.id <= keycode_9)
+		if (ev.id >= clan::keycode_0 && ev.id <= clan::keycode_9)
 		{
-			unsigned int num = (unsigned int)(ev.id - keycode_0);
+			unsigned int num = (unsigned int)(ev.id - clan::keycode_0);
 
 			auto vps = m_RenderWorld->GetViewports();
 			if (vps.empty())
@@ -1794,7 +1794,7 @@ namespace FusionEngine
 
 			bool randomAngle = ev.shift;
 
-			if (ev.id == keycode_8)
+			if (ev.id == clan::keycode_8)
 			{
 				if (!ev.shift)
 				{
@@ -1867,9 +1867,9 @@ namespace FusionEngine
 	{
 		switch (id)   
 		{
-		case mouse_left: return ShapeTool::MouseInput::LeftButton;
-		case mouse_wheel_up: return ShapeTool::MouseInput::ScrollUp;
-		case mouse_wheel_down: return ShapeTool::MouseInput::ScrollDown;
+		case clan::mouse_left: return ShapeTool::MouseInput::LeftButton;
+		case clan::mouse_wheel_up: return ShapeTool::MouseInput::ScrollUp;
+		case clan::mouse_wheel_down: return ShapeTool::MouseInput::ScrollDown;
 		default: return ShapeTool::MouseInput::None;
 		}
 	}
@@ -1934,7 +1934,7 @@ namespace FusionEngine
 					{
 						switch (ev.id)
 						{
-						case mouse_left:
+						case clan::mouse_left:
 							OnMouseUp_Selection(ev);
 							break;
 						};
@@ -1954,12 +1954,12 @@ namespace FusionEngine
 				{
 					switch (ev.id)
 					{
-					case mouse_right:
+					case clan::mouse_right:
 						if (m_EditorOverlay->m_Selected.empty())
 							OnMouseUp_Selection(ev);
 						ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
 						break;
-					case mouse_wheel_up:
+					case clan::mouse_wheel_up:
 						if (ev.ctrl)
 						{
 							if (ev.alt)
@@ -1970,7 +1970,7 @@ namespace FusionEngine
 						else
 							m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
 						break;
-					case mouse_wheel_down:
+					case clan::mouse_wheel_down:
 						if (ev.ctrl)
 						{
 							if (ev.alt)

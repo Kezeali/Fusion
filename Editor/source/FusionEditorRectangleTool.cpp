@@ -238,9 +238,9 @@ namespace FusionEngine
 			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
 			quad.rotate(clan::Vec2f(m_Center.x, m_Center.y), clan::Angle(m_Angle, clan::angle_radians));
 
-			canvas.triangle(quad.p, quad.q, quad.s, currentShapeColour);
-			canvas.triangle(quad.q, quad.r, quad.s, currentShapeColour);
-			canvas.line(m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
+			canvas.draw_triangle(quad.p, quad.q, quad.s, currentShapeColour);
+			canvas.draw_triangle(quad.q, quad.r, quad.s, currentShapeColour);
+			canvas.draw_line(m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
 		}
 
 		if (m_MouseDown && m_Action != Action::None)
@@ -250,9 +250,9 @@ namespace FusionEngine
 			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
 			quad.rotate(clan::Vec2f(m_FeedbackCenter.x, m_FeedbackCenter.y), clan::Angle(m_FeedbackAngle, clan::angle_radians));
 
-			canvas.triangle(quad.p, quad.q, quad.s, modificationColour);
-			canvas.triangle(quad.q, quad.r, quad.s, modificationColour);
-			canvas.line(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
+			canvas.draw_triangle(quad.p, quad.q, quad.s, modificationColour);
+			canvas.draw_triangle(quad.q, quad.r, quad.s, modificationColour);
+			canvas.draw_line(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
 		}
 	}
 

@@ -427,20 +427,25 @@ namespace FusionEngine
 
 	namespace
 	{
-		void DrawSegment(Vector2 p1, Vector2 p2, clan::GraphicContext& gc)
+		void DrawSegment(Vector2 p1, Vector2 p2, clan::Canvas& canvas)
 		{
 			clan::Colorf clcolor(1.f, 0.5f, 0.9f, 1.0f);
 
-			clan::Vec2i positions[] =
-			{
-				clan::Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
-				clan::Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
-			};
+			//clan::Vec2i positions[] =
+			//{
+			//	clan::Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
+			//	clan::Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
+			//};
 
-			clan::PrimitivesArray vertex_data(gc);
-			vertex_data.set_attributes(clan::attrib_position, clan::VertexArrayVector<clan::Vec2i>(gc, &positions[0], 2));
-			vertex_data.set_attributes(clan::attrib_color, clan::VertexArrayVector<clan::Vec4f>(gc, &clcolor, 1));
-			gc.draw_primitives(clan::type_lines, 2, vertex_data);
+			//clan::PrimitivesArray vertex_data(gc);
+			//vertex_data.set_attributes(clan::attrib_position, clan::VertexArrayVector<clan::Vec2i>(gc, &positions[0], 2));
+			//vertex_data.set_attributes(clan::attrib_color, clan::VertexArrayVector<clan::Vec4f>(gc, &clcolor, 1));
+			//gc.draw_primitives(clan::type_lines, 2, vertex_data);
+
+			canvas.draw_line(
+				clan::Pointf((p1.x * s_GameUnitsPerSimUnit), (p1.y * s_GameUnitsPerSimUnit)),
+				clan::Pointf((p2.x * s_GameUnitsPerSimUnit), (p2.y * s_GameUnitsPerSimUnit)),
+				clcolor);
 		}
 	}
 
@@ -516,8 +521,8 @@ namespace FusionEngine
 				clan::Colorf c0 = c1;
 				c0.set_alpha(0.25f);
 				c1.set_alpha(DeltaTime::GetInterpolationAlpha());
-				canvas.box(bar, clan::Colorf::silver);
-				canvas.gradient_fill(fill, clan::Gradient(c0, c1, c0, c1));
+				canvas.draw_box(bar, clan::Colorf::silver);
+				canvas.draw_gradient_fill(fill, clan::Gradient(c0, c1, c0, c1));
 			}
 
 #ifdef FSN_PROFILING_ENABLED
@@ -636,8 +641,8 @@ namespace FusionEngine
 				for (auto ix = (int)std::floor(area.left / cellSize) * cellSize; ix < area.right; ix += cellSize)
 				{
 					//auto x = std::floor(ix / 8) * 8, y = std::floor(iy / 8) * 8;
-					DrawSegment(Vector2(ix, iy), Vector2(ix + cellSize, iy), canvas.get_gc());
-					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + cellSize), canvas.get_gc());
+					DrawSegment(Vector2(ix, iy), Vector2(ix + cellSize, iy), canvas);
+					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + cellSize), canvas);
 				}
 			}
 			const auto textHeight = m_DebugFont2.get_text_size(canvas, "1").height;

@@ -95,7 +95,10 @@ namespace FusionEngine
 	struct GeometryData
 	{
 		int num_verticies;
-		clan::VertexArrayBuffer vertex_buffer;
+		//clan::VertexArrayVector<GeometryVertex> vertex_buffer;
+		clan::VertexArrayVector<clan::Vec4f> verticies;
+		clan::VertexArrayVector<clan::Vec4f> colours;
+		clan::VertexArrayVector<clan::Vec2f> texCoords;
 		RocketCLTexture* texture;
 	};
 
@@ -108,25 +111,22 @@ namespace FusionEngine
 
 	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
-		auto compiledGeometry = CompileGeometry(vertices, num_vertices, indices, num_indices, texture);
+		//auto compiledGeometry = CompileGeometry(vertices, num_vertices, indices, num_indices, texture);
 
-		RenderCompiledGeometry(compiledGeometry, translation);
+		//RenderCompiledGeometry(compiledGeometry, translation);
 
-		ReleaseCompiledGeometry(compiledGeometry);
-	}
+		//ReleaseCompiledGeometry(compiledGeometry);
 
-	Rocket::Core::CompiledGeometryHandle RocketRenderer::CompileGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture)
-	{
-		using namespace Rocket;
-
-		std::vector<GeometryVertex> data(num_indices);
+		std::vector<clan::Vec2f> verts(num_indices);
+		std::vector<clan::Colorf> colours(num_indices);
+		std::vector<clan::Vec2f> texPos(num_indices);
 		for (int i = 0; i < num_indices; i++)
 		{
 			int vertex_index = indices[i];
-			data[i].position.x = vertices[vertex_index].position.x;
-			data[i].position.y = vertices[vertex_index].position.y;
+			verts[i].x = vertices[vertex_index].position.x;
+			verts[i].y = vertices[vertex_index].position.y;
 
-			data[i].color = clan::Colorf(
+			colours[i] = clan::Colorf(
 				vertices[vertex_index].colour.red,
 				vertices[vertex_index].colour.green,
 				vertices[vertex_index].colour.blue,
@@ -136,16 +136,85 @@ namespace FusionEngine
 			//data[i].color.b = vertices[vertex_index].colour.blue / 255.f;
 			//data[i].color.a = vertices[vertex_index].colour.alpha / 255.f;
 
-			data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
-			data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
+			texPos[i].x = vertices[vertex_index].tex_coord.x;
+			texPos[i].y = vertices[vertex_index].tex_coord.y;
 		}
 
-		clan::VertexArrayVector<GeometryVertex> vertBuffer(m_Canvas.get_gc(), data);
+		m_Canvas.push_modelview();
+
+		m_Canvas.mult_translate(translation.x, translation.y);
+
+		if (m_ClipEnabled)
+			m_Canvas.push_cliprect(clan::Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+
+		if (texture != NULL)
+		{
+			auto textureHolder = reinterpret_cast<RocketCLTexture*>(texture);
+			auto textureObj = textureHolder->texture;
+			m_Canvas.draw_triangles(&verts[0], &texPos[0], num_indices, textureObj, colours[0]);
+		}
+		else
+		{
+			m_Canvas.draw_triangles(&verts[0], num_indices, colours[0]);
+		}
+
+		if (m_ClipEnabled)
+			m_Canvas.pop_cliprect();
+
+		m_Canvas.pop_modelview();
+	}
+
+	Rocket::Core::CompiledGeometryHandle RocketRenderer::CompileGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture)
+	{
+		using namespace Rocket;
+
+		//return Rocket::Core::CompiledGeometryHandle(NULL);
+
+		//std::vector<GeometryVertex> data(num_indices);
+		//for (int i = 0; i < num_indices; i++)
+		//{
+		//	int vertex_index = indices[i];
+		//	data[i].position.x = vertices[vertex_index].position.x;
+		//	data[i].position.y = vertices[vertex_index].position.y;
+
+		//	data[i].color = clan::Colorf(
+		//		vertices[vertex_index].colour.red,
+		//		vertices[vertex_index].colour.green,
+		//		vertices[vertex_index].colour.blue,
+		//		vertices[vertex_index].colour.alpha);
+
+		//	data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
+		//	data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
+		//}
+		std::vector<clan::Vec4f> verts(num_indices);
+		std::vector<clan::Vec4f> colours(num_indices);
+		std::vector<clan::Vec2f> texCoords(num_indices);
+		for (int i = 0; i < num_indices; i++)
+		{
+			int vertex_index = indices[i];
+			verts[i].x = vertices[vertex_index].position.x;
+			verts[i].y = vertices[vertex_index].position.y;
+
+			colours[i] = clan::Colorf(
+				vertices[vertex_index].colour.red,
+				vertices[vertex_index].colour.green,
+				vertices[vertex_index].colour.blue,
+				vertices[vertex_index].colour.alpha);
+
+			texCoords[i].x = vertices[vertex_index].tex_coord.x;
+			texCoords[i].y = vertices[vertex_index].tex_coord.y;
+		}
+
+		auto gcVerts = clan::VertexArrayVector<clan::Vec4f>(m_Canvas.get_gc(), verts);
+		auto gcColours = clan::VertexArrayVector<clan::Vec4f>(m_Canvas.get_gc(), colours);
+		auto gcTexCoords = clan::VertexArrayVector<clan::Vec2f>(m_Canvas.get_gc(), texCoords);
 		//clan::VertexArrayBuffer buffer(m_Canvas.get_gc(), data.data(), sizeof(GeometryVertex) * num_indices);
 
 		GeometryData* compiledGeometry = new GeometryData;
 		compiledGeometry->num_verticies = num_indices;
-		compiledGeometry->vertex_buffer = vertBuffer;
+		compiledGeometry->verticies = gcVerts;
+		compiledGeometry->colours = gcColours;
+		compiledGeometry->texCoords = gcTexCoords;
 		compiledGeometry->texture = reinterpret_cast<RocketCLTexture*>(texture);
 
 		//m_Geometry.push_back(buffer);
@@ -157,53 +226,60 @@ namespace FusionEngine
 		using namespace Rocket;
 
 		GeometryData* data = (GeometryData*)geometry;
-		clan::VertexArrayBuffer vertex_buffer = data->vertex_buffer;
+		//auto& vertex_buffer = data->vertex_buffer;
 
-		m_Canvas.push_modelview();
+		//m_Canvas.push_modelview();
 
 		//m_Canvas.set_map_mode(clan::map_2d_upper_left);
 
-		m_Canvas.mult_translate(translation.x, translation.y);
+		//m_Canvas.mult_translate(translation.x, translation.y);
 		//m_Canvas.set_translate(translation.x, translation.y);
 
 		//m_Canvas.set_blend_mode(m_BlendMode);
 
-		clan::PrimitivesArray prim_array(m_Canvas);
+		clan::PrimitivesArray prim_array(m_Canvas.get_gc());
 		if (data->texture != nullptr)
 		{
-			prim_array.set_attributes(clan::attrib_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, position), sizeof(GeometryVertex));
-			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
-			prim_array.set_attributes(clan::attrib_texture_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, tex_coord), sizeof(GeometryVertex));
+			//prim_array.set_attributes(clan::attrib_position, vertex_buffer, cl_offsetof(GeometryVertex, position));
+			//prim_array.set_attributes(clan::attrib_color, vertex_buffer, cl_offsetof(GeometryVertex, color));
+			//prim_array.set_attributes(clan::attrib_texture_position, vertex_buffer, cl_offsetof(GeometryVertex, tex_coord));
 
-			m_Canvas.set_program_object(clan::program_single_texture);
+			prim_array.set_attributes(0, data->verticies);
+			prim_array.set_attributes(1, data->colours);
+			prim_array.set_attributes(2, data->texCoords);
+
+			m_Canvas.get_gc().set_texture(0, data->texture->texture);
+
+			m_Canvas.get_gc().set_program_object(clan::program_single_texture);
 		}
 		else
 		{
-			prim_array.set_attributes(clan::attrib_position, vertex_buffer, 2, clan::type_float, offsetof(GeometryVertex, position), sizeof(GeometryVertex));
-			prim_array.set_attributes(clan::attrib_color, vertex_buffer, 4, clan::type_float, offsetof(GeometryVertex, color), sizeof(GeometryVertex));
+			prim_array.set_attributes(0, data->verticies);
+			prim_array.set_attributes(1, data->colours);
 
-			m_Canvas.set_program_object(clan::program_color_only);
+			m_Canvas.get_gc().set_program_object(clan::program_color_only);
 		}
 
-		if (data->texture)
-			m_Canvas.get_gc().set_texture(0, data->texture->texture);
+		//if (data->texture)
+		//	m_Canvas.set_texture(0, data->texture->texture);
 
-		if (m_ClipEnabled)
-			m_Canvas.push_cliprect(clan::Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+		//if (m_ClipEnabled)
+		//	m_Canvas.get_gc().set_scissor(clan::Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom), clan::y_axis_top_down);
 
+		//m_Canvas.draw_triangles(&(prim_array[clan::attrib_position]), &prim_array[clan::attrib_texture_position], data->num_verticies, data->texture->texture);
 		m_Canvas.get_gc().draw_primitives(clan::type_triangles, data->num_verticies, prim_array);
 
-		if (m_ClipEnabled)
-			m_Canvas.pop_cliprect();
+		//if (m_ClipEnabled)
+		//	m_Canvas.pop_cliprect();
 
+		m_Canvas.get_gc().reset_program_object();
 		if (data->texture)
 			m_Canvas.get_gc().reset_texture(0);
-		m_Canvas.get_gc().reset_program_object();
 
 		//m_Canvas.reset_blend_mode();
 		//m_Canvas.reset_buffer_control();
 
-		m_Canvas.pop_modelview();
+		//m_Canvas.pop_modelview();
 	}
 
 	void RocketRenderer::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
@@ -238,8 +314,8 @@ namespace FusionEngine
 			auto filename = std::string(source.CString(), source.Length());
 
 			clan::Texture2D texture(m_Canvas.get_gc(), physfsDir.open_file_read(filename), clan::PathHelp::get_extension(filename));
-			texture.set_min_filter(clan::filter_linear);
-			texture.set_mag_filter(clan::filter_linear);
+			//texture.set_min_filter(clan::filter_linear);
+			//texture.set_mag_filter(clan::filter_linear);
 
 			if (texture.is_null())
 				return false;
