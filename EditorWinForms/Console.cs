@@ -22,32 +22,52 @@ namespace EditorWinForms
 
         public void AddToConsole(string line)
         {
-            consoleTextBox.Text += line + "\n";
+            if (consoleTextBox.Text.Length > 0)
+                consoleTextBox.Text += "\r\n" + line;
+            else
+                consoleTextBox.Text = line;
+        }
+
+        List<string> currentAutocomplete = new List<string>();
+
+        private void UpdateAutocomplete(string command)
+        {
+            var completions = Client.FindConsoleCommandSuggestions(command);
+
+            completions.RemoveAll((entry) => string.IsNullOrWhiteSpace(entry));
+
+            if (completions.Count > 0)
+            {
+                if (!completions.SequenceEqual(currentAutocomplete))
+                {
+                    currentAutocomplete = new List<string>(completions);
+                    commandTextBox.AutoCompleteCustomSource.AddRange(completions.ToArray());
+                }
+            }
+            else
+                commandTextBox.AutoCompleteCustomSource.Clear();
         }
 
         private void commandTextBox_TextChanged(object sender, EventArgs e)
         {
-            var completions = Client.FindConsoleCommandSuggestions(commandTextBox.Text);
+            UpdateAutocomplete(commandTextBox.Text);
+        }
 
-            if (completions.Count > 0)
+        private void commandTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return || e.KeyCode == Keys.Enter)
             {
-                foreach (var completion in completions)
-                {
-                    autocompleteContextMenuStrip.Items.Add(completion);
-                }
+                e.Handled = true;
 
-                var position = Point.Empty;
-                int lastSpace = commandTextBox.Text.LastIndexOf(' ');
-                if (lastSpace > 0)
-                    position = commandTextBox.GetPositionFromCharIndex(lastSpace);
-
-                autocompleteContextMenuStrip.Show(commandTextBox, position);
+                Client.InterpretConsoleCommand(commandTextBox.Text);
+                commandTextBox.Clear();
+                commandTextBox.AutoCompleteCustomSource.Clear();
             }
         }
 
-        private void autocompleteContextMenuStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void commandTextBox_KeyUp(object sender, KeyEventArgs e)
         {
-            commandTextBox.Text = Client.CompleteCommand(commandTextBox.Text, e.ClickedItem.Text);
+            //UpdateAutocomplete(commandTextBox.Text);
         }
     }
 }

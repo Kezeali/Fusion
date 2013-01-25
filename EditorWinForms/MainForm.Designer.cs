@@ -40,9 +40,9 @@
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.scriptsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.compileScriptsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
-            this.mapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.compileMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resourcesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.clearResourceDatabaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadResourceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,6 +51,8 @@
             this.waitToConnectTimer = new System.Windows.Forms.Timer(this.components);
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.editorServerProcess = new System.Diagnostics.Process();
+            this.openResourceBrowserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -89,25 +91,25 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.aboutToolStripMenuItem.Text = "About";
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(113, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
             // 
             // settingsToolStripMenuItem
             // 
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
-            this.settingsToolStripMenuItem.Text = "Settings";
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.settingsToolStripMenuItem.Text = "Settings...";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
@@ -123,45 +125,47 @@
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(100, 22);
-            this.saveToolStripMenuItem.Text = "Save";
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Text = "Save Map";
             // 
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(100, 22);
-            this.loadToolStripMenuItem.Text = "Load";
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.loadToolStripMenuItem.Text = "Load Map";
             // 
             // compileToolStripMenuItem
             // 
             this.compileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.scriptsToolStripMenuItem,
+            this.compileScriptsToolStripMenuItem,
             this.toolStripMenuItem1,
-            this.mapToolStripMenuItem});
+            this.compileMapToolStripMenuItem});
             this.compileToolStripMenuItem.Name = "compileToolStripMenuItem";
             this.compileToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
             this.compileToolStripMenuItem.Text = "Compile";
             // 
-            // scriptsToolStripMenuItem
+            // compileScriptsToolStripMenuItem
             // 
-            this.scriptsToolStripMenuItem.Name = "scriptsToolStripMenuItem";
-            this.scriptsToolStripMenuItem.Size = new System.Drawing.Size(109, 22);
-            this.scriptsToolStripMenuItem.Text = "Scripts";
+            this.compileScriptsToolStripMenuItem.Name = "compileScriptsToolStripMenuItem";
+            this.compileScriptsToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            this.compileScriptsToolStripMenuItem.Text = "Compile Scripts";
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(106, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(154, 6);
             // 
-            // mapToolStripMenuItem
+            // compileMapToolStripMenuItem
             // 
-            this.mapToolStripMenuItem.Name = "mapToolStripMenuItem";
-            this.mapToolStripMenuItem.Size = new System.Drawing.Size(109, 22);
-            this.mapToolStripMenuItem.Text = "Map";
+            this.compileMapToolStripMenuItem.Name = "compileMapToolStripMenuItem";
+            this.compileMapToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            this.compileMapToolStripMenuItem.Text = "Build Map";
             // 
             // resourcesToolStripMenuItem
             // 
             this.resourcesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openResourceBrowserToolStripMenuItem,
+            this.toolStripMenuItem3,
             this.clearResourceDatabaseToolStripMenuItem,
             this.loadResourceToolStripMenuItem});
             this.resourcesToolStripMenuItem.Name = "resourcesToolStripMenuItem";
@@ -171,14 +175,14 @@
             // clearResourceDatabaseToolStripMenuItem
             // 
             this.clearResourceDatabaseToolStripMenuItem.Name = "clearResourceDatabaseToolStripMenuItem";
-            this.clearResourceDatabaseToolStripMenuItem.Size = new System.Drawing.Size(203, 22);
+            this.clearResourceDatabaseToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
             this.clearResourceDatabaseToolStripMenuItem.Text = "Clear Resource Database";
             // 
             // loadResourceToolStripMenuItem
             // 
             this.loadResourceToolStripMenuItem.Name = "loadResourceToolStripMenuItem";
-            this.loadResourceToolStripMenuItem.Size = new System.Drawing.Size(203, 22);
-            this.loadResourceToolStripMenuItem.Text = "Load Resource";
+            this.loadResourceToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+            this.loadResourceToolStripMenuItem.Text = "Load Resource...";
             // 
             // helpToolStripMenuItem
             // 
@@ -192,7 +196,7 @@
             // websiteToolStripMenuItem
             // 
             this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.websiteToolStripMenuItem.Text = "Website";
             // 
             // waitToConnectTimer
@@ -206,10 +210,24 @@
             this.editorServerProcess.StartInfo.ErrorDialog = true;
             this.editorServerProcess.StartInfo.LoadUserProfile = false;
             this.editorServerProcess.StartInfo.Password = null;
+            this.editorServerProcess.StartInfo.RedirectStandardOutput = true;
             this.editorServerProcess.StartInfo.StandardErrorEncoding = null;
             this.editorServerProcess.StartInfo.StandardOutputEncoding = null;
             this.editorServerProcess.StartInfo.UserName = "";
+            this.editorServerProcess.StartInfo.UseShellExecute = false;
             this.editorServerProcess.SynchronizingObject = this;
+            // 
+            // openResourceBrowserToolStripMenuItem
+            // 
+            this.openResourceBrowserToolStripMenuItem.Name = "openResourceBrowserToolStripMenuItem";
+            this.openResourceBrowserToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+            this.openResourceBrowserToolStripMenuItem.Text = "Open Resource Browser...";
+            this.openResourceBrowserToolStripMenuItem.Click += new System.EventHandler(this.openResourceBrowserToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(205, 6);
             // 
             // MainForm
             // 
@@ -244,9 +262,9 @@
         private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem compileToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem scriptsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem compileScriptsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem mapToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem compileMapToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem resourcesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem clearResourceDatabaseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadResourceToolStripMenuItem;
@@ -257,6 +275,8 @@
         private System.Windows.Forms.Timer waitToConnectTimer;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Diagnostics.Process editorServerProcess;
+        private System.Windows.Forms.ToolStripMenuItem openResourceBrowserToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
     }
 }
 

@@ -20,12 +20,20 @@ void createEntity(int type, const Vector &in pos, float angle)
 	}
 	if (type == 4)
 	{
-		Entity e = editor.CreateEntity("StaticTransform", pos, angle, true, false);
-		ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
-		instantiator.addComponent(e, "SpawnPoint", "");
-		
-		sprite.ImagePath = "/Data/Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		for (int i = 0; i < 9999; ++i)
+		{
+			Entity e = editor.CreateEntity("StaticTransform", pos, angle, true, true);
+			console.println("Created entity " + i);
+		}
 	}
+	//if (type == 4)
+	//{
+	//	Entity e = editor.CreateEntity("StaticTransform", pos, angle, true, false);
+	//	ISprite@ sprite = cast<ISprite>(instantiator.addComponent(e, "CLSprite", ""));
+	//	instantiator.addComponent(e, "SpawnPoint", "");
+		
+	//	sprite.ImagePath = "/Data/Entities/Test/Gfx/spaceshoot_body_moving1.png";
+	//}
 	if (type == 5)
 	{
 		Entity e = editor.CreateEntity("b2Static", pos, angle, false, true);

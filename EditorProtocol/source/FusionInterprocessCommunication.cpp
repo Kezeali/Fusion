@@ -98,6 +98,19 @@ namespace FusionEngine { namespace Interprocess {
 		editor->GetResourceType(path);
 	}
 	
+	void EditorServiceHandler::MoveResource(const std::string& source, const std::string& destination)
+	{
+		try
+		{
+			PhysFSHelp::copy_file(source, destination);
+			PHYSFS_delete(source.c_str());
+		}
+		catch (FusionEngine::Exception& ex)
+		{
+			SendToConsole("Failed to move resource " + source + " -> " + destination + ": " + ex.GetDescription());
+		}
+	}
+
 	void EditorServiceHandler::InterpretConsoleCommand(const std::string& command)
 	{
 		Console::getSingleton().Interpret(command);

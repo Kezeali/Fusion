@@ -108,30 +108,6 @@ namespace FusionEngine
 			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
 
 		Initialise();
-
-		auto mpoint = PHYSFS_getMountPoint((std::string(PHYSFS_getBaseDir()) + "Data\\game.zip").c_str());
-		std::string gameMountPoint;
-		if (mpoint != NULL)
-			gameMountPoint.assign(mpoint);
-		auto spath = PHYSFS_getSearchPath();
-		for (auto i = spath; *i != NULL; i++)
-		{
-			SendToConsole(std::string(*i));
-		}
-		PHYSFS_freeList(spath);
-		SendToConsole(gameMountPoint);
-		char **files = PHYSFS_enumerateFiles(s_PackagesPath.c_str());
-		for (auto it = files; *it != 0; ++it)
-		{
-			SendToConsole(*it);
-		}
-		PHYSFS_freeList(files);
-		files = PHYSFS_enumerateFiles((s_PackagesPath + "/Scripts").c_str());
-		for (auto it = files; *it != 0; ++it)
-		{
-			SendToConsole(*it);
-		}
-		PHYSFS_freeList(files);
 	}
 
 	EngineManager::~EngineManager()

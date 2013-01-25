@@ -9,7 +9,7 @@ namespace EditorWinForms
     public class SettingsFile
     {
         string serverPath = "EditorServer.exe";
-        int maxConnectionRetries = 3;
+        int maxConnectionRetries = 20;
 
         public string ServerPath
         {

@@ -11,6 +11,7 @@ using Thrift.Protocol;
 using Thrift.Transport;
 using FusionEngine.Interprocess;
 using System.IO;
+using System.Diagnostics;
 
 namespace EditorWinForms
 {
@@ -33,33 +34,53 @@ namespace EditorWinForms
         ResourceBrowser resourceBrowser = new ResourceBrowser();
         Console console = new Console();
 
+        bool usingExistingServerProcess = false;
+
         private void MainForm_Load(object sender, EventArgs e)
         {
-            try
+            var serverProcessName = Path.GetFileNameWithoutExtension(settings.ServerPath);
+            var existingProcesses = Process.GetProcessesByName(serverProcessName);
+            if (existingProcesses.Length > 0)
+            {
+                editorServerProcess = existingProcesses[0];
+                usingExistingServerProcess = true;
+            }
+
+            editorServerProcess.OutputDataReceived += editorServerProcess_OutputDataReceived;
+            console.Client = client;
+            console.Show();
+
+            if (!usingExistingServerProcess)
             {
                 editorServerProcess.StartInfo.FileName = settings.ServerPath;
-
-                editorServerProcess.OutputDataReceived += editorServerProcess_OutputDataReceived;
-                console.Show();
-
-                // Attempt to connect if the process was started successfully
-                if (editorServerProcess.Start())
+                try
                 {
-                    waitToConnectTimer.Start();
+                    if (editorServerProcess.Start())
+                    {
+                        console.AddToConsole("Server started");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath);
+                    }
                 }
-                else
+                catch (FileNotFoundException)
                 {
-                    MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath);
+                    MessageBox.Show("Failed to find Fusion server at (path): " + settings.ServerPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath + ".\n\n" + ex.Message);
                 }
             }
-            catch (FileNotFoundException)
-            {
-                MessageBox.Show("Failed to find Fusion server at (path): " + settings.ServerPath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Failed to start Fusion server at (path): " + settings.ServerPath + ".\n\n" + ex.Message);
-            }
+
+            waitToConnectTimer.Start();
+        }
+
+        private void StopServer()
+        {
+            if (transport.IsOpen)
+                client.Stop();
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -75,15 +96,13 @@ namespace EditorWinForms
 
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (transport.IsOpen)
-                client.Stop();
             this.Close();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (transport.IsOpen)
-                client.Stop();
+            if (!usingExistingServerProcess)
+                StopServer();
         }
 
         private void waitToConnectTimer_Tick(object sender, EventArgs e)
@@ -121,14 +140,30 @@ namespace EditorWinForms
                 console.AddToConsole("Connected");
                 waitToConnectTimer.Stop();
 
-                resourceBrowser.Client = client;
-                resourceBrowser.Show();
+                ShowResourceBrowser();
             }
         }
 
         void editorServerProcess_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
         {
             console.AddToConsole(e.Data);
+        }
+
+        private void openResourceBrowserToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowResourceBrowser();
+        }
+
+        private void ShowResourceBrowser()
+        {
+            if (!resourceBrowser.Visible && !resourceBrowser.IsDisposed)
+                resourceBrowser.Show();
+            else
+            {
+                resourceBrowser = new ResourceBrowser();
+                resourceBrowser.Client = client;
+                resourceBrowser.Show();
+            }
         }
 
     }

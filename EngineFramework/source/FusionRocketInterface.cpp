@@ -168,7 +168,7 @@ namespace FusionEngine
 	{
 		using namespace Rocket;
 
-		//return Rocket::Core::CompiledGeometryHandle(NULL);
+		return Rocket::Core::CompiledGeometryHandle(NULL);
 
 		//std::vector<GeometryVertex> data(num_indices);
 		//for (int i = 0; i < num_indices; i++)
@@ -248,9 +248,9 @@ namespace FusionEngine
 			prim_array.set_attributes(1, data->colours);
 			prim_array.set_attributes(2, data->texCoords);
 
-			m_Canvas.get_gc().set_texture(0, data->texture->texture);
-
 			m_Canvas.get_gc().set_program_object(clan::program_single_texture);
+
+			m_Canvas.get_gc().set_texture(0, data->texture->texture);
 		}
 		else
 		{
@@ -272,9 +272,9 @@ namespace FusionEngine
 		//if (m_ClipEnabled)
 		//	m_Canvas.pop_cliprect();
 
-		m_Canvas.get_gc().reset_program_object();
 		if (data->texture)
 			m_Canvas.get_gc().reset_texture(0);
+		m_Canvas.get_gc().reset_program_object();
 
 		//m_Canvas.reset_blend_mode();
 		//m_Canvas.reset_buffer_control();
