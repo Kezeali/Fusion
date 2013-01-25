@@ -375,7 +375,7 @@ namespace FusionEngine
 		const char* dir = PHYSFS_getWriteDir();
 		if (dir != NULL)
 		{
-			full_path = std::string(dir) + PHYSFS_getDirSeparator() + path;
+			full_path = std::string(dir) + path;
 			// Add the directory to the end of the search path
 			if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
 				added = true;
@@ -385,44 +385,55 @@ namespace FusionEngine
 			return false;
 
 		if (!archiveExt.empty())
-			added = mount_archives(mount_point, mount_point, archiveExt, archivesFirst);
+			added = mount_archives(path, mount_point, archiveExt, archivesFirst);
 
 		return added;
 	}
 
 	bool SetupPhysFS::mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool archives_first)
 	{
-		// Ripped from PHYSFS_setSaneConfig (and somewhat c++ized)
+		// Ripped from PHYSFS_setSaneConfig
 		const char *dirsep = PHYSFS_getDirSeparator();
 
-		char **rc = PHYSFS_enumerateFiles(path.c_str());
+		char **rc = PHYSFS_enumerateFiles(mount_point.c_str());
 		char **i;
 		size_t extlen = archive_ext.length();
 		char *ext;
-		char *arc;
+		std::string arc;
+
+		std::string archivePath;
+
+		std::string archiveName;
 
 		bool ok = true;
 
-		for (i = rc; *i != NULL; i++)
+		try
 		{
-			size_t l = strlen(*i);
-			if ((l > extlen) && ((*i)[l - extlen - 1] == '.'))
+			for (i = rc; *i != NULL; i++)
 			{
-				ext = (*i) + (l - extlen);
-				if (platform_stricmp(ext, archive_ext.c_str()) == 0)
+				archiveName.assign(*i);
+				if (archiveName.length() > extlen && archiveName[archiveName.length() - extlen - 1] == '.')
 				{
-					const char *d = PHYSFS_getRealDir(*i);
-					arc = (char *)malloc(strlen(d) + strlen(dirsep) + l + 1);
-					if (arc != NULL)
+					ext = (*i) + (archiveName.length() - extlen);
+
+					if (platform_stricmp(ext, archive_ext.c_str()) == 0)
 					{
-						sprintf(arc, "%s%s%s", d, dirsep, *i);
-						ok = PHYSFS_mount(arc, mount_point.c_str(), (archives_first ? 0 : 1)) != 0;
-						free(arc);
-						if (!ok)
-							break;
+						archivePath = path + "/" + archiveName;
+						const char *d = PHYSFS_getRealDir(archivePath.c_str());
+						if (d != NULL)
+						{
+							arc = d + path + dirsep + archiveName;
+							ok = PHYSFS_mount(arc.c_str(), mount_point.c_str(), (archives_first ? 0 : 1)) != 0;
+							if (!ok)
+								break;
+						}
 					}
 				}
 			}
+		}
+		catch (...)
+		{
+			ok = false;
 		}
 
 		PHYSFS_freeList(rc);

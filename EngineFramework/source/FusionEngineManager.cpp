@@ -91,8 +91,6 @@ namespace FusionEngine
 	{
 		// Configure PhysFS
 		SetupPhysFS::configure("lastflare", "Fusion", "zip");
-		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
-			SendToConsole("Default resource path could not be located");
 
 		// Clear cache
 		//SetupPhysFS::clear_temp();
@@ -106,7 +104,34 @@ namespace FusionEngine
 		// Init Console
 		m_Console.reset(new Console);
 
+		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
+			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
+
 		Initialise();
+
+		auto mpoint = PHYSFS_getMountPoint((std::string(PHYSFS_getBaseDir()) + "Data\\game.zip").c_str());
+		std::string gameMountPoint;
+		if (mpoint != NULL)
+			gameMountPoint.assign(mpoint);
+		auto spath = PHYSFS_getSearchPath();
+		for (auto i = spath; *i != NULL; i++)
+		{
+			SendToConsole(std::string(*i));
+		}
+		PHYSFS_freeList(spath);
+		SendToConsole(gameMountPoint);
+		char **files = PHYSFS_enumerateFiles(s_PackagesPath.c_str());
+		for (auto it = files; *it != 0; ++it)
+		{
+			SendToConsole(*it);
+		}
+		PHYSFS_freeList(files);
+		files = PHYSFS_enumerateFiles((s_PackagesPath + "/Scripts").c_str());
+		for (auto it = files; *it != 0; ++it)
+		{
+			SendToConsole(*it);
+		}
+		PHYSFS_freeList(files);
 	}
 
 	EngineManager::~EngineManager()
