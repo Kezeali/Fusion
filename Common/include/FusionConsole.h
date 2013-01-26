@@ -113,11 +113,9 @@ namespace FusionEngine
 			MTWARNING
 		};
 
-	public:
 		//! Basic constructor
 		Console();
 
-	public:
 		//! Returns the exception marker
 		const std::string& GetExceptionMarker() const;
 		//! Returns the warning marker
@@ -156,6 +154,9 @@ namespace FusionEngine
 
 		//! Sets the help text for the given command
 		void SetCommandHelpText(const std::string &command, const std::string &help_text, const StringVector &arg_names);
+
+		//! Gets the help text for the given command
+		CommandHelp GetCommandHelp(const std::string &command) const;
 
 		//! Returns commands which begin with the given string
 		void ListPrefixedCommands(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results = 0);

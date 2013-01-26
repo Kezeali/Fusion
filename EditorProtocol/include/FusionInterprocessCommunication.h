@@ -71,6 +71,8 @@ namespace FusionEngine { namespace Interprocess
 
 		void CompleteCommand(std::string& _return, const std::string& command, const std::string& completion) final;
 
+		void GetConsoleCommandHelp(ConsoleCommandHelpData& _return, const std::string& command) final;
+
 		void GetSelectedEntities(std::vector<EntityData> & _return) final;
 
 		void SelectEntity(const int32_t id) final;

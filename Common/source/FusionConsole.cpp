@@ -364,6 +364,17 @@ namespace FusionEngine
 		}
 	}
 
+	Console::CommandHelp Console::GetCommandHelp(const std::string &command) const
+	{
+		auto _where = m_CommandHelp->commands.find(command);
+		if (_where != m_CommandHelp->commands.end())
+		{
+			return _where->second;
+		}
+		else
+			return CommandHelp();
+	}
+
 	void Console::ListPrefixedCommands(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results)
 	{
 		auto range = m_CommandHelp->commands.prefix_range(prefix);

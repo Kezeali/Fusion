@@ -19,6 +19,11 @@ struct ResourceFile {
 	3: bool directory
 }
 
+struct ConsoleCommandHelpData {
+	1: string helpText;
+	2: optional list<string> argumentNames;
+}
+
 service Editor {
 	string GetUserDataDirectory();
 	string GetDataDirectory();
@@ -29,6 +34,7 @@ service Editor {
 	oneway void InterpretConsoleCommand(1: string command);
 	list<string> FindConsoleCommandSuggestions(1: string command);
 	string CompleteCommand(1: string command, 2: string completion);
+	ConsoleCommandHelpData GetConsoleCommandHelp(1: string command);
 	list<EntityData> GetSelectedEntities();
 	oneway void SelectEntity(1: i32 id);
 	oneway void FocusOnEntity(1: i32 id);

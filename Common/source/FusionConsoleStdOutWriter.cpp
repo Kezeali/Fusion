@@ -3,7 +3,6 @@
 
 #include "FusionConsoleStdOutWriter.h"
 
-#include <boost/bind.hpp>
 #include <ClanLib/core.h>
 
 namespace FusionEngine
@@ -15,7 +14,7 @@ namespace FusionEngine
 		// Use the singleton
 		m_ConsoleOnNewLineSlot = Console::getSingleton().OnNewData.connect([this](const std::string& data) {
 			if (m_Active)
-				clan::Console::write( data.c_str() );
+				clan::Console::write(data);
 		});
 	}
 
@@ -25,7 +24,7 @@ namespace FusionEngine
 		// Use the given Console
 		m_ConsoleOnNewLineSlot = console->OnNewData.connect([this](const std::string& data) {
 			if (m_Active)
-				clan::Console::write( data.c_str() );
+				clan::Console::write( data );
 		});
 	}
 
@@ -52,12 +51,6 @@ namespace FusionEngine
 
 	void ConsoleStdOutWriter::onConsoleNewline(const std::string &message)
 	{
-		if (!m_Active)
-			return;
-
-		auto linemessage = "-- " + clan::StringHelp::local8_to_text(message);
-		clan::Console::write_line(linemessage);
-		std::cout << message << std::endl;
 	}
 
 }

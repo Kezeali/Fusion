@@ -44,6 +44,8 @@
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.compileMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resourcesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openResourceBrowserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
             this.clearResourceDatabaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadResourceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,8 +53,15 @@
             this.waitToConnectTimer = new System.Windows.Forms.Timer(this.components);
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.editorServerProcess = new System.Diagnostics.Process();
-            this.openResourceBrowserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
+            this.refreshConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
+            this.testToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.printLotsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.printAllTheTimeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.testConsoleTimer = new System.Windows.Forms.Timer(this.components);
+            this.startToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.stopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loremToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -70,7 +79,8 @@
             this.fileToolStripMenuItem,
             this.compileToolStripMenuItem,
             this.resourcesToolStripMenuItem,
-            this.helpToolStripMenuItem});
+            this.helpToolStripMenuItem,
+            this.testToolStripMenuItem});
             this.menuStripMain.Location = new System.Drawing.Point(0, 0);
             this.menuStripMain.Name = "menuStripMain";
             this.menuStripMain.Size = new System.Drawing.Size(428, 24);
@@ -82,6 +92,8 @@
             this.editorToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.aboutToolStripMenuItem,
             this.toolStripMenuItem2,
+            this.refreshConsoleToolStripMenuItem,
+            this.toolStripMenuItem4,
             this.settingsToolStripMenuItem,
             this.quitToolStripMenuItem});
             this.editorToolStripMenuItem.Name = "editorToolStripMenuItem";
@@ -91,25 +103,26 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             this.aboutToolStripMenuItem.Text = "About";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(156, 6);
             // 
             // settingsToolStripMenuItem
             // 
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             this.settingsToolStripMenuItem.Text = "Settings...";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
@@ -172,6 +185,18 @@
             this.resourcesToolStripMenuItem.Size = new System.Drawing.Size(72, 20);
             this.resourcesToolStripMenuItem.Text = "Resources";
             // 
+            // openResourceBrowserToolStripMenuItem
+            // 
+            this.openResourceBrowserToolStripMenuItem.Name = "openResourceBrowserToolStripMenuItem";
+            this.openResourceBrowserToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+            this.openResourceBrowserToolStripMenuItem.Text = "Open Resource Browser...";
+            this.openResourceBrowserToolStripMenuItem.Click += new System.EventHandler(this.openResourceBrowserToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(205, 6);
+            // 
             // clearResourceDatabaseToolStripMenuItem
             // 
             this.clearResourceDatabaseToolStripMenuItem.Name = "clearResourceDatabaseToolStripMenuItem";
@@ -196,7 +221,7 @@
             // websiteToolStripMenuItem
             // 
             this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.websiteToolStripMenuItem.Text = "Website";
             // 
             // waitToConnectTimer
@@ -210,24 +235,79 @@
             this.editorServerProcess.StartInfo.ErrorDialog = true;
             this.editorServerProcess.StartInfo.LoadUserProfile = false;
             this.editorServerProcess.StartInfo.Password = null;
+            this.editorServerProcess.StartInfo.RedirectStandardError = true;
             this.editorServerProcess.StartInfo.RedirectStandardOutput = true;
             this.editorServerProcess.StartInfo.StandardErrorEncoding = null;
             this.editorServerProcess.StartInfo.StandardOutputEncoding = null;
             this.editorServerProcess.StartInfo.UserName = "";
             this.editorServerProcess.StartInfo.UseShellExecute = false;
             this.editorServerProcess.SynchronizingObject = this;
+            this.editorServerProcess.OutputDataReceived += new System.Diagnostics.DataReceivedEventHandler(this.editorServerProcess_OutputDataReceived);
+            this.editorServerProcess.ErrorDataReceived += new System.Diagnostics.DataReceivedEventHandler(this.editorServerProcess_OutputDataReceived);
             // 
-            // openResourceBrowserToolStripMenuItem
+            // refreshConsoleToolStripMenuItem
             // 
-            this.openResourceBrowserToolStripMenuItem.Name = "openResourceBrowserToolStripMenuItem";
-            this.openResourceBrowserToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
-            this.openResourceBrowserToolStripMenuItem.Text = "Open Resource Browser...";
-            this.openResourceBrowserToolStripMenuItem.Click += new System.EventHandler(this.openResourceBrowserToolStripMenuItem_Click);
+            this.refreshConsoleToolStripMenuItem.Name = "refreshConsoleToolStripMenuItem";
+            this.refreshConsoleToolStripMenuItem.Size = new System.Drawing.Size(159, 22);
+            this.refreshConsoleToolStripMenuItem.Text = "Refresh Console";
+            this.refreshConsoleToolStripMenuItem.Click += new System.EventHandler(this.refreshConsoleToolStripMenuItem_Click);
             // 
-            // toolStripMenuItem3
+            // toolStripMenuItem4
             // 
-            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(205, 6);
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(156, 6);
+            // 
+            // testToolStripMenuItem
+            // 
+            this.testToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.printLotsToolStripMenuItem,
+            this.printAllTheTimeToolStripMenuItem,
+            this.loremToolStripMenuItem});
+            this.testToolStripMenuItem.Name = "testToolStripMenuItem";
+            this.testToolStripMenuItem.Size = new System.Drawing.Size(41, 20);
+            this.testToolStripMenuItem.Text = "Test";
+            // 
+            // printLotsToolStripMenuItem
+            // 
+            this.printLotsToolStripMenuItem.Name = "printLotsToolStripMenuItem";
+            this.printLotsToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.printLotsToolStripMenuItem.Text = "Print Lots";
+            this.printLotsToolStripMenuItem.Click += new System.EventHandler(this.printLotsToolStripMenuItem_Click);
+            // 
+            // printAllTheTimeToolStripMenuItem
+            // 
+            this.printAllTheTimeToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.startToolStripMenuItem,
+            this.stopToolStripMenuItem});
+            this.printAllTheTimeToolStripMenuItem.Name = "printAllTheTimeToolStripMenuItem";
+            this.printAllTheTimeToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.printAllTheTimeToolStripMenuItem.Text = "Print All The Time";
+            // 
+            // testConsoleTimer
+            // 
+            this.testConsoleTimer.Interval = 500;
+            this.testConsoleTimer.Tick += new System.EventHandler(this.testConsoleTimer_Tick);
+            // 
+            // startToolStripMenuItem
+            // 
+            this.startToolStripMenuItem.Name = "startToolStripMenuItem";
+            this.startToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.startToolStripMenuItem.Text = "Start";
+            this.startToolStripMenuItem.Click += new System.EventHandler(this.startToolStripMenuItem_Click);
+            // 
+            // stopToolStripMenuItem
+            // 
+            this.stopToolStripMenuItem.Name = "stopToolStripMenuItem";
+            this.stopToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.stopToolStripMenuItem.Text = "Stop";
+            this.stopToolStripMenuItem.Click += new System.EventHandler(this.stopToolStripMenuItem_Click);
+            // 
+            // loremToolStripMenuItem
+            // 
+            this.loremToolStripMenuItem.Name = "loremToolStripMenuItem";
+            this.loremToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.loremToolStripMenuItem.Text = "Lorem";
+            this.loremToolStripMenuItem.Click += new System.EventHandler(this.loremToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -277,6 +357,15 @@
         private System.Diagnostics.Process editorServerProcess;
         private System.Windows.Forms.ToolStripMenuItem openResourceBrowserToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripMenuItem refreshConsoleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem4;
+        private System.Windows.Forms.ToolStripMenuItem testToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem printLotsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem printAllTheTimeToolStripMenuItem;
+        private System.Windows.Forms.Timer testConsoleTimer;
+        private System.Windows.Forms.ToolStripMenuItem startToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem stopToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem loremToolStripMenuItem;
     }
 }
 

@@ -53,6 +53,7 @@
     <Compile Include="Console.Designer.cs">
       <DependentUpon>Console.cs</DependentUpon>
     </Compile>
+    <Compile Include="gen-csharp\FusionEngine\Interprocess\ConsoleCommandHelpData.cs" />
     <Compile Include="gen-csharp\FusionEngine\Interprocess\ResourceFile.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -103,7 +104,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="AutocompleteMenu\AutocompleteMenu.csproj">
+      <Project>{43cbc9aa-6a8e-463f-83a9-aff3124afdb6}</Project>
+      <Name>AutocompleteMenu</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>robocopy $(SolutionDir)EditorProtocol\gen-csharp $(ProjectDir)gen-csharp /MIR

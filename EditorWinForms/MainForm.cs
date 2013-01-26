@@ -46,7 +46,7 @@ namespace EditorWinForms
                 usingExistingServerProcess = true;
             }
 
-            editorServerProcess.OutputDataReceived += editorServerProcess_OutputDataReceived;
+            //editorServerProcess.OutputDataReceived += editorServerProcess_OutputDataReceived;
             console.Client = client;
             console.Show();
 
@@ -164,6 +164,50 @@ namespace EditorWinForms
                 resourceBrowser.Client = client;
                 resourceBrowser.Show();
             }
+        }
+
+        private void refreshConsoleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            console.AddToConsole(editorServerProcess.StandardOutput.ReadToEnd());
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void printLotsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < 100; ++i)
+                console.AddToConsole("Text");
+        }
+
+        bool tick = true;
+
+        private void testConsoleTimer_Tick(object sender, EventArgs e)
+        {
+            if (tick)
+                console.AddToConsole("Tick");
+            else
+                console.AddToConsole("Tock");
+            tick = !tick;
+        }
+
+        private void startToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            testConsoleTimer.Start();
+        }
+
+        private void stopToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            testConsoleTimer.Stop();
+        }
+
+        private void loremToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            console.AddToConsole(
+@"The first couple of responses I got were related to how to track a memory leak, so I thought I should share my methodology. I used a combination of WinDbg and perfmon to track the memory use over time (from a couple hours to days). The total number of bytes on all CLR heaps does not increase by more than I expect, but the total number of private bytes steadily increases as more messages are logged. This makes WinDbg less useful, as it's tools (sos) and commands (dumpheap, gcroot, etc.) are based on .NET's managed memory."
+                );
         }
 
     }

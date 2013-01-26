@@ -47,7 +47,7 @@ public:
 		if (!SetupPhysFS::is_init())
 			return 1;
 
-		clan::ConsoleWindow conWindow("Console", 80, 10);
+		//clan::ConsoleWindow conWindow("Console", 80, 10);
 
 		try
 		{
@@ -63,7 +63,15 @@ public:
 			Interprocess::EditorServer server;
 			std::thread serverThread(&Interprocess::EditorServer::Serve, &server, &manager, editor.get());
 
+			std::cerr << "No error, just testing";
+
+			auto consoleConnection = Console::getSingleton().OnNewData.connect([](const std::string& data) {
+					std::cout << data;
+			});
+
 			manager.Run();
+
+			SendToConsole("EngineManager quit");
 
 			server.Stop();
 			serverThread.join();

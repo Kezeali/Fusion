@@ -30,44 +30,65 @@
         {
             this.consoleTextBox = new System.Windows.Forms.TextBox();
             this.commandTextBox = new System.Windows.Forms.TextBox();
+            this.autocompleteMenu = new AutocompleteMenuNS.AutocompleteMenu();
             this.SuspendLayout();
             // 
             // consoleTextBox
             // 
+            this.consoleTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.autocompleteMenu.SetAutocompleteMenu(this.consoleTextBox, null);
             this.consoleTextBox.BackColor = System.Drawing.Color.AliceBlue;
-            this.consoleTextBox.Font = new System.Drawing.Font("Consolas", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.consoleTextBox.CausesValidation = false;
+            this.consoleTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.consoleTextBox.ForeColor = System.Drawing.Color.DimGray;
-            this.consoleTextBox.Location = new System.Drawing.Point(0, 1);
+            this.consoleTextBox.HideSelection = false;
+            this.consoleTextBox.Location = new System.Drawing.Point(1, 1);
             this.consoleTextBox.Multiline = true;
             this.consoleTextBox.Name = "consoleTextBox";
             this.consoleTextBox.ReadOnly = true;
             this.consoleTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.consoleTextBox.Size = new System.Drawing.Size(284, 235);
-            this.consoleTextBox.TabIndex = 0;
+            this.consoleTextBox.Size = new System.Drawing.Size(483, 535);
+            this.consoleTextBox.TabIndex = 1;
             // 
             // commandTextBox
             // 
-            this.commandTextBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
-            this.commandTextBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-            this.commandTextBox.Location = new System.Drawing.Point(1, 241);
+            this.commandTextBox.AcceptsTab = true;
+            this.commandTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.autocompleteMenu.SetAutocompleteMenu(this.commandTextBox, this.autocompleteMenu);
+            this.commandTextBox.CausesValidation = false;
+            this.commandTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.commandTextBox.Location = new System.Drawing.Point(1, 541);
             this.commandTextBox.Name = "commandTextBox";
-            this.commandTextBox.Size = new System.Drawing.Size(282, 20);
-            this.commandTextBox.TabIndex = 1;
-            this.commandTextBox.TextChanged += new System.EventHandler(this.commandTextBox_TextChanged);
+            this.commandTextBox.Size = new System.Drawing.Size(482, 23);
+            this.commandTextBox.TabIndex = 0;
             this.commandTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.commandTextBox_KeyDown);
-            this.commandTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.commandTextBox_KeyPress);
             this.commandTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.commandTextBox_KeyUp);
+            // 
+            // autocompleteMenu
+            // 
+            this.autocompleteMenu.AllowsTabKey = true;
+            this.autocompleteMenu.AppearInterval = 100;
+            this.autocompleteMenu.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.autocompleteMenu.ImageList = null;
+            this.autocompleteMenu.Items = new string[0];
+            this.autocompleteMenu.MinFragmentLength = 1;
+            this.autocompleteMenu.SearchPattern = "[\\w]";
+            this.autocompleteMenu.TargetControlWrapper = null;
             // 
             // Console
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 262);
+            this.ClientSize = new System.Drawing.Size(484, 566);
             this.Controls.Add(this.commandTextBox);
             this.Controls.Add(this.consoleTextBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "Console";
             this.Text = "Console";
+            this.Shown += new System.EventHandler(this.Console_Shown);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -77,6 +98,7 @@
 
         private System.Windows.Forms.TextBox consoleTextBox;
         private System.Windows.Forms.TextBox commandTextBox;
+        private AutocompleteMenuNS.AutocompleteMenu autocompleteMenu;
 
     }
 }

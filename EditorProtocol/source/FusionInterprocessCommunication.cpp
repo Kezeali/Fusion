@@ -129,6 +129,13 @@ namespace FusionEngine { namespace Interprocess {
 		_return = Console::getSingleton().Autocomplete(command, completion);
 	}
 
+	void EditorServiceHandler::GetConsoleCommandHelp(ConsoleCommandHelpData& _return, const std::string& command)
+	{
+		auto commandHelp = Console::getSingleton().GetCommandHelp(command);
+		_return.helpText = commandHelp.helpText;
+		_return.argumentNames = commandHelp.argumentNames;
+	}
+
 	void EditorServiceHandler::GetSelectedEntities(std::vector<EntityData> & _return)
 	{
 		editor->ForEachSelected([&_return](const EntityPtr& entity)
