@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Windows.Forms;
 using FusionEngine.Interprocess;
+using System.Threading;
 
 namespace EditorWinForms
 {
@@ -20,6 +21,221 @@ namespace EditorWinForms
         }
 
         public Editor.Client Client { get; set; }
+
+        class HoveredNode
+        {
+            public TreeNode node;
+            public bool wasExpanded = false;
+            public DateTime startHoverTime = DateTime.Now;
+        }
+
+        HoveredNode hoveredNode;
+
+        private void SetHoveredNode(TreeNode node)
+        {
+            if (hoveredNode == null || node != hoveredNode.node)
+            {
+                ClearHoveredNode();
+
+                if (node != null)
+                {
+                    try
+                    {
+                        hoveredNode = new HoveredNode();
+
+                        hoveredNode.node = node;
+
+                        hoveredNode.wasExpanded = hoveredNode.node.IsExpanded;
+                        hoveredNode.node.BackColor = Color.SkyBlue;
+                    }
+                    catch
+                    {
+                        hoveredNode = null;
+                    }
+                }
+            }
+            else
+            {
+                if ((DateTime.Now - hoveredNode.startHoverTime).TotalSeconds >= 1.0)
+                {
+                    hoveredNode.node.Expand();
+                }
+            }
+        }
+
+        bool IsParent(TreeNode expectedParent, TreeNode child)
+        {
+            var current = child;
+            while (current != null)
+            {
+                if (current == expectedParent)
+                    return true;
+                current = current.Parent;
+            }
+            return false;
+        }
+
+        private void ClearHoveredNode()
+        {
+            try
+            {
+                if (hoveredNode != null)
+                {
+                    //if (!hoveredNode.wasExpanded)
+                    //{
+                    //    var node = hoveredNode.node;
+                    //    new Thread(() =>
+                    //    {
+                    //        Thread.Sleep(1000);
+                    //        directoryTreeView.Invoke((Action)(() =>
+                    //        {
+                    //            if (hoveredNode != null && !IsParent(node, hoveredNode.node))
+                    //                node.Collapse();
+                    //        }));
+                    //    }).Start();
+                    //}
+
+                    hoveredNode.node.BackColor = Color.Transparent;
+                    hoveredNode = null;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private static string GetLastPathElement(string path)
+        {
+            string title;
+            if (path != "/")
+            {
+                var end = path.LastIndexOfAny(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
+                if (end != -1 && end + 1 < path.Length)
+                    title = path.Substring(end + 1);
+                else
+                    title = path;
+            }
+            else
+                title = path;
+            return title;
+        }
+
+        class NativeDirectoryTreeProgress
+        {
+            public string path;
+            public TreeNode node;
+            //public TreeNode[] children;
+            public List<ResourceFile> resources;
+            public int i;
+
+            public NativeDirectoryTreeProgress(TreeNode node)
+            {
+            }
+
+            public NativeDirectoryTreeProgress(string title, string path, List<ResourceFile> resources, int i = 0)
+            {
+                this.path = path;
+                this.resources = resources;
+                this.i = i;
+
+                this.node = new TreeNode(title);
+                this.node.Name = title;
+                this.node.Tag = path;
+            }
+        }
+
+        public void RefreshBrowserWithNativeFS()
+        {
+            var basePath = Client.GetUserDataDirectory();
+
+            TreeNode rootNode = new TreeNode("/");
+            rootNode.Name = "";
+            rootNode.Tag = "/";
+
+            PopulateNode(basePath, rootNode, 2);
+
+            directoryTreeView.Invoke(BeginUpdateDirectoryTree);
+            directoryTreeView.Invoke(ClearDirectoryTree);
+            directoryTreeView.Invoke(AddToDirectoryTree, rootNode);
+            directoryTreeView.Invoke(RedrawDirectoryTree);
+            directoryTreeView.Invoke(EndUpdateDirectoryTree);
+        }
+
+        class SubdirToProcess
+        {
+            public string path;
+            public TreeNode treeNode;
+
+            public SubdirToProcess(string path, TreeNode treeNode)
+            {
+                this.path = path;
+                this.treeNode = treeNode;
+            }
+        }
+
+        private static void PopulateNode(string basePath, TreeNode rootNode, int depth)
+        {
+            Queue<SubdirToProcess> subdirectoriesToProcess = new Queue<SubdirToProcess>();
+            subdirectoriesToProcess.Enqueue(new SubdirToProcess(basePath, rootNode));
+
+            //while (subdirectoriesToProcess.Count > 0)
+            {
+                var toProcess = subdirectoriesToProcess.Dequeue();
+
+                try
+                {
+                    toProcess.treeNode.Nodes.Clear();
+
+                    foreach (var entry in Directory.EnumerateDirectories(toProcess.path))
+                    {
+                        var foldername = GetLastPathElement(entry);
+                        TreeNode newChild = new TreeNode(foldername);
+                        newChild.Name = foldername;
+                        newChild.Tag = (string)toProcess.treeNode.Tag + foldername + "/";
+                        toProcess.treeNode.Nodes.Add(newChild);
+
+                        subdirectoriesToProcess.Enqueue(new SubdirToProcess(entry, newChild));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    toProcess.treeNode.Nodes.Add("Error: " + ex.Message);
+                }
+            }
+        }
+
+        private static void PopulateSubnodes(string basePath, TreeNode rootNode)
+        {
+            if (Path.DirectorySeparatorChar != '/')
+            {
+                //var fullPath = basePath + ((string)rootNode.Tag).Replace('/', Path.DirectorySeparatorChar);
+
+                foreach (var entry in rootNode.Nodes)
+                {
+                    var subnode = (TreeNode)entry;
+                    var relPath = ((string)subnode.Tag).Replace('/', Path.DirectorySeparatorChar);
+                    PopulateNode(basePath + relPath, subnode, 1);
+                }
+            }
+            else
+            {
+                //var fullPath = basePath + (string)rootNode.Tag;
+
+                foreach (var entry in rootNode.Nodes)
+                {
+                    var subnode = (TreeNode)entry;
+                    var relPath = (string)subnode.Tag;
+                    PopulateNode(basePath + relPath, subnode, 1);
+                }
+            }
+        }
+
+        void PopulateNode(string basePath, TreeNode rootNode)
+        {
+            directoryTreeView.Invoke(BeginUpdateDirectoryTree);
+            directoryTreeView.Invoke((Action)(() => { PopulateNode(basePath, rootNode, 1); }));
+            directoryTreeView.Invoke(EndUpdateDirectoryTree);
+        }
 
         class DirectoryTreeProgress
         {
@@ -41,7 +257,7 @@ namespace EditorWinForms
             }
         }
 
-        public void RefreshBrowser()
+        public void RefreshBrowserWithPhysFS()
         {
             if (Client != null)
             {
@@ -63,16 +279,7 @@ namespace EditorWinForms
                             string path = progress.resources[progress.i].Filename;
 
                             string title;
-                            if (path != "/")
-                            {
-                                var end = path.LastIndexOfAny(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-                                if (end != -1 && end + 1 < path.Length)
-                                    title = path.Substring(end + 1);
-                                else
-                                    title = path;
-                            }
-                            else
-                                title = path;
+                            title = GetLastPathElement(path);
 
                             var childProgress = new DirectoryTreeProgress(title, path, Client.GetResources(path));
                             progress.node.Nodes.Add(childProgress.node);
@@ -85,10 +292,17 @@ namespace EditorWinForms
                     }
                 }
 
+                directoryTreeView.Invoke(BeginUpdateDirectoryTree);
                 directoryTreeView.Invoke(ClearDirectoryTree);
                 directoryTreeView.Invoke(AddToDirectoryTree, rootProgress.node);
                 directoryTreeView.Invoke(RedrawDirectoryTree);
+                directoryTreeView.Invoke(EndUpdateDirectoryTree);
             }
+        }
+
+        private void directoryTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            PopulateSubnodes(Client.GetUserDataDirectory(), e.Node);
         }
 
         private delegate void ClearDirectoryTreeFn();
@@ -117,7 +331,7 @@ namespace EditorWinForms
         {
             try
             {
-                RefreshBrowser();
+                RefreshBrowserWithNativeFS();
             }
             catch (Exception)
             {
@@ -126,8 +340,13 @@ namespace EditorWinForms
 
         private void refreshBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            appFileSystemWatcher.Path = Client.GetDataDirectory();
+            appFileSystemWatcher.EnableRaisingEvents = true;
+            writeDirFileSystemWatcher.Path = Client.GetUserDataDirectory();
+            writeDirFileSystemWatcher.EnableRaisingEvents = true;
+
             if (directoryTreeView.Nodes.Count > 0)
-                directoryTreeView.Nodes[0].Expand();
+                directoryTreeView.TopNode.Expand();
         }
 
         private void NavigateToPath(string path)
@@ -148,7 +367,17 @@ namespace EditorWinForms
             filesListView.EndUpdate();
 
             // Make sure the navigated-to node is expanded
-            TreeNode node = directoryTreeView.Nodes[0];
+            TreeNode node = FindNode(path, directoryTreeView.TopNode);
+
+            if (node != null && directoryTreeView.SelectedNode != node)
+            {
+                directoryTreeView.SelectedNode = node;
+                node.Expand();
+            }
+        }
+
+        private static TreeNode FindNode(string path, TreeNode node)
+        {
             var currentCollection = node.Nodes;
 
             var pathElements = path.Split(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
@@ -160,12 +389,7 @@ namespace EditorWinForms
                 else
                     break;
             }
-
-            if (node != null && directoryTreeView.SelectedNode != node)
-            {
-                directoryTreeView.SelectedNode = node;
-                node.Expand();
-            }
+            return node;
         }
 
         private void directoryTreeView_AfterSelect(object sender, TreeViewEventArgs e)
@@ -197,6 +421,11 @@ namespace EditorWinForms
 
         private void directoryTreeView_DragEnter(object sender, DragEventArgs e)
         {
+            DecideDragEffects(e);
+        }
+
+        private static void DecideDragEffects(DragEventArgs e)
+        {
             if (e.Data.GetDataPresent(DataFormats.Text))
             {
                 if (((e.KeyState & 4) == 4) && ((e.AllowedEffect & DragDropEffects.Move) == DragDropEffects.Move))
@@ -214,22 +443,101 @@ namespace EditorWinForms
 
         private void directoryTreeView_DragDrop(object sender, DragEventArgs e)
         {
-            var node = directoryTreeView.GetNodeAt(e.X, e.Y);
+            ClearHoveredNode();
+
+            var node = directoryTreeView.GetNodeAt(directoryTreeView.PointToClient(new Point(e.X, e.Y)));
             if (node != null)
             {
                 if (e.Data.GetDataPresent(DataFormats.Text))
                 {
                     try
                     {
-                        var targetPath = node.FullPath.Substring(1);
                         var sourcePath = (string)e.Data.GetData(DataFormats.Text);
-                        Client.MoveResource(sourcePath, targetPath);
+                        var targetPath = node.FullPath.Substring(1) + "/" + Path.GetFileName(sourcePath);
+                        if ((e.Effect & DragDropEffects.Copy) != 0)
+                            Client.CopyResource(sourcePath, targetPath);
+                        else if ((e.Effect & DragDropEffects.Move) != 0)
+                            Client.MoveResource(sourcePath, targetPath);
                     }
                     catch
                     { }
                 }
             }
         }
-        
+
+        private void directoryTreeView_DragOver(object sender, DragEventArgs e)
+        {
+            DecideDragEffects(e);
+            SetHoveredNode(directoryTreeView.GetNodeAt(directoryTreeView.PointToClient(new Point(e.X, e.Y))));
+        }
+
+        private void directoryTreeView_DragLeave(object sender, EventArgs e)
+        {
+            ClearHoveredNode();
+        }
+
+        private void filesListView_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                foreach (var item in filesListView.SelectedItems)
+                {
+                    var path = (string)((ListViewItem)item).Tag;
+                    Client.DeleteResource(path);
+                }
+            }
+            catch
+            { }
+        }
+
+        static IEnumerable<string> MakeRelative(string path, string basePath)
+        {
+            var baseDirElements = basePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var pathElements = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            int i = 0;
+            for (; i < pathElements.Length && i < baseDirElements.Length; ++i)
+            {
+                if (pathElements[i] != baseDirElements[i])
+                    break;
+            }
+            return pathElements.Skip(i);
+        }
+
+        private void fileSystemWatcher_ChangedCreatedDeleted(object sender, FileSystemEventArgs e)
+        {
+            if (!directoryTreeView.IsDisposed)
+            {
+                if (Directory.Exists(e.FullPath))
+                {
+                    var basePath = Client.GetUserDataDirectory();
+                    var relativePath = string.Join("/", MakeRelative(e.FullPath, basePath));
+                    var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
+                    PopulateNode(basePath, nodeChanged, 1);
+                    //refreshBackgroundWorker.RunWorkerAsync();
+                }
+
+                if (directoryTreeView.SelectedNode != null)
+                    NavigateToPath(directoryTreeView.SelectedNode.FullPath.Substring(1));
+            }
+        }
+
+        private void fileSystemWatcher_Renamed(object sender, RenamedEventArgs e)
+        {
+            if (!directoryTreeView.IsDisposed)
+            {
+                if (Directory.Exists(e.FullPath))
+                {
+                    var basePath = Client.GetUserDataDirectory();
+                    var relativePath = string.Join("/", MakeRelative(e.FullPath, basePath));
+                    var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
+                    PopulateNode(basePath, nodeChanged, 1);
+                    //refreshBackgroundWorker.RunWorkerAsync();
+                }
+
+                if (directoryTreeView.SelectedNode != null)
+                    NavigateToPath(directoryTreeView.SelectedNode.FullPath.Substring(1));
+            }
+        }
+
     }
 }

@@ -85,6 +85,7 @@
             this.ClientSize = new System.Drawing.Size(484, 566);
             this.Controls.Add(this.commandTextBox);
             this.Controls.Add(this.consoleTextBox);
+            this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "Console";
             this.Text = "Console";

@@ -39,6 +39,8 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 
+#include <boost/tokenizer.hpp>
+
 #include "FusionEngineManager.h"
 #include "FusionEditor.h"
 #include "FusionEntity.h"
@@ -97,18 +99,53 @@ namespace FusionEngine { namespace Interprocess {
 	{
 		editor->GetResourceType(path);
 	}
+
+	namespace 
+	{
+		void copy_file_even_if_dest_nonexist(const std::string& source, const std::string& destination)
+		{
+			for (size_t c = destination.find('/'); c != std::string::npos; c = destination.find('/', c + 1))
+			{
+				auto newPath = destination.substr(0, c);
+				if (PHYSFS_isDirectory(newPath.c_str()) == 0)
+				{
+					PHYSFS_mkdir(newPath.c_str());
+				}
+			}
+			PhysFSHelp::copy_file(source, destination);
+		}
+	}
+
+	void EditorServiceHandler::CopyResource(const std::string& source, const std::string& destination)
+	{
+		try
+		{
+			copy_file_even_if_dest_nonexist(source, destination);
+		}
+		catch (FusionEngine::Exception& ex)
+		{
+			SendToConsole("Failed to copy resource\n" + source + "\n-> " + destination + ":\n" + ex.GetDescription());
+		}
+	}
 	
 	void EditorServiceHandler::MoveResource(const std::string& source, const std::string& destination)
 	{
 		try
 		{
-			PhysFSHelp::copy_file(source, destination);
+			copy_file_even_if_dest_nonexist(source, destination);
 			PHYSFS_delete(source.c_str());
 		}
 		catch (FusionEngine::Exception& ex)
 		{
 			SendToConsole("Failed to move resource " + source + " -> " + destination + ": " + ex.GetDescription());
 		}
+	}
+
+	void EditorServiceHandler::DeleteResource(const std::string& path)
+	{
+		if (PHYSFS_isDirectory(path.c_str()))
+			PhysFSHelp::clear_folder(path);
+		PHYSFS_delete(path.c_str());
 	}
 
 	void EditorServiceHandler::InterpretConsoleCommand(const std::string& command)

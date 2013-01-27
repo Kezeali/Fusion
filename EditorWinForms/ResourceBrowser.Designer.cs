@@ -33,12 +33,16 @@
             this.mainSplitContainer = new System.Windows.Forms.SplitContainer();
             this.directoryTreeView = new System.Windows.Forms.TreeView();
             this.filesListView = new System.Windows.Forms.ListView();
-            this.refreshBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.fileListImageList = new System.Windows.Forms.ImageList(this.components);
+            this.refreshBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.appFileSystemWatcher = new System.IO.FileSystemWatcher();
+            this.writeDirFileSystemWatcher = new System.IO.FileSystemWatcher();
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
             this.mainSplitContainer.Panel2.SuspendLayout();
             this.mainSplitContainer.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.appFileSystemWatcher)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.writeDirFileSystemWatcher)).BeginInit();
             this.SuspendLayout();
             // 
             // mainSplitContainer
@@ -69,9 +73,12 @@
             this.directoryTreeView.PathSeparator = "/";
             this.directoryTreeView.Size = new System.Drawing.Size(196, 562);
             this.directoryTreeView.TabIndex = 1;
+            this.directoryTreeView.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.directoryTreeView_BeforeExpand);
             this.directoryTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.directoryTreeView_AfterSelect);
             this.directoryTreeView.DragDrop += new System.Windows.Forms.DragEventHandler(this.directoryTreeView_DragDrop);
             this.directoryTreeView.DragEnter += new System.Windows.Forms.DragEventHandler(this.directoryTreeView_DragEnter);
+            this.directoryTreeView.DragOver += new System.Windows.Forms.DragEventHandler(this.directoryTreeView_DragOver);
+            this.directoryTreeView.DragLeave += new System.EventHandler(this.directoryTreeView_DragLeave);
             // 
             // filesListView
             // 
@@ -90,11 +97,7 @@
             this.filesListView.View = System.Windows.Forms.View.Tile;
             this.filesListView.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.filesListView_ItemDrag);
             this.filesListView.DoubleClick += new System.EventHandler(this.filesListView_DoubleClick);
-            // 
-            // refreshBackgroundWorker
-            // 
-            this.refreshBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.refreshBackgroundWorker_DoWork);
-            this.refreshBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.refreshBackgroundWorker_RunWorkerCompleted);
+            this.filesListView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.filesListView_KeyDown);
             // 
             // fileListImageList
             // 
@@ -104,6 +107,35 @@
             this.fileListImageList.Images.SetKeyName(1, "FolderOpen");
             this.fileListImageList.Images.SetKeyName(2, "File");
             this.fileListImageList.Images.SetKeyName(3, "Map");
+            // 
+            // refreshBackgroundWorker
+            // 
+            this.refreshBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.refreshBackgroundWorker_DoWork);
+            this.refreshBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.refreshBackgroundWorker_RunWorkerCompleted);
+            // 
+            // appFileSystemWatcher
+            // 
+            this.appFileSystemWatcher.IncludeSubdirectories = true;
+            this.appFileSystemWatcher.NotifyFilter = ((System.IO.NotifyFilters)((((System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.DirectoryName) 
+            | System.IO.NotifyFilters.Size) 
+            | System.IO.NotifyFilters.LastWrite)));
+            this.appFileSystemWatcher.SynchronizingObject = this;
+            this.appFileSystemWatcher.Changed += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.appFileSystemWatcher.Created += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.appFileSystemWatcher.Deleted += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.appFileSystemWatcher.Renamed += new System.IO.RenamedEventHandler(this.fileSystemWatcher_Renamed);
+            // 
+            // writeDirFileSystemWatcher
+            // 
+            this.writeDirFileSystemWatcher.IncludeSubdirectories = true;
+            this.writeDirFileSystemWatcher.NotifyFilter = ((System.IO.NotifyFilters)((((System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.DirectoryName) 
+            | System.IO.NotifyFilters.Size) 
+            | System.IO.NotifyFilters.LastWrite)));
+            this.writeDirFileSystemWatcher.SynchronizingObject = this;
+            this.writeDirFileSystemWatcher.Changed += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.writeDirFileSystemWatcher.Created += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.writeDirFileSystemWatcher.Deleted += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
+            this.writeDirFileSystemWatcher.Renamed += new System.IO.RenamedEventHandler(this.fileSystemWatcher_Renamed);
             // 
             // ResourceBrowser
             // 
@@ -119,6 +151,8 @@
             this.mainSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).EndInit();
             this.mainSplitContainer.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.appFileSystemWatcher)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.writeDirFileSystemWatcher)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -130,5 +164,7 @@
         private System.Windows.Forms.ListView filesListView;
         private System.ComponentModel.BackgroundWorker refreshBackgroundWorker;
         private System.Windows.Forms.ImageList fileListImageList;
+        private System.IO.FileSystemWatcher appFileSystemWatcher;
+        private System.IO.FileSystemWatcher writeDirFileSystemWatcher;
     }
 }

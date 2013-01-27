@@ -30,7 +30,9 @@ service Editor {
 	list<ResourceFile> GetResources(1: string path);
 	list<ResourceFile> GetResourcesRecursive(1: string path);
 	string GetResourceType(1: string path);
+	oneway void CopyResource(1: string source, 2: string destination);
 	oneway void MoveResource(1: string source, 2: string destination);
+	oneway void DeleteResource(1: string path);
 	oneway void InterpretConsoleCommand(1: string command);
 	list<string> FindConsoleCommandSuggestions(1: string command);
 	string CompleteCommand(1: string command, 2: string completion);

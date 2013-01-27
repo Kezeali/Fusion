@@ -12,6 +12,9 @@ using Thrift.Transport;
 using FusionEngine.Interprocess;
 using System.IO;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Collections;
+using System.Threading;
 
 namespace EditorWinForms
 {
@@ -35,6 +38,17 @@ namespace EditorWinForms
         Console console = new Console();
 
         bool usingExistingServerProcess = false;
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_PARENTNOTIFY = 0x0210;
+            if (!this.Focused && m.Msg == WM_PARENTNOTIFY)
+            {
+                // Make this form auto-grab the focus when menu/controls are clicked
+                this.Activate();
+            }
+            base.WndProc(ref m);
+        }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
@@ -74,7 +88,8 @@ namespace EditorWinForms
                 }
             }
 
-            waitToConnectTimer.Start();
+            //waitToConnectTimer.Start();
+            connectBackgroundWorker.RunWorkerAsync();
         }
 
         private void StopServer()
@@ -110,15 +125,62 @@ namespace EditorWinForms
             AttemptToConnect();
         }
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetWindowRect(HandleRef hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;        // x position of upper-left corner
+            public int Top;         // y position of upper-left corner
+            public int Right;       // x position of lower-right corner
+            public int Bottom;      // y position of lower-right corner
+        }
+
         int connectionAttempts = 0;
 
-        private void AttemptToConnect()
+        private void connectBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            console.AddToConsole(string.Format("Attempting to connect. Max {0} tries", settings.MaxConnectionRetries));
+            try
+            {
+                while (!AttemptToConnect())
+                {
+                    Thread.Sleep(1000);
+                    console.AddToConsole(string.Format("Retrying in {0}ms", 1000));
+                }
+            }
+            catch
+            { }
+        }
+
+        private void connectBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (!usingExistingServerProcess)
+                editorServerProcess.BeginOutputReadLine();
+
+            ShowResourceBrowser();
+
+            RECT windowRect;
+            if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
+            {
+                //SetDesktopLocation(windowRect.Top - Size.Height, windowRect.Left);
+                SetBounds(windowRect.Left, windowRect.Top - Size.Height, windowRect.Right - windowRect.Left, Height, BoundsSpecified.Location | BoundsSpecified.Width);
+                //SetDesktopBounds(windowRect.Top - Size.Height, windowRect.Left, windowRect.Right - windowRect.Left, Height);
+            }
+
+            BringToFront();
+        }
+
+        private bool AttemptToConnect()
+        {
+            console.AddToConsole("Attempting to connect to engine");
             if (!transport.IsOpen)
             {
                 if (connectionAttempts++ < settings.MaxConnectionRetries)
                 {
+                    if (connectionAttempts > 1)
+                        console.AddToConsole(string.Format("Retry {0} of {1}", connectionAttempts - 1, settings.MaxConnectionRetries));
                     try
                     {
                         transport.Open();
@@ -130,18 +192,21 @@ namespace EditorWinForms
                 }
                 else
                 {
-                    console.AddToConsole("Failed to connect");
-                    waitToConnectTimer.Stop();
+                    console.AddToConsole("Failed to connect!");
+                    console.AddToConsole("vvvvvv");
+                    return true;
                 }
             }
 
             if (transport.IsOpen)
             {
-                console.AddToConsole("Connected");
-                waitToConnectTimer.Stop();
+                console.AddToConsole("Connected!");
+                console.AddToConsole("vvvvvv");
 
-                ShowResourceBrowser();
+                return true;
             }
+
+            return false;
         }
 
         void editorServerProcess_OutputDataReceived(object sender, System.Diagnostics.DataReceivedEventArgs e)
@@ -157,7 +222,10 @@ namespace EditorWinForms
         private void ShowResourceBrowser()
         {
             if (!resourceBrowser.Visible && !resourceBrowser.IsDisposed)
+            {
+                resourceBrowser.Client = client;
                 resourceBrowser.Show();
+            }
             else
             {
                 resourceBrowser = new ResourceBrowser();
@@ -168,7 +236,6 @@ namespace EditorWinForms
 
         private void refreshConsoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            console.AddToConsole(editorServerProcess.StandardOutput.ReadToEnd());
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -208,6 +275,11 @@ namespace EditorWinForms
             console.AddToConsole(
 @"The first couple of responses I got were related to how to track a memory leak, so I thought I should share my methodology. I used a combination of WinDbg and perfmon to track the memory use over time (from a couple hours to days). The total number of bytes on all CLR heaps does not increase by more than I expect, but the total number of private bytes steadily increases as more messages are logged. This makes WinDbg less useful, as it's tools (sos) and commands (dumpheap, gcroot, etc.) are based on .NET's managed memory."
                 );
+        }
+
+        private void websiteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Process.Start(@"https://github.com/Kezeali/Fusion");
         }
 
     }

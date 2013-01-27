@@ -49,6 +49,8 @@ public:
 
 		//clan::ConsoleWindow conWindow("Console", 80, 10);
 
+		//AllocConsole();
+
 		try
 		{
 			EngineManager manager(args);
@@ -67,6 +69,7 @@ public:
 
 			auto consoleConnection = Console::getSingleton().OnNewData.connect([](const std::string& data) {
 					std::cout << data;
+					std::cout << std::flush;
 			});
 
 			manager.Run();
@@ -78,9 +81,12 @@ public:
 		}
 		catch (std::exception& ex)
 		{
+			//FreeConsole();
 			std::cerr << "Unhandled exception: " << ex.what();
 			throw;
 		}
+
+		//FreeConsole();
 
 		return 0;
 	}

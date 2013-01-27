@@ -41,59 +41,6 @@ namespace EditorWinForms
             AddToTextBox(consoleTextBox, line);
         }
 
-        void AddToTextBoxCrappy(string line)
-        {
-            int initialSelectionStart = consoleTextBox.SelectionStart;
-            int initialSelectionLength = consoleTextBox.SelectionLength;
-            bool scrollToEnd = initialSelectionStart == consoleTextBox.Text.Length;
-
-            if (scrollToEnd)
-            {
-                if (consoleTextBox.Text.Length > 0)
-                    consoleTextBox.AppendText("\r\n" + line);
-                else
-                    consoleTextBox.AppendText(line);
-            }
-            else
-            {
-                if (consoleTextBox.Text.Length > 0)
-                    consoleTextBox.Text += "\r\n" + line;
-                else
-                    consoleTextBox.Text = line;
-
-                consoleTextBox.SelectionStart = initialSelectionStart;
-                consoleTextBox.SelectionLength = initialSelectionLength;
-                consoleTextBox.ClearUndo();
-            }
-
-            const int maxLines = 2000;
-
-            if (consoleTextBox.Lines.Length > maxLines)
-            {
-                int exceededLines = consoleTextBox.Lines.Length - maxLines;
-
-                int lengthOfTextRemoved = consoleTextBox.Lines.Take(exceededLines).Sum((lineEntry) => lineEntry.Length);
-
-                int adjustedSelectionStart;
-                if (scrollToEnd)
-                    adjustedSelectionStart = consoleTextBox.Text.Length;
-                else
-                    adjustedSelectionStart = (initialSelectionStart >= lengthOfTextRemoved ? initialSelectionStart - lengthOfTextRemoved : 0);
-
-                var textboxLines = consoleTextBox.Lines;
-                System.Array.Copy(textboxLines, exceededLines, textboxLines, 0, textboxLines.Length - exceededLines);
-                System.Array.Resize(ref textboxLines, textboxLines.Length - exceededLines);
-                consoleTextBox.Lines = textboxLines;
-
-                consoleTextBox.SelectionStart = adjustedSelectionStart;
-            }
-
-            if (!scrollToEnd)
-            {
-                consoleTextBox.ScrollToCaret();
-            }
-        }
-
         // Constants for extern calls to various scrollbar functions
         private const int SB_HORZ = 0x0;
         private const int SB_VERT = 0x1;

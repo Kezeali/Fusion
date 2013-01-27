@@ -116,7 +116,9 @@ namespace FusionEngine
 			clan::PixelBuffer* imageData = static_cast<clan::PixelBuffer*>(resource->GetDataPtr());
 			FSN_ASSERT(imageData);
 
-			clan::Texture2D* data = new clan::Texture2D();
+			//imageData = import_desc.process(imageData);
+
+			clan::Texture2D* data = new clan::Texture2D(gc, imageData->get_size(), imageData->get_format()/*import_desc.is_srgb() ? tf_srgb8_alpha8 : tf_rgba8*/);
 			data->set_image(gc, *imageData);
 
 			delete imageData;
