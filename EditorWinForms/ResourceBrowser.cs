@@ -503,21 +503,31 @@ namespace EditorWinForms
             return pathElements.Skip(i);
         }
 
+        private void RefreshPath(string absoslutePath)
+        {
+            string navigateTo = null;
+            if (directoryTreeView.SelectedNode != null)
+                navigateTo = directoryTreeView.SelectedNode.FullPath;
+
+            if (Directory.Exists(absoslutePath))
+            {
+                var basePath = Client.GetUserDataDirectory();
+                var relativePath = string.Join("/", MakeRelative(absoslutePath, basePath));
+                var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
+                if (nodeChanged != null)
+                    PopulateNode(basePath, nodeChanged, 1);
+                //refreshBackgroundWorker.RunWorkerAsync();
+            }
+
+            if (navigateTo != null)
+                NavigateToPath(navigateTo);
+        }
+
         private void fileSystemWatcher_ChangedCreatedDeleted(object sender, FileSystemEventArgs e)
         {
             if (!directoryTreeView.IsDisposed)
             {
-                if (Directory.Exists(e.FullPath))
-                {
-                    var basePath = Client.GetUserDataDirectory();
-                    var relativePath = string.Join("/", MakeRelative(e.FullPath, basePath));
-                    var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
-                    PopulateNode(basePath, nodeChanged, 1);
-                    //refreshBackgroundWorker.RunWorkerAsync();
-                }
-
-                if (directoryTreeView.SelectedNode != null)
-                    NavigateToPath(directoryTreeView.SelectedNode.FullPath.Substring(1));
+                RefreshPath(e.FullPath);
             }
         }
 
@@ -525,17 +535,13 @@ namespace EditorWinForms
         {
             if (!directoryTreeView.IsDisposed)
             {
-                if (Directory.Exists(e.FullPath))
-                {
-                    var basePath = Client.GetUserDataDirectory();
-                    var relativePath = string.Join("/", MakeRelative(e.FullPath, basePath));
-                    var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
-                    PopulateNode(basePath, nodeChanged, 1);
-                    //refreshBackgroundWorker.RunWorkerAsync();
-                }
+                var basePath = Client.GetUserDataDirectory();
+                var relativePath = string.Join("/", MakeRelative(e.OldFullPath, basePath));
+                var node = FindNode(relativePath, directoryTreeView.TopNode);
+                if (node != null)
+                    node.Remove();
 
-                if (directoryTreeView.SelectedNode != null)
-                    NavigateToPath(directoryTreeView.SelectedNode.FullPath.Substring(1));
+                RefreshPath(e.FullPath);
             }
         }
 
