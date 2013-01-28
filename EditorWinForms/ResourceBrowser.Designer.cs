@@ -37,12 +37,16 @@
             this.refreshBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.appFileSystemWatcher = new System.IO.FileSystemWatcher();
             this.writeDirFileSystemWatcher = new System.IO.FileSystemWatcher();
+            this.refreshNodeBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.directoryImageList = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).BeginInit();
             this.mainSplitContainer.Panel1.SuspendLayout();
             this.mainSplitContainer.Panel2.SuspendLayout();
             this.mainSplitContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.appFileSystemWatcher)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.writeDirFileSystemWatcher)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // mainSplitContainer
@@ -54,6 +58,7 @@
             // 
             // mainSplitContainer.Panel1
             // 
+            this.mainSplitContainer.Panel1.Controls.Add(this.pictureBox1);
             this.mainSplitContainer.Panel1.Controls.Add(this.directoryTreeView);
             // 
             // mainSplitContainer.Panel2
@@ -68,9 +73,14 @@
             this.directoryTreeView.AllowDrop = true;
             this.directoryTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.directoryTreeView.HideSelection = false;
+            this.directoryTreeView.HotTracking = true;
+            this.directoryTreeView.ImageIndex = 0;
+            this.directoryTreeView.ImageList = this.directoryImageList;
+            this.directoryTreeView.Indent = 16;
             this.directoryTreeView.Location = new System.Drawing.Point(0, 0);
             this.directoryTreeView.Name = "directoryTreeView";
             this.directoryTreeView.PathSeparator = "/";
+            this.directoryTreeView.SelectedImageIndex = 1;
             this.directoryTreeView.Size = new System.Drawing.Size(196, 562);
             this.directoryTreeView.TabIndex = 1;
             this.directoryTreeView.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.directoryTreeView_BeforeExpand);
@@ -115,6 +125,7 @@
             // 
             // appFileSystemWatcher
             // 
+            this.appFileSystemWatcher.EnableRaisingEvents = true;
             this.appFileSystemWatcher.IncludeSubdirectories = true;
             this.appFileSystemWatcher.NotifyFilter = ((System.IO.NotifyFilters)((((System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.DirectoryName) 
             | System.IO.NotifyFilters.Size) 
@@ -127,6 +138,7 @@
             // 
             // writeDirFileSystemWatcher
             // 
+            this.writeDirFileSystemWatcher.EnableRaisingEvents = true;
             this.writeDirFileSystemWatcher.IncludeSubdirectories = true;
             this.writeDirFileSystemWatcher.NotifyFilter = ((System.IO.NotifyFilters)((((System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.DirectoryName) 
             | System.IO.NotifyFilters.Size) 
@@ -136,6 +148,34 @@
             this.writeDirFileSystemWatcher.Created += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
             this.writeDirFileSystemWatcher.Deleted += new System.IO.FileSystemEventHandler(this.fileSystemWatcher_ChangedCreatedDeleted);
             this.writeDirFileSystemWatcher.Renamed += new System.IO.RenamedEventHandler(this.fileSystemWatcher_Renamed);
+            // 
+            // refreshNodeBackgroundWorker
+            // 
+            this.refreshNodeBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.refreshNodeBackgroundWorker_DoWork);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox1.BackColor = System.Drawing.SystemColors.Window;
+            this.pictureBox1.Image = global::EditorWinForms.Properties.Resources.LinkSpinAttackDemoMoving;
+            this.pictureBox1.Location = new System.Drawing.Point(143, 3);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(50, 54);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pictureBox1.TabIndex = 2;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Visible = false;
+            // 
+            // directoryImageList
+            // 
+            this.directoryImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("directoryImageList.ImageStream")));
+            this.directoryImageList.TransparentColor = System.Drawing.Color.Transparent;
+            this.directoryImageList.Images.SetKeyName(0, "Folder");
+            this.directoryImageList.Images.SetKeyName(1, "FolderOpen");
+            this.directoryImageList.Images.SetKeyName(2, "File");
+            this.directoryImageList.Images.SetKeyName(3, "Map");
             // 
             // ResourceBrowser
             // 
@@ -148,11 +188,13 @@
             this.Text = "ResourceBrowser";
             this.Shown += new System.EventHandler(this.ResourceBrowser_Shown);
             this.mainSplitContainer.Panel1.ResumeLayout(false);
+            this.mainSplitContainer.Panel1.PerformLayout();
             this.mainSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.mainSplitContainer)).EndInit();
             this.mainSplitContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.appFileSystemWatcher)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.writeDirFileSystemWatcher)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -166,5 +208,8 @@
         private System.Windows.Forms.ImageList fileListImageList;
         private System.IO.FileSystemWatcher appFileSystemWatcher;
         private System.IO.FileSystemWatcher writeDirFileSystemWatcher;
+        private System.ComponentModel.BackgroundWorker refreshNodeBackgroundWorker;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ImageList directoryImageList;
     }
 }

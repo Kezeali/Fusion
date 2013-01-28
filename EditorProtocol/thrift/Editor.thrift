@@ -14,7 +14,7 @@ struct EntityData {
 }
 
 struct ResourceFile {
-	1: string filename,
+	1: string path,
 	2: string type,
 	3: bool directory
 }

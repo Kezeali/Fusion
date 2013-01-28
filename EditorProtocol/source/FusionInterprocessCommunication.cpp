@@ -75,7 +75,7 @@ namespace FusionEngine { namespace Interprocess {
 		for (auto file : files)
 		{
 			ResourceFile resource;
-			resource.filename = file;
+			resource.path = file;
 			resource.directory = PHYSFS_isDirectory(file.c_str()) != 0;
 			if (!resource.directory)
 				resource.type = editor->GetResourceType(file);

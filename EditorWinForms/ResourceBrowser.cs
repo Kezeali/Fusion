@@ -152,13 +152,14 @@ namespace EditorWinForms
             rootNode.Name = "";
             rootNode.Tag = "/";
 
-            PopulateNode(basePath, rootNode, 2);
+            PopulateNode(basePath, rootNode);
 
-            directoryTreeView.Invoke(BeginUpdateDirectoryTree);
-            directoryTreeView.Invoke(ClearDirectoryTree);
-            directoryTreeView.Invoke(AddToDirectoryTree, rootNode);
-            directoryTreeView.Invoke(RedrawDirectoryTree);
-            directoryTreeView.Invoke(EndUpdateDirectoryTree);
+            directoryTreeView.Invoke((Action<TreeNode>)((nodeToAdd) => {
+                directoryTreeView.BeginUpdate();
+                directoryTreeView.Nodes.Clear();
+                directoryTreeView.Nodes.Add(rootNode);
+                directoryTreeView.EndUpdate();
+            }));
         }
 
         class SubdirToProcess
@@ -173,29 +174,88 @@ namespace EditorWinForms
             }
         }
 
-        private static void PopulateNode(string basePath, TreeNode rootNode, int depth)
+        private static void PopulateNode(string basePath, TreeNode rootNode, System.Action<string, TreeNode> subdirectoryHandler = null)
+        {
+            rootNode.Nodes.Clear();
+
+            foreach (var entry in Directory.EnumerateDirectories(basePath))
+            {
+                var foldername = GetLastPathElement(entry);
+                TreeNode newChild = new TreeNode(foldername);
+                newChild.Name = foldername;
+                newChild.Tag = (string)rootNode.Tag + foldername + "/";
+                rootNode.Nodes.Add(newChild);
+
+                subdirectoryHandler(entry, newChild);
+            }
+        }
+
+        private void PopulateNodePhysFS(TreeNode rootNode)
+        {
+            rootNode.Nodes.Clear();
+
+            foreach (var entry in Client.GetResources((string)rootNode.Tag))
+            {
+                CreateChild(rootNode, entry);
+            }
+        }
+
+        private void PopulateNodeRecursivePhysFS(TreeNode rootNode)
+        {
+            Queue<SubdirToProcess> subdirs = new Queue<SubdirToProcess>();
+            subdirs.Enqueue(new SubdirToProcess((string)rootNode.Tag, rootNode));
+
+            while (subdirs.Count > 0)
+            {
+                var toProcess = subdirs.Dequeue();
+
+                try
+                {
+                    directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Clear());
+
+                    foreach (var entry in Client.GetResources(toProcess.path))
+                    {
+                        if (entry.Directory)
+                        {
+                            TreeNode newChild = CreateChild(toProcess.treeNode, entry);
+
+                            directoryTreeView.InvokeLambda((nodeToAdd) =>
+                            {
+                                toProcess.treeNode.Nodes.Add(nodeToAdd);
+                            }, newChild);
+
+                            subdirs.Enqueue(new SubdirToProcess(entry.Path, newChild));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Add("Error: " + ex.Message));
+                }
+            }
+        }
+
+        private static TreeNode CreateChild(TreeNode rootNode, ResourceFile entry)
+        {
+            var foldername = GetLastPathElement(entry.Path);
+            TreeNode newChild = new TreeNode(foldername);
+            newChild.Name = foldername;
+            newChild.Tag = (string)rootNode.Tag + foldername + "/";
+            return newChild;
+        }
+
+        private static void PopulateNodeRecursive(string basePath, TreeNode rootNode)
         {
             Queue<SubdirToProcess> subdirectoriesToProcess = new Queue<SubdirToProcess>();
             subdirectoriesToProcess.Enqueue(new SubdirToProcess(basePath, rootNode));
 
-            //while (subdirectoriesToProcess.Count > 0)
+            while (subdirectoriesToProcess.Count > 0)
             {
                 var toProcess = subdirectoriesToProcess.Dequeue();
 
                 try
                 {
-                    toProcess.treeNode.Nodes.Clear();
-
-                    foreach (var entry in Directory.EnumerateDirectories(toProcess.path))
-                    {
-                        var foldername = GetLastPathElement(entry);
-                        TreeNode newChild = new TreeNode(foldername);
-                        newChild.Name = foldername;
-                        newChild.Tag = (string)toProcess.treeNode.Tag + foldername + "/";
-                        toProcess.treeNode.Nodes.Add(newChild);
-
-                        subdirectoriesToProcess.Enqueue(new SubdirToProcess(entry, newChild));
-                    }
+                    PopulateNode(toProcess.path, toProcess.treeNode, (subPath, subNode) => subdirectoriesToProcess.Enqueue(new SubdirToProcess(subPath, subNode)));
                 }
                 catch (Exception ex)
                 {
@@ -214,7 +274,7 @@ namespace EditorWinForms
                 {
                     var subnode = (TreeNode)entry;
                     var relPath = ((string)subnode.Tag).Replace('/', Path.DirectorySeparatorChar);
-                    PopulateNode(basePath + relPath, subnode, 1);
+                    PopulateNode(basePath + relPath, subnode);
                 }
             }
             else
@@ -225,15 +285,15 @@ namespace EditorWinForms
                 {
                     var subnode = (TreeNode)entry;
                     var relPath = (string)subnode.Tag;
-                    PopulateNode(basePath + relPath, subnode, 1);
+                    PopulateNode(basePath + relPath, subnode);
                 }
             }
         }
 
-        void PopulateNode(string basePath, TreeNode rootNode)
+        void RefreshNode(string basePath, TreeNode rootNode)
         {
             directoryTreeView.Invoke(BeginUpdateDirectoryTree);
-            directoryTreeView.Invoke((Action)(() => { PopulateNode(basePath, rootNode, 1); }));
+            directoryTreeView.Invoke((Action)(() => { PopulateNode(basePath, rootNode); }));
             directoryTreeView.Invoke(EndUpdateDirectoryTree);
         }
 
@@ -276,7 +336,7 @@ namespace EditorWinForms
                     {
                         if (progress.resources[progress.i].Directory)
                         {
-                            string path = progress.resources[progress.i].Filename;
+                            string path = progress.resources[progress.i].Path;
 
                             string title;
                             title = GetLastPathElement(path);
@@ -302,7 +362,7 @@ namespace EditorWinForms
 
         private void directoryTreeView_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            PopulateSubnodes(Client.GetUserDataDirectory(), e.Node);
+            //PopulateSubnodes(Client.GetUserDataDirectory(), e.Node);
         }
 
         private delegate void ClearDirectoryTreeFn();
@@ -329,13 +389,25 @@ namespace EditorWinForms
 
         private void refreshBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            pictureBox1.Invoke((Action)(() => pictureBox1.Visible = true));
             try
             {
-                RefreshBrowserWithNativeFS();
+                //RefreshBrowserWithPhysFS();
+                TreeNode rootNode = new TreeNode("/");
+                rootNode.Name = "";
+                rootNode.Tag = "/";
+
+                directoryTreeView.Invoke((Action)(() =>
+                {
+                    directoryTreeView.Nodes.Add(rootNode);
+                }));
+
+                PopulateNodeRecursivePhysFS(rootNode);
             }
             catch (Exception)
             {
             }
+            pictureBox1.Invoke((Action)(() => pictureBox1.Visible = false));
         }
 
         private void refreshBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -345,9 +417,18 @@ namespace EditorWinForms
             writeDirFileSystemWatcher.Path = Client.GetUserDataDirectory();
             writeDirFileSystemWatcher.EnableRaisingEvents = true;
 
+            while (postLoadActions.Count > 0)
+                postLoadActions.Dequeue()();
+
             if (directoryTreeView.Nodes.Count > 0)
                 directoryTreeView.TopNode.Expand();
         }
+
+
+        private void refreshNodeBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+        }
+
 
         private void NavigateToPath(string path)
         {
@@ -359,8 +440,8 @@ namespace EditorWinForms
 
             foreach (var resource in resources)
             {
-                var item = new ListViewItem(Path.GetFileName(resource.Filename), resource.Directory ? "Folder" : "File");
-                item.Tag = resource.Filename;
+                var item = new ListViewItem(Path.GetFileName(resource.Path), resource.Directory ? "Folder" : "File");
+                item.Tag = resource.Path;
                 filesListView.Items.Add(item);
             }
 
@@ -503,7 +584,7 @@ namespace EditorWinForms
             return pathElements.Skip(i);
         }
 
-        private void RefreshPath(string absoslutePath)
+        private void RefreshPath(string absoslutePath, string basePath)
         {
             string navigateTo = null;
             if (directoryTreeView.SelectedNode != null)
@@ -511,11 +592,10 @@ namespace EditorWinForms
 
             if (Directory.Exists(absoslutePath))
             {
-                var basePath = Client.GetUserDataDirectory();
                 var relativePath = string.Join("/", MakeRelative(absoslutePath, basePath));
                 var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
                 if (nodeChanged != null)
-                    PopulateNode(basePath, nodeChanged, 1);
+                    PopulateNodePhysFS(nodeChanged);
                 //refreshBackgroundWorker.RunWorkerAsync();
             }
 
@@ -523,11 +603,29 @@ namespace EditorWinForms
                 NavigateToPath(navigateTo);
         }
 
+
+        private void RenamePath(string fullPath, string oldFullPath, string basePath)
+        {
+            var relativePath = string.Join("/", MakeRelative(oldFullPath, basePath));
+            var node = FindNode(relativePath, directoryTreeView.TopNode);
+            if (node != null)
+                node.Remove();
+
+            RefreshPath(fullPath, basePath);
+        }
+
+        Queue<Action> postLoadActions = new Queue<Action>();
+
         private void fileSystemWatcher_ChangedCreatedDeleted(object sender, FileSystemEventArgs e)
         {
             if (!directoryTreeView.IsDisposed)
             {
-                RefreshPath(e.FullPath);
+                string basePath = ((FileSystemWatcher)sender).Path;
+
+                if (!refreshBackgroundWorker.IsBusy)
+                    RefreshPath(e.FullPath, basePath);
+                else
+                    postLoadActions.Enqueue(() => { RefreshPath(e.FullPath, basePath); });
             }
         }
 
@@ -535,13 +633,12 @@ namespace EditorWinForms
         {
             if (!directoryTreeView.IsDisposed)
             {
-                var basePath = Client.GetUserDataDirectory();
-                var relativePath = string.Join("/", MakeRelative(e.OldFullPath, basePath));
-                var node = FindNode(relativePath, directoryTreeView.TopNode);
-                if (node != null)
-                    node.Remove();
+                var basePath = ((FileSystemWatcher)sender).Path;
 
-                RefreshPath(e.FullPath);
+                if (!refreshBackgroundWorker.IsBusy)
+                    RenamePath(e.FullPath, e.OldFullPath, basePath);
+                else
+                    postLoadActions.Enqueue(() => { RenamePath(e.FullPath, e.OldFullPath, basePath); });
             }
         }
 
