@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,16 +32,43 @@ namespace EditorWinForms
             }
         }
 
+        private bool ReadValue(StreamReader reader, out string key, out string value)
+        {
+            var line = reader.ReadLine();
+            var elements = line.Split('=');
+            if (elements.Length >= 2)
+            {
+                key = elements[0];
+                value = elements.Skip(1).Aggregate((a, b) => a + b).Trim();
+                return true;
+            }
+            else
+            {
+                key = line;
+                value = line;
+                return false;
+            }
+        }
+
         public SettingsFile()
         {
             try
             {
-                using (var reader = new System.IO.StreamReader("config.txt"))
+                using (var reader = new StreamReader("config.txt"))
                 {
-                    serverPath = reader.ReadLine();
-                    string line = reader.ReadLine();
-                    if (line.Length > 0)
-                        int.TryParse(line, out maxConnectionRetries);
+                    while (!reader.EndOfStream)
+                    {
+                        string key, value;
+                        ReadValue(reader, out key, out value);
+                        if (key == "serverPath")
+                            serverPath = value;
+                        else if (key == "maxConnectionRetries")
+                            maxConnectionRetries = int.Parse(value);
+                    }
+                    //serverPath = reader.ReadLine();
+                    //string line = reader.ReadLine();
+                    //if (line.Length > 0)
+                    //    int.TryParse(line, out maxConnectionRetries);
                 }
             }
             catch
@@ -61,8 +89,12 @@ namespace EditorWinForms
             {
                 using (var writer = new System.IO.StreamWriter("config.txt"))
                 {
-                    writer.WriteLine(serverPath);
-                    writer.WriteLine(maxConnectionRetries);
+                    foreach (var field in GetType().GetFields())
+                    {
+                        writer.Write(string.Format("{0}={1}", field.Name, field.GetValue(this)));
+                    }
+                    //writer.WriteLine(serverPath);
+                    //writer.WriteLine(maxConnectionRetries);
                 }
             }
             catch
