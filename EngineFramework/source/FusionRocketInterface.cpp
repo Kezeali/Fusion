@@ -151,11 +151,11 @@ namespace FusionEngine
 		{
 			auto textureHolder = reinterpret_cast<RocketCLTexture*>(texture);
 			auto textureObj = textureHolder->texture;
-			m_Canvas.draw_triangles(&verts[0], &texPos[0], num_indices, textureObj, colours[0]);
+			m_Canvas.fill_triangles(&verts[0], &texPos[0], num_indices, textureObj, &colours[0]);
 		}
 		else
 		{
-			m_Canvas.draw_triangles(&verts[0], num_indices, colours[0]);
+			m_Canvas.fill_triangles(&verts[0], &colours[0], num_indices);
 		}
 
 		if (m_ClipEnabled)

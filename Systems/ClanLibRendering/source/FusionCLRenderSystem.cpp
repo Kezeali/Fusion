@@ -522,7 +522,7 @@ namespace FusionEngine
 				c0.set_alpha(0.25f);
 				c1.set_alpha(DeltaTime::GetInterpolationAlpha());
 				canvas.draw_box(bar, clan::Colorf::silver);
-				canvas.draw_gradient_fill(fill, clan::Gradient(c0, c1, c0, c1));
+				canvas.fill_rect(fill, clan::Gradient(c0, c1, c0, c1));
 			}
 
 #ifdef FSN_PROFILING_ENABLED

@@ -212,10 +212,10 @@ namespace FusionEngine
 		canvas.draw_line(m_Center.x - 4.f, m_Center.y, m_Center.x + 4.f, m_Center.y, clan::Colorf(1.f, 0.f, 0.f));
 		canvas.draw_line(m_Center.x, m_Center.y - 4.f, m_Center.x, m_Center.y + 4.f, clan::Colorf(0.f, 1.f, 0.f));
 		if (m_Radius > 0.f)
-			canvas.draw_circle(m_Center.x, m_Center.y, m_Radius, currentShapeColour);
+			canvas.fill_circle(m_Center.x, m_Center.y, m_Radius, currentShapeColour);
 
 		if (m_MouseDown && m_Action != Action::None)
-			canvas.draw_circle(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackRadius, modificationColour);
+			canvas.fill_circle(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackRadius, modificationColour);
 	}
 
 	void EditorCircleTool::CreateGui()

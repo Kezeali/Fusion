@@ -419,7 +419,7 @@ namespace FusionEngine
 			auto fillC = clan::Colorf::aquamarine;
 			fillC.set_alpha(0.20f);
 			canvas.draw_box(m_SelectionBox, clan::Colorf::white);
-			canvas.draw_fill(m_SelectionBox, fillC);
+			canvas.fill_rect(m_SelectionBox, fillC);
 		}
 	}
 

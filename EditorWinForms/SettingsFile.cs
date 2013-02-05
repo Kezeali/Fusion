@@ -50,13 +50,18 @@ namespace EditorWinForms
             }
         }
 
+        private void WriteValue(StreamWriter writer, string key, string value)
+        {
+            writer.WriteLine(key + "=" + value);
+        }
+
         public SettingsFile()
         {
-            try
+            using (var reader = new StreamReader("config.txt"))
             {
-                using (var reader = new StreamReader("config.txt"))
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    try
                     {
                         string key, value;
                         ReadValue(reader, out key, out value);
@@ -65,14 +70,10 @@ namespace EditorWinForms
                         else if (key == "maxConnectionRetries")
                             maxConnectionRetries = int.Parse(value);
                     }
-                    //serverPath = reader.ReadLine();
-                    //string line = reader.ReadLine();
-                    //if (line.Length > 0)
-                    //    int.TryParse(line, out maxConnectionRetries);
+                    catch
+                    {
+                    }
                 }
-            }
-            catch
-            {
             }
         }
 
@@ -89,12 +90,8 @@ namespace EditorWinForms
             {
                 using (var writer = new System.IO.StreamWriter("config.txt"))
                 {
-                    foreach (var field in GetType().GetFields())
-                    {
-                        writer.Write(string.Format("{0}={1}", field.Name, field.GetValue(this)));
-                    }
-                    //writer.WriteLine(serverPath);
-                    //writer.WriteLine(maxConnectionRetries);
+                    WriteValue(writer, "serverPath", serverPath);
+                    WriteValue(writer, "maxConnectionRetries", maxConnectionRetries.ToString());
                 }
             }
             catch

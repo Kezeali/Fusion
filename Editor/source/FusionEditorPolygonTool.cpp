@@ -209,7 +209,7 @@ namespace FusionEngine
 			}
 		}
 		for (auto it = m_Verts.begin(); it != m_Verts.end(); ++it)
-			canvas.draw_circle(it->x, it->y, 1.0f, pointColour);
+			canvas.fill_circle(it->x, it->y, 1.0f, pointColour);
 
 		clan::Colorf feedbackColour;
 		if (m_FeedbackType == Add)
@@ -218,17 +218,17 @@ namespace FusionEngine
 			feedbackColour = clan::Colorf(0.98f, 0.6f, 0.6f);
 		else
 			feedbackColour = clan::Colorf(0.6f, 0.6f, 0.98f);
-		canvas.draw_circle(m_FeedbackPoint.x, m_FeedbackPoint.y, 1.0f, feedbackColour);
+		canvas.fill_circle(m_FeedbackPoint.x, m_FeedbackPoint.y, 1.0f, feedbackColour);
 
 		if (m_DrawFeedbackTri)
 		{
 			clan::Colorf feedbackLineColour(0.96f, 0.96f, 0.96f, 0.8f);
 
-			canvas.draw_circle(m_FeedbackTri[0].x, m_FeedbackTri[0].y, 1.0f, feedbackColour);
+			canvas.fill_circle(m_FeedbackTri[0].x, m_FeedbackTri[0].y, 1.0f, feedbackColour);
 			auto it2 = m_FeedbackTri.begin() + 1u;
 			for (auto it = m_FeedbackTri.begin(); it2 != m_FeedbackTri.end(); ++it, ++it2)
 			{
-				canvas.draw_circle(it2->x, it2->y, 1.0f, feedbackColour);
+				canvas.fill_circle(it2->x, it2->y, 1.0f, feedbackColour);
 				canvas.draw_line(it->x, it->y, it2->x, it2->y, feedbackLineColour);
 			}
 		}
@@ -237,7 +237,7 @@ namespace FusionEngine
 		for (auto it = m_GrabbedVerts.begin(); it != m_GrabbedVerts.end(); ++it)
 		{
 			const Vector2& v = m_Verts[*it];
-			canvas.draw_circle(v.x, v.y, 0.5f, grabbedColour);
+			canvas.fill_circle(v.x, v.y, 0.5f, grabbedColour);
 		}
 	}
 
