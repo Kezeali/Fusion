@@ -36,6 +36,7 @@
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
 #include "FusionResourcePointer.h"
+#include "FusionViewport.h"
 
 #include <angelscript.h>
 #include <boost/intrusive_ptr.hpp>
@@ -134,6 +135,13 @@ namespace FusionEngine
 		const std::shared_ptr<Viewport>& GetViewport() const { return m_Viewport; }
 		Rocket::Core::Context* GetGUIContext() const { return m_GUIContext; }
 
+		void Save();
+		void Save(const std::string& name);		
+		void Load();
+		void Load(const std::string& name);
+
+		void Compile(const std::string& name);
+
 		bool IsResourceEditable(const std::string& file) const;
 
 		virtual std::shared_ptr<ResourceEditor> StartResourceEditor(const std::string& path);
@@ -157,6 +165,19 @@ namespace FusionEngine
 		void GoToEntityWithID(const ObjectID id);
 
 		size_t GetNumSelected() const;
+		
+		void AddEntityToDelete(const EntityPtr& entity);
+
+		void CreateArchetypeInstance(const std::string& archetype_name, const Vector2& pos, float angle);
+
+		bool TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const;
+		bool TranslateScreenToWorld(float* x, float* y) const;
+		Vector2 ReturnScreenToWorld(float x, float y) const;
+
+		Vector2 GetMousePositionInWindow() const;
+		std::pair<Vector2, ViewportPtr> GetMousePositionInWorldAndViewport() const;
+		ViewportPtr GetViewportUnderMouse() const;
+		Vector2 GetMousePositionInWorld() const;
 
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
@@ -277,15 +298,9 @@ namespace FusionEngine
 		void ShowResourceBrowser();
 		void HideResourceBrowser();
 
-		void Save();
-		void Load();
-
 		void BuildCreateEntityScript();
 
 		void DeleteEntity(const EntityPtr& entity);
-		void AddEntityToDelete(const EntityPtr& entity);
-
-		void CreateArchetypeInstance(const std::string& archetype_name, const Vector2& pos, float angle);
 
 		void CopySelectedEntities();
 		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
@@ -307,8 +322,6 @@ namespace FusionEngine
 
 		void ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities);
 
-		bool TranslateScreenToWorld(float* x, float* y) const;
-		Vector2 ReturnScreenToWorld(float x, float y) const;
 		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
 
 		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const clan::Colorf&)> fn);

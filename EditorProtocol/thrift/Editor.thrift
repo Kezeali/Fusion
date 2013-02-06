@@ -24,7 +24,20 @@ struct ConsoleCommandHelpData {
 	2: optional list<string> argumentNames;
 }
 
+enum DragDropAction {
+	Copy = 1,
+	Move = 2
+}
+
+struct DragDropData {
+	1: string path;
+	4: DragDropAction attemptedAction;
+}
+
 service Editor {
+	void SaveMap(1: string name);
+	void LoadMap(1: string name);
+	void CompileMap(1: string name);
 	string GetUserDataDirectory();
 	string GetDataDirectory();
 	list<ResourceFile> GetResources(1: string path);
@@ -33,6 +46,8 @@ service Editor {
 	oneway void CopyResource(1: string source, 2: string destination);
 	oneway void MoveResource(1: string source, 2: string destination);
 	oneway void DeleteResource(1: string path);
+	DragDropAction SetDragDropData(1: DragDropData data);
+	bool DragDrop(1: DragDropData data);
 	oneway void InterpretConsoleCommand(1: string command);
 	list<string> FindConsoleCommandSuggestions(1: string command);
 	string CompleteCommand(1: string command, 2: string completion);

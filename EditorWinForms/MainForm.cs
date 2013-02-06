@@ -282,5 +282,10 @@ namespace EditorWinForms
             Process.Start(@"https://github.com/Kezeali/Fusion");
         }
 
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //client.SaveMap();
+        }
+
     }
 }

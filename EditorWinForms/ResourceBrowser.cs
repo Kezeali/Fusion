@@ -192,12 +192,29 @@ namespace EditorWinForms
 
         private void PopulateNodePhysFS(TreeNode rootNode)
         {
-            rootNode.Nodes.Clear();
+            directoryTreeView.InvokeLambda(() =>
+            {
+                directoryTreeView.BeginUpdate();
+                rootNode.Nodes.Clear();
+            });
 
             foreach (var entry in Client.GetResources((string)rootNode.Tag))
             {
-                CreateChild(rootNode, entry);
+                if (entry.Directory)
+                {
+                    var newChild = CreateChild(rootNode, entry);
+
+                    directoryTreeView.InvokeLambda((nodeToAdd) =>
+                    {
+                        rootNode.Nodes.Add(nodeToAdd);
+                    }, newChild);
+                }
             }
+
+            directoryTreeView.InvokeLambda(() =>
+            {
+                directoryTreeView.EndUpdate();
+            });
         }
 
         private void PopulateNodeRecursivePhysFS(TreeNode rootNode)
@@ -211,8 +228,11 @@ namespace EditorWinForms
 
                 try
                 {
-                    directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Clear());
-
+                    directoryTreeView.InvokeLambda(() =>
+                        {
+                            directoryTreeView.BeginUpdate();
+                            toProcess.treeNode.Nodes.Clear();
+                        });
                     foreach (var entry in Client.GetResources(toProcess.path))
                     {
                         if (entry.Directory)
@@ -231,6 +251,13 @@ namespace EditorWinForms
                 catch (Exception ex)
                 {
                     directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Add("Error: " + ex.Message));
+                }
+                finally
+                {
+                    directoryTreeView.InvokeLambda(() =>
+                    {
+                        directoryTreeView.EndUpdate();
+                    });
                 }
             }
         }
@@ -392,17 +419,21 @@ namespace EditorWinForms
             pictureBox1.Invoke((Action)(() => pictureBox1.Visible = true));
             try
             {
-                //RefreshBrowserWithPhysFS();
-                TreeNode rootNode = new TreeNode("/");
-                rootNode.Name = "";
-                rootNode.Tag = "/";
-
-                directoryTreeView.Invoke((Action)(() =>
+                TreeNode refreshedNode = (TreeNode)e.Argument;
+                if (e.Argument == null)
                 {
-                    directoryTreeView.Nodes.Add(rootNode);
-                }));
+                    TreeNode rootNode = new TreeNode("/");
+                    rootNode.Name = "";
+                    rootNode.Tag = "/";
 
-                PopulateNodeRecursivePhysFS(rootNode);
+                    directoryTreeView.Invoke((Action)(() =>
+                    {
+                        directoryTreeView.Nodes.Add(rootNode);
+                    }));
+
+                    refreshedNode = rootNode;
+                }
+                PopulateNodeRecursivePhysFS(refreshedNode);
             }
             catch (Exception)
             {
@@ -420,15 +451,16 @@ namespace EditorWinForms
             while (postLoadActions.Count > 0)
                 postLoadActions.Dequeue()();
 
+            if (viewedPath != null)
+            {
+                NavigateToPath(viewedPath);
+            }
+
             if (directoryTreeView.Nodes.Count > 0)
                 directoryTreeView.TopNode.Expand();
         }
 
-
-        private void refreshNodeBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-        }
-
+        string viewedPath;
 
         private void NavigateToPath(string path)
         {
@@ -476,7 +508,8 @@ namespace EditorWinForms
         private void directoryTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             // Substring to skip the root node name (which is bogus)
-            NavigateToPath(e.Node.FullPath.Substring(1));
+            viewedPath = e.Node.FullPath.Substring(1);
+            NavigateToPath(viewedPath);
         }
 
         private void filesListView_DoubleClick(object sender, EventArgs e)
@@ -561,46 +594,79 @@ namespace EditorWinForms
         {
             try
             {
-                foreach (var item in filesListView.SelectedItems)
+                if (e.KeyCode == Keys.Delete)
                 {
-                    var path = (string)((ListViewItem)item).Tag;
-                    Client.DeleteResource(path);
+                    if (filesListView.SelectedItems.Count > 0)
+                    {
+                        var image = filesListView.SelectedItems[0].ImageList.Images[filesListView.SelectedItems[0].ImageKey];
+                        string text = filesListView.SelectedItems.Count == 1 ? "Are you sure you want to delete " + filesListView.SelectedItems[0].Tag : "Are you sure you want to delete " + filesListView.SelectedItems.Count + " files";
+
+                        List<string> paths = new List<string>();
+                        foreach (var item in filesListView.SelectedItems)
+                            paths.Add((string)((ListViewItem)item).Tag);
+
+                        ModelessMessageBox.Show(this, text, "Delete Resource", image, "Yes", "No",
+                            () =>
+                            {
+                                foreach (var path in paths)
+                                {
+                                    Client.CopyResource(path, "/DeletedResources/" + Path.GetFileName(path));
+                                    Client.DeleteResource(path);
+                                }
+                            });
+                    }
                 }
             }
             catch
             { }
         }
 
-        static IEnumerable<string> MakeRelative(string path, string basePath)
+        static IEnumerable<string> MakeRelative(string path, string basePath, bool dropLastElement = false)
         {
             var baseDirElements = basePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var pathElements = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            int i = 0;
-            for (; i < pathElements.Length && i < baseDirElements.Length; ++i)
+            if (pathElements.Length != 0)
             {
-                if (pathElements[i] != baseDirElements[i])
-                    break;
+                int i = 0;
+                for (; i < pathElements.Length && i < baseDirElements.Length; ++i)
+                {
+                    if (pathElements[i] != baseDirElements[i])
+                        break;
+                }
+                if (dropLastElement)
+                    return pathElements.Take(pathElements.Length - 1).Skip(i);
+                else
+                    return pathElements.Skip(i);
             }
-            return pathElements.Skip(i);
+            else
+                return pathElements.AsEnumerable();
         }
 
         private void RefreshPath(string absoslutePath, string basePath)
         {
-            string navigateTo = null;
-            if (directoryTreeView.SelectedNode != null)
-                navigateTo = directoryTreeView.SelectedNode.FullPath;
+            if (viewedPath == null && directoryTreeView.SelectedNode != null)
+                viewedPath = directoryTreeView.SelectedNode.FullPath;
 
-            if (Directory.Exists(absoslutePath))
+            if (!File.Exists(absoslutePath))
             {
-                var relativePath = string.Join("/", MakeRelative(absoslutePath, basePath));
+                var relativePath = string.Join("/", MakeRelative(absoslutePath, basePath, true));
                 var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
                 if (nodeChanged != null)
-                    PopulateNodePhysFS(nodeChanged);
-                //refreshBackgroundWorker.RunWorkerAsync();
+                {
+                    try
+                    {
+                        refreshBackgroundWorker.RunWorkerAsync(nodeChanged);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                    }
+                }
             }
-
-            if (navigateTo != null)
-                NavigateToPath(navigateTo);
+            else
+            {
+                if (viewedPath != null)
+                    NavigateToPath(viewedPath);
+            }
         }
 
 
@@ -639,6 +705,20 @@ namespace EditorWinForms
                     RenamePath(e.FullPath, e.OldFullPath, basePath);
                 else
                     postLoadActions.Enqueue(() => { RenamePath(e.FullPath, e.OldFullPath, basePath); });
+            }
+        }
+
+        private void filesListView_AfterLabelEdit(object sender, LabelEditEventArgs e)
+        {
+            try
+            {
+                var oldPath = (string)filesListView.Items[e.Item].Tag;
+                var folderPath = oldPath.Substring(0, oldPath.LastIndexOf('/'));
+                Client.MoveResource(oldPath, folderPath + "/" + e.Label);
+            }
+            catch (Exception ex)
+            {
+                ModelessMessageBox.Show(this, "Failed to rename file" + ex.Message, "EOROROR", () => { });
             }
         }
 

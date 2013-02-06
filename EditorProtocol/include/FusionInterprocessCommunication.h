@@ -53,6 +53,12 @@ namespace FusionEngine { namespace Interprocess
 	public:
 		EditorServiceHandler(FusionEngine::EngineManager* manager, FusionEngine::Editor* editor);
 
+		void SaveMap(const std::string& name) final;
+
+		void LoadMap(const std::string& name) final;
+
+		void CompileMap(const std::string& name) final;
+
 		void GetUserDataDirectory(std::string& _return) final;
 
 		void GetDataDirectory(std::string& _return) final;
@@ -68,6 +74,10 @@ namespace FusionEngine { namespace Interprocess
 		void MoveResource(const std::string& source, const std::string& destination) final;
 
 		void DeleteResource(const std::string& path) final;
+
+		DragDropAction::type SetDragDropData(const DragDropData& data) final;
+
+		bool DragDrop(const DragDropData& data) final;
 
 		void InterpretConsoleCommand(const std::string& command) final;
 

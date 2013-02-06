@@ -1178,41 +1178,7 @@ namespace FusionEngine
 		{
 			m_CompileMap = false;
 
-			const std::string mapName = m_SaveName;
-
-			try
-			{
-				if (!mapName.empty() && (PHYSFS_isDirectory(mapName.c_str()) || PHYSFS_mkdir(mapName.c_str())))
-				{
-					m_StreamingManager->StoreAllCells(false);
-
-					m_MapLoader->Save(mapName);
-					m_MapLoader->Stop();
-
-					PhysVFS vfs;
-					GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
-
-					auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled " + mapName);
-					mb->Show();
-				}
-				else
-				{
-					SendToConsole("Failed to compile map: failed to create map folder");
-					MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:Failed to create map folder");
-				}
-			}
-			catch (FileSystemException& e)
-			{
-				SendToConsole("Failed to compile map: " + e.GetDescription());
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
-			}
-			catch (Exception& e)
-			{
-				SendToConsole("Failed to compile map: " + e.GetDescription());
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
-			}
-			m_MapLoader->Start();
-			m_StreamingManager->Update(true);
+			Compile(m_SaveName);
 		}
 
 		if (m_SaveMap)
@@ -1324,14 +1290,19 @@ namespace FusionEngine
 	{
 		if (!m_SaveName.empty())
 		{
-			try
-			{
-				m_Saver->Save(m_SaveName, false);
-			}
-			catch (std::exception& e)
-			{
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
-			}
+			Save(m_SaveName);
+		}
+	}
+
+	void Editor::Save(const std::string& name)
+	{
+		try
+		{
+			m_Saver->Save(name, false);
+		}
+		catch (std::exception& e)
+		{
+			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
 		}
 	}
 
@@ -1339,18 +1310,60 @@ namespace FusionEngine
 	{
 		if (!m_SaveName.empty())
 		{
-			try
-			{
-				m_Saver->Load(m_SaveName);
-				
-				m_NonStreamedEntities = m_EntityManager->GetLastLoadedNonStreamedEntities();
-				m_StreamingManager->AddCamera(m_EditCam, m_EditCamRange);
-			}
-			catch (std::exception& e)
-			{
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
-			}
+			Load(m_SaveName);
 		}
+	}
+
+	void Editor::Load(const std::string& name)
+	{
+		try
+		{
+			m_Saver->Load(name);
+				
+			m_NonStreamedEntities = m_EntityManager->GetLastLoadedNonStreamedEntities();
+			m_StreamingManager->AddCamera(m_EditCam, m_EditCamRange);
+		}
+		catch (std::exception& e)
+		{
+			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+		}
+	}
+
+	void Editor::Compile(const std::string& mapName)
+	{
+		try
+			{
+				if (!mapName.empty() && (PHYSFS_isDirectory(mapName.c_str()) || PHYSFS_mkdir(mapName.c_str())))
+				{
+					m_StreamingManager->StoreAllCells(false);
+
+					m_MapLoader->Save(mapName);
+					m_MapLoader->Stop();
+
+					PhysVFS vfs;
+					GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
+
+					auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled " + mapName);
+					mb->Show();
+				}
+				else
+				{
+					SendToConsole("Failed to compile map: failed to create map folder");
+					MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:Failed to create map folder");
+				}
+			}
+			catch (FileSystemException& e)
+			{
+				SendToConsole("Failed to compile map: " + e.GetDescription());
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+			}
+			catch (Exception& e)
+			{
+				SendToConsole("Failed to compile map: " + e.GetDescription());
+				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+			}
+			m_MapLoader->Start();
+			m_StreamingManager->Update(true);
 	}
 
 	void Editor::ToggleResourceBrowser()
@@ -2165,11 +2178,11 @@ namespace FusionEngine
 	//	m_RightClickMenu->Show(position.x, position.y);
 	//}
 
-	bool Editor::TranslateScreenToWorld(float* x, float* y) const
+	bool Editor::TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const
 	{
 		clan::Rectf worldArea, screenArea;
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, m_Viewport, true);
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, m_Viewport, false);
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, viewport, true);
+		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, viewport, false);
 
 		const bool withinViewport = *x >= screenArea.left && *y >= screenArea.top;
 		*x -= screenArea.left, *y -= screenArea.top;
@@ -2181,10 +2194,45 @@ namespace FusionEngine
 		return withinViewport;
 	}
 
+	bool Editor::TranslateScreenToWorld(float* x, float* y) const
+	{
+		return TranslateScreenToWorld(m_Viewport, x, y);
+	}
+
 	Vector2 Editor::ReturnScreenToWorld(float x, float y) const
 	{
 		TranslateScreenToWorld(&x, &y);
 		return Vector2(x, y);
+	}
+
+	Vector2 Editor::GetMousePositionInWindow() const
+	{
+		auto pos = m_DisplayWindow.get_ic().get_mouse().get_position();
+		return Vector2((float)pos.x, (float)pos.y);
+	}
+
+	std::pair<Vector2, ViewportPtr> Editor::GetMousePositionInWorldAndViewport() const
+	{
+		Vector2 posInWindow = GetMousePositionInWindow();
+		std::vector<ViewportPtr> viewports;
+		viewports.push_back(m_Viewport);
+		for (ViewportPtr viewport : viewports)
+		{
+			auto translatedPos = posInWindow;
+			if (TranslateScreenToWorld(viewport, &translatedPos.x, &translatedPos.y))
+				return std::make_pair(translatedPos, viewport);
+		}
+		return std::make_pair(Vector2::zero(), ViewportPtr());
+	}
+
+	ViewportPtr Editor::GetViewportUnderMouse() const
+	{
+		return GetMousePositionInWorldAndViewport().second;
+	}
+
+	Vector2 Editor::GetMousePositionInWorld() const
+	{
+		return GetMousePositionInWorldAndViewport().first;
 	}
 
 	void Editor::UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position)

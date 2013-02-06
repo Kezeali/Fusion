@@ -59,6 +59,21 @@ namespace FusionEngine { namespace Interprocess {
 		editor(editor)
 	{
 	}
+	
+	void EditorServiceHandler::SaveMap(const std::string& name)
+	{
+		editor->Save(name);
+	}
+
+	void EditorServiceHandler::LoadMap(const std::string& name)
+	{
+		editor->Load(name);
+	}
+
+	void EditorServiceHandler::CompileMap(const std::string& name)
+	{
+		editor->Compile(name);
+	}
 
 	void EditorServiceHandler::GetUserDataDirectory(std::string & _return)
 	{
@@ -146,6 +161,17 @@ namespace FusionEngine { namespace Interprocess {
 		if (PHYSFS_isDirectory(path.c_str()))
 			PhysFSHelp::clear_folder(path);
 		PHYSFS_delete(path.c_str());
+	}
+
+	DragDropAction::type EditorServiceHandler::SetDragDropData(const DragDropData& data)
+	{
+		return DragDropAction::Copy;
+	}
+
+	bool EditorServiceHandler::DragDrop(const DragDropData& data)
+	{
+		editor->CreateArchetypeInstance(data.path, editor->GetMousePositionInWorld(), 0.0f);
+		return true;
 	}
 
 	void EditorServiceHandler::InterpretConsoleCommand(const std::string& command)
