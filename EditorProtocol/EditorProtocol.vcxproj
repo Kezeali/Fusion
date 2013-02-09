@@ -112,6 +112,12 @@ thrift --gen csharp %(Identity)
 @echo off</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Running Thrift...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">gen-cpp\%(Filename).cpp;gen-cpp\%(Filename).h;gen-cpp\%(Filename)_constants.cpp;gen-cpp\%(Filename)_constants.h;gen-cpp\%(Filename)_server.skelleton.cpp;gen-cpp\%(Filename)_types.cpp;gen-cpp\%(Filename)_types.h;%(Outputs)</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Running Thrift...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">echo on
+thrift --gen cpp %(Identity)
+thrift --gen csharp %(Identity)
+@echo off</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">gen-cpp\%(Filename).cpp;gen-cpp\%(Filename).h;gen-cpp\%(Filename)_constants.cpp;gen-cpp\%(Filename)_constants.h;gen-cpp\%(Filename)_server.skelleton.cpp;gen-cpp\%(Filename)_types.cpp;gen-cpp\%(Filename)_types.h;%(Outputs)</Outputs>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
