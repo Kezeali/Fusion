@@ -37,6 +37,8 @@ namespace EditorWinForms
         ResourceBrowser resourceBrowser = new ResourceBrowser();
         Console console = new Console();
 
+        string mapName;
+
         bool usingExistingServerProcess = false;
 
         protected override void WndProc(ref Message m)
@@ -100,13 +102,13 @@ namespace EditorWinForms
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
-            settings.ServerPath = openFileDialog1.FileName;
+            settings.ServerPath = locateServerOpenFileDialog.FileName;
         }
 
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            openFileDialog1.FileName = settings.ServerPath;
-            openFileDialog1.ShowDialog();
+            locateServerOpenFileDialog.FileName = settings.ServerPath;
+            locateServerOpenFileDialog.ShowDialog();
         }
 
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -138,6 +140,14 @@ namespace EditorWinForms
             public int Bottom;      // y position of lower-right corner
         }
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool MoveWindow(HandleRef hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool IsWindowVisible(HandleRef hWnd);
+
         int connectionAttempts = 0;
 
         private void connectBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -161,15 +171,23 @@ namespace EditorWinForms
 
             ShowResourceBrowser();
 
-            RECT windowRect;
-            if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
-            {
-                //SetDesktopLocation(windowRect.Top - Size.Height, windowRect.Left);
-                SetBounds(windowRect.Left, windowRect.Top - Size.Height, windowRect.Right - windowRect.Left, Height, BoundsSpecified.Location | BoundsSpecified.Width);
-                //SetDesktopBounds(windowRect.Top - Size.Height, windowRect.Left, windowRect.Right - windowRect.Left, Height);
-            }
+            AlignWithEditorWindow();
 
             BringToFront();
+        }
+
+        private void AlignWithEditorWindow()
+        {
+            if (IsWindowVisible(new HandleRef(this, editorServerProcess.MainWindowHandle)))
+            {
+                RECT windowRect;
+                if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
+                {
+                    //SetDesktopLocation(windowRect.Top - Size.Height, windowRect.Left);
+                    SetBounds(windowRect.Left, windowRect.Top - Size.Height, windowRect.Right - windowRect.Left, Height, BoundsSpecified.Location | BoundsSpecified.Width);
+                    //SetDesktopBounds(windowRect.Top - Size.Height, windowRect.Left, windowRect.Right - windowRect.Left, Height);
+                }
+            }
         }
 
         private bool AttemptToConnect()
@@ -234,6 +252,11 @@ namespace EditorWinForms
             }
         }
 
+        private void clearResourceDatabaseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //client.InterpretConsoleCommand();
+        }
+
         private void refreshConsoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
         }
@@ -282,9 +305,66 @@ namespace EditorWinForms
             Process.Start(@"https://github.com/Kezeali/Fusion");
         }
 
+        private void compileScriptsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            client.RefreshResources();
+        }
+
+        FilenameDialog dialog = new FilenameDialog();
+
+        bool ShowMapNameDialog(string title = "Map Name")
+        {
+            dialog.Text = title;
+            if (mapName != null)
+                dialog.FileName = mapName;
+            dialog.ShowDialog();
+            mapName = dialog.FileName;
+            return dialog.Result;
+        }
+
+        bool ShowMapNameDialogIfNecessary(string title = "Map Name")
+        {
+            if (mapName == null)
+                return ShowMapNameDialog(title);
+            return true;
+        }
+
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //client.SaveMap();
+            if (ShowMapNameDialogIfNecessary("Save: Set Map Name"))
+                client.SaveMap(mapName);
+        }
+
+        private void saveMapAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ShowMapNameDialog("Save As: Set Map Name"))
+                client.SaveMap(mapName);
+        }
+
+        private void loadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ShowMapNameDialog("Load: Set Map Name"))
+                client.LoadMap(mapName);
+        }
+
+        private void compileMapToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ShowMapNameDialogIfNecessary("Build: Set Map Name"))
+                client.CompileMap(mapName);
+        }
+
+        private void MainForm_Move(object sender, EventArgs e)
+        {
+            //RECT windowRect;
+            //if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
+            //{
+            //    MoveWindow(new HandleRef(this, editorServerProcess.MainWindowHandle), this.Left, this.Bottom, windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, true);
+            //}
+        }
+
+        private void checkEnginePositionTimer_Tick(object sender, EventArgs e)
+        {
+            //AlignWithEditorWindow();
         }
 
     }

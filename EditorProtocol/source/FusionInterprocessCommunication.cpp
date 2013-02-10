@@ -46,6 +46,7 @@
 #include "FusionEntity.h"
 #include "FusionViewport.h"
 #include "FusionPhysFS.h"
+#include "FusionResourceManager.h"
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -112,7 +113,12 @@ namespace FusionEngine { namespace Interprocess {
 
 	void EditorServiceHandler::GetResourceType(std::string & _return, const std::string& path)
 	{
-		editor->GetResourceType(path);
+		_return = editor->GetResourceType(path);
+	}
+
+	void EditorServiceHandler::RefreshResources()
+	{
+		ResourceManager::getSingleton().CheckForChanges();
 	}
 
 	namespace 

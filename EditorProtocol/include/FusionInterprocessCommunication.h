@@ -69,6 +69,8 @@ namespace FusionEngine { namespace Interprocess
 
 		void GetResourceType(std::string& _return, const std::string& path) final;
 		
+		void RefreshResources() final;
+		
 		void CopyResource(const std::string& source, const std::string& destination) final;
 
 		void MoveResource(const std::string& source, const std::string& destination) final;

@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.locateServerOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.menuStripMain = new System.Windows.Forms.MenuStrip();
             this.editorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -63,15 +63,17 @@
             this.editorServerProcess = new System.Diagnostics.Process();
             this.testConsoleTimer = new System.Windows.Forms.Timer(this.components);
             this.connectBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.compileMapSaveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.saveMapAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.checkEnginePositionTimer = new System.Windows.Forms.Timer(this.components);
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
-            // openFileDialog1
+            // locateServerOpenFileDialog
             // 
-            this.openFileDialog1.DefaultExt = "exe";
-            this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "Executable files|*.exe";
-            this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
+            this.locateServerOpenFileDialog.DefaultExt = "exe";
+            this.locateServerOpenFileDialog.Filter = "Executable files|*.exe";
+            this.locateServerOpenFileDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
             // 
             // menuStripMain
             // 
@@ -143,6 +145,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.saveToolStripMenuItem,
+            this.saveMapAsToolStripMenuItem,
             this.loadToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -159,7 +162,8 @@
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
             this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.loadToolStripMenuItem.Text = "Load Map";
+            this.loadToolStripMenuItem.Text = "Load Map...";
+            this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
             // compileToolStripMenuItem
             // 
@@ -176,6 +180,7 @@
             this.compileScriptsToolStripMenuItem.Name = "compileScriptsToolStripMenuItem";
             this.compileScriptsToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
             this.compileScriptsToolStripMenuItem.Text = "Compile Scripts";
+            this.compileScriptsToolStripMenuItem.Click += new System.EventHandler(this.compileScriptsToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -186,7 +191,8 @@
             // 
             this.compileMapToolStripMenuItem.Name = "compileMapToolStripMenuItem";
             this.compileMapToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
-            this.compileMapToolStripMenuItem.Text = "Build Map";
+            this.compileMapToolStripMenuItem.Text = "Build Map...";
+            this.compileMapToolStripMenuItem.Click += new System.EventHandler(this.compileMapToolStripMenuItem_Click);
             // 
             // resourcesToolStripMenuItem
             // 
@@ -216,6 +222,7 @@
             this.clearResourceDatabaseToolStripMenuItem.Name = "clearResourceDatabaseToolStripMenuItem";
             this.clearResourceDatabaseToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
             this.clearResourceDatabaseToolStripMenuItem.Text = "Clear Resource Database";
+            this.clearResourceDatabaseToolStripMenuItem.Click += new System.EventHandler(this.clearResourceDatabaseToolStripMenuItem_Click);
             // 
             // loadResourceToolStripMenuItem
             // 
@@ -235,7 +242,7 @@
             // websiteToolStripMenuItem
             // 
             this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.websiteToolStripMenuItem.Text = "Website";
             this.websiteToolStripMenuItem.Click += new System.EventHandler(this.websiteToolStripMenuItem_Click);
             // 
@@ -319,6 +326,18 @@
             this.connectBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.connectBackgroundWorker_DoWork);
             this.connectBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.connectBackgroundWorker_RunWorkerCompleted);
             // 
+            // saveMapAsToolStripMenuItem
+            // 
+            this.saveMapAsToolStripMenuItem.Name = "saveMapAsToolStripMenuItem";
+            this.saveMapAsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveMapAsToolStripMenuItem.Text = "Save Map As...";
+            this.saveMapAsToolStripMenuItem.Click += new System.EventHandler(this.saveMapAsToolStripMenuItem_Click);
+            // 
+            // checkEnginePositionTimer
+            // 
+            this.checkEnginePositionTimer.Enabled = true;
+            this.checkEnginePositionTimer.Tick += new System.EventHandler(this.checkEnginePositionTimer_Tick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -334,6 +353,7 @@
             this.Text = "Fusion Editor";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.Move += new System.EventHandler(this.MainForm_Move);
             this.menuStripMain.ResumeLayout(false);
             this.menuStripMain.PerformLayout();
             this.ResumeLayout(false);
@@ -343,7 +363,7 @@
 
         #endregion
 
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.OpenFileDialog locateServerOpenFileDialog;
         private System.Windows.Forms.MenuStrip menuStripMain;
         private System.Windows.Forms.ToolStripMenuItem editorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
@@ -377,6 +397,9 @@
         private System.Windows.Forms.ToolStripMenuItem stopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loremToolStripMenuItem;
         private System.ComponentModel.BackgroundWorker connectBackgroundWorker;
+        private System.Windows.Forms.SaveFileDialog compileMapSaveFileDialog;
+        private System.Windows.Forms.ToolStripMenuItem saveMapAsToolStripMenuItem;
+        private System.Windows.Forms.Timer checkEnginePositionTimer;
     }
 }
 

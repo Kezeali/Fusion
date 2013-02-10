@@ -144,7 +144,7 @@ namespace FusionEngine
 			m_Canvas = clan::Canvas(m_DisplayWindow);
 
 			// Init sound
-			m_SoundOutput = clan::SoundOutput(44100);
+			//m_SoundOutput = clan::SoundOutput(44100);
 
 			// Init ScriptManager
 			m_ScriptManager = std::make_shared<ScriptManager>();

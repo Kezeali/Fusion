@@ -199,7 +199,6 @@
     <ClInclude Include="include\FusionResourceManager.h" />
     <ClInclude Include="include\FusionResourcePointer.h" />
     <ClInclude Include="include\FusionSaveDataArchive.h" />
-    <ClInclude Include="include\FusionScopeGuard.h" />
     <ClInclude Include="include\FusionScriptConsoleCallback.h" />
     <ClInclude Include="include\FusionScriptedConsoleCommand.h" />
     <ClInclude Include="include\FusionScriptedSlots.h" />

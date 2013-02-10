@@ -350,9 +350,6 @@
       <Filter>Resources\Loaders</Filter>
     </ClInclude>
     <ClInclude Include="source\PrecompiledHeaders.h" />
-    <ClInclude Include="include\FusionScopeGuard.h">
-      <Filter>Exception</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionExpected.h">
       <Filter>Exception</Filter>
     </ClInclude>

@@ -69,6 +69,12 @@
       <DependentUpon>Console.cs</DependentUpon>
     </Compile>
     <Compile Include="ControlUtils.cs" />
+    <Compile Include="FilenameDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FilenameDialog.Designer.cs">
+      <DependentUpon>FilenameDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="gen-csharp\FusionEngine\Interprocess\ConsoleCommandHelpData.cs" />
     <Compile Include="gen-csharp\FusionEngine\Interprocess\DragDropAction.cs" />
     <Compile Include="gen-csharp\FusionEngine\Interprocess\DragDropData.cs" />
@@ -99,6 +105,9 @@
     <Compile Include="SettingsFile.cs" />
     <EmbeddedResource Include="Console.resx">
       <DependentUpon>Console.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FilenameDialog.resx">
+      <DependentUpon>FilenameDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
