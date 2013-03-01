@@ -355,11 +355,11 @@ namespace EditorWinForms
 
         private void MainForm_Move(object sender, EventArgs e)
         {
-            //RECT windowRect;
-            //if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
-            //{
-            //    MoveWindow(new HandleRef(this, editorServerProcess.MainWindowHandle), this.Left, this.Bottom, windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, true);
-            //}
+            RECT windowRect;
+            if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
+            {
+                MoveWindow(new HandleRef(this, editorServerProcess.MainWindowHandle), this.Left, this.Bottom, windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, true);
+            }
         }
 
         private void checkEnginePositionTimer_Tick(object sender, EventArgs e)

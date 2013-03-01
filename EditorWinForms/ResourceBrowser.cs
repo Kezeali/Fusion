@@ -527,6 +527,7 @@ namespace EditorWinForms
             {
                 var item = (ListViewItem)e.Item;
                 filesListView.DoDragDrop(item.Tag, DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Scroll);
+                Client.SetDragDropData(new DragDropData() { AttemptedAction = DragDropAction.Copy, Path = item.Tag.ToString() });
             }
             catch
             {

@@ -52,6 +52,7 @@
 #include "FusionResourceDatabase.h"
 #include "FusionStreamingManager.h"
 #include "FusionWorldSaver.h"
+#include "FusionWindowDropTarget.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionBinaryStream.h"
 
@@ -83,6 +84,7 @@
 #include <Rocket/Controls/DataSource.h>
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Core/StreamMemory.h>
+#include <oleidl.h>
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr)
 {
@@ -947,6 +949,8 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
+		Deactivate();
+
 		m_ResourceBrowser.reset();
 		m_DockedWindows.reset();
 		m_EntitySelectionMenu.reset();
@@ -955,6 +959,175 @@ namespace FusionEngine
 		// These need to be cleaned up before the GUI context is destroyed
 		m_SaveDialogListener.reset();
 		m_OpenDialogListener.reset();
+	}
+
+	class Win32DropTargetImpl;
+
+	class Win32DropTarget : public WindowDropTarget
+	{
+	public:
+		Win32DropTarget(const clan::DisplayWindow& window);
+
+		virtual ~Win32DropTarget();
+
+		virtual boost::signals2::signal<bool (const Vector2i& drop_location)>& GetSigDragEnter() const;
+
+		virtual boost::signals2::signal<void (const std::string& filename, const Vector2i& drop_location)>& GetSigDrop() const;
+
+	private:
+		clan::DisplayWindow m_DisplayWindow;
+		boost::intrusive_ptr<Win32DropTargetImpl> m_Impl;
+	};
+
+	class Win32DropTargetImpl : public RefCounted, public IDropTarget, public noncopyable
+	{
+	public:
+		Win32DropTargetImpl()
+			: m_AllowDrop(false)
+		{
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE DragEnter(__RPC__in_opt IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, __RPC__inout DWORD *pdwEffect) 
+		{
+			m_AllowDrop = QueryDataObject(pDataObj);
+
+			if (m_AllowDrop)
+			{
+				*pdwEffect = ChooseDragEffect(grfKeyState, *pdwEffect);
+
+				m_AllowDrop = m_SigDragEnter(Vector2i(pt.x, pt.y));
+				if (!m_AllowDrop)
+					*pdwEffect = DROPEFFECT_NONE;
+			}
+			else
+				*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState, POINTL pt, __RPC__inout DWORD *pdwEffect) 
+		{
+			if (m_AllowDrop)
+				*pdwEffect = ChooseDragEffect(grfKeyState, *pdwEffect);
+			return S_OK;
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE DragLeave(void) 
+		{
+			return S_OK;
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE Drop(__RPC__in_opt IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, __RPC__inout DWORD *pdwEffect) 
+		{
+			if (QueryDataObject(pDataObj))
+			{
+				*pdwEffect = ChooseDragEffect(grfKeyState, *pdwEffect);
+
+				m_SigDrop(GetTextFromData(pDataObj), Vector2i(pt.x, pt.y));
+			}
+			else
+				*pdwEffect = DROPEFFECT_NONE;
+			return S_OK;
+		}
+
+		bool QueryDataObject(IDataObject *pDataObject)
+		{
+			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+			// does the data object support CF_TEXT using a HGLOBAL?
+			return pDataObject->QueryGetData(&fmtetc) == S_OK ? true : false;
+		}
+
+		DWORD ChooseDragEffect(DWORD keyState, DWORD allowedEffects)
+		{
+			return allowedEffects & DROPEFFECT_COPY;
+		}
+
+		std::string GetTextFromData(IDataObject *pDataObject)
+		{
+			std::string dataText;
+
+			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			STGMEDIUM stgmed;
+
+			if(pDataObject->QueryGetData(&fmtetc) == S_OK)
+			{
+				if(pDataObject->GetData(&fmtetc, &stgmed) == S_OK)
+				{
+					PVOID data = GlobalLock(stgmed.hGlobal);
+
+					dataText = reinterpret_cast<char*>(data);
+
+					GlobalUnlock(stgmed.hGlobal);
+
+					// release the data using the COM API
+					ReleaseStgMedium(&stgmed);
+				}
+			}
+
+			return dataText;
+		}
+
+		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) 
+		{
+			if(riid == IID_IDropTarget || riid == IID_IUnknown)
+			{
+				AddRef();
+				*ppvObject = this;
+				return S_OK;
+			}
+			else
+			{
+				*ppvObject = 0;
+				return E_NOINTERFACE;
+			}
+		}
+
+		virtual ULONG STDMETHODCALLTYPE AddRef(void) 
+		{
+			addRef();
+			return this->m_RefCount;
+		}
+
+		virtual ULONG STDMETHODCALLTYPE Release(void) 
+		{
+			release();
+			return this->m_RefCount;
+		}
+
+		boost::signals2::signal<bool (const Vector2i& drop_location)> m_SigDragEnter;
+		boost::signals2::signal<void (const std::string& filename, const Vector2i& drop_location)> m_SigDrop;
+
+	private:
+		bool m_AllowDrop;
+	};
+
+	Win32DropTarget::Win32DropTarget(const clan::DisplayWindow& window)
+		: m_Impl(new Win32DropTargetImpl())
+	{
+		OleInitialize(NULL);
+
+		//CoLockObjectExternal(m_Impl.get(), TRUE, FALSE);
+
+		RegisterDragDrop(window.get_hwnd(), m_Impl.get());
+	}
+
+	Win32DropTarget::~Win32DropTarget()
+	{
+		RevokeDragDrop(m_DisplayWindow.get_hwnd());
+
+		//CoLockObjectExternal(m_Impl.get(), FALSE, TRUE);
+
+		OleUninitialize();
+	}
+
+	boost::signals2::signal<bool (const Vector2i& drop_location)>& Win32DropTarget::GetSigDragEnter() const
+	{
+		return m_Impl->m_SigDragEnter;
+	}
+
+	boost::signals2::signal<void (const std::string& filename, const Vector2i& drop_location)>& Win32DropTarget::GetSigDrop() const
+	{
+		return m_Impl->m_SigDrop;
 	}
 
 	void Editor::Activate()
@@ -992,11 +1165,26 @@ namespace FusionEngine
 		m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
 
 		m_Background->Show();
+
+		m_DropTarget = std::make_shared<Win32DropTarget>(m_DisplayWindow);
+		m_DropTarget->GetSigDragEnter().connect([this](const Vector2i& drop_location)->bool
+		{
+			SendToConsole("Attempting to bring window to front");
+			m_DisplayWindow.bring_to_front();
+			return true;
+		});
+
+		m_DropTarget->GetSigDrop().connect([this](const std::string& filename, const Vector2i& drop_location)
+		{
+			DragDrop(filename);
+		});
 	}
 
 	void Editor::Deactivate()
 	{
 		m_Active = false;
+
+		m_DropTarget.reset();
 
 		m_Background.reset();
 
@@ -1364,6 +1552,21 @@ namespace FusionEngine
 			}
 			m_MapLoader->Start();
 			m_StreamingManager->Update(true);
+	}
+
+	bool Editor::DragEnter(const std::string &path)
+	{
+		m_DragData = path;
+		return true;
+	}
+
+	bool Editor::DragDrop(const std::string &path)
+	{
+		SendToConsole("Dropped: " + path);
+
+		m_DragData = path;
+		CreateArchetypeInstance(m_DragData, GetMousePositionInWorld(), 0.0f);
+		return true;
 	}
 
 	void Editor::ToggleResourceBrowser()

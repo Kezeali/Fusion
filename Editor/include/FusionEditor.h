@@ -97,6 +97,8 @@ namespace FusionEngine
 
 	class InspectorGenerator;
 
+	class WindowDropTarget;
+
 	class Editor : public EngineExtension, public ResourceEditorFactory
 	{
 	public:
@@ -141,6 +143,9 @@ namespace FusionEngine
 		void Load(const std::string& name);
 
 		void Compile(const std::string& name);
+
+		bool DragEnter(const std::string &path);
+		bool DragDrop(const std::string &path);
 
 		bool IsResourceEditable(const std::string& file) const;
 
@@ -278,6 +283,9 @@ namespace FusionEngine
 		bool m_Dragging;
 
 		Tool m_Tool;
+
+		std::string m_DragData;
+		std::shared_ptr<WindowDropTarget> m_DropTarget;
 
 		std::shared_ptr<EditorOverlay> m_EditorOverlay;
 		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;

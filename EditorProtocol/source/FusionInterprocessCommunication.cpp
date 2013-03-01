@@ -171,12 +171,13 @@ namespace FusionEngine { namespace Interprocess {
 
 	DragDropAction::type EditorServiceHandler::SetDragDropData(const DragDropData& data)
 	{
+		editor->DragEnter(data.path);
 		return DragDropAction::Copy;
 	}
 
 	bool EditorServiceHandler::DragDrop(const DragDropData& data)
 	{
-		editor->CreateArchetypeInstance(data.path, editor->GetMousePositionInWorld(), 0.0f);
+		editor->DragDrop(data.path);
 		return true;
 	}
 

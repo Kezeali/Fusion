@@ -124,6 +124,7 @@
     <ClInclude Include="include\FusionRigidBodyInspector.h" />
     <ClInclude Include="include\FusionSpriteInspector.h" />
     <ClInclude Include="include\FusionTransformInspector.h" />
+    <ClInclude Include="include\FusionWindowDropTarget.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>

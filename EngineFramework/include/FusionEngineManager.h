@@ -178,6 +178,7 @@ namespace FusionEngine
 		std::shared_ptr<TaskScheduler> m_Scheduler;
 
 		clan::Slot m_GotFocusSlot;
+		clan::Slot m_GotMouseSlot;
 
 		void ReadOptions(const ClientOptions& options);
 

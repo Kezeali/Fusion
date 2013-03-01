@@ -30,7 +30,6 @@
 #include <ClanLib/display.h>
 #include <ClanLib/gl.h>
 #include <ClanLib/sound.h>
-#include <ClanLib/vorbis.h>
 
 #include <tbb/concurrent_queue.h>
 #include <tbb/scalable_allocator.h>
