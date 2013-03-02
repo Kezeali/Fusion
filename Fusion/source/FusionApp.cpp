@@ -12,7 +12,6 @@
 #include <ClanLib/display.h>
 #include <ClanLib/gl.h>
 #include <ClanLib/sound.h>
-#include <ClanLib/vorbis.h>
 
 #include <string>
 #include <memory>
@@ -39,7 +38,6 @@ public:
 		clan::SetupDisplay setupDisplay;
 		clan::SetupGL setupGL;
 		clan::SetupSound setupSound;
-		clan::SetupVorbis setupVorbis;
 
 		SetupPhysFS setupPhysfs(clan::System::get_exe_path().c_str());
 		if (!SetupPhysFS::is_init())
