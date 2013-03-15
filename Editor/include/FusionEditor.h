@@ -33,6 +33,7 @@
 #include "FusionEngineExtension.h"
 #include "FusionResourceEditorFactory.h"
 
+#include "FusionCellStreamTypes.h"
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
 #include "FusionResourcePointer.h"
@@ -160,7 +161,7 @@ namespace FusionEngine
 		//! Move the camera so that the given entity is in view
 		void GoToEntity(const EntityPtr& entity);
 
-		void ForEachSelected(std::function<bool (const EntityPtr&)> fn);
+		void ForEachSelected(std::function<void (const EntityPtr&)> fn);
 
 		void SelectEntity(const EntityPtr& entity);
 		void DeselectEntity(const EntityPtr& entity);
@@ -310,6 +311,12 @@ namespace FusionEngine
 
 		void DeleteEntity(const EntityPtr& entity);
 
+		void SaveEntities(OCellStream& file, const std::set<EntityPtr>& entities);
+		std::vector<EntityPtr> LoadEntities(std::shared_ptr<ICellStream> file, const Vector2& offset, float base_angle);
+
+		void CreatePrefab(const std::string& filename, const std::set<EntityPtr>& selected_entities);
+		std::vector<EntityPtr> InstantiatePrefab(const std::string& filename, const Vector2& offset, float base_angle);
+
 		void CopySelectedEntities();
 		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
 
@@ -332,7 +339,7 @@ namespace FusionEngine
 
 		void UpdateSelectionRectangle(const Vector2& pointer_position, bool translate_position);
 
-		void ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const clan::Colorf&)> fn);
+		void ForEachSelectedWithColours(std::function<void (const EntityPtr&, const clan::Colorf&)> fn);
 
 		void DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn);
 

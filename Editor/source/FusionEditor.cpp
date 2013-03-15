@@ -1102,7 +1102,8 @@ namespace FusionEngine
 	};
 
 	Win32DropTarget::Win32DropTarget(const clan::DisplayWindow& window)
-		: m_Impl(new Win32DropTargetImpl())
+		: m_DisplayWindow(window),
+		m_Impl(new Win32DropTargetImpl())
 	{
 		OleInitialize(NULL);
 
@@ -1113,7 +1114,8 @@ namespace FusionEngine
 
 	Win32DropTarget::~Win32DropTarget()
 	{
-		RevokeDragDrop(m_DisplayWindow.get_hwnd());
+		if (!m_DisplayWindow.is_null())
+			RevokeDragDrop(m_DisplayWindow.get_hwnd());
 
 		//CoLockObjectExternal(m_Impl.get(), FALSE, TRUE);
 
@@ -1784,7 +1786,7 @@ namespace FusionEngine
 		delta *= 1.f / m_EditCam->GetZoom();
 		delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
 
-		ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+		ForEachSelected([delta](const EntityPtr& entity) { entity->SetPosition(entity->GetPosition() + delta); });
 
 		m_EditorOverlay->SetOffset(Vector2());
 	}
@@ -1953,6 +1955,47 @@ namespace FusionEngine
 		// Ctrl + Keys
 		if (ev.ctrl)
 		{
+			switch (ev.id)
+			{
+				case clan::keycode_t:
+				{
+						EntityPtr entity;
+						if (!m_EditorOverlay->m_Selected.empty())
+						{
+							entity = *m_EditorOverlay->m_Selected.begin();
+						}
+						else
+						{
+							entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+							//entity->SetName(m_EntityManager->GenerateName(entity));
+						}
+
+						std::string archetypeName = "/Data/" + entity->GetName() + ".archetype";
+
+						std::shared_ptr<ArchetypeFactory> archetypeFactory = std::make_shared<ArchetypeFactory>();
+						archetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), archetypeName, entity);
+
+						IO::PhysFSStream archetypeFile(archetypeName, IO::OpenMode::Write);
+						archetypeFactory->Save(archetypeFile);
+				}
+				break;
+				case clan::keycode_y:
+				{
+						EntityPtr entity;
+						if (!m_EditorOverlay->m_Selected.empty())
+						{
+							entity = *m_EditorOverlay->m_Selected.begin();
+						}
+						else
+						{
+							entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
+							//entity->SetName(m_EntityManager->GenerateName(entity));
+						}
+
+						CreatePrefab("/Data/" + entity->GetName() + ".prefab", m_EditorOverlay->m_Selected);
+				}
+				break;
+			}
 		}
 		// Keys
 		else
@@ -1976,7 +2019,7 @@ namespace FusionEngine
 				break;
 			case clan::keycode_delete:
 				if (ev.shift)
-					ForEachSelected([this](const EntityPtr& entity)->bool { this->AddEntityToDelete(entity); return true; });
+					ForEachSelected([this](const EntityPtr& entity) { this->AddEntityToDelete(entity); });
 				else
 				{
 					//ShowDeleteDialog();
@@ -2009,33 +2052,6 @@ namespace FusionEngine
 			srand(clan::System::get_time());
 
 			bool randomAngle = ev.shift;
-
-			if (ev.id == clan::keycode_8)
-			{
-				if (!ev.shift)
-				{
-					EntityPtr entity;
-					if (!m_EditorOverlay->m_Selected.empty())
-					{
-						entity = *m_EditorOverlay->m_Selected.begin();
-					}
-					else
-					{
-						entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
-						//entity->SetName(m_EntityManager->GenerateName(entity));
-					}
-
-					std::string archetypeName = "/Data/" + entity->GetName() + ".archetype";
-
-					std::shared_ptr<ArchetypeFactory> archetypeFactory = std::make_shared<ArchetypeFactory>();
-					archetypeFactory->DefineArchetypeFromEntity(m_ComponentFactory.get(), archetypeName, entity);
-
-					IO::PhysFSStream archetypeFile(archetypeName, IO::OpenMode::Write);
-					archetypeFactory->Save(archetypeFile);
-				}
-
-				return;
-			}
 
 			// TODO: if Caller gets destroyed without being called an exception is fired: investigate
 			auto caller = ScriptUtils::Calling::Caller::CallerForGlobalFuncId(ScriptManager::getSingleton().GetEnginePtr(), m_CreateEntityFn->GetId());
@@ -2142,7 +2158,7 @@ namespace FusionEngine
 						auto delta = mouseInWorld - m_DragFrom;
 						delta.x = ToSimUnits(delta.x); delta.y = ToSimUnits(delta.y);
 
-						ForEachSelected([delta](const EntityPtr& entity)->bool { entity->SetPosition(entity->GetPosition() + delta); return true; });
+						ForEachSelected([delta](const EntityPtr& entity) { entity->SetPosition(entity->GetPosition() + delta); });
 
 						m_EditorOverlay->SetOffset(Vector2());
 					}
@@ -2179,9 +2195,9 @@ namespace FusionEngine
 						if (ev.ctrl)
 						{
 							if (ev.alt)
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); return true; });
+								ForEachSelected([](const EntityPtr& entity) { entity->SetAngle(entity->GetAngle() + s_pi * 0.01f); });
 							else
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f); return true;  });
+								ForEachSelected([](const EntityPtr& entity) { entity->SetAngle(entity->GetAngle() + s_pi * 0.1f);  });
 						}
 						else
 							m_EditCam->SetZoom(m_EditCam->GetZoom() + 0.05f);
@@ -2190,9 +2206,9 @@ namespace FusionEngine
 						if (ev.ctrl)
 						{
 							if (ev.alt)
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f); return true;  });
+								ForEachSelected([](const EntityPtr& entity) { entity->SetAngle(entity->GetAngle() - s_pi * 0.01f);  });
 							else
-								ForEachSelected([](const EntityPtr& entity)->bool { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f); return true;  });
+								ForEachSelected([](const EntityPtr& entity) { entity->SetAngle(entity->GetAngle() - s_pi * 0.1f);  });
 						}
 						else
 							m_EditCam->SetZoom(m_EditCam->GetZoom() - 0.05f);
@@ -2352,35 +2368,6 @@ namespace FusionEngine
 		m_RightClickMenu->Show(position.x, position.y);
 	}
 
-	//void Editor::ShowContextMenu(const Vector2i& position)
-	//{
-	//	ClearCtxMenu(m_PropertiesMenu.get());
-	//	ClearCtxMenu(m_EntitySelectionMenu.get());
-
-	//	AddMenuItem(m_EntitySelectionMenu.get(),
-	//		"Deselect All",
-	//		std::bind(&Editor::DeselectAll, this));
-
-	//	ForEachSelectedWithColours([this](const EntityPtr& entity, const clan::Colorf& colour)->bool
-	//	{
-	//		const std::string title = entity->GetName().empty() ? std::string("Unnamed ") : entity->GetName() + "(" + entity->GetType() + ")";
-
-	//		// Add an item for this entity to the Properties sub-menu
-	//		AddMenuItem(this->m_PropertiesMenu.get(),
-	//			title, entity->GetName(),
-	//			[this, entity](const MenuItemEvent& e) { std::vector<EntityPtr> ents; ents.push_back(entity); CreatePropertiesWindow(ents); }
-	//		);
-
-	//		// Add an item for this entity to the Select sub-menu
-	//		AddMenuItem(m_EntitySelectionMenu.get(),
-	//			title, entity->GetName(),
-	//			[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
-	//		);
-	//	});
-
-	//	m_RightClickMenu->Show(position.x, position.y);
-	//}
-
 	bool Editor::TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const
 	{
 		clan::Rectf worldArea, screenArea;
@@ -2516,21 +2503,19 @@ namespace FusionEngine
 		return m_EditorOverlay->m_Selected.size();
 	}
 
-	void Editor::ForEachSelected(std::function<bool (const EntityPtr&)> fn)
+	void Editor::ForEachSelected(std::function<void (const EntityPtr&)> fn)
 	{
 		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
 		{
-			if (!fn(*it))
-				break;
+			fn(*it);
 		}
 	}
 
-	void Editor::ForEachSelectedWithColours(std::function<bool (const EntityPtr&, const clan::Colorf&)> fn)
+	void Editor::ForEachSelectedWithColours(std::function<void (const EntityPtr&, const clan::Colorf&)> fn)
 	{
 		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
 		{
-			if (!fn(*it, m_EditorOverlay->GetColour(it)))
-				break;
+			fn(*it, m_EditorOverlay->GetColour(it));
 		}
 	}
 
@@ -2547,24 +2532,31 @@ namespace FusionEngine
 		}));
 	}
 
+	namespace {
+		template <typename SelectorFnT>
+		clan::Rectf GetBBOf(SelectorFnT selector_fn)
+		{
+			clan::Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+			selector_fn([&bb](const EntityPtr& entity)
+			{
+				auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
+				auto pos = transform->GetPosition();
+				if (pos.x < bb.left)
+					bb.left = pos.x;
+				if (pos.y < bb.top)
+					bb.top = pos.y;
+				if (pos.x > bb.right)
+					bb.right = pos.x;
+				if (pos.y > bb.bottom)
+					bb.bottom = pos.y;
+			});
+			return bb;
+		}
+	}
+
 	clan::Rectf Editor::GetBBOfSelected()
 	{
-		clan::Rectf bb(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
-		ForEachSelected([&bb](const EntityPtr& entity)->bool
-		{
-			auto transform = entity->GetComponent<ITransform>(); FSN_ASSERT(transform);
-			auto pos = transform->GetPosition();
-			if (pos.x < bb.left)
-				bb.left = pos.x;
-			if (pos.y < bb.top)
-				bb.top = pos.y;
-			if (pos.x > bb.right)
-				bb.right = pos.x;
-			if (pos.y > bb.bottom)
-				bb.bottom = pos.y;
-			return true;
-		});
-		return bb;
+		return GetBBOf(std::bind(&Editor::ForEachSelected, this, std::placeholders::_1));
 	}
 
 	void Editor::GetEntitiesOverlapping(std::vector<EntityPtr> &out, const clan::Rectf &rectangle, const Editor::QueryType query_type)
@@ -2702,16 +2694,16 @@ namespace FusionEngine
 		});
 	}
 
-	void Editor::CopySelectedEntities()
+	void Editor::SaveEntities(OCellStream& file, const std::set<EntityPtr>& entities)
 	{
-		auto bb = GetBBOfSelected();
+		auto bb = GetBBOf([&entities](std::function<void (EntityPtr)> fn) { for (auto entity : entities) fn(entity); });
 		auto c = bb.get_center();
 		Vector2 center(c.x, c.y);
-		if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))
+		if (file)
 		{
-			IO::Streams::CellStreamWriter writer(file.get());
+			IO::Streams::CellStreamWriter writer(&file);
 			writer.Write(GetNumSelected());
-			ForEachSelected([&](const EntityPtr& entity)->bool
+			for (auto entity : entities)
 			{
 				{
 					auto transform = entity->GetComponent<ITransform>();
@@ -2721,10 +2713,76 @@ namespace FusionEngine
 					writer.Write(pos.y);
 					writer.Write(transform->Angle.Get());
 				}
-				EntitySerialisationUtils::SaveEntity(*file, entity, true, EntitySerialisationUtils::EditableBinary);
-				return true;
-			});
+				EntitySerialisationUtils::SaveEntity(file, entity, true, EntitySerialisationUtils::EditableBinary);
+			}
 		}
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to create entity clipboard file");
+	}
+
+	std::vector<EntityPtr> Editor::LoadEntities(std::shared_ptr<ICellStream> file, const Vector2& offset, float base_angle)
+	{
+		std::vector<EntityPtr> loadedEntities;
+
+		Vector2 simOffset(ToSimUnits(offset.x), ToSimUnits(offset.y));
+
+		IO::Streams::CellStreamReader reader(file.get());
+		size_t numEntities = reader.ReadValue<size_t>();
+		for (size_t i = 0; i < numEntities; ++i)
+		{
+			Vector2 entityPos;
+			float entityAngle = 0.f;
+			{
+				reader.Read(entityPos.x);
+				reader.Read(entityPos.y);
+				reader.Read(entityAngle);
+			}
+
+			EntityPtr entity;
+			std::tie(entity, file) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(file), true, 0, EntitySerialisationUtils::EditableBinary, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
+
+			if (entity->GetID())
+				entity->SetID(m_EntityInstantiator->GetFreeGlobalID());
+			entity->SetName("");
+
+			{
+				auto transform = entity->GetComponent<ITransform>();
+				transform->Position.Set(simOffset + entityPos);
+				transform->Angle.Set(base_angle + entityAngle);
+			}
+
+			m_EntityManager->AddEntity(entity);
+			if (entity->GetDomain() == SYSTEM_DOMAIN)
+				m_NonStreamedEntities.push_back(entity);
+
+			loadedEntities.push_back(entity);
+		}
+
+		return loadedEntities;
+	}
+
+	void Editor::CreatePrefab(const std::string& name, const std::set<EntityPtr>& entities)
+	{
+		IO::PhysFSStream file(name, IO::Write);
+		if (file)
+			SaveEntities(file, entities);
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to create prefab file");
+	}
+
+	std::vector<EntityPtr> Editor::InstantiatePrefab(const std::string& filename, const Vector2& offset, float base_angle)
+	{
+		auto file = std::make_shared<IO::PhysFSStream>(filename, IO::Read);
+		if (file)
+			return LoadEntities(file, offset, base_angle);
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to open file");
+	}
+
+	void Editor::CopySelectedEntities()
+	{
+		if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))
+			SaveEntities(*file, m_EditorOverlay->m_Selected);
 		else
 			FSN_EXCEPT(FileSystemException, "Failed to create entity clipboard file");
 	}
@@ -2732,41 +2790,9 @@ namespace FusionEngine
 	void Editor::PasteEntities(const Vector2& offset, float base_angle)
 	{
 		if (auto selfishFile = m_DataArchiver->LoadDataFile("editor.entity_clipboard"))
-		{
-			std::shared_ptr<std::istream> file(std::move(selfishFile));
-
-			Vector2 simOffset(ToSimUnits(offset.x), ToSimUnits(offset.y));
-
-			IO::Streams::CellStreamReader reader(file.get());
-			size_t numEntities = reader.ReadValue<size_t>();
-			for (size_t i = 0; i < numEntities; ++i)
-			{
-				Vector2 entityPos;
-				float entityAngle = 0.f;
-				{
-					reader.Read(entityPos.x);
-					reader.Read(entityPos.y);
-					reader.Read(entityAngle);
-				}
-
-				EntityPtr entity;
-				std::tie(entity, file) = EntitySerialisationUtils::LoadEntityImmeadiate(std::move(file), true, 0, EntitySerialisationUtils::EditableBinary, m_ComponentFactory.get(), m_EntityManager.get(), m_EntityInstantiator.get());
-
-				if (entity->GetID())
-					entity->SetID(m_EntityInstantiator->GetFreeGlobalID());
-				entity->SetName("");
-
-				{
-					auto transform = entity->GetComponent<ITransform>();
-					transform->Position.Set(simOffset + entityPos);
-					transform->Angle.Set(base_angle + entityAngle);
-				}
-
-				m_EntityManager->AddEntity(entity);
-				if (entity->GetDomain() == SYSTEM_DOMAIN)
-					m_NonStreamedEntities.push_back(entity);
-			}
-		}
+			LoadEntities(std::move(selfishFile), offset, base_angle);
+		else
+			FSN_EXCEPT(FileSystemException, "Failed to open data file");
 	}
 
 	class InspectorGenerator
@@ -2954,7 +2980,7 @@ namespace FusionEngine
 		InspectorGenerator generator(doc);
 		InitInspectorGenerator(generator, std::function<void (void)>());
 
-		ForEachSelected([&generator](const EntityPtr& entity)->bool { generator.ProcessEntity(entity); return true; });
+		ForEachSelected([&generator](const EntityPtr& entity) { generator.ProcessEntity(entity); });
 		generator.Generate();
 		
 		doc->Show();

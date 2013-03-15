@@ -230,8 +230,6 @@ namespace FusionEngine { namespace Interprocess {
 				{}
 			}
 			_return.push_back(data);
-
-			return true;
 		});
 	}
 
