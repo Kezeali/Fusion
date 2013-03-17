@@ -185,6 +185,13 @@ namespace FusionEngine
 		ViewportPtr GetViewportUnderMouse() const;
 		Vector2 GetMousePositionInWorld() const;
 
+		typedef std::function<void (const std::string&)> FileBrowserOverrideResultFn_t;
+		typedef std::function<void (const std::string&, const std::string&, const FileBrowserOverrideResultFn_t&)> FileBrowserOverrideFn_t;
+
+		void SetFilebrowserOpenOverride(const FileBrowserOverrideFn_t& fn);
+
+		void SetFilebrowserSaveOverride(const FileBrowserOverrideFn_t& fn);
+
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
 		enum Tool
@@ -299,8 +306,14 @@ namespace FusionEngine
 
 		std::list<EntityPtr> m_ToDelete;
 
-		void ShowSaveDialog();
-		void ShowLoadDialog();
+		FileBrowserOverrideFn_t m_OpenDialogOverride;
+		FileBrowserOverrideFn_t m_SaveDialogOverride;
+
+		void ShowSaveMapDialog();
+		void ShowLoadMapDialog();
+
+		void ShowSaveDialog(const std::string& title, const std::string& initial_path);
+		void ShowLoadDialog(const std::string& title, const std::string& initial_path);
 
 		void ToggleResourceBrowser();
 		bool IsResourceBrowserVisible() const;

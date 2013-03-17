@@ -59,6 +59,23 @@ namespace FusionEngine { namespace Interprocess {
 		: engineManager(manager),
 		editor(editor)
 	{
+		editor->SetFilebrowserOpenOverride([this](const std::string& title, const std::string& initial_path, const Editor::FileBrowserOverrideResultFn_t& result_fn)
+		{
+			DialogRequest request;
+			request.title = title;
+			request.path = initial_path;
+			request.type = DialogType::Open;
+			dialogRequests.push_back(DialogRequestData(result_fn, request));
+		});
+
+		editor->SetFilebrowserSaveOverride([this](const std::string& title, const std::string& initial_path, const Editor::FileBrowserOverrideResultFn_t& result_fn)
+		{
+			DialogRequest request;
+			request.title = title;
+			request.path = initial_path;
+			request.type = DialogType::Save;
+			dialogRequests.push_back(DialogRequestData(result_fn, request));
+		});
 	}
 	
 	void EditorServiceHandler::SaveMap(const std::string& name)
@@ -74,6 +91,29 @@ namespace FusionEngine { namespace Interprocess {
 	void EditorServiceHandler::CompileMap(const std::string& name)
 	{
 		editor->Compile(name);
+	}
+
+	void EditorServiceHandler::PopDialogRequest(DialogRequest& _return)
+	{
+		if (!dialogRequests.empty())
+		{
+			auto frontRequest = dialogRequests.front();
+			dialogRequests.pop_front();
+
+			activeDialogRequests[frontRequest.request.id] = frontRequest.resultFn;
+			_return = frontRequest.request;
+		}
+	}
+	
+	void EditorServiceHandler::CompleteDialogRequest(const DialogRequest& request, bool success)
+	{
+		auto entry = activeDialogRequests.find(request.id);
+		if (entry != activeDialogRequests.end())
+		{
+			if (entry->second)
+				entry->second(request.path);
+			activeDialogRequests.erase(entry);
+		}
 	}
 
 	void EditorServiceHandler::GetUserDataDirectory(std::string & _return)
@@ -257,7 +297,6 @@ namespace FusionEngine { namespace Interprocess {
 	{
 		editor->RequestQuit();
 	}
-
 
 	EditorServer::EditorServer()
 	{

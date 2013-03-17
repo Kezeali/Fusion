@@ -622,27 +622,6 @@ namespace EditorWinForms
             { }
         }
 
-        static IEnumerable<string> MakeRelative(string path, string basePath, bool dropLastElement = false)
-        {
-            var baseDirElements = basePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var pathElements = path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (pathElements.Length != 0)
-            {
-                int i = 0;
-                for (; i < pathElements.Length && i < baseDirElements.Length; ++i)
-                {
-                    if (pathElements[i] != baseDirElements[i])
-                        break;
-                }
-                if (dropLastElement)
-                    return pathElements.Take(pathElements.Length - 1).Skip(i);
-                else
-                    return pathElements.Skip(i);
-            }
-            else
-                return pathElements.AsEnumerable();
-        }
-
         private void RefreshPath(string absoslutePath, string basePath)
         {
             if (viewedPath == null && directoryTreeView.SelectedNode != null)
@@ -650,7 +629,7 @@ namespace EditorWinForms
 
             if (!File.Exists(absoslutePath))
             {
-                var relativePath = string.Join("/", MakeRelative(absoslutePath, basePath, true));
+                var relativePath = string.Join("/", PhysFSUtils.MakeRelative(absoslutePath, basePath, true));
                 var nodeChanged = FindNode(relativePath, directoryTreeView.TopNode);
                 if (nodeChanged != null)
                 {
@@ -673,7 +652,7 @@ namespace EditorWinForms
 
         private void RenamePath(string fullPath, string oldFullPath, string basePath)
         {
-            var relativePath = string.Join("/", MakeRelative(oldFullPath, basePath));
+            var relativePath = string.Join("/", PhysFSUtils.MakeRelative(oldFullPath, basePath));
             var node = FindNode(relativePath, directoryTreeView.TopNode);
             if (node != null)
                 node.Remove();

@@ -34,10 +34,24 @@ struct DragDropData {
 	4: DragDropAction attemptedAction;
 }
 
+enum DialogType {
+	Open = 1,
+	Save = 2
+}
+
+struct DialogRequest {
+	1: DialogType type;
+	2: i32 id;
+	3: optional string title;
+	4: optional string path;
+}
+
 service Editor {
 	void SaveMap(1: string name);
 	void LoadMap(1: string name);
 	void CompileMap(1: string name);
+	DialogRequest PopDialogRequest();
+	void CompleteDialogRequest(1: DialogRequest request, 2: bool success);
 	string GetUserDataDirectory();
 	string GetDataDirectory();
 	list<ResourceFile> GetResources(1: string path);

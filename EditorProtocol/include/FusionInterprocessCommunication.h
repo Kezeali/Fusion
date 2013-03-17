@@ -36,6 +36,7 @@
 #include <functional>
 #include <unordered_map>
 #include <string>
+#include "FusionEditor.h"
 
 namespace FusionEngine
 {
@@ -58,6 +59,10 @@ namespace FusionEngine { namespace Interprocess
 		void LoadMap(const std::string& name) final;
 
 		void CompileMap(const std::string& name) final;
+
+		void PopDialogRequest(DialogRequest& _return) final;
+		
+		void CompleteDialogRequest(const DialogRequest& request, bool success) final;
 
 		void GetUserDataDirectory(std::string& _return) final;
 
@@ -102,6 +107,22 @@ namespace FusionEngine { namespace Interprocess
 	private:
 		FusionEngine::EngineManager* engineManager;
 		FusionEngine::Editor* editor;
+
+		struct DialogRequestData
+		{
+			FusionEngine::Editor::FileBrowserOverrideResultFn_t resultFn;
+			DialogRequest request;
+
+			DialogRequestData(FusionEngine::Editor::FileBrowserOverrideResultFn_t resultFn, DialogRequest request)
+				: resultFn(resultFn),
+				request(request)
+			{
+			}
+		};
+
+		std::deque<DialogRequestData> dialogRequests;
+
+		std::map<std::int32_t, FusionEngine::Editor::FileBrowserOverrideResultFn_t> activeDialogRequests;
 
 		void MakeResourceList(std::vector<ResourceFile>& out, const std::vector<std::string>& files);
 	};

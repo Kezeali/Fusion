@@ -40,6 +40,7 @@
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveMapAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileScriptsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -64,8 +65,9 @@
             this.testConsoleTimer = new System.Windows.Forms.Timer(this.components);
             this.connectBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.compileMapSaveFileDialog = new System.Windows.Forms.SaveFileDialog();
-            this.saveMapAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkEnginePositionTimer = new System.Windows.Forms.Timer(this.components);
+            this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -154,14 +156,21 @@
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.saveToolStripMenuItem.Text = "Save Map";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+            // 
+            // saveMapAsToolStripMenuItem
+            // 
+            this.saveMapAsToolStripMenuItem.Name = "saveMapAsToolStripMenuItem";
+            this.saveMapAsToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.saveMapAsToolStripMenuItem.Text = "Save Map As...";
+            this.saveMapAsToolStripMenuItem.Click += new System.EventHandler(this.saveMapAsToolStripMenuItem_Click);
             // 
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.loadToolStripMenuItem.Text = "Load Map...";
             this.loadToolStripMenuItem.Click += new System.EventHandler(this.loadToolStripMenuItem_Click);
             // 
@@ -242,7 +251,7 @@
             // websiteToolStripMenuItem
             // 
             this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.websiteToolStripMenuItem.Text = "Website";
             this.websiteToolStripMenuItem.Click += new System.EventHandler(this.websiteToolStripMenuItem_Click);
             // 
@@ -326,13 +335,6 @@
             this.connectBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.connectBackgroundWorker_DoWork);
             this.connectBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.connectBackgroundWorker_RunWorkerCompleted);
             // 
-            // saveMapAsToolStripMenuItem
-            // 
-            this.saveMapAsToolStripMenuItem.Name = "saveMapAsToolStripMenuItem";
-            this.saveMapAsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.saveMapAsToolStripMenuItem.Text = "Save Map As...";
-            this.saveMapAsToolStripMenuItem.Click += new System.EventHandler(this.saveMapAsToolStripMenuItem_Click);
-            // 
             // checkEnginePositionTimer
             // 
             this.checkEnginePositionTimer.Enabled = true;
@@ -400,6 +402,8 @@
         private System.Windows.Forms.SaveFileDialog compileMapSaveFileDialog;
         private System.Windows.Forms.ToolStripMenuItem saveMapAsToolStripMenuItem;
         private System.Windows.Forms.Timer checkEnginePositionTimer;
+        private System.Windows.Forms.OpenFileDialog openFileDialog;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog;
     }
 }
 

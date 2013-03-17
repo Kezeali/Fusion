@@ -355,16 +355,32 @@ namespace EditorWinForms
 
         private void MainForm_Move(object sender, EventArgs e)
         {
-            RECT windowRect;
-            if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
-            {
-                MoveWindow(new HandleRef(this, editorServerProcess.MainWindowHandle), this.Left, this.Bottom, windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, true);
-            }
+            //RECT windowRect;
+            //if (GetWindowRect(new HandleRef(this, editorServerProcess.MainWindowHandle), out windowRect))
+            //{
+            //    MoveWindow(new HandleRef(this, editorServerProcess.MainWindowHandle), this.Left, this.Bottom, windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, true);
+            //}
         }
 
         private void checkEnginePositionTimer_Tick(object sender, EventArgs e)
         {
-            //AlignWithEditorWindow();
+            AlignWithEditorWindow();
+            
+            var dialogRequest = client.PopDialogRequest();
+
+            var physfsBasePath = client.GetUserDataDirectory();
+
+            if (dialogRequest.Type == DialogType.Open)
+            {
+                openFileDialog.FileName = physfsBasePath + dialogRequest.Path;
+                openFileDialog.Title = dialogRequest.Title;
+                openFileDialog.Tag = dialogRequest.Id;
+
+                var result = openFileDialog.ShowDialog();
+
+                dialogRequest.Path = PhysFSUtils.MakeRelativeString(openFileDialog.FileName, physfsBasePath);
+                client.CompleteDialogRequest(dialogRequest, result == System.Windows.Forms.DialogResult.OK && dialogRequest.Path != string.Empty);
+            }
         }
 
     }

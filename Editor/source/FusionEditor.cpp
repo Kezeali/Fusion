@@ -1444,7 +1444,7 @@ namespace FusionEngine
 		m_EditCam->SetSimPosition(entityPosition);
 	}
 
-	void Editor::ShowSaveDialog()
+	void Editor::ShowSaveMapDialog()
 	{
 		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
@@ -1460,7 +1460,7 @@ namespace FusionEngine
 		document->RemoveReference();
 	}
 
-	void Editor::ShowLoadDialog()
+	void Editor::ShowLoadMapDialog()
 	{
 		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
@@ -1474,6 +1474,52 @@ namespace FusionEngine
 		m_OpenDialogListener->Attach(document);
 		document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
 		document->RemoveReference();
+	}
+
+	void Editor::ShowSaveDialog(const std::string& title, const std::string& initial_path)
+	{
+		if (m_SaveDialogOverride)
+		{
+			m_SaveDialogOverride(title, initial_path, [this](const std::string& path) { Save(path); });
+		}
+		else
+		{
+			auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+
+			Rocket::Core::String title("Save Map");
+			document->SetTitle(title);
+			if (auto okButton = document->GetElementById("button_ok"))
+				okButton->SetInnerRML("Save");
+			if (auto fileList = document->GetElementById("file_list"))
+				fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+
+			m_SaveDialogListener->Attach(document);
+			document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+			document->RemoveReference();
+		}
+	}
+
+	void Editor::ShowLoadDialog(const std::string& title, const std::string& initial_path)
+	{
+		if (m_OpenDialogOverride)
+		{
+			m_OpenDialogOverride(title, initial_path, [this](const std::string& path) { Load(path); });
+		}
+		else
+		{
+			auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+
+			Rocket::Core::String title("Open Map");
+			document->SetTitle(title);
+			if (auto okButton = document->GetElementById("button_ok"))
+				okButton->SetInnerRML("Open");
+			if (auto fileList = document->GetElementById("file_list"))
+				fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+
+			m_OpenDialogListener->Attach(document);
+			document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+			document->RemoveReference();
+		}
 	}
 
 	void Editor::Save()
@@ -1817,12 +1863,12 @@ namespace FusionEngine
 			{
 			case clan::keycode_s:
 				if (ev.shift || m_SaveName.empty())
-					ShowSaveDialog();
+					ShowSaveMapDialog();
 				else
 					m_SaveMap = true;
 				break;
 			case clan::keycode_o:
-				ShowLoadDialog();
+				ShowLoadMapDialog();
 				break;
 
 			case clan::keycode_c:
@@ -2463,6 +2509,16 @@ namespace FusionEngine
 		}
 
 		m_SelectionDrawer->SetSelectionBox(m_SelectionRectangle);
+	}
+
+	void Editor::SetFilebrowserOpenOverride(const Editor::FileBrowserOverrideFn_t& fn)
+	{
+		m_OpenDialogOverride = fn;
+	}
+
+	void Editor::SetFilebrowserSaveOverride(const Editor::FileBrowserOverrideFn_t& fn)
+	{
+		m_SaveDialogOverride = fn;
 	}
 
 	void Editor::SelectEntity(const EntityPtr& entity)
