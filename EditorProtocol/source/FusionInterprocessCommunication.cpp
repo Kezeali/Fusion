@@ -38,6 +38,7 @@
 //#include <thrift/server/TNonblockingServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TTransportUtils.h>
+#include <thrift/concurrency/Thread.h>
 
 #include <boost/tokenizer.hpp>
 
@@ -57,11 +58,13 @@ namespace FusionEngine { namespace Interprocess {
 	
 	EditorServiceHandler::EditorServiceHandler(FusionEngine::EngineManager* manager, FusionEngine::Editor* editor)
 		: engineManager(manager),
-		editor(editor)
+		editor(editor),
+		nextId(1)
 	{
 		editor->SetFilebrowserOpenOverride([this](const std::string& title, const std::string& initial_path, const Editor::FileBrowserOverrideResultFn_t& result_fn)
 		{
 			DialogRequest request;
+			request.id = nextId++;
 			request.title = title;
 			request.path = initial_path;
 			request.type = DialogType::Open;
@@ -71,6 +74,7 @@ namespace FusionEngine { namespace Interprocess {
 		editor->SetFilebrowserSaveOverride([this](const std::string& title, const std::string& initial_path, const Editor::FileBrowserOverrideResultFn_t& result_fn)
 		{
 			DialogRequest request;
+			request.id = nextId++;
 			request.title = title;
 			request.path = initial_path;
 			request.type = DialogType::Save;
@@ -103,9 +107,15 @@ namespace FusionEngine { namespace Interprocess {
 			activeDialogRequests[frontRequest.request.id] = frontRequest.resultFn;
 			_return = frontRequest.request;
 		}
+		else
+		{
+			DialogRequest emptyRequest;
+			emptyRequest.id = 0;
+			_return = emptyRequest;
+		}
 	}
 	
-	void EditorServiceHandler::CompleteDialogRequest(const DialogRequest& request, bool success)
+	void EditorServiceHandler::CompleteDialogRequest(const DialogRequest& request, const bool success)
 	{
 		auto entry = activeDialogRequests.find(request.id);
 		if (entry != activeDialogRequests.end())
@@ -293,6 +303,99 @@ namespace FusionEngine { namespace Interprocess {
 			return false;
 	}
 
+	class EditorThreadManager : public apache::thrift::concurrency::ThreadManager
+	{
+		virtual void start() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void stop() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void join() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual STATE state() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void threadFactory(boost::shared_ptr<ThreadFactory> value) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void addWorker(size_t value=1) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void removeWorker(size_t value=1) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t idleWorkerCount() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t workerCount() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t pendingTaskCount() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t totalTaskCount() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t pendingTaskCountMax() const
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual size_t expiredTaskCount() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void add(boost::shared_ptr<apache::thrift::concurrency::Runnable>task, int64_t timeout=0LL, int64_t expiration=0LL) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void remove(boost::shared_ptr<apache::thrift::concurrency::Runnable> task) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual boost::shared_ptr<apache::thrift::concurrency::Runnable> removeNextPending() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void removeExpiredTasks() 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+
+		virtual void setExpireCallback(ExpireCallback expireCallback) 
+		{
+			throw std::exception("The method or operation is not implemented.");
+		}
+	};
+
 	void EditorServiceHandler::Stop()
 	{
 		editor->RequestQuit();
@@ -312,12 +415,7 @@ namespace FusionEngine { namespace Interprocess {
 		boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(9090));
 		boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
-		//TNonblockingServer s2(processor, protocolFactory, 9080);
-
-		server.reset(new TSimpleServer(processor,
-			serverTransport,
-			transportFactory,
-			protocolFactory));
+		server.reset(new TThreadedServer(processor, serverTransport, transportFactory, protocolFactory));
 
 		server->serve();
 	}

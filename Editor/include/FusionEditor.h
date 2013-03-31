@@ -47,6 +47,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 
 namespace Rocket { namespace Core {
@@ -174,7 +175,7 @@ namespace FusionEngine
 		
 		void AddEntityToDelete(const EntityPtr& entity);
 
-		void CreateArchetypeInstance(const std::string& archetype_name, const Vector2& pos, float angle);
+		void CreateArchetypeInstance(const std::string& archetype_name, const Vector2& pos, float angle, clan::Rectf selected_area, float grid_size);
 
 		bool TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const;
 		bool TranslateScreenToWorld(float* x, float* y) const;
@@ -306,6 +307,8 @@ namespace FusionEngine
 
 		std::list<EntityPtr> m_ToDelete;
 
+		std::queue<std::function<void (void)>> m_ActionQueue;
+
 		FileBrowserOverrideFn_t m_OpenDialogOverride;
 		FileBrowserOverrideFn_t m_SaveDialogOverride;
 
@@ -334,6 +337,9 @@ namespace FusionEngine
 		void PasteEntities(const Vector2& top_left, float base_angle = 0.f);
 
 		void NudgeSelectedEntities(const Vector2& pixels);
+
+		void QueueAction(const std::function<void (void)>& action);
+		void ExecuteAction();
 
 		void OnKeyDown(const clan::InputEvent& ev);
 		void OnKeyUp(const clan::InputEvent& ev);

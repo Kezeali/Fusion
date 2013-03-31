@@ -47,8 +47,6 @@ public:
 
 		//clan::ConsoleWindow conWindow("Console", 80, 10);
 
-		//AllocConsole();
-
 		try
 		{
 			EngineManager manager(args);
@@ -62,8 +60,6 @@ public:
 
 			Interprocess::EditorServer server;
 			std::thread serverThread(&Interprocess::EditorServer::Serve, &server, &manager, editor.get());
-
-			std::cerr << "No error, just testing";
 
 			auto consoleConnection = Console::getSingleton().OnNewData.connect([](const std::string& data) {
 					std::cout << data;
@@ -79,12 +75,9 @@ public:
 		}
 		catch (std::exception& ex)
 		{
-			//FreeConsole();
-			std::cerr << "Unhandled exception: " << ex.what();
+			std::cout << "Unhandled exception: " << ex.what();
 			throw;
 		}
-
-		//FreeConsole();
 
 		return 0;
 	}

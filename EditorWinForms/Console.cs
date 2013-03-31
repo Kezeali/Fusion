@@ -19,6 +19,8 @@ namespace EditorWinForms
         public Console()
         {
             InitializeComponent();
+
+            instance = this;
         }
 
         Editor.Client client;
@@ -36,9 +38,16 @@ namespace EditorWinForms
             }
         }
 
+        static Console instance;
+
         public void AddToConsole(string line)
         {
             AddToTextBox(consoleTextBox, line);
+        }
+
+        public static void AddLine(string line)
+        {
+            instance.AddToConsole(line);
         }
 
         // Constants for extern calls to various scrollbar functions

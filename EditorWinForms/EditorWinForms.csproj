@@ -69,6 +69,7 @@
       <DependentUpon>Console.cs</DependentUpon>
     </Compile>
     <Compile Include="ControlUtils.cs" />
+    <Compile Include="EngineConnection.cs" />
     <Compile Include="FilenameDialog.cs">
       <SubType>Form</SubType>
     </Compile>

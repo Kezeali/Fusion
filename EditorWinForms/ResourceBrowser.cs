@@ -146,20 +146,28 @@ namespace EditorWinForms
 
         public void RefreshBrowserWithNativeFS()
         {
-            var basePath = Client.GetUserDataDirectory();
+            try
+            {
+                var basePath = Client.GetUserDataDirectory();
 
-            TreeNode rootNode = new TreeNode("/");
-            rootNode.Name = "";
-            rootNode.Tag = "/";
+                TreeNode rootNode = new TreeNode("/");
+                rootNode.Name = "";
+                rootNode.Tag = "/";
 
-            PopulateNode(basePath, rootNode);
+                PopulateNode(basePath, rootNode);
 
-            directoryTreeView.Invoke((Action<TreeNode>)((nodeToAdd) => {
-                directoryTreeView.BeginUpdate();
-                directoryTreeView.Nodes.Clear();
-                directoryTreeView.Nodes.Add(rootNode);
-                directoryTreeView.EndUpdate();
-            }));
+                directoryTreeView.Invoke((Action<TreeNode>)((nodeToAdd) =>
+                {
+                    directoryTreeView.BeginUpdate();
+                    directoryTreeView.Nodes.Clear();
+                    directoryTreeView.Nodes.Add(rootNode);
+                    directoryTreeView.EndUpdate();
+                }));
+            }
+            catch (Exception ex)
+            {
+                Console.AddLine(ex.Message);
+            }
         }
 
         class SubdirToProcess
@@ -192,29 +200,36 @@ namespace EditorWinForms
 
         private void PopulateNodePhysFS(TreeNode rootNode)
         {
-            directoryTreeView.InvokeLambda(() =>
+            try
             {
-                directoryTreeView.BeginUpdate();
-                rootNode.Nodes.Clear();
-            });
-
-            foreach (var entry in Client.GetResources((string)rootNode.Tag))
-            {
-                if (entry.Directory)
+                directoryTreeView.InvokeLambda(() =>
                 {
-                    var newChild = CreateChild(rootNode, entry);
+                    directoryTreeView.BeginUpdate();
+                    rootNode.Nodes.Clear();
+                });
 
-                    directoryTreeView.InvokeLambda((nodeToAdd) =>
+                foreach (var entry in Client.GetResources((string)rootNode.Tag))
+                {
+                    if (entry.Directory)
                     {
-                        rootNode.Nodes.Add(nodeToAdd);
-                    }, newChild);
-                }
-            }
+                        var newChild = CreateChild(rootNode, entry);
 
-            directoryTreeView.InvokeLambda(() =>
+                        directoryTreeView.InvokeLambda((nodeToAdd) =>
+                        {
+                            rootNode.Nodes.Add(nodeToAdd);
+                        }, newChild);
+                    }
+                }
+
+                directoryTreeView.InvokeLambda(() =>
+                {
+                    directoryTreeView.EndUpdate();
+                });
+            }
+            catch (Exception ex)
             {
-                directoryTreeView.EndUpdate();
-            });
+                Console.AddLine(ex.Message);
+            }
         }
 
         private void PopulateNodeRecursivePhysFS(TreeNode rootNode)
@@ -250,7 +265,8 @@ namespace EditorWinForms
                 }
                 catch (Exception ex)
                 {
-                    directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Add("Error: " + ex.Message));
+                    Console.AddLine(ex.Message);
+                    //directoryTreeView.InvokeLambda(() => toProcess.treeNode.Nodes.Add("Error: " + ex.Message));
                 }
                 finally
                 {
@@ -443,49 +459,63 @@ namespace EditorWinForms
 
         private void refreshBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            appFileSystemWatcher.Path = Client.GetDataDirectory();
-            appFileSystemWatcher.EnableRaisingEvents = true;
-            writeDirFileSystemWatcher.Path = Client.GetUserDataDirectory();
-            writeDirFileSystemWatcher.EnableRaisingEvents = true;
-
-            while (postLoadActions.Count > 0)
-                postLoadActions.Dequeue()();
-
-            if (viewedPath != null)
+            try
             {
-                NavigateToPath(viewedPath);
-            }
+                appFileSystemWatcher.Path = Client.GetDataDirectory();
+                appFileSystemWatcher.EnableRaisingEvents = true;
+                writeDirFileSystemWatcher.Path = Client.GetUserDataDirectory();
+                writeDirFileSystemWatcher.EnableRaisingEvents = true;
 
-            if (directoryTreeView.Nodes.Count > 0)
-                directoryTreeView.TopNode.Expand();
+                while (postLoadActions.Count > 0)
+                    postLoadActions.Dequeue()();
+
+                if (viewedPath != null)
+                {
+                    NavigateToPath(viewedPath);
+                }
+
+                if (directoryTreeView.Nodes.Count > 0)
+                    directoryTreeView.TopNode.Expand();
+            }
+            catch (Exception ex)
+            {
+                Console.AddLine(ex.Message);
+            }
         }
 
         string viewedPath;
 
         private void NavigateToPath(string path)
         {
-            var resources = Client.GetResources(path);
-
-            filesListView.BeginUpdate();
-
-            filesListView.Clear();
-
-            foreach (var resource in resources)
+            try
             {
-                var item = new ListViewItem(Path.GetFileName(resource.Path), resource.Directory ? "Folder" : "File");
-                item.Tag = resource.Path;
-                filesListView.Items.Add(item);
+                var resources = Client.GetResources(path);
+
+                filesListView.BeginUpdate();
+
+                filesListView.Clear();
+
+                foreach (var resource in resources)
+                {
+                    var item = new ListViewItem(Path.GetFileName(resource.Path), resource.Directory ? "Folder" : "File");
+                    item.Tag = resource.Path;
+                    filesListView.Items.Add(item);
+                }
+
+                filesListView.EndUpdate();
+
+                // Make sure the navigated-to node is expanded
+                TreeNode node = FindNode(path, directoryTreeView.TopNode);
+
+                if (node != null && directoryTreeView.SelectedNode != node)
+                {
+                    directoryTreeView.SelectedNode = node;
+                    node.Expand();
+                }
             }
-
-            filesListView.EndUpdate();
-
-            // Make sure the navigated-to node is expanded
-            TreeNode node = FindNode(path, directoryTreeView.TopNode);
-
-            if (node != null && directoryTreeView.SelectedNode != node)
+            catch (Exception ex)
             {
-                directoryTreeView.SelectedNode = node;
-                node.Expand();
+                Console.AddLine(ex.Message);
             }
         }
 

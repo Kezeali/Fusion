@@ -85,6 +85,8 @@
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Core/StreamMemory.h>
 #include <oleidl.h>
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range2d.h>
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr)
 {
@@ -1364,6 +1366,8 @@ namespace FusionEngine
 			BuildCreateEntityScript();
 		}
 
+		ExecuteAction();
+
 		if (m_CompileMap)
 		{
 			m_CompileMap = false;
@@ -1613,7 +1617,7 @@ namespace FusionEngine
 		SendToConsole("Dropped: " + path);
 
 		m_DragData = path;
-		CreateArchetypeInstance(m_DragData, GetMousePositionInWorld(), 0.0f);
+		CreateArchetypeInstance(m_DragData, GetMousePositionInWorld(), 0.0f, m_SelectionRectangle, 100.f);
 		return true;
 	}
 
@@ -1835,6 +1839,28 @@ namespace FusionEngine
 		ForEachSelected([delta](const EntityPtr& entity) { entity->SetPosition(entity->GetPosition() + delta); });
 
 		m_EditorOverlay->SetOffset(Vector2());
+	}
+
+	void Editor::QueueAction(const std::function<void (void)>& action)
+	{
+		m_ActionQueue.push(action);
+	}
+
+	void Editor::ExecuteAction()
+	{
+		if (!m_ActionQueue.empty())
+		{
+			try
+			{
+				auto action = m_ActionQueue.back();
+				action();
+			}
+			catch (std::exception& ex)
+			{
+				SendToConsole(ex.what());
+			}
+			m_ActionQueue.pop();
+		}
 	}
 
 	void Editor::OnKeyDown(const clan::InputEvent& ev)
@@ -2723,23 +2749,46 @@ namespace FusionEngine
 		m_ToDelete.push_back(entity);
 	}
 
-	void Editor::CreateArchetypeInstance(const std::string& archetype_name, const Vector2& position, float angle)
+	void Editor::CreateArchetypeInstance(const std::string& archetype_name, const Vector2& position, float angle, clan::Rectf selected_area, float grid_size)
 	{
-		DoWithArchetypeFactory(archetype_name, [this, position, angle](const ResourcePointer<ArchetypeFactory>& archetype_factory)
+		DoWithArchetypeFactory(archetype_name, [this, position, angle, selected_area, grid_size](const ResourcePointer<ArchetypeFactory>& archetype_factory)
 		{
 			Vector2 p(position);
-			if (m_SelectionRectangle.contains(clan::Vec2f(p.x, p.y)))
+			const size_t subrectSize = size_t(grid_size * 40) + 1;
+			if (selected_area.contains(clan::Vec2f(p.x, p.y)))
 			{
-				for (p.y = m_SelectionRectangle.top; p.y < m_SelectionRectangle.bottom; p.y += 100)
-					for (p.x = m_SelectionRectangle.left; p.x < m_SelectionRectangle.right; p.x += 100)
+				const size_t numSubrectsHigh = size_t(selected_area.get_height() / subrectSize) + 1;
+				const size_t numSubrectsWide = size_t(selected_area.get_width() / subrectSize) + 1;
+				for (size_t subrectTop = 0; subrectTop < numSubrectsHigh; subrectTop += subrectSize)
+				{
+					for (size_t subrectLeft = 0; subrectLeft < numSubrectsWide; subrectLeft += subrectSize)
 					{
-						Vector2 simPos(ToSimUnits(p.x), ToSimUnits(p.y));
+						clan::Rect subrect(subrectLeft, subrectTop, subrectLeft + subrectSize, subrectTop + subrectSize);
+						QueueAction([this, archetype_factory, selected_area, subrect, angle, grid_size]()
+						{
+							SendToConsole("Spawning subrect [" + boost::lexical_cast<std::string>(subrect.top) + ", " + boost::lexical_cast<std::string>(subrect.left) + "]");
+							tbb::parallel_for(tbb::blocked_range2d<size_t>(subrect.top, subrect.bottom, subrect.left, subrect.right),
+							[this, archetype_factory, selected_area, angle, grid_size](const tbb::blocked_range2d<size_t>& range)
+							{
+								for (size_t row = range.rows().begin(); row < range.rows().end(); ++row)
+								{
+									for (size_t col = range.cols().begin(); col < range.cols().end(); ++col)
+									{
+										float y = selected_area.top + row * grid_size, x = selected_area.left + col * grid_size;
+										if (x <= selected_area.right && y <= selected_area.bottom)
+										{
+											Vector2 simPos(ToSimUnits(x), ToSimUnits(y));
+											auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, angle);
+											m_EntityManager->AddEntity(entity);
 
-						auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, angle);
-						m_EntityManager->AddEntity(entity);
-
-						SendToConsole("Instantiate " + boost::lexical_cast<std::string>(p.x));
+											SendToConsole("Instantiate [" + boost::lexical_cast<std::string>(simPos.x) + ", " + boost::lexical_cast<std::string>(simPos.y) + "]");
+										}
+									}
+								}
+							});
+						});
 					}
+				}
 			}
 			else
 			{

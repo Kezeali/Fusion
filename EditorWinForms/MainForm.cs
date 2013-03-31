@@ -23,10 +23,6 @@ namespace EditorWinForms
         public MainForm()
         {
             InitializeComponent();
-
-            transport = new TSocket("localhost", 9090, 60000);
-            TProtocol protocol = new TBinaryProtocol(transport);
-            client = new Editor.Client(protocol);
         }
 
         TTransport transport;
@@ -54,6 +50,11 @@ namespace EditorWinForms
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            var socket = new TSocket(settings.ServerAddress, 9090);
+            transport = new TBufferedTransport(socket, 1024);
+            TProtocol protocol = new TBinaryProtocol(transport);
+            client = new Editor.Client(protocol);
+
             var serverProcessName = Path.GetFileNameWithoutExtension(settings.ServerPath);
             var existingProcesses = Process.GetProcessesByName(serverProcessName);
             if (existingProcesses.Length > 0)
@@ -174,6 +175,8 @@ namespace EditorWinForms
             AlignWithEditorWindow();
 
             BringToFront();
+
+            processEngineMessageTimer.Start();
         }
 
         private void AlignWithEditorWindow()
@@ -362,25 +365,56 @@ namespace EditorWinForms
             //}
         }
 
+        EngineConnection engineConnection;
+
+        bool editorMissing;
+        int originalCheckEnginePositionTimerInterval;
+
         private void checkEnginePositionTimer_Tick(object sender, EventArgs e)
         {
-            AlignWithEditorWindow();
-            
-            var dialogRequest = client.PopDialogRequest();
-
-            var physfsBasePath = client.GetUserDataDirectory();
-
-            if (dialogRequest.Type == DialogType.Open)
+            try
             {
-                openFileDialog.FileName = physfsBasePath + dialogRequest.Path;
-                openFileDialog.Title = dialogRequest.Title;
-                openFileDialog.Tag = dialogRequest.Id;
-
-                var result = openFileDialog.ShowDialog();
-
-                dialogRequest.Path = PhysFSUtils.MakeRelativeString(openFileDialog.FileName, physfsBasePath);
-                client.CompleteDialogRequest(dialogRequest, result == System.Windows.Forms.DialogResult.OK && dialogRequest.Path != string.Empty);
+                AlignWithEditorWindow();
+                if (editorMissing)
+                {
+                    checkEnginePositionTimer.Interval = originalCheckEnginePositionTimerInterval;
+                    editorMissing = false;
+                }
             }
+            catch (InvalidOperationException)
+            {
+                originalCheckEnginePositionTimerInterval = checkEnginePositionTimer.Interval;
+                checkEnginePositionTimer.Interval = 1000;
+                editorMissing = true;
+            }
+        }
+
+        private void processEngineMessageTimer_Tick(object sender, EventArgs e)
+        {
+            //try
+            //{
+            //    var dialogRequest = client.PopDialogRequest();
+            //    if (dialogRequest.Id > 0)
+            //    {
+            //        var physfsBasePath = client.GetUserDataDirectory();
+
+            //        if (dialogRequest.Type == DialogType.Open)
+            //        {
+            //            openFileDialog.FileName = physfsBasePath + dialogRequest.Path;
+            //            openFileDialog.Title = dialogRequest.Title;
+            //            openFileDialog.Tag = dialogRequest.Id;
+
+            //            var result = openFileDialog.ShowDialog();
+
+            //            dialogRequest.Path = PhysFSUtils.MakeRelativeString(openFileDialog.FileName, physfsBasePath);
+            //            client.CompleteDialogRequest(dialogRequest, result == System.Windows.Forms.DialogResult.OK && dialogRequest.Path != string.Empty);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    console.AddToConsole(ex.Message);
+            //}
         }
 
     }

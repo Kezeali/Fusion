@@ -10,6 +10,7 @@ namespace EditorWinForms
     public class SettingsFile
     {
         string serverPath = "EditorServer.exe";
+        string serverAddress = "localhost";
         int maxConnectionRetries = 20;
 
         public string ServerPath
@@ -18,6 +19,16 @@ namespace EditorWinForms
             set
             {
                 serverPath = value;
+                Save();
+            }
+        }
+
+        public string ServerAddress
+        {
+            get { return serverAddress; }
+            set
+            {
+                serverAddress = value;
                 Save();
             }
         }
@@ -57,21 +68,26 @@ namespace EditorWinForms
 
         public SettingsFile()
         {
-            using (var reader = new StreamReader("config.txt"))
+            if (File.Exists("config.txt"))
             {
-                while (!reader.EndOfStream)
+                using (var reader = new StreamReader("config.txt"))
                 {
-                    try
+                    while (!reader.EndOfStream)
                     {
-                        string key, value;
-                        ReadValue(reader, out key, out value);
-                        if (key == "serverPath")
-                            serverPath = value;
-                        else if (key == "maxConnectionRetries")
-                            maxConnectionRetries = int.Parse(value);
-                    }
-                    catch
-                    {
+                        try
+                        {
+                            string key, value;
+                            ReadValue(reader, out key, out value);
+                            if (key == "serverPath")
+                                serverPath = value;
+                            else if (key == "serverAddress")
+                                serverAddress = value;
+                            else if (key == "maxConnectionRetries")
+                                maxConnectionRetries = int.Parse(value);
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
             }
@@ -91,6 +107,7 @@ namespace EditorWinForms
                 using (var writer = new System.IO.StreamWriter("config.txt"))
                 {
                     WriteValue(writer, "serverPath", serverPath);
+                    WriteValue(writer, "serverAddress", serverAddress);
                     WriteValue(writer, "maxConnectionRetries", maxConnectionRetries.ToString());
                 }
             }

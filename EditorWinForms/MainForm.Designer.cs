@@ -68,6 +68,7 @@
             this.checkEnginePositionTimer = new System.Windows.Forms.Timer(this.components);
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.processEngineMessageTimer = new System.Windows.Forms.Timer(this.components);
             this.menuStripMain.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -340,6 +341,11 @@
             this.checkEnginePositionTimer.Enabled = true;
             this.checkEnginePositionTimer.Tick += new System.EventHandler(this.checkEnginePositionTimer_Tick);
             // 
+            // processEngineMessageTimer
+            // 
+            this.processEngineMessageTimer.Interval = 500;
+            this.processEngineMessageTimer.Tick += new System.EventHandler(this.processEngineMessageTimer_Tick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -404,6 +410,7 @@
         private System.Windows.Forms.Timer checkEnginePositionTimer;
         private System.Windows.Forms.OpenFileDialog openFileDialog;
         private System.Windows.Forms.SaveFileDialog saveFileDialog;
+        private System.Windows.Forms.Timer processEngineMessageTimer;
     }
 }
 

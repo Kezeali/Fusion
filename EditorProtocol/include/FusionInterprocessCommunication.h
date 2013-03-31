@@ -62,7 +62,7 @@ namespace FusionEngine { namespace Interprocess
 
 		void PopDialogRequest(DialogRequest& _return) final;
 		
-		void CompleteDialogRequest(const DialogRequest& request, bool success) final;
+		void CompleteDialogRequest(const DialogRequest& request, const bool success) final;
 
 		void GetUserDataDirectory(std::string& _return) final;
 
@@ -123,6 +123,8 @@ namespace FusionEngine { namespace Interprocess
 		std::deque<DialogRequestData> dialogRequests;
 
 		std::map<std::int32_t, FusionEngine::Editor::FileBrowserOverrideResultFn_t> activeDialogRequests;
+
+		std::int32_t nextId;
 
 		void MakeResourceList(std::vector<ResourceFile>& out, const std::vector<std::string>& files);
 	};
