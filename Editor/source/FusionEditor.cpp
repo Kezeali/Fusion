@@ -1852,7 +1852,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				auto action = m_ActionQueue.back();
+				auto action = m_ActionQueue.front();
 				action();
 			}
 			catch (std::exception& ex)
@@ -2754,14 +2754,15 @@ namespace FusionEngine
 		DoWithArchetypeFactory(archetype_name, [this, position, angle, selected_area, grid_size](const ResourcePointer<ArchetypeFactory>& archetype_factory)
 		{
 			Vector2 p(position);
-			const size_t subrectSize = size_t(grid_size * 40) + 1;
+			const float subrectSizef = grid_size * 20.0f;
+			const size_t subrectSize = size_t(subrectSizef / grid_size) + 1;
 			if (selected_area.contains(clan::Vec2f(p.x, p.y)))
 			{
-				const size_t numSubrectsHigh = size_t(selected_area.get_height() / subrectSize) + 1;
-				const size_t numSubrectsWide = size_t(selected_area.get_width() / subrectSize) + 1;
-				for (size_t subrectTop = 0; subrectTop < numSubrectsHigh; subrectTop += subrectSize)
+				const size_t numRows = size_t(selected_area.get_height() / grid_size) + 1;
+				const size_t numCols = size_t(selected_area.get_width() / grid_size) + 1;
+				for (size_t subrectTop = 0; subrectTop < numRows; subrectTop += subrectSize)
 				{
-					for (size_t subrectLeft = 0; subrectLeft < numSubrectsWide; subrectLeft += subrectSize)
+					for (size_t subrectLeft = 0; subrectLeft < numCols; subrectLeft += subrectSize)
 					{
 						clan::Rect subrect(subrectLeft, subrectTop, subrectLeft + subrectSize, subrectTop + subrectSize);
 						QueueAction([this, archetype_factory, selected_area, subrect, angle, grid_size]()
