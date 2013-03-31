@@ -259,7 +259,15 @@ namespace FusionEngine
 				{
 					//FSN_ASSERT(task->GetSystemWorld() && task->GetSystemWorld()->GetSystem(), "Invalid task");
 					FSN_PROFILE(task->GetName());
-					task->Update(delta);
+					try
+					{
+						task->Update(delta);
+					}
+					catch (std::exception& e)
+					{
+						AddLogEntry(e.what(), LOG_CRITICAL);
+						SendToConsole(e.what());
+					}
 				});
 				FSN_ASSERT(systemTask != nullptr);
 
@@ -293,7 +301,15 @@ namespace FusionEngine
 		{
 			FSN_PROFILE((*it)->GetSystemWorld()->GetSystem()->GetName());
 
-			(*it)->Update(m_DeltaTime);
+			try
+			{
+				(*it)->Update(m_DeltaTime);
+			}
+			catch (std::exception& e)
+			{
+				AddLogEntry(e.what(), LOG_CRITICAL);
+				SendToConsole(e.what());
+			}
 		}
 
 //#ifdef _WIN32
@@ -302,7 +318,7 @@ namespace FusionEngine
 
 		m_PrimaryThreadSystemTasks.clear();
 
-		// Contribute to the parallel execution
+		// Contribute to the parallel execution & capture thread errors
 		try
 		{
 			m_SystemTasksRoot->wait_for_all();
@@ -311,7 +327,6 @@ namespace FusionEngine
 		{
 			AddLogEntry(std::string(e.name()) + e.what(), LOG_CRITICAL);
 			SendToConsole(e.what());
-			throw e;
 		}
 		catch (tbb::bad_last_alloc& e)
 		{
@@ -337,7 +352,6 @@ namespace FusionEngine
 		{
 			AddLogEntry(e.what(), LOG_CRITICAL);
 			SendToConsole(e.what());
-			throw e;
 		}
 	}
 
