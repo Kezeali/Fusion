@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2011 Fusion Project Team
+*  Copyright (c) 2006-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -349,6 +349,43 @@ namespace FusionEngine
 
 		filename.flush();
 		return filename.str();
+	}
+
+	void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity)
+	{
+		Logger* logger = Logger::getSingletonPtr();
+		if (logger != nullptr)
+			logger->Add(entry, file_tag, severity);
+	}
+
+	void AddLogEntry(const std::string& entry, LogSeverity severity)
+	{
+		AddLogEntry(g_LogGeneral, entry, severity);
+	}
+
+	void AddLogEntry(const std::string& entry)
+	{
+		AddLogEntry(g_LogGeneral, entry, LOG_NORMAL);
+	}
+
+	MakeLog Log(const std::string& file_tag, LogSeverity severity)
+	{
+		return MakeLog(file_tag, severity);
+	}
+
+	MakeLog Log(const std::string& file_tag)
+	{
+		return Log(file_tag, LOG_NORMAL);
+	}
+
+	MakeLog Log(LogSeverity severity)
+	{
+		return Log(g_LogGeneral, severity);
+	}
+
+	MakeLog Log()
+	{
+		return Log(g_LogGeneral, LOG_NORMAL);
 	}
 
 }
