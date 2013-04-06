@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2006-2012 Fusion Project Team
+*  Copyright (c) 2006-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -211,18 +211,13 @@ namespace FusionEngine
 	};
 
 	//! Add a log entry
-	inline void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity = LOG_NORMAL)
-	{
-		Logger* logger = Logger::getSingletonPtr();
-		if (logger != nullptr)
-			logger->Add(entry, file_tag, severity);
-	}
+	void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity = LOG_NORMAL);
 
 	//! Add a log entry to the default log file
-	inline void AddLogEntry(const std::string& entry, LogSeverity severity = LOG_NORMAL)
-	{
-		AddLogEntry(g_LogGeneral, entry, severity);
-	}
+	void AddLogEntry(const std::string& entry, LogSeverity severity);
+
+	//! Add a log entry to the default log file
+	void AddLogEntry(const std::string& entry);
 
 	//! An object that allows the use of the stream operator to create a log entry
 	class MakeLog
@@ -264,28 +259,16 @@ namespace FusionEngine
 	};
 
 	//! Make a MakeLog object
-	inline MakeLog Log(const std::string& file_tag, LogSeverity severity)
-	{
-		return MakeLog(file_tag, severity);
-	}
+	MakeLog Log(const std::string& file_tag, LogSeverity severity);
 
 	//! Make a MakeLog object with the default severity
-	inline MakeLog Log(const std::string& file_tag)
-	{
-		return Log(file_tag, LOG_NORMAL);
-	}
+	MakeLog Log(const std::string& file_tag);
 
 	//! Make a MakeLog object for the default log file
-	inline MakeLog Log(LogSeverity severity)
-	{
-		return Log(g_LogGeneral, severity);
-	}
+	MakeLog Log(LogSeverity severity);
 
 	//! Make a MakeLog object with the default severity for the default log file
-	inline MakeLog Log()
-	{
-		return Log(g_LogGeneral, LOG_NORMAL);
-	}
+	MakeLog Log();
 
 }
 
