@@ -182,6 +182,7 @@ namespace FusionEngine
 		Vector2 ReturnScreenToWorld(float x, float y) const;
 
 		Vector2 GetMousePositionInWindow() const;
+		std::pair<Vector2, ViewportPtr> GetPositionInWorldAndViewport(Vector2 pos_in_window) const;
 		std::pair<Vector2, ViewportPtr> GetMousePositionInWorldAndViewport() const;
 		ViewportPtr GetViewportUnderMouse() const;
 		Vector2 GetMousePositionInWorld() const;
