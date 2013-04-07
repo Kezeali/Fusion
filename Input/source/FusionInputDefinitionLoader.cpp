@@ -47,7 +47,7 @@ namespace FusionEngine
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != "inputdefinitions")
-				throw FileTypeException("InputDefinitionLoader::LoadInputs", "Not an input declaration file", __FILE__, __LINE__);
+				FSN_EXCEPT(FileTypeException, "Not an input declaration file");
 
 			ticpp::Iterator< ticpp::Element > group( "group" );
 			for ( group = group.begin(pElem); group != group.end(); group++ )

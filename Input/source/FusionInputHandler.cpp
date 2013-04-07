@@ -233,7 +233,7 @@ namespace FusionEngine
 		ticpp::Element* elem = doc.FirstChildElement();
 
 		if (elem->Value() != "keyinfo")
-			throw FileTypeException("InputManager::loadKeyInfo", "Not a keyinfo definition file", __FILE__, __LINE__);
+			FSN_EXCEPT(FileTypeException, "Not a keyinfo definition file");
 
 		ticpp::Iterator< ticpp::Element > child( "key" );
 		for ( child = child.begin( elem ); child != child.end(); child++ )
@@ -245,7 +245,7 @@ namespace FusionEngine
 			kinfo.m_Description = child->GetAttributeOrDefault("name", kinfo.m_Name);
 
 			if (kinfo.m_Name.empty())
-				throw FileTypeException("InputManager::loadKeyInfo", "The keyinfo document contains incomplete tags", __FILE__, __LINE__);
+				FSN_EXCEPT(FileTypeException, "The keyinfo document contains incomplete tags");
 
 			m_KeyInfo[kinfo.m_Name] = kinfo;
 		}
