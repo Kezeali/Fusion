@@ -1105,7 +1105,7 @@ namespace FusionEngine
 
 	Win32DropTarget::Win32DropTarget(const clan::DisplayWindow& window)
 		: m_DisplayWindow(window),
-		m_Impl(new Win32DropTargetImpl())
+		m_Impl(new Win32DropTargetImpl(), false)
 	{
 		OleInitialize(NULL);
 
