@@ -976,6 +976,8 @@ namespace FusionEngine
 
 		virtual boost::signals2::signal<void (const std::string& filename, const Vector2i& drop_location)>& GetSigDrop() const;
 
+		virtual bool TryPopDropEvent(DropEvent& out);
+
 	private:
 		clan::DisplayWindow m_DisplayWindow;
 		boost::intrusive_ptr<Win32DropTargetImpl> m_Impl;
@@ -991,7 +993,7 @@ namespace FusionEngine
 
 		virtual HRESULT STDMETHODCALLTYPE DragEnter(__RPC__in_opt IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, __RPC__inout DWORD *pdwEffect) 
 		{
-			m_AllowDrop = QueryDataObject(pDataObj);
+			m_AllowDrop = IsSupportedData(pDataObj);
 
 			if (m_AllowDrop)
 			{
@@ -1020,40 +1022,129 @@ namespace FusionEngine
 
 		virtual HRESULT STDMETHODCALLTYPE Drop(__RPC__in_opt IDataObject *pDataObj, DWORD grfKeyState, POINTL pt, __RPC__inout DWORD *pdwEffect) 
 		{
-			if (QueryDataObject(pDataObj))
+			if (IsSupportedData(pDataObj))
 			{
 				*pdwEffect = ChooseDragEffect(grfKeyState, *pdwEffect);
 
-				m_SigDrop(GetTextFromData(pDataObj), Vector2i(pt.x, pt.y));
+				m_DroppedStuff.push(std::move(DroppedStuff(pDataObj, pt)));
 			}
 			else
 				*pdwEffect = DROPEFFECT_NONE;
 			return S_OK;
 		}
 
-		bool QueryDataObject(IDataObject *pDataObject)
+		class DroppedStuff
+		{
+		public:
+			DroppedStuff()
+				: dataObject(nullptr)
+			{
+			}
+
+			DroppedStuff(IDataObject* dataObject_, POINTL pt)
+				: dataObject(dataObject_),
+				position(pt.x, pt.y)
+			{
+				dataObject->AddRef();
+			}
+
+			DroppedStuff(const DroppedStuff& other)
+				: dataObject(other.dataObject),
+				position(other.position)
+			{
+				dataObject->AddRef();
+			}
+
+			DroppedStuff(DroppedStuff&& other)
+				: dataObject(other.dataObject),
+				position(other.position)
+			{
+				other.dataObject = nullptr;
+			}
+
+			~DroppedStuff()
+			{
+				if (dataObject)
+					dataObject->Release();
+			}
+
+			DroppedStuff& operator= (const DroppedStuff& other)
+			{
+				dataObject = other.dataObject;
+				if (dataObject)
+					dataObject->AddRef();
+				position = other.position;
+				return *this;
+			}
+
+			DroppedStuff& operator= (DroppedStuff&& other)
+			{
+				dataObject = other.dataObject;
+				other.dataObject = nullptr;
+				position = other.position;
+				return *this;
+			}
+
+			std::vector<std::string> GetFilePaths() const
+			{
+				if (dataObject)
+				{
+					if (HasText(dataObject))
+						return fe_splitstring(GetTextFromData(dataObject), ";");
+					else if (HasHDrop(dataObject))
+						return GetFileListFromData(dataObject);
+					else
+						FSN_EXCEPT(InvalidArgumentException, "Failed to get useful data from the dropped object.");
+				}
+				else
+					FSN_EXCEPT(InvalidArgumentException, "Tried to access empty data object.");
+			}
+
+			Vector2i GetPosition() const
+			{
+				return position;
+			}
+
+		private:
+			IDataObject* dataObject;
+
+			Vector2i position;
+		};
+
+		tbb::concurrent_queue<DroppedStuff> m_DroppedStuff;
+
+		static bool HasText(IDataObject *pDataObject)
 		{
 			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
-
-			// does the data object support CF_TEXT using a HGLOBAL?
-			return pDataObject->QueryGetData(&fmtetc) == S_OK ? true : false;
+			return SUCCEEDED(pDataObject->QueryGetData(&fmtetc));
 		}
 
-		DWORD ChooseDragEffect(DWORD keyState, DWORD allowedEffects)
+		static bool HasHDrop(IDataObject *pDataObject)
+		{
+			FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			return SUCCEEDED(pDataObject->QueryGetData(&fmtetc));
+		}
+
+		static bool IsSupportedData(IDataObject *dataObject)
+		{
+			return HasText(dataObject) || HasHDrop(dataObject);
+		}
+
+		static DWORD ChooseDragEffect(DWORD keyState, DWORD allowedEffects)
 		{
 			return allowedEffects & DROPEFFECT_COPY;
 		}
 
-		std::string GetTextFromData(IDataObject *pDataObject)
+		static std::string GetTextFromData(IDataObject *pDataObject)
 		{
 			std::string dataText;
 
 			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 			STGMEDIUM stgmed;
 
-			if(pDataObject->QueryGetData(&fmtetc) == S_OK)
+			if(SUCCEEDED(pDataObject->QueryGetData(&fmtetc)))
 			{
-				if(pDataObject->GetData(&fmtetc, &stgmed) == S_OK)
+				if(SUCCEEDED(pDataObject->GetData(&fmtetc, &stgmed)))
 				{
 					PVOID data = GlobalLock(stgmed.hGlobal);
 
@@ -1067,6 +1158,41 @@ namespace FusionEngine
 			}
 
 			return dataText;
+		}
+
+		static std::vector<std::string> GetFileListFromData(IDataObject *pDataObject)
+		{
+			std::vector<std::string> fileList;
+
+			FORMATETC fmtetc = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			STGMEDIUM stgmed;
+
+			if(SUCCEEDED(pDataObject->QueryGetData(&fmtetc)))
+			{
+				if(SUCCEEDED(pDataObject->GetData(&fmtetc, &stgmed)))
+				{
+					PVOID data = GlobalLock(stgmed.hGlobal);
+
+					auto hdrop = reinterpret_cast<HDROP>(data);
+					UINT numFiles = DragQueryFile(hdrop, 0xFFFFFFFF, NULL, 0);
+					for (UINT i = 0; i < numFiles; ++i)
+					{
+						TCHAR fileName[MAX_PATH];
+						UINT cch = DragQueryFile(hdrop, i, fileName, MAX_PATH);
+						if (cch > 0 && cch < MAX_PATH)
+						{
+							fileList.push_back(clan::StringHelp::ucs2_to_local8(std::wstring(&fileName[0], size_t(cch))));
+						}
+					}
+
+					GlobalUnlock(stgmed.hGlobal);
+
+					// release the data using the COM API
+					ReleaseStgMedium(&stgmed);
+				}
+			}
+
+			return fileList;
 		}
 
 		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObject) 
@@ -1134,6 +1260,24 @@ namespace FusionEngine
 		return m_Impl->m_SigDrop;
 	}
 
+	bool Win32DropTarget::TryPopDropEvent(DropEvent& out)
+	{
+		Win32DropTargetImpl::DroppedStuff dropObject;
+		if (m_Impl->m_DroppedStuff.try_pop(dropObject))
+		{
+			try
+			{
+				out.filesList = dropObject.GetFilePaths();
+				out.dropPosition = dropObject.GetPosition();
+				return true;
+			}
+			catch (InvalidArgumentException&)
+			{
+			}
+		}
+		return false;
+	}
+
 	void Editor::Activate()
 	{
 		m_Active = true;
@@ -1178,10 +1322,10 @@ namespace FusionEngine
 			return true;
 		});
 
-		m_DropTarget->GetSigDrop().connect([this](const std::string& filename, const Vector2i& drop_location)
-		{
-			DragDrop(filename);
-		});
+		//m_DropTarget->GetSigDrop().connect([this](const std::string& filename, const Vector2i& drop_location)
+		//{
+		//	DragDrop(filename);
+		//});
 	}
 
 	void Editor::Deactivate()
@@ -1367,6 +1511,13 @@ namespace FusionEngine
 		}
 
 		ExecuteAction();
+
+		WindowDropTarget::DropEvent dropEvent;
+		if (m_DropTarget->TryPopDropEvent(dropEvent))
+		{
+			for (auto file : dropEvent.filesList)
+				DragDrop(file);
+		}
 
 		if (m_CompileMap)
 		{
@@ -2473,18 +2624,22 @@ namespace FusionEngine
 		return Vector2((float)pos.x, (float)pos.y);
 	}
 
-	std::pair<Vector2, ViewportPtr> Editor::GetMousePositionInWorldAndViewport() const
+	std::pair<Vector2, ViewportPtr> Editor::GetPositionInWorldAndViewport(Vector2 pos_in_window) const
 	{
-		Vector2 posInWindow = GetMousePositionInWindow();
 		std::vector<ViewportPtr> viewports;
 		viewports.push_back(m_Viewport);
 		for (ViewportPtr viewport : viewports)
 		{
-			auto translatedPos = posInWindow;
+			auto translatedPos = pos_in_window;
 			if (TranslateScreenToWorld(viewport, &translatedPos.x, &translatedPos.y))
 				return std::make_pair(translatedPos, viewport);
 		}
 		return std::make_pair(Vector2::zero(), ViewportPtr());
+	}
+
+	std::pair<Vector2, ViewportPtr> Editor::GetMousePositionInWorldAndViewport() const
+	{
+		return GetPositionInWorldAndViewport(GetMousePositionInWindow());
 	}
 
 	ViewportPtr Editor::GetViewportUnderMouse() const

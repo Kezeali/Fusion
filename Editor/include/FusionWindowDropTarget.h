@@ -35,7 +35,7 @@
 
 namespace FusionEngine
 {
-	
+
 	class WindowDropTarget
 	{
 	public:
@@ -45,6 +45,14 @@ namespace FusionEngine
 
 		virtual boost::signals2::signal<bool (const Vector2i& drop_location)>& GetSigDragEnter() const = 0;
 		virtual boost::signals2::signal<void (const std::string& filename, const Vector2i& drop_location)>& GetSigDrop() const = 0;
+
+		struct DropEvent
+		{
+			std::vector<std::string> filesList;
+			Vector2i dropPosition;
+		};
+
+		virtual bool TryPopDropEvent(DropEvent& out) = 0;
 	};
 
 }
