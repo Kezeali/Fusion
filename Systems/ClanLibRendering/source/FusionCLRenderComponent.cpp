@@ -32,14 +32,11 @@
 #include "FusionLogger.h"
 #include "FusionResourceManager.h"
 
+#include "FusionEntity.h"
 #include "FusionTransformComponent.h"
 #include "FusionSpriteDefinition.h"
 
 #include <functional>
-
-#ifdef _DEBUG
-#include "FusionEntity.h"
-#endif
 
 namespace FusionEngine
 {
