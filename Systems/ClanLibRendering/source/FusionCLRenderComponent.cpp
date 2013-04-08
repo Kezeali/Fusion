@@ -394,12 +394,15 @@ namespace FusionEngine
 
 			FSN_ASSERT(transform);
 
-			using namespace std::placeholders;
+			if (!GetParent()->IsTerrain())
+			{
+				using namespace std::placeholders;
 
-			auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
-			m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&CLSprite::SetPosition, this, _1));
-			m_AngleChangeConnection = system.AddHandler<const float&>(transform->Angle.GetID(), std::bind(&CLSprite::SetAngle, this, _1));
-			m_DepthChangeConnection = system.AddHandler<const int&>(transform->Depth.GetID(), [this](const int& depth) { m_EntityDepth = depth; });
+				auto& system = EvesdroppingManager::getSingleton().GetSignalingSystem();
+				m_PositionChangeConnection = system.AddHandler<const Vector2&>(transform->Position.GetID(), std::bind(&CLSprite::SetPosition, this, _1));
+				m_AngleChangeConnection = system.AddHandler<const float&>(transform->Angle.GetID(), std::bind(&CLSprite::SetAngle, this, _1));
+				m_DepthChangeConnection = system.AddHandler<const int&>(transform->Depth.GetID(), [this](const int& depth) { m_EntityDepth = depth; });
+			}
 
 			m_Position = transform->Position.Get();
 			m_Angle = transform->Angle.Get();

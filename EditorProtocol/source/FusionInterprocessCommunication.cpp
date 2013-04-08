@@ -166,6 +166,11 @@ namespace FusionEngine { namespace Interprocess {
 		_return = editor->GetResourceType(path);
 	}
 
+	void EditorServiceHandler::StartResourceEditor(const std::string& path)
+	{
+		editor->StartResourceEditor(path);
+	}
+
 	void EditorServiceHandler::RefreshResources()
 	{
 		ResourceManager::getSingleton().CheckForChanges();

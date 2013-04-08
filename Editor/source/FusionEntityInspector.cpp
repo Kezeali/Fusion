@@ -89,24 +89,35 @@ namespace FusionEngine { namespace Inspectors
 			});
 		}
 
-		AddTextInput("Streamed",
+		AddToggleInput("Streamed",
+			[](bool streamed, const EntityPtr& entity)
+		{
+		},
+			[](const EntityPtr& entity)
+		{
+			return entity->GetDomain() != SYSTEM_DOMAIN;
+		});
+
+		AddTextInput("Cell",
 			[](const EntityPtr& entity)->std::string
 		{
 			try
 			{
-				std::string val;
-				if (entity->GetDomain() == SYSTEM_DOMAIN)
-					val = "No";
-				else
-				{
-					val = "Yes: " +
-						boost::lexical_cast<std::string>(entity->GetStreamingCellIndex().x) + ", " +
+				return boost::lexical_cast<std::string>(entity->GetStreamingCellIndex().x) + ", " +
 						boost::lexical_cast<std::string>(entity->GetStreamingCellIndex().y);
-				}
-				return val;
 			}
 			catch (boost::bad_lexical_cast&){}
-			return "";
+			return "error";
+		});
+
+		AddToggleInput("Terrain",
+			[](bool value, const EntityPtr& entity)
+		{
+			entity->SetTerrain(value);
+		},
+			[](const EntityPtr& entity)
+		{
+			return entity->IsTerrain();
 		});
 
 		AddTextInput("Archetype",
@@ -130,7 +141,7 @@ namespace FusionEngine { namespace Inspectors
 				"input",
 				attributes);
 
-			Rocket::Core::Factory::InstanceElementText(element, "Apply");
+			Rocket::Core::Factory::InstanceElementText(element, "Apply To Instances");
 
 			addControl(this, apply_button, element);
 		}
@@ -177,8 +188,8 @@ namespace FusionEngine { namespace Inspectors
 		{
 			Input inputData;
 			inputData.ui_element = input_element;
-			inputData.set_callback = setter;
-			inputData.get_callback = getter;
+			inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(input_element->GetValue().CString(), entity); };
+			inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { input_element->SetValue(getter(entity).c_str()); };
 			m_Inputs[input_element] = inputData;
 		}
 	}
@@ -186,6 +197,82 @@ namespace FusionEngine { namespace Inspectors
 	void ElementEntityInspector::AddTextInput(const std::string& name, StringGetter_t getter, int size)
 	{
 		AddTextInput(name, StringSetter_t(), getter, size);
+	}
+
+	namespace {
+		bool SetCheckbox(const boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, bool value, bool first = true)
+		{
+			auto type = input->GetAttribute("type", Rocket::Core::String(""));
+			if (type == "checkbox")
+			{
+				if (first)
+				{
+					if (value)
+						input->SetAttribute("checked", "");
+					else
+						input->RemoveAttribute("checked");
+				}
+				else
+				{
+					if (input->HasAttribute("checked") != value)
+						input->SetAttribute("checked", "some");
+				}
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool GetCheckbox(const boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input)
+		{
+			auto type = input->GetAttribute("type", Rocket::Core::String(""));
+			if (type == "checkbox")
+			{
+				return input->HasAttribute("checked");
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	void ElementEntityInspector::AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter)
+	{
+		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		this->AppendChild(line);
+
+		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+
+		auto lowerName = fe_newlower(name);
+
+		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+
+		Rocket::Core::XMLAttributes attributes;
+		attributes.Set("type", "checkbox");
+		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
+		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		attributes.Set("value", Rocket::Core::String(lowerName.c_str()));
+		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+			"input",
+			"input",
+			attributes);
+
+		addControl(line, input_element, element);
+
+		line->RemoveReference();
+
+		if (input_element)
+		{
+			Input inputData;
+			inputData.ui_element = input_element;
+			inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(GetCheckbox(input_element), entity); };
+			inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { SetCheckbox(input_element, getter(entity)); };
+			m_Inputs[input_element] = inputData;
+		}
 	}
 
 	void ClearUIValue(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& element)
@@ -227,10 +314,9 @@ namespace FusionEngine { namespace Inspectors
 		for (auto it = m_Inputs.begin(), end = m_Inputs.end(); it != end; ++it)
 			ClearUIValue(it->second.ui_element);
 
-		SetUIValueVisitor visitor(m_Entity);
 		for (auto inputIt = m_Inputs.begin(), inputEnd = m_Inputs.end(); inputIt != inputEnd; ++inputIt)
 		{
-			visitor(inputIt->second.ui_element, inputIt->second.get_callback);
+			inputIt->second.receiveFromEntity(m_Entity);
 		}
 	}
 
@@ -256,8 +342,8 @@ namespace FusionEngine { namespace Inspectors
 				if (entry != m_Inputs.end())
 				{
 					auto& inputData = entry->second;
-					if (inputData.set_callback)
-						inputData.set_callback(inputData.ui_element->GetValue().CString(), m_Entity);
+					if (inputData.publishToEntity)
+						inputData.publishToEntity(m_Entity);
 
 					if (ev == "enter")
 						entry->first->Blur();

@@ -71,8 +71,10 @@ namespace FusionEngine { namespace Inspectors
 
 		void SetCloseCallback(const std::function<void (void)>& fn) { m_CloseCallback = fn; }
 
-		typedef std::function<void (std::string, const EntityPtr& entity)> StringSetter_t;
-		typedef std::function<std::string (const EntityPtr& entity)> StringGetter_t;
+		typedef std::function<void (bool, const EntityPtr&)> BoolSetter_t;
+		typedef std::function<bool (const EntityPtr&)> BoolGetter_t;
+		typedef std::function<void (std::string, const EntityPtr&)> StringSetter_t;
+		typedef std::function<std::string (const EntityPtr&)> StringGetter_t;
 
 	private:
 		EntityPtr m_Entity;
@@ -84,8 +86,9 @@ namespace FusionEngine { namespace Inspectors
 		struct Input
 		{
 			boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> ui_element;
-			StringSetter_t set_callback;
-			StringGetter_t get_callback;
+
+			std::function<void (const EntityPtr& entity)> publishToEntity;
+			std::function<void (const EntityPtr& entity)> receiveFromEntity;
 		};
 
 		std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
@@ -117,6 +120,7 @@ namespace FusionEngine { namespace Inspectors
 
 		void AddTextInput(const std::string& name, StringSetter_t setter, StringGetter_t getter, int size = 0);
 		void AddTextInput(const std::string& name, StringGetter_t getter, int size = 0);
+		void AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
 
 		void ProcessEvent(Rocket::Core::Event& ev);
 	};

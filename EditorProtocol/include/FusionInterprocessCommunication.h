@@ -73,6 +73,8 @@ namespace FusionEngine { namespace Interprocess
 		void GetResourcesRecursive(std::vector<ResourceFile> & _return, const std::string& path) final;
 
 		void GetResourceType(std::string& _return, const std::string& path) final;
+
+		void StartResourceEditor(const std::string& path) final;
 		
 		void RefreshResources() final;
 		
