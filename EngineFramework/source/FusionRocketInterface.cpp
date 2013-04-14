@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2012 Fusion Project Team
+*  Copyright (c) 2009-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -96,8 +96,8 @@ namespace FusionEngine
 	{
 		int num_verticies;
 		//clan::VertexArrayVector<GeometryVertex> vertex_buffer;
-		clan::VertexArrayVector<clan::Vec4f> verticies;
-		clan::VertexArrayVector<clan::Vec4f> colours;
+		clan::VertexArrayVector<clan::Vec2f> verticies;
+		clan::VertexArrayVector<clan::Colorf> colours;
 		clan::VertexArrayVector<clan::Vec2f> texCoords;
 		RocketCLTexture* texture;
 	};
@@ -186,8 +186,8 @@ namespace FusionEngine
 		//	data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
 		//	data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
 		//}
-		std::vector<clan::Vec4f> verts(num_indices);
-		std::vector<clan::Vec4f> colours(num_indices);
+		std::vector<clan::Vec2f> verts(num_indices);
+		std::vector<clan::Colorf> colours(num_indices);
 		std::vector<clan::Vec2f> texCoords(num_indices);
 		for (int i = 0; i < num_indices; i++)
 		{
@@ -205,8 +205,8 @@ namespace FusionEngine
 			texCoords[i].y = vertices[vertex_index].tex_coord.y;
 		}
 
-		auto gcVerts = clan::VertexArrayVector<clan::Vec4f>(m_Canvas.get_gc(), verts);
-		auto gcColours = clan::VertexArrayVector<clan::Vec4f>(m_Canvas.get_gc(), colours);
+		auto gcVerts = clan::VertexArrayVector<clan::Vec2f>(m_Canvas.get_gc(), verts);
+		auto gcColours = clan::VertexArrayVector<clan::Colorf>(m_Canvas.get_gc(), colours);
 		auto gcTexCoords = clan::VertexArrayVector<clan::Vec2f>(m_Canvas.get_gc(), texCoords);
 		//clan::VertexArrayBuffer buffer(m_Canvas.get_gc(), data.data(), sizeof(GeometryVertex) * num_indices);
 
@@ -230,6 +230,15 @@ namespace FusionEngine
 
 		//m_Canvas.push_modelview();
 
+		auto gc = m_Canvas.get_gc();
+
+		//clan::BlendStateDescription blend_state_desc;
+		//blend_state_desc.enable_blending(true);
+		//blend_state_desc.set_blend_function(clan::blend_src_alpha, clan::blend_one, clan::blend_src_alpha, clan::blend_one);
+		//clan::BlendState blend_state(m_Canvas, blend_state_desc);
+
+		//m_Canvas.set_blend_state(blend_state);
+
 		//m_Canvas.set_map_mode(clan::map_2d_upper_left);
 
 		//m_Canvas.mult_translate(translation.x, translation.y);
@@ -237,7 +246,7 @@ namespace FusionEngine
 
 		//m_Canvas.set_blend_mode(m_BlendMode);
 
-		clan::PrimitivesArray prim_array(m_Canvas.get_gc());
+		clan::PrimitivesArray prim_array(gc);
 		if (data->texture != nullptr)
 		{
 			//prim_array.set_attributes(clan::attrib_position, vertex_buffer, cl_offsetof(GeometryVertex, position));
@@ -248,36 +257,31 @@ namespace FusionEngine
 			prim_array.set_attributes(1, data->colours);
 			prim_array.set_attributes(2, data->texCoords);
 
-			m_Canvas.get_gc().set_program_object(clan::program_single_texture);
+			gc.set_image_texture(0, data->texture->texture);
 
-			m_Canvas.get_gc().set_texture(0, data->texture->texture);
+			gc.set_program_object(clan::program_single_texture);
 		}
 		else
 		{
 			prim_array.set_attributes(0, data->verticies);
 			prim_array.set_attributes(1, data->colours);
 
-			m_Canvas.get_gc().set_program_object(clan::program_color_only);
+			gc.set_program_object(clan::program_color_only);
 		}
 
-		//if (data->texture)
-		//	m_Canvas.set_texture(0, data->texture->texture);
+		if (m_ClipEnabled)
+			m_Canvas.get_gc().set_scissor(clan::Rect(m_Scissor_left + translation.x, m_Scissor_top + translation.y, m_Scissor_right + translation.x, m_Scissor_bottom + translation.y), clan::y_axis_top_down);
 
-		//if (m_ClipEnabled)
-		//	m_Canvas.get_gc().set_scissor(clan::Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom), clan::y_axis_top_down);
-
-		//m_Canvas.draw_triangles(&(prim_array[clan::attrib_position]), &prim_array[clan::attrib_texture_position], data->num_verticies, data->texture->texture);
-		m_Canvas.get_gc().draw_primitives(clan::type_triangles, data->num_verticies, prim_array);
+		gc.draw_primitives(clan::type_triangles, data->num_verticies, prim_array);
 
 		//if (m_ClipEnabled)
 		//	m_Canvas.pop_cliprect();
 
+		gc.reset_program_object();
 		if (data->texture)
-			m_Canvas.get_gc().reset_texture(0);
-		m_Canvas.get_gc().reset_program_object();
+			gc.reset_texture(0);
 
-		//m_Canvas.reset_blend_mode();
-		//m_Canvas.reset_buffer_control();
+		//m_Canvas.reset_blend_state();
 
 		//m_Canvas.pop_modelview();
 	}

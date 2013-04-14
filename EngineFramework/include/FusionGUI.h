@@ -178,7 +178,7 @@ namespace FusionEngine
 		virtual void Update(float split);
 
 		//! Draws the gui
-		virtual void Draw();
+		virtual void Draw(const clan::Canvas& canvas);
 
 		//! Unbinds
 		virtual void CleanUp();

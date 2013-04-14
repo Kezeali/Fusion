@@ -542,9 +542,10 @@ namespace FusionEngine
 		//}
 	}
 
-	void GUI::Draw()
+	void GUI::Draw(const clan::Canvas& draw_to)
 	{
 		//m_Context->Render();
+		m_Canvas.flush();
 	}
 
 	const std::shared_ptr<GUIContext>& GUI::CreateContext(const std::string& name, Vector2i size)
