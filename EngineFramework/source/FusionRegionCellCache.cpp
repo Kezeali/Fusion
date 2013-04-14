@@ -507,9 +507,12 @@ namespace FusionEngine
 				
 				write(newStartingSector, toScalarIndex(cell_index), data);
 
-				// Defrag if that is turned on
+				// Defrag if fragmentation is not allowed
 				if (!fragmentationAllowed)
-					defragment(startingSector, newStartingSector + sectorsAllocated);
+				{
+					if (startingSector != 0) // No need to defrag if this data was new data
+						defragment(startingSector, newStartingSector + sectorsAllocated);
+				}
 			}
 			else // No free space found, grow the file
 			{

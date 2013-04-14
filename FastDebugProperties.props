@@ -7,6 +7,7 @@
   <PropertyGroup>
     <IncludePath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)Release\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -14,6 +15,7 @@
       <PreprocessorDefinitions>_HAS_ITERATOR_DEBUGGING=0;FSN_ASSERTS_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
