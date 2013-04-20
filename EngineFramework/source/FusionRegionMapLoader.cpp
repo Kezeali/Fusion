@@ -176,7 +176,11 @@ namespace FusionEngine
 		std::for_each(m_FullBasePath.begin(), m_FullBasePath.end(), [](std::string::value_type& c) { if (c == '\\') c = '/'; });
 		
 		if (!m_EditMode)
+		{
 			m_Cache = new RegionCellCache(m_FullBasePath, 16);
+
+			m_Cache->SetFragmentationAllowed(true);
+		}
 		else // edit mode
 		{
 			// These cells will be used as the static map file files (after defragmentation)
@@ -187,7 +191,7 @@ namespace FusionEngine
 			setupTuning(m_EntityLocationDB.get());
 			m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
 
-			m_Cache->SetupEditMode(true);
+			m_Cache->SetFragmentationAllowed(true);
 
 			// Generate the path and cache object for the editable data cache (used to store data from entities serialised in "Editable"
 			//  mode - which includes metadata that allows them to be deserialised even if scripts / class definitions change)
@@ -665,6 +669,9 @@ namespace FusionEngine
 		for (auto it = loaded_entities.begin(); it != loaded_entities.end(); ++it)
 		{
 			const auto& entity = *it;
+
+			// Could sync props here to be safe, but commented out for now because the entity is /supposed/ to be correct before it gets here
+			//entity->SynchroniseParallelEdits();
 
 			Vector2 pos = entity->GetPosition();
 			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
@@ -1326,10 +1333,16 @@ namespace FusionEngine
 				}
 			}
 		}
+		catch (std::exception& ex)
+		{
+			SendToConsole(std::string() + "Unhandled exception in map loader thread: " + ex.what());
+			FSN_ASSERT_FAIL(std::string() + "Unhandled exception in map loader thread:" + ex.what());
+			// TODO: attempt to restart the thread after it exits here
+		}
 		catch (...)
 		{
-			SendToConsole("Unhandled exception in map loader thread.");
-			FSN_ASSERT_FAIL("Unhandled exception in map loader thread.");
+			SendToConsole("Unhandled & unknown exception in map loader thread.");
+			FSN_ASSERT_FAIL("Unhandled & unknown exception in map loader thread.");
 		}
 		asThreadCleanup();
 	}

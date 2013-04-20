@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -192,6 +192,12 @@ namespace FusionEngine
 		size_t moveData(size_t first_sector, size_t dest_sector);
 		//! Move from the given run of sectors to the given new location
 		void moveData(size_t first_sector, size_t length_in_sectors, size_t dest_sector);
+
+		//! Rebuild the index based on the actual stored cell data
+		/*!
+		* Probably only useful to fix region files damaged by bugs in the defragment() and write() methods
+		*/
+		void fixIndex();
 
 		//! Returns the scalar index within the region file cell table that the given vector cell index translates to
 		size_t toScalarIndex(const std::pair<int32_t, int32_t>& cell_index) const;

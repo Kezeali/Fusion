@@ -257,6 +257,8 @@ namespace FusionEngine
 
 		entity->SetPosition(pos);
 		entity->SetAngle(angle);
+		// Apply the position and angle values
+		entity->SynchroniseParallelEdits();
 
 		auto agent = std::make_shared<ArchetypalEntityManager>(entity, data.Profile, m_ComponentInstantiator, m_ResourceContainer != nullptr ? ResourceDataPtr(m_ResourceContainer) : ResourceDataPtr());
 		entity->SetArchetypeAgent(agent);

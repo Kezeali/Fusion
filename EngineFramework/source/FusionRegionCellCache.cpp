@@ -588,8 +588,11 @@ namespace FusionEngine
 	{
 		if (first_sector > 0) // sector zero is the cell index, which doesn't have length data
 		{
-			// Read the data length from the give sector
+			// Read the data length from the given sector
 			IO::Streams::CellStreamReader reader(file.get());
+
+			std::streampos streamPos(first_sector * s_SectorSize);
+			file->seekg(streamPos);
 
 			auto length = reader.ReadValue<size_t>();
 			if (length > 0)
@@ -636,6 +639,30 @@ namespace FusionEngine
 
 		for (size_t i = dest_sector; i < dest_sector + length_in_sectors; ++i)
 			free_sectors.set(i, false);
+	}
+
+	void RegionFile::fixIndex()
+	{
+		const auto lengthOfFile = fileLength(*file);
+		const auto numSectorsInFile = lengthOfFile / s_SectorSize;
+		for (size_t sectorIndex = 1; sectorIndex < numSectorsInFile; ++sectorIndex)
+		{
+			IO::Streams::CellStreamReader reader(file.get());
+
+			std::streampos streamPos(sectorIndex * s_SectorSize);
+			file->seekg(streamPos);
+
+			auto cellDataLength = reader.ReadValue<size_t>();
+			if (cellDataLength > 0)
+			{
+				const auto dataVersion = reader.ReadValue<uint8_t>();
+
+				const auto cellIndex = reader.ReadValue<size_t>();
+				const auto cellDataLengthInSectors = (size_t)(cellDataLength / s_SectorSize + 1u);
+
+				setCellDataLocation(cellIndex, sectorIndex, cellDataLengthInSectors);
+			}
+		}
 	}
 
 	size_t RegionFile::toScalarIndex(const std::pair<int32_t, int32_t>& cell_index) const
@@ -770,11 +797,6 @@ namespace FusionEngine
 				it->second->defragment();
 			}
 		}
-	}
-
-	void RegionCellCache::SetupEditMode(bool enable)
-	{
-		SetFragmentationAllowed(!enable);
 	}
 
 	RegionCellCache::RegionCoord_t RegionCellCache::cellToRegionCoord(int32_t* cell_x, int32_t* cell_y) const
