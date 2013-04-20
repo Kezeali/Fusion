@@ -1089,10 +1089,10 @@ namespace FusionEngine
 			{
 				if (dataObject)
 				{
-					if (HasText(dataObject))
-						return fe_splitstring(GetTextFromData(dataObject), ";");
-					else if (HasHDrop(dataObject))
+					if (HasHDrop(dataObject))
 						return GetFileListFromData(dataObject);
+					else if (HasText(dataObject))
+						return fe_splitstring(GetTextFromData(dataObject), ";");
 					else
 						FSN_EXCEPT(InvalidArgumentException, "Failed to get useful data from the dropped object.");
 				}
@@ -1115,13 +1115,13 @@ namespace FusionEngine
 
 		static bool HasText(IDataObject *pDataObject)
 		{
-			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			FORMATETC fmtetc = { CF_TEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 			return SUCCEEDED(pDataObject->QueryGetData(&fmtetc));
 		}
 
 		static bool HasHDrop(IDataObject *pDataObject)
 		{
-			FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			FORMATETC fmtetc = { CF_HDROP, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 			return SUCCEEDED(pDataObject->QueryGetData(&fmtetc));
 		}
 
@@ -1139,7 +1139,7 @@ namespace FusionEngine
 		{
 			std::string dataText;
 
-			FORMATETC fmtetc = { CF_TEXT, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+			FORMATETC fmtetc = { CF_TEXT, NULL, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 			STGMEDIUM stgmed;
 
 			if(SUCCEEDED(pDataObject->QueryGetData(&fmtetc)))
