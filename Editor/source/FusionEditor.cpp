@@ -1291,12 +1291,12 @@ namespace FusionEngine
 		camera->SetPosition(0.f, 0.f);
 		m_Viewport = std::make_shared<Viewport>(clan::Rectf(0.f, 0.f, 1.f, 1.f), camera);
 		m_RenderWorld->AddViewport(m_Viewport);
-		m_StreamingManager->AddCamera(camera);
+		m_StreamingManager->AddCamera(camera, m_EditCamRange);
 
 		m_EditCam = camera;
 
 		m_EditorOverlay->m_EditCam = m_EditCam;
-		if (m_EditCamRange < 0.f)
+		if (m_EditCamRange <= 0.f)
 			m_EditorOverlay->m_CamRange = m_StreamingManager->GetRange();
 		else
 			m_EditorOverlay->m_CamRange = m_EditCamRange;
@@ -1510,7 +1510,13 @@ namespace FusionEngine
 			BuildCreateEntityScript();
 		}
 
-		ExecuteAction();
+		const auto timeSinceLastAction = time - m_LastActionTime;
+		if (timeSinceLastAction > 0.5f)
+		{
+			m_LastActionTime = time;
+			if (timeSinceLastAction > dt) // make sure there is a break between actions
+				ExecuteAction();
+		}
 
 		WindowDropTarget::DropEvent dropEvent;
 		if (m_DropTarget->TryPopDropEvent(dropEvent))
@@ -2937,7 +2943,7 @@ namespace FusionEngine
 											auto entity = archetype_factory->MakeInstance(m_ComponentFactory.get(), simPos, angle);
 											m_EntityManager->AddEntity(entity);
 
-											SendToConsole("Instantiate [" + boost::lexical_cast<std::string>(simPos.x) + ", " + boost::lexical_cast<std::string>(simPos.y) + "]");
+											//SendToConsole("Instantiate [" + boost::lexical_cast<std::string>(simPos.x) + ", " + boost::lexical_cast<std::string>(simPos.y) + "]");
 										}
 									}
 								}

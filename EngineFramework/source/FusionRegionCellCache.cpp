@@ -832,7 +832,7 @@ namespace FusionEngine
 	void RegionCellCache::GetRegionFile(const RegionLoadedCallback& loadedCallback, const RegionCellCache::RegionCoord_t& coord, bool load_if_uncached)
 	{
 		auto entry = m_Cache.find(coord);
-		if (entry == m_Cache.end())
+		if (entry == m_Cache.end() || !entry->second.IsLoaded())
 		{
 			if (load_if_uncached)
 			{
@@ -855,6 +855,8 @@ namespace FusionEngine
 						std::bind(&RegionCellCache::OnRegionFileLoaded, this, _1, coord),
 						-1000);
 				}
+				else
+					m_CacheImportance.remove(coord);
 				// Add the given callback to the end of the list for this region
 				accessor->second.m_OtherCallbacks.push_back(loadedCallback);
 

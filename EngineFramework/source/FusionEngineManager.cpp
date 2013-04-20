@@ -607,23 +607,27 @@ namespace FusionEngine
 
 			m_GUI->InitialiseConsole(m_ScriptManager.get());
 
-			m_ActiveExtensions.clear();
-			// Initialise extensions
-			for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
 			{
-				(*exit)->SetDisplay(m_DisplayWindow);
-				(*exit)->SetComponentFactory(m_ComponentUniverse);
-				(*exit)->SetEntityInstantiator(m_EntityInstantiator);
-				(*exit)->SetEntityManager(m_EntityManager);
-				(*exit)->SetArchetypeFactory(m_ArchetypeFactory);
-				(*exit)->SetMapLoader(m_CellArchivist);
-				(*exit)->SetStreamingManager(m_StreamingManager);
-				(*exit)->SetWorldSaver(this);
-				(*exit)->SetDataArchiver(m_CellArchivist);
-
-				if (m_EnabledExtensions.find((*exit)->GetName()) != m_EnabledExtensions.end())
+				std::unique_ptr<ClientOptions> options(new ClientOptions("settings.xml", "settings"));
+				m_ActiveExtensions.clear();
+				// Initialise extensions
+				for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
 				{
-					m_ActiveExtensions.push_back(*exit);
+					(*exit)->SetDisplay(m_DisplayWindow);
+					(*exit)->SetComponentFactory(m_ComponentUniverse);
+					(*exit)->SetEntityInstantiator(m_EntityInstantiator);
+					(*exit)->SetEntityManager(m_EntityManager);
+					(*exit)->SetArchetypeFactory(m_ArchetypeFactory);
+					(*exit)->SetMapLoader(m_CellArchivist);
+					(*exit)->SetStreamingManager(m_StreamingManager);
+					(*exit)->SetWorldSaver(this);
+					(*exit)->SetDataArchiver(m_CellArchivist);
+					(*exit)->SetOptions(*options);
+
+					if (m_EnabledExtensions.find((*exit)->GetName()) != m_EnabledExtensions.end())
+					{
+						m_ActiveExtensions.push_back(*exit);
+					}
 				}
 			}
 			

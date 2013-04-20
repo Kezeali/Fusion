@@ -132,6 +132,7 @@
             this.filesListView.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.filesListView_ItemDrag);
             this.filesListView.DoubleClick += new System.EventHandler(this.filesListView_DoubleClick);
             this.filesListView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.filesListView_KeyDown);
+            this.filesListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.filesListView_MouseClick);
             // 
             // fileListImageList
             // 

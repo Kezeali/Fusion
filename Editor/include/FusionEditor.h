@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -312,6 +312,8 @@ namespace FusionEngine
 
 		FileBrowserOverrideFn_t m_OpenDialogOverride;
 		FileBrowserOverrideFn_t m_SaveDialogOverride;
+
+		float m_LastActionTime;
 
 		void ShowSaveMapDialog();
 		void ShowLoadMapDialog();

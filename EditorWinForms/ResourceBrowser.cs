@@ -732,5 +732,17 @@ namespace EditorWinForms
             }
         }
 
+        private void filesListView_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                for (int i = 0; i < filesListView.SelectedItems.Count; ++i)
+                {
+                    var item = filesListView.SelectedItems[i];
+                    Client.StartResourceEditor((string)item.Tag);
+                }
+            }
+        }
+
     }
 }
