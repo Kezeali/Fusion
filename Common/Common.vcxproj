@@ -51,7 +51,7 @@
     <Import Project="..\CommonReleaseProperties.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Fast Debug|Win32'" Label="PropertySheets">
-    <Import Project="C:\Users\Kezeali\AppData\Local\Microsoft\MSBuild\v4.0\Microsoft.Cpp.Win32.user.props" />
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\FastDebugProperties.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
