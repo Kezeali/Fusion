@@ -29,6 +29,12 @@
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>Source Files\PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionCLRenderTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionGraphicalProfilerTask.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionStreamingCameraComponent.h">
@@ -48,6 +54,15 @@
     </ClInclude>
     <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>Source Files\PrecompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCLRenderTask.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRenderAction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionGraphicalProfilerTask.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

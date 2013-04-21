@@ -87,28 +87,9 @@ namespace FusionEngine
 		//! Stores the times / stats recorded since the last time this method was called and clears them
 		void StoreTick();
 
-		std::string PushThreadScopeLabel(const std::string& suffix)
-		{
-#ifdef FSN_TBB_AVAILABLE
-			bool exists;
-			auto& current = m_ScopeLabel.local(exists);
-			if (exists && !current.empty())
-				return current += (":" + suffix);
-			else
-				return current += suffix;
-#else
-			return suffix;
-#endif
-		};
+		std::string PushThreadScopeLabel(const std::string& suffix);
 
-		void PopThreadScopeLabel()
-		{
-			auto pos = m_ScopeLabel.local().rfind(':');
-			if (pos != std::string::npos)
-				m_ScopeLabel.local().erase(pos);
-			else
-				m_ScopeLabel.local().clear();
-		}
+		void PopThreadScopeLabel();
 
 	private:
 		std::map<std::string, double> m_TimesLastTick;

@@ -105,6 +105,8 @@
     <ClCompile Include="source\FusionCameraSynchroniser.cpp" />
     <ClCompile Include="source\FusionCLRenderComponent.cpp" />
     <ClCompile Include="source\FusionCLRenderSystem.cpp" />
+    <ClCompile Include="source\FusionCLRenderTask.cpp" />
+    <ClCompile Include="source\FusionGraphicalProfilerTask.cpp" />
     <ClCompile Include="source\FusionStreamingCameraComponent.cpp" />
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -117,6 +119,9 @@
     <ClInclude Include="include\FusionCLRenderComponent.h" />
     <ClInclude Include="include\FusionCLRenderExtension.h" />
     <ClInclude Include="include\FusionCLRenderSystem.h" />
+    <ClInclude Include="include\FusionCLRenderTask.h" />
+    <ClInclude Include="include\FusionGraphicalProfilerTask.h" />
+    <ClInclude Include="include\FusionRenderAction.h" />
     <ClInclude Include="include\FusionStreamingCameraComponent.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>

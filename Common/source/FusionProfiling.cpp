@@ -99,6 +99,27 @@ namespace FusionEngine
 			m_TimesLastTick[it->first] /= it->second;
 	}
 
+	std::string Profiling::PushThreadScopeLabel(const std::string& suffix)
+	{
+#ifdef FSN_TBB_AVAILABLE
+		auto& current = m_ScopeLabel.local();
+		return current += ("/" + suffix);
+#else
+		return suffix;
+#endif
+	}
+
+	void Profiling::PopThreadScopeLabel()
+	{
+#ifdef FSN_TBB_AVAILABLE
+		const auto pos = m_ScopeLabel.local().rfind('/');
+		if (pos != std::string::npos && pos != 0)
+			m_ScopeLabel.local().erase(pos);
+		else
+			m_ScopeLabel.local().clear();
+#endif
+	}
+
 	Profiler::Profiler(const std::string& label)
 		: m_Label(Profiling::getSingleton().PushThreadScopeLabel(label))
 #ifdef FSN_PROFILER_USE_TBB_TIMER

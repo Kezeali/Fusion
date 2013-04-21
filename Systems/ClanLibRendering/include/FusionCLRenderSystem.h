@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011-2012 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -34,9 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionCommon.h"
-
 #include "FusionComponentSystem.h"
+#include "FusionRenderAction.h"
 #include "FusionViewport.h"
 
 #include <ClanLib/display.h>
@@ -52,12 +51,11 @@ namespace FusionEngine
 	class CLSprite;
 	class CLRenderTask;
 	class CLRenderGUITask;
+	class GraphicalProfilerTask;
 	class StreamingCamera;
 	class CameraSynchroniser;
 
 	class CLRenderExtension;
-
-	class B2DebugDraw;
 
 	class CLRenderSystem : public IComponentSystem
 	{
@@ -93,6 +91,13 @@ namespace FusionEngine
 		void AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& viewport);
 		void RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas);
 
+		//! Enqueue an action to get executed when each viewport is rendered
+		void EnqueueViewportRenderAction(const RenderAction& action);
+		//! Enqueue an action to get executed when a specific viewport is rendered
+		void EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action);
+		//! Enqueue an action to get executed when the world is rendered
+		void EnqueueWorldRenderAction(const RenderAction& action);
+
 		void AddQueuedViewports();
 
 		// TEMP
@@ -125,6 +130,7 @@ namespace FusionEngine
 
 		CLRenderTask* m_RenderTask;
 		CLRenderGUITask* m_GUITask;
+		GraphicalProfilerTask* m_GraphicalProfilerTask;
 
 		// Drawables contains all drawable components (sprites, etc.) sorted for rendering
 		std::vector<boost::intrusive_ptr<IDrawable>> m_Drawables;
@@ -135,9 +141,8 @@ namespace FusionEngine
 
 		std::vector<boost::intrusive_ptr<CLSprite>> m_SpritesToDefine;
 
-		boost::mutex m_ViewportMutex;
 		std::vector<ViewportPtr> m_Viewports;
-		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
+		tbb::concurrent_queue<std::pair<ViewportPtr, bool>> m_ViewportsToAddOrRemove;
 
 		std::multimap<ViewportPtr, std::weak_ptr<CLRenderExtension>> m_Extensions;
 
@@ -148,68 +153,6 @@ namespace FusionEngine
 		CameraSynchroniser* m_CameraManager;
 
 		Renderer* m_Renderer;
-	};
-
-	//! ClanLib render task
-	class CLRenderTask : public ISystemTask
-	{
-	public:
-		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
-		~CLRenderTask();
-
-		void Update(const float delta);
-
-		void Draw();
-
-		SystemType GetTaskType() const { return SystemType::Rendering; }
-
-		PerformanceHint GetPerformanceHint() const { return LongSerial; }
-
-		bool IsPrimaryThreadOnly() const
-		{
-			return true;
-		}
-
-	private:
-		CLRenderWorld* m_RenderWorld;
-		Renderer* const m_Renderer;
-
-		float m_Accumulator;
-
-		std::unique_ptr<B2DebugDraw> m_PhysDebugDraw;
-
-		clan::Font m_DebugFont;
-		clan::Font m_DebugFont2;
-	};
-
-	class CLRenderGUITask : public ISystemTask
-	{
-	public:
-		CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer);
-		~CLRenderGUITask();
-
-		void Update(const float delta);
-
-		SystemType GetTaskType() const { return SystemType::Simulation; }
-
-		PerformanceHint GetPerformanceHint() const { return Short; }
-
-		bool IsPrimaryThreadOnly() const
-		{
-			return true;
-		}
-
-		void onMouseMove(const clan::InputEvent &ev);
-
-	private:
-		CLRenderWorld* m_RenderWorld;
-		Renderer* const m_Renderer;
-
-		clan::Canvas m_Canvas;
-
-		clan::Slot m_MouseMoveSlot;
-		std::deque<clan::InputEvent> m_BufferedEvents;
-		//Vector2i m_LastPosition;
 	};
 
 }

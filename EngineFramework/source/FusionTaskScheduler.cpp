@@ -162,33 +162,41 @@ namespace FusionEngine
 
 			FSN_ASSERT(!tasks.empty());
 
-			if (tasks.size() > 1)
+			for (int i = 0; i < 2; ++i)
 			{
-				// Create a proxy-task to execute all the tasks for this system if there is more than one
-				ISystemTask* task = new SystemTaskExecutor(world.get(), tasks);
-				m_SortedTasks.push_back(task);
-				m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
-			}
-			else
-				m_SortedTasks.push_back(tasks.front());
-
-			// Grab all the tasks for each combination of SystemTypes
-			for (int i = 0; i < s_NumSystemTypeCombinations; ++i)
-			{
-				const uint8_t systemTypeCombination = s_SystemTypeCombinations[i];
-
-				std::vector<ISystemTask*> systemTypeTasks;
-				std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
-					[systemTypeCombination](ISystemTask* task) { return (task->GetTaskType() & systemTypeCombination) != 0; });
-
-				if (systemTypeTasks.size() > 1)
+				const bool primaryThread = i == 0;
+				// Grab the tasks that do / don't need to run in the primary thread
+				std::vector<ISystemTask*> threadRestrictionTasks;
+				std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(threadRestrictionTasks),
+					[primaryThread](ISystemTask* task) { return (task->IsPrimaryThreadOnly() == primaryThread); });
+				if (threadRestrictionTasks.size() > 1)
 				{
-					auto task = new SystemTaskExecutor(world.get(), systemTypeTasks);
-					m_GroupedSortedTasks[systemTypeCombination].push_back(task);
+					// Create a proxy-task to execute all the tasks for this system if there is more than one
+					ISystemTask* task = new SystemTaskExecutor(world.get(), threadRestrictionTasks);
+					m_SortedTasks.push_back(task);
 					m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
 				}
-				else if (!systemTypeTasks.empty())
-					m_GroupedSortedTasks[systemTypeCombination].push_back(systemTypeTasks.front());
+				else if (!threadRestrictionTasks.empty())
+					m_SortedTasks.push_back(threadRestrictionTasks.front());
+
+				// Grab all the tasks for each combination of SystemTypes
+				for (int i = 0; i < s_NumSystemTypeCombinations; ++i)
+				{
+					const uint8_t systemTypeCombination = s_SystemTypeCombinations[i];
+
+					std::vector<ISystemTask*> systemTypeTasks;
+					std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
+						[systemTypeCombination, primaryThread](ISystemTask* task) { return (task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
+
+					if (systemTypeTasks.size() > 1)
+					{
+						auto task = new SystemTaskExecutor(world.get(), systemTypeTasks);
+						m_GroupedSortedTasks[systemTypeCombination].push_back(task);
+						m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
+					}
+					else if (!systemTypeTasks.empty())
+						m_GroupedSortedTasks[systemTypeCombination].push_back(systemTypeTasks.front());
+				}
 			}
 		}
 
