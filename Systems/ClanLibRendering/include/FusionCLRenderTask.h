@@ -92,9 +92,31 @@ namespace FusionEngine
 			RenderAction action;
 		};
 
-		tbb::concurrent_queue<ViewportRenderAction> m_SingleViewportRenderActions;
-		RenderActionQueue m_ViewportRenderActions;
-		RenderActionQueue m_WorldRenderActions;
+		template <class ActionT>
+		class RenderActionCategory
+		{
+		public:
+			void Push(ActionT action)
+			{
+				actionQueue.push(action);
+			}
+
+			const ActionT& GetAction()
+			{
+				while (actionQueue.try_pop(mostRecentAction));
+				return mostRecentAction;
+			}
+
+		private:
+			typedef typename tbb::concurrent_queue<ActionT> RenderActionQueue;
+
+			RenderActionQueue actionQueue;
+			ActionT mostRecentAction;
+		};
+
+		RenderActionCategory<RenderAction> m_RenderActions;
+		RenderActionCategory<ViewportRenderAction> m_SingleViewportRenderActions;
+		RenderActionCategory<RenderAction> m_WorldRenderActions;
 	};
 
 	class CLRenderGUITask : public ISystemTask

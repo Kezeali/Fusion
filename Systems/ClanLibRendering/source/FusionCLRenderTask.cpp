@@ -77,7 +77,7 @@ namespace FusionEngine
 
 	void CLRenderTask::EnqueueViewportRenderAction(const RenderAction& action)
 	{
-		m_ViewportRenderActions.push(action);
+		m_RenderActions.Push(action);
 	}
 
 	void CLRenderTask::EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action)
@@ -85,12 +85,12 @@ namespace FusionEngine
 		ViewportRenderAction entry;
 		entry.viewport = vp;
 		entry.action = action;
-		m_SingleViewportRenderActions.push(entry);
+		m_SingleViewportRenderActions.Push(entry);
 	}
 
 	void CLRenderTask::EnqueueWorldRenderAction(const RenderAction& action)
 	{
-		m_WorldRenderActions.push(action);
+		m_WorldRenderActions.Push(action);
 	}
 
 //#define FSN_CLRENDER_PARALLEL_UPDATE
@@ -204,17 +204,6 @@ namespace FusionEngine
 		{
 			clan::Colorf clcolor(1.f, 0.5f, 0.9f, 1.0f);
 
-			//clan::Vec2i positions[] =
-			//{
-			//	clan::Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
-			//	clan::Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
-			//};
-
-			//clan::PrimitivesArray vertex_data(gc);
-			//vertex_data.set_attributes(clan::attrib_position, clan::VertexArrayVector<clan::Vec2i>(gc, &positions[0], 2));
-			//vertex_data.set_attributes(clan::attrib_color, clan::VertexArrayVector<clan::Vec4f>(gc, &clcolor, 1));
-			//gc.draw_primitives(clan::type_lines, 2, vertex_data);
-
 			canvas.draw_line(
 				clan::Pointf((p1.x * s_GameUnitsPerSimUnit), (p1.y * s_GameUnitsPerSimUnit)),
 				clan::Pointf((p2.x * s_GameUnitsPerSimUnit), (p2.y * s_GameUnitsPerSimUnit)),
@@ -251,10 +240,10 @@ namespace FusionEngine
 				}
 			}
 
-			{
-				FSN_PROFILE("GUI");
-				worldGUICtx->Render();
-			}
+			//{
+			//	FSN_PROFILE("GUI");
+			//	worldGUICtx->Render();
+			//}
 
 			m_RenderWorld->RunExtensions(vp, canvas);
 
@@ -270,22 +259,20 @@ namespace FusionEngine
 			
 			Vector2 camera_pos(p.x, p.y);
 
-			RenderAction action;
-			while (m_ViewportRenderActions.try_pop(action))
-			{
+			auto action = m_RenderActions.GetAction();
+			if (action)
 				action(canvas, camera_pos);
-			}
 		}
 
-		{
-			FSN_PROFILE("GUI");
-			for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
-			{
-				auto ctx = Rocket::Core::GetContext(i);
-				if (ctx != worldGUICtx)
-					ctx->Render();
-			}
-		}
+		//{
+		//	FSN_PROFILE("GUI");
+		//	for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+		//	{
+		//		auto ctx = Rocket::Core::GetContext(i);
+		//		if (ctx != worldGUICtx)
+		//			ctx->Render();
+		//	}
+		//}
 
 		if (m_RenderWorld->IsDebugTextEnabled())
 		{
