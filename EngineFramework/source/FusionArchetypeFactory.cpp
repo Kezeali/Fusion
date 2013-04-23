@@ -63,6 +63,7 @@ namespace FusionEngine
 		//! Allow the cache to clear
 		virtual void EndSustain();
 
+		//! Set the number of resources that are cached while NOT sustaining
 		void SetVolatileCapacity(size_t capacity) { m_VolitileCapacity = capacity; }
 		size_t GetVolatileCapacity() const { return m_VolitileCapacity; }
 
@@ -95,6 +96,11 @@ namespace FusionEngine
 				: resource(std::move(other.resource)),
 				hotReloadConnection(std::move(other.hotReloadConnection))
 			{
+			}
+
+			~StoredResource()
+			{
+				hotReloadConnection.disconnect();
 			}
 
 			StoredResource& operator =(StoredResource&& other)
