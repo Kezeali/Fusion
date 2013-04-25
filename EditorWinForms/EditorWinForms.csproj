@@ -296,7 +296,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>robocopy $(SolutionDir)EditorProtocol\gen-csharp $(ProjectDir)gen-csharp /MIR
+    <PreBuildEvent>robocopy "$(SolutionDir)EditorProtocol\gen-csharp" "$(ProjectDir)gen-csharp" /MIR
 exit 0</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
