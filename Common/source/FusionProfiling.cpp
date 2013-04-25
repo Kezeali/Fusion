@@ -40,7 +40,7 @@ namespace FusionEngine
 	{
 	}
 
-	void Profiling::AddTime(const std::string& label, const double seconds)
+	void Profiling::AddTime(const std::string& label, const TimeValue_t seconds)
 	{
 #ifdef FSN_TBB_AVAILABLE
 		m_IncomingTimes.push(std::make_pair(label, seconds));
@@ -52,32 +52,32 @@ namespace FusionEngine
 
 	void Profiling::AddTime(const std::string& label, const uint32_t miliseconds)
 	{
-		AddTime(label, double(miliseconds) * 0.001);
+		AddTime(label, TimeValue_t(miliseconds) * 0.001);
 	}
 
-	void Profiling::AddStat(const std::string& label, const double seconds)
+	void Profiling::AddStat(const std::string& label, const TimeValue_t seconds)
 	{
 		AddTime("@" + label, seconds);
 	}
 
-	double Profiling::GetTime(const std::string& label) const
+	Profiling::TimeValue_t Profiling::GetTime(const std::string& label) const
 	{
-		return m_TimesLastTick.at(label);
+		return m_TimesLastTick->at(label);
 	}
 
-	std::map<std::string, double> Profiling::GetTimes() const
+	Profiling::Times_t Profiling::GetTimes() const
 	{
-		return m_TimesLastTick;
+		return *m_TimesLastTick;
 	}
 
 	void Profiling::StoreTick()
 	{
 		m_ScopeLabel.clear();
-		m_TimesLastTick.clear();
 
+		std::unique_ptr<Times_t> newTimes(new Times_t); // get with them, man.
 		std::map<std::string, size_t> numValues;
 
-		std::pair<std::string, double> entry;
+		Entry_t entry;
 #ifdef FSN_TBB_AVAILABLE
 		while (m_IncomingTimes.try_pop(entry))
 		{
@@ -88,7 +88,7 @@ namespace FusionEngine
 			entry = m_IncomingTimes.front();
 			m_IncomingTimes.pop_front();
 #endif
-			auto result = m_TimesLastTick.insert(std::move(entry));
+			auto result = newTimes->insert(std::move(entry));
 			FSN_ASSERT(!result.first->first.empty());
 			if (result.first->first[0] == '@')
 				++numValues[result.first->first];
@@ -96,7 +96,9 @@ namespace FusionEngine
 				result.first->second += entry.second;
 		}
 		for (auto it = numValues.begin(); it != numValues.end(); ++it)
-			m_TimesLastTick[it->first] /= it->second;
+			(*newTimes)[it->first] /= it->second;
+
+		m_TimesLastTick.swap(newTimes); // drop a bomb on it
 	}
 
 	std::string Profiling::PushThreadScopeLabel(const std::string& suffix)
@@ -136,7 +138,7 @@ namespace FusionEngine
 		Profiling::getSingleton().AddTime(m_Label, doneTime.seconds());
 #else
 		boost::timer::nanosecond_type nanoseconds = m_Timer.elapsed().wall;
-		Profiling::getSingleton().AddTime(m_Label, double(nanoseconds * 0.000000001));
+		Profiling::getSingleton().AddTime(m_Label, Profiling::TimeValue_t(nanoseconds * 0.000000001));
 #endif
 	}
 

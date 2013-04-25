@@ -38,8 +38,12 @@
 #include "FusionRenderAction.h"
 #include "FusionViewport.h"
 
+#include "FusionProfiling.h"
+
 #include <map>
 #include <vector>
+
+#include <boost/circular_buffer.hpp>
 
 namespace FusionEngine
 {
@@ -69,16 +73,38 @@ namespace FusionEngine
 
 		clan::Font m_DebugFont;
 		clan::Font m_DebugFont2;
+		
+		float m_PollingInterval;
+		float m_LastPolledTime;
 
-		typedef std::map<std::string, double> FrameStats;
+		size_t m_HistoryCapacity;
 
-		struct HistoryNode
+		struct ProfilingNode
 		{
-			std::list<FrameStats> history;
-			std::map<std::string, HistoryNode> children;
+			std::string label;
+			std::map<std::string, ProfilingNode> children;
+			ProfilingNode* parent;
 		};
 
-		HistoryNode m_HistoryTree;
+		ProfilingNode m_NavigationRoot;
+
+		struct HistogramLine
+		{
+			boost::circular_buffer<clan::Vec2f> verts;
+			clan::Colorf colour;
+			Profiling::TimeValue_t lastValue;
+			std::string label;
+		};
+
+		clan::ColorHSVf m_NextColour;
+
+		std::map<std::string, HistogramLine> m_DisplayData;
+
+		boost::circular_buffer<Profiling::Times_t> m_History;
+
+		std::string m_NewSelectedPath;
+		std::string m_SelectedPath;
+		ProfilingNode* m_SelectedNode;
 	};
 
 }

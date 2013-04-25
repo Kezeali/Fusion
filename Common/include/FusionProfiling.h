@@ -48,6 +48,7 @@
 #endif
 #include <tbb/concurrent_queue.h>
 #include <tbb/enumerable_thread_specific.h>
+#include <tbb/spin_rw_mutex.h>
 
 #else // TBB not available
 #include <boost/thread/mutex.hpp>
@@ -70,19 +71,22 @@ namespace FusionEngine
 		Profiling();
 		//! Destructor
 		~Profiling();
+		
+		typedef double TimeValue_t;
+		typedef std::map<std::string, TimeValue_t> Times_t;
 
-		//! A time or other value. Entries with labels will be added together at the end of the frame.
-		void AddTime(const std::string& label, const double seconds);
+		//! A time or other value. Entries with the same label will be added together at the end of the frame.
+		void AddTime(const std::string& label, const TimeValue_t seconds);
 		//! Convenience: converts miliseconds to seconds and calls the other overload
 		void AddTime(const std::string& label, const std::uint32_t miliseconds);
 
-		//! Averaged over the frame
-		void AddStat(const std::string& label, const double seconds);
+		//! Entries with the same label will be averaged over the frame
+		void AddStat(const std::string& label, const TimeValue_t seconds);
 
 		//! Returns the accumulated time recorded under the given label during the last tick
-		double GetTime(const std::string& label) const;
+		TimeValue_t GetTime(const std::string& label) const;
 		//! Returns the accumulated times recorded during the last tick
-		std::map<std::string, double> GetTimes() const;
+		Times_t GetTimes() const;
 
 		//! Stores the times / stats recorded since the last time this method was called and clears them
 		void StoreTick();
@@ -92,13 +96,15 @@ namespace FusionEngine
 		void PopThreadScopeLabel();
 
 	private:
-		std::map<std::string, double> m_TimesLastTick;
+		typedef std::pair<std::string, TimeValue_t> Entry_t;
+
+		std::unique_ptr<Times_t> m_TimesLastTick;
 #ifdef FSN_TBB_AVAILABLE
-		tbb::concurrent_queue<std::pair<std::string, double>> m_IncomingTimes;
+		tbb::concurrent_queue<Entry_t> m_IncomingTimes;
 
 		tbb::enumerable_thread_specific<std::string> m_ScopeLabel;
 #else
-		std::deque<std::pair<std::string, double>> m_IncomingTimes;
+		std::deque<Entry_t> m_IncomingTimes;
 		boost::mutex m_Mutex;
 #endif
 	};
@@ -111,10 +117,6 @@ namespace FusionEngine
 		~Profiler();
 
 	private:
-//#ifdef FSN_TBB_AVAILABLE
-//		static tbb::enumerable_thread_specific<std::string> m_ScopeLabel;
-//#endif
-
 		std::string m_Label;
 
 #ifdef FSN_PROFILER_USE_TBB_TIMER
