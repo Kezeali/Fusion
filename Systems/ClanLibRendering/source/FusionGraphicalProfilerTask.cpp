@@ -49,31 +49,42 @@ namespace FusionEngine
 	GraphicalProfilerTask::GraphicalProfilerTask(CLRenderWorld* sysworld, clan::Canvas canvas)
 		: ISystemTask(sysworld),
 		m_RenderWorld(sysworld),
-		m_PollingInterval(0.05f),
+		m_PollingInterval(0.1f),
 		m_LastPolledTime(0.0f),
 		m_HistoryCapacity(300),
 		m_NextColour(0.0f, 0.8f, 0.8f, 1.0f),
-		m_SelectedPath("/")
+		m_ClearDisplayData(false),
+		m_NewSelectedPath("/"),
+		m_Tick(m_HistoryCapacity)
 	{
 		m_DebugFont = clan::Font(canvas, "Lucida Console", 14);
 		m_DebugFont2 = clan::Font(canvas, "Lucida Console", 10);
+
+		Console::getSingleton().BindCommand("prog_polling_interval", [this](const StringVector& args)->std::string
+		{
+			if (args.size() >= 2)
+			{
+				const auto value = boost::lexical_cast<float>(args[1]);
+				m_PollingInterval = value;
+			}
+			return "";
+		});
 
 		Console::getSingleton().BindCommand("prog_history_size", [this](const StringVector& args)->std::string
 		{
 			if (args.size() >= 2)
 			{
 				const auto value = boost::lexical_cast<size_t>(args[1]);
-				m_HistoryCapacity = value;
-				this->m_History.set_capacity(value);
+				this->m_HistoryCapacity = value;
+				this->m_ClearDisplayData = true;
 			}
 			return "";
 		});
-
-		m_History.set_capacity(m_HistoryCapacity);
 	}
 
 	GraphicalProfilerTask::~GraphicalProfilerTask()
 	{
+		Console::getSingleton().UnbindCommand("prog_polling_interval");
 		Console::getSingleton().UnbindCommand("prog_history_size");
 	}
 
@@ -99,10 +110,14 @@ namespace FusionEngine
 		}
 		else
 		{
+			m_LastPolledTime = 0.0f;
 			const clan::Sizef graphSize(400.f, 400.f);
 
-			auto newDisplayData = std::make_pair(std::string(), HistogramLine());
-			newDisplayData.second.colour = m_NextColour;
+			++m_Tick;
+
+			// TODO: generic task Invoke, much like render actions but for intra-task execution (like clearing the display data)
+			if (m_ClearDisplayData)
+				m_DisplayData.clear();
 
 			if (m_NewSelectedPath != m_SelectedPath)
 			{
@@ -115,43 +130,58 @@ namespace FusionEngine
 				{
 					for (auto it = path.begin(); it != path.end() - 1; ++it)
 					{
-						m_SelectedNode = &m_SelectedNode->children[*it];
+						auto newNode = &m_SelectedNode->children[*it];
+						newNode->parent = m_SelectedNode;
+						m_SelectedNode = newNode;
 					}
 				}
 			}
 
 			{
-				clan::Vec2f vert;
-				const float xInterval = graphSize.width / m_History.size();
+				auto newDisplayData = std::make_pair(std::string(), HistogramLine());
+				newDisplayData.second.colour = m_NextColour;
+				newDisplayData.second.percentages.set_capacity(m_HistoryCapacity);
 
 				const auto times = Profiling::getSingleton().GetTimes();
+				const auto actualDT = times.at("$ActualDT");
 				for (const auto& entry : times)
 				{
 					const auto& key = entry.first;
 					const auto& value = entry.second;
 
-					const auto pathLength = key.rfind("/");
-					if (pathLength != std::string::npos)
+					if (!key.empty() && key[0] == '/')
 					{
-						const auto path = key.substr(0, pathLength);
-						const auto statKey = key.substr(pathLength);
-						//if (path[depth][0] != '@' && path[depth][0] != '!' && path[depth][0] != '~' && path[depth][0] != '#')
-						if (statKey[0] != '@' && statKey[0] != '!' && statKey[0] != '~' && statKey[0] != '#')
+						const auto pathLength = key.rfind("/");
+						if (pathLength != std::string::npos)
 						{
-							vert.y = float(value / DeltaTime::GetActualDeltaTime() * graphSize.height);
-
-							auto r = m_DisplayData.insert(newDisplayData);
-							if (r.second)
+							const auto path = key.substr(0, pathLength + 1);
+							const auto statKey = key.substr(pathLength + 1);
+							if (path == m_SelectedPath)
 							{
-								newDisplayData.second.colour = m_NextColour;
-								m_NextColour.h += 16.6f;
-								if (m_NextColour.h > 360.0f)
-									m_NextColour.h -= 360.0f;
+								// Populate the navigation tree
+								if (m_SelectedNode)
+								{
+									auto& node = m_SelectedNode->children[statKey];
+									node.parent = m_SelectedNode;
+									node.label = statKey;
+								}
+
+								const auto percentage = value / actualDT;
+
+								newDisplayData.first = key;
+								auto r = m_DisplayData.insert(newDisplayData);
+								if (r.second)
+								{
+									r.first->second.colour = m_NextColour;
+									m_NextColour.h += 41.8f;
+									if (m_NextColour.h > 360.0f)
+										m_NextColour.h -= 360.0f;
+								}
+								auto& displayData = r.first->second;
+								displayData.percentages.push_back(std::make_pair(m_Tick, percentage));
+								displayData.lastValue = value;
+								displayData.label = statKey;
 							}
-							auto& displayData = r.first->second;
-							displayData.verts.push_back(vert);
-							displayData.lastValue = value;
-							displayData.label = statKey;
 						}
 					}
 				}
@@ -161,16 +191,35 @@ namespace FusionEngine
 			std::vector<clan::Colorf> colours;
 			std::vector<std::string> labels;
 
+			clan::Rectf graphRect(clan::Pointf(), graphSize);
+
 			if (m_SelectedNode)
 			{
+				const auto numLines = m_SelectedNode->children.size();
+				lines.resize(numLines);
+				colours.resize(numLines);
+				labels.resize(numLines);
+
+				const auto earliestTick = m_Tick - m_HistoryCapacity;
+
 				size_t i = 0;
 				for (const auto& node : m_SelectedNode->children)
 				{
-					const auto& stat = m_DisplayData[node.first];
+					const auto& data = m_DisplayData[m_SelectedPath + node.first];
 					{
-						lines[i].assign(stat.verts.begin(), stat.verts.end());
-						colours[i] = stat.colour;
-						labels[i] = stat.label + " " + boost::lexical_cast<std::string>(stat.lastValue);
+						//clan::Vec2f vert(graphRect.left, 0.0f);
+						for (const auto& dataPoint : data.percentages)
+						{
+							if (dataPoint.first >= earliestTick)
+							{
+								const float x = float(dataPoint.first - earliestTick) / float(m_HistoryCapacity) * graphSize.width;
+								const float y = float(dataPoint.second * graphSize.height);
+								const clan::Vec2f vert(graphRect.left + x, graphRect.bottom - y);
+								lines[i].push_back(vert);
+							}
+						}
+						colours[i] = data.colour;
+						labels[i] = data.label + " " + boost::lexical_cast<std::string>(data.lastValue);
 					}
 					++i;
 				}
@@ -178,11 +227,10 @@ namespace FusionEngine
 
 			auto font = m_DebugFont;
 
-			m_RenderWorld->EnqueueViewportRenderAction([graphSize, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
+			m_RenderWorld->EnqueueViewportRenderAction([graphRect, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
 			{
-				clan::Rectf box(graphSize);
 				clan::Colorf colour = clan::Colorf::lightyellow;
-				canvas.draw_box(box, colour);
+				canvas.draw_box(graphRect, colour);
 
 				for (size_t i = 0; i < lines.size(); ++i)
 				{
@@ -193,8 +241,8 @@ namespace FusionEngine
 
 				const auto textLineHeight = fontCopy.get_text_size(canvas.get_gc(), "X").height;
 
-				const float textX = box.right;
-				const float textTop = box.bottom - textLineHeight * lines.size();
+				const float textX = graphRect.right;
+				const float textTop = graphRect.bottom - textLineHeight * lines.size();
 
 				for (size_t i = 0; i < lines.size(); ++i)
 				{

@@ -84,13 +84,14 @@ namespace FusionEngine
 			std::string label;
 			std::map<std::string, ProfilingNode> children;
 			ProfilingNode* parent;
+			ProfilingNode() : parent(nullptr) {}
 		};
 
 		ProfilingNode m_NavigationRoot;
 
 		struct HistogramLine
 		{
-			boost::circular_buffer<clan::Vec2f> verts;
+			boost::circular_buffer<std::pair<unsigned int, double>> percentages;
 			clan::Colorf colour;
 			Profiling::TimeValue_t lastValue;
 			std::string label;
@@ -100,11 +101,15 @@ namespace FusionEngine
 
 		std::map<std::string, HistogramLine> m_DisplayData;
 
+		bool m_ClearDisplayData;
+
 		boost::circular_buffer<Profiling::Times_t> m_History;
 
 		std::string m_NewSelectedPath;
 		std::string m_SelectedPath;
 		ProfilingNode* m_SelectedNode;
+
+		unsigned int m_Tick;
 	};
 
 }
