@@ -38,7 +38,7 @@
 namespace FusionEngine
 {
 
-	class ISystemWorld;
+	class SystemWorldBase;
 
 	class PrefabInstantiationException : public Exception
 	{

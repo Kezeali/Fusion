@@ -68,7 +68,7 @@ namespace FusionEngine
 
 	class AngelScriptWorld;
 	class AngelScriptTask;
-	class AngelScriptTaskB;
+	class AngelScriptInstantiationTask;
 
 	class AngelScriptSystem : public IComponentSystem
 	{
@@ -77,7 +77,7 @@ namespace FusionEngine
 		virtual ~AngelScriptSystem()
 		{}
 
-		std::shared_ptr<ISystemWorld> CreateWorld();
+		std::shared_ptr<SystemWorldBase> CreateWorld();
 
 	private:
 		SystemType GetType() const { return SystemType::Simulation; }
@@ -89,18 +89,15 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
-	class AngelScriptWorld : public ISystemWorld, public std::enable_shared_from_this<AngelScriptWorld>
+	class AngelScriptWorld : public SystemWorldBase, public std::enable_shared_from_this<AngelScriptWorld>
 	{
 		friend class AngelScriptTask;
-		friend class AngelScriptTaskB;
+		friend class AngelScriptInstantiationTask;
 	public:
 		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
 		~AngelScriptWorld();
 
 		void CreateScriptMethodMap();
-
-		void OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world);
-		void OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world);
 
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
@@ -122,8 +119,13 @@ namespace FusionEngine
 		void OnActivation(const ComponentPtr& component);
 		void OnDeactivation(const ComponentPtr& component);
 
-		ISystemTask* GetTask();
-		std::vector<ISystemTask*> GetTasks();
+		void OnWorldAdded(const std::string& other_world);
+		void OnWorldRemoved(const std::string& other_world);
+
+		//void ProcessMessage(SystemWorldBase::Message message);
+
+		SystemTaskBase* GetTask();
+		std::vector<SystemTaskBase*> GetTasks();
 
 		struct DependencyNode
 		{
@@ -197,9 +199,7 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 		asIScriptEngine* m_Engine;
 		AngelScriptTask* m_ASTask;
-		AngelScriptTaskB* m_ASTaskB;
-
-		std::shared_ptr<Box2DWorld> m_Box2dWorld;
+		AngelScriptInstantiationTask* m_InstantiateTask;
 
 		std::unordered_map<std::string, std::function<void (ASScript*, int)>> m_ScriptMethodExecutors;
 		std::array<std::string, EventHandlerMethodTypeIds::NumHandlerTypes> m_EventHandlerMethodDeclarations;
@@ -215,13 +215,13 @@ namespace FusionEngine
 		bool instantiateScript(const boost::intrusive_ptr<ASScript>& script);
 	};
 
-	class AngelScriptTask : public ISystemTask
+	class AngelScriptTask : public SystemTaskBase
 	{
 	public:
 		AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
 		~AngelScriptTask();
 
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Simulation; }
 
@@ -251,13 +251,13 @@ namespace FusionEngine
 	};
 
 	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!
-	class AngelScriptTaskB : public ISystemTask
+	class AngelScriptInstantiationTask : public SystemTaskBase
 	{
 	public:
-		AngelScriptTaskB(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
-		~AngelScriptTaskB();
+		AngelScriptInstantiationTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
+		~AngelScriptInstantiationTask();
 
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Rendering; }
 

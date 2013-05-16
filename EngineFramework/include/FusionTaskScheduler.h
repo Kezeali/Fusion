@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -54,7 +54,7 @@ namespace FusionEngine
 
 		~TaskScheduler();
 
-		void SetUniverse(const std::vector<std::shared_ptr<ISystemWorld>>& universe);
+		void SetUniverse(const std::vector<std::shared_ptr<SystemWorldBase>>& universe);
 
 		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
 
@@ -88,12 +88,12 @@ namespace FusionEngine
 
 		Timer m_Timer;
 		
-		std::vector<std::shared_ptr<ISystemWorld>> m_ComponentWorlds;
-		std::vector<ISystemTask*> m_SortedTasks; // All tasks (simulation and render tasks)
-		std::vector<ISystemTask*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
+		std::vector<std::shared_ptr<SystemWorldBase>> m_ComponentWorlds;
+		std::vector<SystemTaskBase*> m_SortedTasks; // All tasks (simulation and render tasks)
+		std::vector<SystemTaskBase*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
 
-		std::vector<std::unique_ptr<ISystemTask>> m_ProxyTasks; // This is to make sure they are deleted
-		std::unique_ptr<ISystemTask> m_StreamingTask;
+		std::vector<std::unique_ptr<SystemTaskBase>> m_ProxyTasks; // This is to make sure they are deleted
+		std::unique_ptr<SystemTaskBase> m_StreamingTask;
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;

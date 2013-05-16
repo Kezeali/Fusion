@@ -32,6 +32,8 @@
 #include "FusionComponentSystem.h"
 #include "FusionComponentTypeInfo.h"
 
+#include <tbb/parallel_for.h>
+
 namespace FusionEngine
 {
 
@@ -44,9 +46,11 @@ namespace FusionEngine
 	{
 	}
 
-	void ComponentUniverse::AddWorld(const std::shared_ptr<ISystemWorld>& world)
+	void ComponentUniverse::AddWorld(const std::shared_ptr<SystemWorldBase>& world)
 	{
-		auto types = world->GetTypes();
+		const auto name = world->GetSystem()->GetName();
+
+		const auto types = world->GetTypes();
 		for (auto it = types.begin(), end = types.end(); it != end; ++it)
 		{
 			m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, world));
@@ -54,69 +58,89 @@ namespace FusionEngine
 
 		for (auto it = m_Worlds.begin(); it != m_Worlds.end(); ++it)
 		{
-			(*it)->OnWorldAdded(world);
-			world->OnWorldAdded(*it);
+			it->second->OnWorldAdded(name);
+			world->OnWorldAdded(it->first);
 		}
 
-		m_Worlds.insert(world);
+		m_Worlds[name] = world;
 	}
 
-	void ComponentUniverse::RemoveWorld(const std::shared_ptr<ISystemWorld>& world)
+	void ComponentUniverse::RemoveWorld(const std::shared_ptr<SystemWorldBase>& world)
 	{
-		m_Worlds.erase(world);
+		const auto name = world->GetSystem()->GetName();
+		m_Worlds.erase(name);
 
 		for (auto it = m_Worlds.begin(); it != m_Worlds.end(); ++it)
 		{
-			world->OnWorldRemoved(*it);
-			(*it)->OnWorldRemoved(world);
+			world->OnWorldRemoved(it->first);
+			it->second->OnWorldRemoved(name);
 		}
 
 		m_ComponentTypes.by<tag::world>().erase(world);
 	}
 
-	void ComponentUniverse::OnBeginStep()
+	void ComponentUniverse::CheckMessages(const std::shared_ptr<SystemWorldBase>& world)
 	{
-		m_Mutex.lock();
-	}
-
-	void ComponentUniverse::OnEndStep()
-	{
-		m_Mutex.unlock();
-	}
-
-	void ComponentUniverse::CheckMessages()
-	{
-		for (auto it = m_Worlds.begin(), end = m_Worlds.end(); it != end; ++it)
+		SystemWorldBase::Message message;
+		while (world->TryPopOutgoingMessage(message))
 		{
-			const auto& world = (*it);
-			while (const auto message = world->PopSystemMessage())
+			switch (message.targetType)
 			{
-				switch (message)
+			case SystemWorldBase::Message::TargetType::System:
+				if (!message.targetName.empty())
 				{
-				case ISystemWorld::MessageType::NewTypes:
+					auto entry = m_Worlds.find(message.targetName);
+					if (entry != m_Worlds.end())
 					{
-						m_ComponentTypes.by<tag::world>().erase(world);
-
-						auto types = world->GetTypes();
-						for (auto it = types.begin(), end = types.end(); it != end; ++it)
-						{
-							m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, world));
-						}
+						entry->second->ReceiveMessage(message);
 					}
-					break;
 				}
+				else
+				{
+					for (const auto& targetWorld : m_Worlds)
+						targetWorld.second->ReceiveMessage(message);
+				}
+				break;
+			case SystemWorldBase::Message::TargetType::Engine:
+				if (message.targetName.empty())
+				{
+					switch (boost::any_cast<SystemWorldBase::EngineMessage>(message.data))
+					{
+					case SystemWorldBase::EngineMessage::RefreshComponentTypes:
+						{
+							m_ComponentTypes.by<tag::world>().erase(world);
+
+							auto types = world->GetTypes();
+							for (auto it = types.begin(), end = types.end(); it != end; ++it)
+							{
+								m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, world));
+							}
+						}
+						break;
+					}
+				}
+				else
+				{
+					// TODO?: move CheckMessages into the engine manager so it can pass messages to extensions
+				}
+				break;
 			}
 		}
 	}
 
-	std::shared_ptr<ISystemWorld> ComponentUniverse::GetWorldByComponentType(const std::string& type)
+	std::shared_ptr<SystemWorldBase> ComponentUniverse::GetWorldByComponentType(const std::string& type)
 	{
 		const auto& types = m_ComponentTypes.by<tag::type>();
 		auto _where = types.find(type);
 		if (_where != types.end())
 			return _where->second;
 		else
-			return std::shared_ptr<ISystemWorld>();
+			return std::shared_ptr<SystemWorldBase>();
+	}
+
+	std::map<std::string, std::shared_ptr<SystemWorldBase>> ComponentUniverse::GetWorlds() const
+	{
+		return m_Worlds;
 	}
 
 	ComponentPtr ComponentUniverse::InstantiateComponent(const std::string& type)

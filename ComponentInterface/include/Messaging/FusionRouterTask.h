@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCellArchivistSystem
-#define H_FusionCellArchivistSystem
+#ifndef H_FusionRouterTask
+#define H_FusionRouterTask
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,33 +36,30 @@
 
 #include "FusionComponentSystem.h"
 
-#include "FusionRegionMapLoader.h"
+#include "FusionTaskRouter.h"
 
 namespace FusionEngine
 {
-
-	class CellArchivistSystem : public SystemTaskBase
+	
+	//! Router task
+	class RouterTask : public SystemTaskBase
 	{
 	public:
-		CellArchivistSystem(RegionCellArchivist* archivist)
-			: SystemTaskBase(nullptr, "CellArchivist"),
-			m_Archivist(archivist)
-		{}
-		~CellArchivistSystem() {}
+		RouterTask(SystemWorldBase* sysworld, Renderer* const renderer);
+		~RouterTask();
 
-		void Update(const float delta);
+		SystemType GetTaskType() const { return SystemType::Messaging; }
 
-		SystemType GetTaskType() const { return SystemType::Simulation; }
-
-		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return Short; }
 
 		bool IsPrimaryThreadOnly() const
 		{
-			return false;
+			return true;
 		}
+		void Update() override;
 
-	protected:
-		RegionCellArchivist* m_Archivist;
+	private:
+		Messaging::TaskRouter m_Router;
 	};
 
 }

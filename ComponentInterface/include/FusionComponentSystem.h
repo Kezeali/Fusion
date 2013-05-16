@@ -38,16 +38,20 @@
 
 #include "FusionVectorTypes.h"
 
+#include "Messaging/FusionRouterTask.h"
+
+#include <tbb/concurrent_queue.h>
+
 namespace FusionEngine
 {
 
-	class ISystemTask;
-	class ISystemWorld;
+	class SystemTaskBase;
+	class SystemWorldBase;
 	class IComponentSystem;
 
-	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
+	typedef std::shared_ptr<SystemWorldBase> SystemWorldPtr;
 
-	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04 };
+	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
 
 	//! Component System
 	class IComponentSystem
@@ -61,17 +65,17 @@ namespace FusionEngine
 
 		virtual void RegisterScriptInterface(asIScriptEngine* engine) {}
 
-		virtual std::shared_ptr<ISystemWorld> CreateWorld() = 0;
+		virtual std::shared_ptr<SystemWorldBase> CreateWorld() = 0;
 	};
 
 	//! World
-	class ISystemWorld
+	class SystemWorldBase
 	{
 	public:
-		ISystemWorld(IComponentSystem* system)
+		SystemWorldBase(IComponentSystem* system)
 			: m_System(system)
 		{}
-		virtual ~ISystemWorld() {}
+		virtual ~SystemWorldBase() {}
 
 		IComponentSystem* GetSystem() const
     {
@@ -80,42 +84,66 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
-		enum MessageType
+		/*void SendMessage(Message message)
 		{
-			None = 0,
-			NewTypes = 1
+			m_OutgoingMessages.push(message);
+		}
+
+		void ReceiveMessage(Message message)
+		{
+			m_IncommingMessages.push(message);
+		}
+
+		void PostSelfMessage(const char type, boost::any data)
+		{
+			ReceiveMessage(Message(Message::TargetType::System, GetSystem()->GetName(), type, data));
+		}
+
+		void PostSystemMessage(std::string systemName, const char type, boost::any data)
+		{
+			SendMessage(Message(Message::TargetType::System, systemName, type, data));
+		}
+
+		enum class EngineMessage
+		{
+			RefreshComponentTypes
 		};
 
-		void PostSystemMessage(MessageType message)
+		void PostEngineMessage(EngineMessage message)
 		{
-			m_SystemMessages.push_back(message);
+			SendMessage(Message(Message::TargetType::Engine, "", 0, message));
 		}
 
-		MessageType PopSystemMessage()
+		bool TryPopOutgoingMessage(Message& message)
 		{
-			MessageType message = MessageType::None;
-			if (!m_SystemMessages.empty())
+			return m_OutgoingMessages.try_pop(message);
+		}
+
+		bool TryPopIncommingMessage(Message& message)
+		{
+			return m_IncommingMessages.try_pop(message);
+		}
+
+		void ProcessReceivedMessages()
+		{
+			Message message;
+			while (TryPopIncommingMessage(message))
 			{
-				message = m_SystemMessages.back();
-				m_SystemMessages.pop_back();
+				ProcessMessage(message);
 			}
-			return message;
-		}
+		}*/
 
-		virtual void OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world) {}
-		virtual void OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world) {}
+		virtual void ProcessMessage(Messaging::Message message) = 0;
+
+		virtual void OnWorldAdded(const std::string& other_world_name) {}
+		virtual void OnWorldRemoved(const std::string& other_world_name) {}
 
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
-		//! Instanciate method for physics / transform components
-		virtual ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
-		{
-			return InstantiateComponent(type);
-		}
 
 		//! Allows a system to prevent an entity from activating until all required resources are loaded
 		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
-		//! Cancel preperation & drop any references to the given component
+		//! Cancel preparation & drop any references to the given component
 		virtual void CancelPreparation(const ComponentPtr& component)
 		{
 			if (component->IsPreparing())
@@ -126,38 +154,43 @@ namespace FusionEngine
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
 		virtual void OnDeactivation(const ComponentPtr& component) = 0;
 
-		virtual ISystemTask* GetTask() { return nullptr; }
+		virtual SystemTaskBase* GetTask() { return nullptr; }
 
-		virtual std::vector<ISystemTask*> GetTasks()
+		virtual std::vector<SystemTaskBase*> GetTasks()
 		{
 			FSN_ASSERT(GetTask() != nullptr);
-			std::vector<ISystemTask*> tasks(1);
+			std::vector<SystemTaskBase*> tasks(1);
 			tasks[0] = GetTask();
 			return tasks;
 		}
 
 	private:
 		IComponentSystem* m_System;
-		std::vector<MessageType> m_SystemMessages;
+
+		std::unique_ptr<RouterTask> m_RouterTask;
 	};
 
 	//! Task
-	class ISystemTask
+	class SystemTaskBase
 	{
 	public:
-		ISystemTask(ISystemWorld* world) : m_SystemWorld(world)
+		SystemTaskBase(SystemWorldBase* world, const std::string& name)
+			: m_SystemWorld(world),
+			m_Name(name)
 		{}
-		virtual ~ISystemTask() {}
+		virtual ~SystemTaskBase() {}
 
-		ISystemWorld* GetSystemWorld() const { return m_SystemWorld; }
+		SystemWorldBase* GetSystemWorld() const { return m_SystemWorld; }
 
 		SystemType GetSystemType() const;
 
-		virtual std::string GetName() const { return GetSystemWorld()->GetSystem()->GetName(); }
+		std::string GetName() const { return m_Name; }
 
-		virtual void Update(const float delta) = 0;
+		virtual void Update() = 0;
 
 		virtual SystemType GetTaskType() const = 0;
+
+		virtual std::vector<std::string> GetDependencies() const { return std::vector<std::string>(); }
 
 		enum PerformanceHint : uint16_t
 		{
@@ -172,16 +205,17 @@ namespace FusionEngine
 		virtual bool IsPrimaryThreadOnly() const = 0;
 
 	protected:
-		ISystemWorld *m_SystemWorld;
+		SystemWorldBase *m_SystemWorld;
+		std::string m_Name;
 	};
 
 
-	inline SystemType ISystemTask::GetSystemType() const
+	inline SystemType SystemTaskBase::GetSystemType() const
 	{
 		return GetSystemWorld()->GetSystemType();
 	}
 
-	inline SystemType ISystemWorld::GetSystemType() const
+	inline SystemType SystemWorldBase::GetSystemType() const
 	{
 		return GetSystem()->GetType();
 	}

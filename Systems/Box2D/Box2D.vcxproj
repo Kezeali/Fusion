@@ -116,6 +116,7 @@
     <ClInclude Include="include\FusionBox2DComponent.h" />
     <ClInclude Include="include\FusionBox2DContactListener.h" />
     <ClInclude Include="include\FusionBox2DSystem.h" />
+    <ClInclude Include="include\FusionBox2DSystemMessageTypes.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>

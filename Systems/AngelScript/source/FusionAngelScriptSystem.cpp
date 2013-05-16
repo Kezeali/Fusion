@@ -41,7 +41,7 @@
 #include "FusionXML.h"
 
 // Collision handling
-#include "FusionBox2DSystem.h"
+#include "FusionBox2DSystemMessageTypes.h"
 #include "FusionB2ContactListenerASScript.h"
 
 #include "FusionPlayerRegistry.h"
@@ -540,13 +540,13 @@ namespace FusionEngine
 			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 	}
 
-	std::shared_ptr<ISystemWorld> AngelScriptSystem::CreateWorld()
+	std::shared_ptr<SystemWorldBase> AngelScriptSystem::CreateWorld()
 	{
 		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager);
 	}
 
 	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
-		: ISystemWorld(system),
+		: SystemWorldBase(system),
 		m_ScriptManager(manager)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
@@ -559,31 +559,23 @@ namespace FusionEngine
 		CreateScriptMethodMap();
 
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
-		m_ASTaskB = new AngelScriptTaskB(this, m_ScriptManager);
+		m_InstantiateTask = new AngelScriptInstantiationTask(this, m_ScriptManager);
 	}
 
 	AngelScriptWorld::~AngelScriptWorld()
 	{
 		m_CheckForChangesConnection.disconnect();
 
-		delete m_ASTaskB;
+		delete m_InstantiateTask;
 		delete m_ASTask;
 	}
 
-	void AngelScriptWorld::OnWorldAdded(const std::shared_ptr<ISystemWorld>& other_world)
+	void AngelScriptWorld::OnWorldAdded(const std::string& other_world)
 	{
-		if (auto box2d = std::dynamic_pointer_cast<Box2DWorld>(other_world))
-		{
-			m_Box2dWorld = box2d;
-		}
 	}
 
-	void AngelScriptWorld::OnWorldRemoved(const std::shared_ptr<ISystemWorld>& other_world)
+	void AngelScriptWorld::OnWorldRemoved(const std::string& other_world)
 	{
-		if (auto box2d = std::dynamic_pointer_cast<Box2DWorld>(other_world))
-		{
-			m_Box2dWorld = box2d;
-		}
 	}
 
 	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
@@ -1063,7 +1055,7 @@ namespace FusionEngine
 
 		ComponentTypeInfoCache::getSingleton().ClearCache();
 
-		ISystemWorld::PostSystemMessage(MessageType::NewTypes);
+		PostEngineMessage(EngineMessage::RefreshComponentTypes);
 
 		SendToConsole("Finished Building Scripts");
 	}
@@ -1166,7 +1158,7 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			if (scriptComponent->HasContactListener())
-				m_Box2dWorld->RemoveContactListener(scriptComponent->GetContactListener());
+				PostSystemMessage("Box2DWorld", char(Box2DSystemMessageType::RemoveContactListener), scriptComponent->GetContactListener());
 			// Find and remove the deactivated script
 			{
 				auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
@@ -1187,16 +1179,16 @@ namespace FusionEngine
 		}
 	}
 
-	ISystemTask* AngelScriptWorld::GetTask()
+	SystemTaskBase* AngelScriptWorld::GetTask()
 	{
-		return m_ASTask;
+		return m_InstantiateTask;
 	}
 
-	std::vector<ISystemTask*> AngelScriptWorld::GetTasks()
+	std::vector<SystemTaskBase*> AngelScriptWorld::GetTasks()
 	{
-		std::vector<ISystemTask*> tasks;
+		std::vector<SystemTaskBase*> tasks;
 		tasks.push_back(m_ASTask);
-		tasks.push_back(m_ASTaskB);
+		tasks.push_back(m_InstantiateTask);
 		return tasks;
 	}
 
@@ -1243,7 +1235,7 @@ namespace FusionEngine
 	}
 
 	AngelScriptTask::AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "AngelScript"),
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{
@@ -1272,14 +1264,14 @@ namespace FusionEngine
 		m_PlayerRemovedConnection.disconnect();
 	}
 
-	AngelScriptTaskB::AngelScriptTaskB(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
-		: ISystemTask(sysworld),
+	AngelScriptInstantiationTask::AngelScriptInstantiationTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
+		: SystemTaskBase(sysworld, "AngelScriptInstantiation"),
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{
 	}
 
-	AngelScriptTaskB::~AngelScriptTaskB()
+	AngelScriptInstantiationTask::~AngelScriptInstantiationTask()
 	{
 	}
 
@@ -1341,16 +1333,13 @@ namespace FusionEngine
 				}
 			}
 
-			if (m_Box2dWorld)
+			const bool hasCollisionHandler = script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorEnter])
+				|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorExit])
+				|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionEnter])
+				|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionExit]);
+			if (hasCollisionHandler)
 			{
-				const bool hasCollisionHandler = script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorEnter])
-					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::SensorExit])
-					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionEnter])
-					|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionExit]);
-				if (hasCollisionHandler)
-				{
-					m_Box2dWorld->AddContactListener(script->GetContactListener());
-				}
+				PostSystemMessage("Box2DWorld", char(Box2DSystemMessageType::AddContactListener), script->GetContactListener());
 			}
 			// Initialise the event-handler method index
 			for (size_t i = 0; i < m_EventHandlerMethodDeclarations.size(); ++i)
@@ -1362,7 +1351,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	void AngelScriptTaskB::Update(const float delta)
+	void AngelScriptInstantiationTask::Update()
 	{
 		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
 		std::vector<boost::intrusive_ptr<ASScript>> notInstantiated;
@@ -1497,7 +1486,7 @@ namespace FusionEngine
 		return false;
 	}
 
-	void AngelScriptTask::Update(const float delta)
+	void AngelScriptTask::Update()
 	{
 		{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;

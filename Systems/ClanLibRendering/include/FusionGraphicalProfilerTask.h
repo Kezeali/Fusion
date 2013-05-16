@@ -51,7 +51,7 @@ namespace FusionEngine
 	class CLRenderWorld;
 
 	//! ClanLib render task
-	class GraphicalProfilerTask : public ISystemTask
+	class GraphicalProfilerTask : public SystemTaskBase
 	{
 	public:
 		GraphicalProfilerTask(CLRenderWorld* sysworld, clan::Canvas canvas);
@@ -66,7 +66,7 @@ namespace FusionEngine
 			return false;
 		}
 		
-		void Update(const float delta);
+		void Update() override;
 
 	private:
 		CLRenderWorld* m_RenderWorld;

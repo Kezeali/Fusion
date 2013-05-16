@@ -119,6 +119,7 @@
     <ClInclude Include="include\FusionCLRenderComponent.h" />
     <ClInclude Include="include\FusionCLRenderExtension.h" />
     <ClInclude Include="include\FusionCLRenderSystem.h" />
+    <ClInclude Include="include\FusionCLRenderSystemMessageTypes.h" />
     <ClInclude Include="include\FusionCLRenderTask.h" />
     <ClInclude Include="include\FusionGraphicalProfilerTask.h" />
     <ClInclude Include="include\FusionRenderAction.h" />

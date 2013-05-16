@@ -637,7 +637,7 @@ namespace FusionEngine
 			m_GotFocusSlot = m_DisplayWindow.sig_got_focus().connect(m_ResourceManager.get(), &ResourceManager::CheckForChanges);
 
 			// Create worlds
-			std::vector<std::shared_ptr<ISystemWorld>> worlds;
+			std::vector<std::shared_ptr<SystemWorldBase>> worlds;
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
 				auto world = it->second->CreateWorld();
@@ -652,7 +652,7 @@ namespace FusionEngine
 			m_Scheduler->SetUniverse(worlds);
 
 			// Check for any messages posted during world creation
-			m_ComponentUniverse->CheckMessages();
+			//m_ComponentUniverse->CheckMessages();
 
 			// Activate extensions
 			for (auto it = m_ActiveExtensions.begin(), end = m_ActiveExtensions.end(); it != end; ++it)
@@ -763,7 +763,7 @@ namespace FusionEngine
 					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
 				}
 
-				m_ComponentUniverse->CheckMessages();
+				//m_ComponentUniverse->CheckMessages();
 
 				// Propagate property changes
 				{

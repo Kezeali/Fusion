@@ -50,7 +50,7 @@ namespace FusionEngine
 	class B2DebugDraw;
 
 	//! ClanLib render task
-	class CLRenderTask : public ISystemTask
+	class CLRenderTask : public SystemTaskBase
 	{
 	public:
 		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
@@ -65,11 +65,10 @@ namespace FusionEngine
 			return true;
 		}
 
-		void EnqueueViewportRenderAction(const RenderAction& action);
-		void EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action);
-		void EnqueueWorldRenderAction(const RenderAction& action);
+		void SetRenderAction(const RenderAction& action);
+		void RemoveRenderAction(const RenderAction& action);
 		
-		void Update(const float delta);
+		void Update() override;
 
 		void Draw();
 
@@ -84,48 +83,27 @@ namespace FusionEngine
 		clan::Font m_DebugFont;
 		clan::Font m_DebugFont2;
 
-		typedef tbb::concurrent_queue<RenderAction> RenderActionQueue;
-
 		struct ViewportRenderAction
 		{
 			ViewportPtr viewport;
 			RenderAction action;
 		};
 
-		template <class ActionT>
-		class RenderActionCategory
-		{
-		public:
-			void Push(ActionT action)
-			{
-				actionQueue.push(action);
-			}
+		typedef std::map<std::string, RenderAction> RenderActionsMap;
+		typedef std::map<std::string, ViewportRenderAction> ViewportRenderActionsMap;
 
-			const ActionT& GetAction()
-			{
-				while (actionQueue.try_pop(mostRecentAction));
-				return mostRecentAction;
-			}
-
-		private:
-			typedef typename tbb::concurrent_queue<ActionT> RenderActionQueue;
-
-			RenderActionQueue actionQueue;
-			ActionT mostRecentAction;
-		};
-
-		RenderActionCategory<RenderAction> m_RenderActions;
-		RenderActionCategory<ViewportRenderAction> m_SingleViewportRenderActions;
-		RenderActionCategory<RenderAction> m_WorldRenderActions;
+		RenderActionsMap m_RenderActions;
+		ViewportRenderActionsMap m_SingleViewportRenderActions;
+		RenderActionsMap m_WorldRenderActions;
 	};
 
-	class CLRenderGUITask : public ISystemTask
+	class CLRenderGUITask : public SystemTaskBase
 	{
 	public:
 		CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer);
 		~CLRenderGUITask();
 
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Simulation; }
 

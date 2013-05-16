@@ -227,14 +227,6 @@ namespace FusionEngine
 			ctx->Abort();
 	}
 
-	static void* ScritAlloc(size_t size)
-	{
-	}
-
-	static void ScriptFree(void* ptr)
-	{
-	}
-
 	//////////
 	// ScriptingManager
 	ScriptManager::ScriptManager()

@@ -34,6 +34,7 @@
 #include "FusionMaths.h"
 #include "FusionProfiling.h"
 #include "FusionBox2DContactListener.h"
+#include "FusionBox2DSystemMessageTypes.h"
 
 // TEMP: For authority contact listener:
 #include "FusionEntity.h"
@@ -98,7 +99,7 @@ namespace FusionEngine
 	{
 	}
 
-	std::shared_ptr<ISystemWorld> Box2DSystem::CreateWorld()
+	std::shared_ptr<SystemWorldBase> Box2DSystem::CreateWorld()
 	{
 		return std::make_shared<Box2DWorld>(this);
 	}
@@ -284,7 +285,7 @@ namespace FusionEngine
 	};
 
 	Box2DWorld::Box2DWorld(IComponentSystem* system)
-		: ISystemWorld(system)
+		: SystemWorldBase(system)
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity);
@@ -488,16 +489,35 @@ namespace FusionEngine
 		}
 	}
 
-	std::vector<ISystemTask*> Box2DWorld::GetTasks()
+	void Box2DWorld::ProcessMessage(SystemWorldBase::Message message)
 	{
-		std::vector<ISystemTask*> tasks(2);
+		switch (message.messageType)
+		{
+		case Box2DSystemMessageType::AddContactListener:
+			{
+				auto listener = boost::any_cast<std::shared_ptr<Box2DContactListener>>(message.data);
+				AddContactListener(listener);
+			}
+			break;
+		case Box2DSystemMessageType::RemoveContactListener:
+			{
+				auto listener = boost::any_cast<std::shared_ptr<Box2DContactListener>>(message.data);
+				RemoveContactListener(listener);
+			}
+			break;
+		}
+	}
+
+	std::vector<SystemTaskBase*> Box2DWorld::GetTasks()
+	{
+		std::vector<SystemTaskBase*> tasks(2);
 		tasks[0] = m_B2DTask;
 		tasks[1] = m_B2DInterpTask;
 		return tasks;
 	}
 
 	Box2DTask::Box2DTask(Box2DWorld* sysworld, b2World* const world)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "Box2DTask"),
 		m_B2DSysWorld(sysworld),
 		m_World(world)
 	{
@@ -526,7 +546,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Box2DTask::Update(const float delta)
+	void Box2DTask::Update()
 	{
 		// Late initialisation
 		m_B2DSysWorld->InitialiseActiveComponents();
@@ -552,7 +572,7 @@ namespace FusionEngine
 		}
 
 		// I'm glad I don't have to worry about what goes on in here :)
-		m_World->Step(delta, 8, 8);
+		m_World->Step(DeltaTime::GetDeltaTime(), 8, 8);
 		m_World->ClearForces();
 
 		// Setup property synch by marking them as changed and
@@ -614,7 +634,7 @@ namespace FusionEngine
 	}
 
 	Box2DInterpolateTask::Box2DInterpolateTask(Box2DWorld* sysworld)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "Box2DInterpolate"),
 		m_B2DSysWorld(sysworld)
 	{
 	}
@@ -666,7 +686,7 @@ namespace FusionEngine
 	//	Lerp(out, start, end, alpha);
 	//}
 
-	void Box2DInterpolateTask::Update(const float delta)
+	void Box2DInterpolateTask::Update()
 	{
 		FSN_ASSERT(DeltaTime::GetInterpolationAlpha() <= 1.0f);
 		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;

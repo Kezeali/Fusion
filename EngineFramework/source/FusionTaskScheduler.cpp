@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011-2012 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -83,13 +83,13 @@ namespace FusionEngine
 		return m_DeltaTime;
 	}
 
-	class SystemTaskExecutor : public ISystemTask
+	class SystemTaskExecutor : public SystemTaskBase
 	{
 	public:
-		SystemTaskExecutor(ISystemWorld* world, const std::vector<ISystemTask*>& sub_tasks);
+		SystemTaskExecutor(SystemWorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks);
 
 	private:
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return m_TaskType; }
 
@@ -97,14 +97,14 @@ namespace FusionEngine
 
 		bool IsPrimaryThreadOnly() const { return m_PrimaryThreadOnly; }
 
-		std::vector<ISystemTask*> m_SubTasks;
+		std::vector<SystemTaskBase*> m_SubTasks;
 		SystemType m_TaskType;
 		PerformanceHint m_PerfHint;
 		bool m_PrimaryThreadOnly;
 	};
 
-	SystemTaskExecutor::SystemTaskExecutor(ISystemWorld* world, const std::vector<ISystemTask*>& sub_tasks)
-		: ISystemTask(world),
+	SystemTaskExecutor::SystemTaskExecutor(SystemWorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks)
+		: SystemTaskBase(world, world->GetSystem()->GetName()),
 		m_SubTasks(sub_tasks)
 	{
 		FSN_ASSERT(!sub_tasks.empty());
@@ -129,11 +129,11 @@ namespace FusionEngine
 		}
 	}
 
-	void SystemTaskExecutor::Update(const float delta)
+	void SystemTaskExecutor::Update()
 	{
 		for (auto it = m_SubTasks.begin(), end = m_SubTasks.end(); it != end; ++it)
 		{
-			(*it)->Update(delta);
+			(*it)->Update();
 		}
 	}
 
@@ -148,7 +148,7 @@ namespace FusionEngine
 		SystemType::Simulation | SystemType::Streaming
 	};
 
-	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<ISystemWorld>>& universe)
+	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<SystemWorldBase>>& universe)
 	{
 		m_ComponentWorlds = universe;
 
@@ -166,15 +166,15 @@ namespace FusionEngine
 			{
 				const bool primaryThread = i == 0;
 				// Grab the tasks that do / don't need to run in the primary thread
-				std::vector<ISystemTask*> threadRestrictionTasks;
+				std::vector<SystemTaskBase*> threadRestrictionTasks;
 				std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(threadRestrictionTasks),
-					[primaryThread](ISystemTask* task) { return (task->IsPrimaryThreadOnly() == primaryThread); });
+					[primaryThread](SystemTaskBase* task) { return (task->IsPrimaryThreadOnly() == primaryThread); });
 				if (threadRestrictionTasks.size() > 1)
 				{
 					// Create a proxy-task to execute all the tasks for this system if there is more than one
-					ISystemTask* task = new SystemTaskExecutor(world.get(), threadRestrictionTasks);
+					SystemTaskBase* task = new SystemTaskExecutor(world.get(), threadRestrictionTasks);
 					m_SortedTasks.push_back(task);
-					m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
+					m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
 				}
 				else if (!threadRestrictionTasks.empty())
 					m_SortedTasks.push_back(threadRestrictionTasks.front());
@@ -184,15 +184,15 @@ namespace FusionEngine
 				{
 					const uint8_t systemTypeCombination = s_SystemTypeCombinations[i];
 
-					std::vector<ISystemTask*> systemTypeTasks;
+					std::vector<SystemTaskBase*> systemTypeTasks;
 					std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
-						[systemTypeCombination, primaryThread](ISystemTask* task) { return (task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
+						[systemTypeCombination, primaryThread](SystemTaskBase* task) { return (task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
 
 					if (systemTypeTasks.size() > 1)
 					{
 						auto task = new SystemTaskExecutor(world.get(), systemTypeTasks);
 						m_GroupedSortedTasks[systemTypeCombination].push_back(task);
-						m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
+						m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
 					}
 					else if (!systemTypeTasks.empty())
 						m_GroupedSortedTasks[systemTypeCombination].push_back(systemTypeTasks.front());
@@ -217,7 +217,7 @@ namespace FusionEngine
 	namespace
 	{
 		template <typename Pred>
-		void sortTaskVector(std::vector<ISystemTask*>& vec, Pred pred)
+		void sortTaskVector(std::vector<SystemTaskBase*>& vec, Pred pred)
 		{
 			std::sort(vec.begin(), vec.end(), pred);
 		}
@@ -225,7 +225,7 @@ namespace FusionEngine
 
 	void TaskScheduler::SortTasks()
 	{
-		auto pred = [](ISystemTask* first, ISystemTask* second)->bool
+		auto pred = [](SystemTaskBase* first, SystemTaskBase* second)->bool
 		{
 			return first->GetPerformanceHint() < second->GetPerformanceHint();
 		};
@@ -303,7 +303,6 @@ namespace FusionEngine
 
 		FSN_ASSERT(DeltaTime::m_Alpha >= 0.0f && (m_FramesSkipped > 0 || DeltaTime::m_Alpha <= 1.0f));
 
-		// TODO: remove this
 		taskFilter &= what;
 		if (taskFilter == 0)
 			return taskFilter;
@@ -323,11 +322,11 @@ namespace FusionEngine
 			// Schedule the tasks for component-worlds that are ready for execution
 			if ((taskFilter & everySystemType) == everySystemType)
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);
+				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks);
 			}
 			else
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_GroupedSortedTasks[taskFilter], deltaTime);
+				m_TaskManager->SpawnJobsForSystemTasks(m_GroupedSortedTasks[taskFilter]);
 			}
 
 			m_TaskManager->WaitForSystemTasks();
@@ -338,7 +337,7 @@ namespace FusionEngine
 			{
 				auto world = *it;
 				if (world->GetSystemType() & taskFilter)
-					world->GetTask()->Update(deltaTime);
+					world->GetTask()->Update();
 			}
 
 			if (taskFilter & SystemType::Streaming)

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -19,14 +19,12 @@
 *
 *    3. This notice may not be removed or altered from any source distribution.
 *
-*
-*  File Author(s):
-*
+*  File Author:
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCellArchivistSystem
-#define H_FusionCellArchivistSystem
+#ifndef H_FusionMessage
+#define H_FusionMessage
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,37 +32,41 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
+#include "FusionAddress.h"
 
-#include "FusionRegionMapLoader.h"
-
-namespace FusionEngine
+namespace FusionEngine { namespace Messaging
 {
 
-	class CellArchivistSystem : public SystemTaskBase
+	struct Message
 	{
-	public:
-		CellArchivistSystem(RegionCellArchivist* archivist)
-			: SystemTaskBase(nullptr, "CellArchivist"),
-			m_Archivist(archivist)
+		Address targetName;
+		char messageType;
+		boost::any data;
+		Message()
+			: messageType(0)
 		{}
-		~CellArchivistSystem() {}
-
-		void Update(const float delta);
-
-		SystemType GetTaskType() const { return SystemType::Simulation; }
-
-		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
-
-		bool IsPrimaryThreadOnly() const
+		Message(TargetType targetType, std::string targetName, char messageType, boost::any data)
+			: targetType(targetType),
+			targetName(targetName),
+			messageType(messageType),
+			data(data)
+		{}
+		Message(const Message& other)
+			: targetType(other.targetType),
+			targetName(other.targetName),
+			messageType(other.messageType),
+			data(other.data)
 		{
-			return false;
 		}
-
-	protected:
-		RegionCellArchivist* m_Archivist;
+		Message(Message&& other)
+			: targetType(other.targetType),
+			targetName(other.targetName),
+			messageType(other.messageType),
+			data(other.data)
+		{
+		}
 	};
 
-}
+} }
 
 #endif

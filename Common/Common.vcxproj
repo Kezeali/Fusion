@@ -114,6 +114,7 @@
     <ClCompile Include="source\FusionCommonAppTypes.cpp" />
     <ClCompile Include="source\FusionConsole.cpp" />
     <ClCompile Include="source\FusionConsoleStdOutWriter.cpp" />
+    <ClCompile Include="source\FusionEASTLScalableAllocator.cpp" />
     <ClCompile Include="source\FusionException.cpp" />
     <ClCompile Include="source\FusionIDStack.cpp" />
     <ClCompile Include="source\FusionImageLoader.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="include\FusionCommonAppTypes.h" />
     <ClInclude Include="include\FusionConsole.h" />
     <ClInclude Include="include\FusionConsoleStdOutWriter.h" />
+    <ClInclude Include="include\FusionEASTLScalableAllocator.h" />
     <ClInclude Include="include\FusionEvent.h" />
     <ClInclude Include="include\FusionException.h" />
     <ClInclude Include="include\FusionExceptionFactory.h" />

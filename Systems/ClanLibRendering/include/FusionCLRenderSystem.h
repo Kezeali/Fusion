@@ -62,7 +62,7 @@ namespace FusionEngine
 	public:
 		CLRenderSystem(const clan::Canvas& window, CameraSynchroniser* camera_sync);
 
-		std::shared_ptr<ISystemWorld> CreateWorld();
+		std::shared_ptr<SystemWorldBase> CreateWorld();
 
 	private:
 		SystemType GetType() const { return SystemType::Rendering; }
@@ -78,7 +78,7 @@ namespace FusionEngine
 	class SpriteDefinitionCache;
 
 	//! ClanLib Renderer
-	class CLRenderWorld : public ISystemWorld
+	class CLRenderWorld : public SystemWorldBase
 	{
 	public:
 		CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync);
@@ -90,13 +90,6 @@ namespace FusionEngine
 
 		void AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& viewport);
 		void RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas);
-
-		//! Enqueue an action to get executed when each viewport is rendered
-		void EnqueueViewportRenderAction(const RenderAction& action);
-		//! Enqueue an action to get executed when a specific viewport is rendered
-		void EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action);
-		//! Enqueue an action to get executed when the world is rendered
-		void EnqueueWorldRenderAction(const RenderAction& action);
 
 		void AddQueuedViewports();
 
@@ -126,7 +119,9 @@ namespace FusionEngine
 		void OnActivation(const ComponentPtr& component);
 		void OnDeactivation(const ComponentPtr& component);
 
-		std::vector<ISystemTask*> GetTasks();
+		void ProcessMessage(Messaging::Message message) override;
+
+		std::vector<SystemTaskBase*> GetTasks();
 
 		CLRenderTask* m_RenderTask;
 		CLRenderGUITask* m_GUITask;

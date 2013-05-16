@@ -1576,7 +1576,7 @@ namespace FusionEngine
 			//  entity from the active list
 			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
-				// Keep entities active untill they are no longer referenced
+				// Keep entities active until they are no longer referenced
 				if (hasNoActiveReferences(entity))
 				{
 					if (entity->IsActive())
@@ -1586,7 +1586,7 @@ namespace FusionEngine
 
 					entity->RemoveDeactivateMark();
 
-					continue;
+					continue; // causes this item to be overwritten with the next, or to be after newEnd if it is currently the last in the list
 				}
 			}
 			
@@ -1869,7 +1869,7 @@ namespace FusionEngine
 		return allAreActive;
 	}
 
-	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component)
+	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<SystemWorldBase>& world, const ComponentPtr& component)
 	{
 #ifdef FSN_PROFILING_ENABLED
 		Profiling::getSingleton().AddTime("~Activated" + component->GetType(), double(1.0));

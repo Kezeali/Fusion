@@ -62,7 +62,7 @@ void intrusive_ptr_release(asIScriptFunction *ptr);
 namespace FusionEngine
 {
 
-	class ISystemWorld;
+	class SystemWorldBase;
 	class AngelScriptWorld;
 	class Box2DWorld;
 	class CLRenderWorld;
@@ -128,7 +128,7 @@ namespace FusionEngine
 		void SetWorldSaver(WorldSaver* saver) { m_Saver = saver; }
 		void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) { m_DataArchiver = archiver; }
 
-		void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world);
+		void OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world);
 
 		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw);
 

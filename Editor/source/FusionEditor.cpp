@@ -1385,7 +1385,7 @@ namespace FusionEngine
 		ScriptManager::getSingleton().AddFile("/Data/core/gui/gui_popup.as", "gui_popup.as");
 	}
 
-	void Editor::OnWorldCreated(const std::shared_ptr<ISystemWorld>& world)
+	void Editor::OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world)
 	{
 		if (auto asw = std::dynamic_pointer_cast<AngelScriptWorld>(world))
 		{

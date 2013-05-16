@@ -42,22 +42,21 @@
 namespace FusionEngine
 {
 
-	class StreamingTask : public ISystemTask
+	class StreamingTask : public SystemTaskBase
 	{
 	public:
 		StreamingTask(EntityManager* streaming_manager, RegionCellArchivist* archivist)
-			: ISystemTask(nullptr), m_StreamingManager(streaming_manager), m_Archivist(archivist),
-			newSlowness(0u), lastTick(0)
+			: SystemTaskBase(nullptr, "Streaming"),
+			m_StreamingManager(streaming_manager),
+			m_Archivist(archivist)
 		{}
 		~StreamingTask() {}
 
-		void Update(const float delta);
-
-		std::string GetName() const { return "Streaming"; }
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Simulation; }
 
-		PerformanceHint GetPerformanceHint() const { return ISystemTask::LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
 
 		bool IsPrimaryThreadOnly() const
 		{
@@ -67,24 +66,22 @@ namespace FusionEngine
 	protected:
 		EntityManager* m_StreamingManager;
 		RegionCellArchivist* m_Archivist;
-
-		uint32_t newSlowness;
-		Tick_t lastTick;
 	};
 
-	class StreamingTaskB : public ISystemTask
+	class StreamingTaskB : public SystemTaskBase
 	{
 	public:
 		StreamingTaskB(EntityManager* streaming_manager)
-			: ISystemTask(nullptr), m_StreamingManager(streaming_manager)
+			: SystemTaskBase(nullptr, "Streaming-CamerasOnly"),
+			m_StreamingManager(streaming_manager)
 		{}
 		~StreamingTaskB() {}
 
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Rendering; }
 
-		PerformanceHint GetPerformanceHint() const { return ISystemTask::LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
 
 		bool IsPrimaryThreadOnly() const
 		{
@@ -95,13 +92,13 @@ namespace FusionEngine
 		EntityManager* m_StreamingManager;
 	};
 	
-	inline void StreamingTask::Update(const float delta)
+	inline void StreamingTask::Update()
 	{
 		m_Archivist->BeginTransaction();
 		try
 		{
 			m_StreamingManager->UpdateActiveRegions();
-			m_StreamingManager->ProcessActiveEntities(delta);
+			m_StreamingManager->ProcessActiveEntities(DeltaTime::GetDeltaTime());
 		}
 		catch (...)
 		{
@@ -111,7 +108,7 @@ namespace FusionEngine
 		m_Archivist->EndTransaction();
 	}
 	
-	inline void StreamingTaskB::Update(const float delta)
+	inline void StreamingTaskB::Update()
 	{
 		m_StreamingManager->UpdateActiveRegions();
 	}

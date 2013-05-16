@@ -37,5 +37,8 @@
     <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>Source Files\PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionBox2DSystemMessageTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

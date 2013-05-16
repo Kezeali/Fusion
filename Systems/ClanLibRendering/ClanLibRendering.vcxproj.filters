@@ -64,5 +64,8 @@
     <ClInclude Include="include\FusionGraphicalProfilerTask.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionCLRenderSystemMessageTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

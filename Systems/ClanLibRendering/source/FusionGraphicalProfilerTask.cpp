@@ -30,6 +30,7 @@
 #include "FusionGraphicalProfilerTask.h"
 
 #include "FusionCLRenderSystem.h"
+#include "FusionCLRenderSystemMessageTypes.h"
 
 #include "FusionDeltaTime.h"
 
@@ -47,7 +48,7 @@ namespace FusionEngine
 {
 
 	GraphicalProfilerTask::GraphicalProfilerTask(CLRenderWorld* sysworld, clan::Canvas canvas)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "GraphicalProfilerTask"),
 		m_RenderWorld(sysworld),
 		m_PollingInterval(0.1f),
 		m_LastPolledTime(0.0f),
@@ -101,9 +102,9 @@ namespace FusionEngine
 		}
 	}
 
-	void GraphicalProfilerTask::Update(const float delta)
+	void GraphicalProfilerTask::Update()
 	{
-		m_LastPolledTime += delta;
+		m_LastPolledTime += DeltaTime::GetActualDeltaTime();
 		if (m_LastPolledTime < m_PollingInterval)
 		{
 			// scrub
@@ -227,7 +228,7 @@ namespace FusionEngine
 
 			auto font = m_DebugFont;
 
-			m_RenderWorld->EnqueueViewportRenderAction([graphRect, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
+			m_SystemWorld->PostSystemMessage("CLRenderSystem", char(CLRenderSystemMessageType::SetRenderAction), [graphRect, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
 			{
 				clan::Colorf colour = clan::Colorf::lightyellow;
 				canvas.draw_box(graphRect, colour);

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011-2012 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -67,14 +67,14 @@ namespace FusionEngine
 
 		std::string GetName() const { return "Box2DSystem"; }
 		
-		std::shared_ptr<ISystemWorld> CreateWorld();
+		std::shared_ptr<SystemWorldBase> CreateWorld();
 	};
 
 	class AuthorityContactManager;
 	class TransformPinner;
 
 	//! Manages a b2World
-	class Box2DWorld : public ISystemWorld, public std::enable_shared_from_this<Box2DWorld>
+	class Box2DWorld : public SystemWorldBase, public std::enable_shared_from_this<Box2DWorld>
 	{
 		friend class Box2DTask;
 		friend class Box2DInterpolateTask;
@@ -82,9 +82,6 @@ namespace FusionEngine
 		//! CTOR
 		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
-
-		void AddContactListener(const std::shared_ptr<Box2DContactListener>& listener);
-		void RemoveContactListener(const std::shared_ptr<Box2DContactListener>& listener);
 
 		// NOTE: due to how Box2DBody destruction is handled, Box2DWorld should
 		//  NEVER have a Clear method (that clears the b2World), nor should you
@@ -101,10 +98,15 @@ namespace FusionEngine
 		ComponentPtr InstantiateComponent(const std::string& type);
 		ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 
-		void OnActivation(const ComponentPtr& component);
-		void OnDeactivation(const ComponentPtr& component);
+		void OnActivation(const ComponentPtr& component) override;
+		void OnDeactivation(const ComponentPtr& component) override;
 
-		std::vector<ISystemTask*> GetTasks();
+		void ProcessMessage(Messaging::Message message) override;
+
+		void AddContactListener(const std::shared_ptr<Box2DContactListener>& listener);
+		void RemoveContactListener(const std::shared_ptr<Box2DContactListener>& listener);
+
+		std::vector<SystemTaskBase*> GetTasks();
 
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
@@ -122,14 +124,14 @@ namespace FusionEngine
 	};
 
 	//! Updates Box2D-based physics components
-	class Box2DTask : public ISystemTask
+	class Box2DTask : public SystemTaskBase
 	{
 	public:
 		//! CTOR
 		Box2DTask(Box2DWorld* sysworld, b2World* const world);
 		~Box2DTask();
 
-		void Update(const float delta);
+		void Update() override;
 
 		//! Simulation
 		SystemType GetTaskType() const { return SystemType::Simulation; }
@@ -149,13 +151,13 @@ namespace FusionEngine
 	};
 
 	//! Does interpolation on objects for which it is enabled
-	class Box2DInterpolateTask : public ISystemTask
+	class Box2DInterpolateTask : public SystemTaskBase
 	{
 	public:
 		Box2DInterpolateTask(Box2DWorld* sysworld);
 		~Box2DInterpolateTask();
 
-		void Update(const float delta);
+		void Update() override;
 
 		SystemType GetTaskType() const { return SystemType::Rendering; }
 

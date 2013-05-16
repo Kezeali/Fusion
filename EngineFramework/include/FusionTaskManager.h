@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -40,8 +40,18 @@
 #include <tbb/task_scheduler_init.h>
 #include <tbb/tbb_thread.h>
 
+#include <EASTL/vector.h>
+
 namespace FusionEngine
 {
+
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+	class PrimaryThreadTask;
+
+	class PrimaryThreadTaskScheduler;
+#endif
+
+	typedef eastl::vector<SystemTaskBase*> TaskGroup;
 
 	class TaskManager
 	{
@@ -50,7 +60,7 @@ namespace FusionEngine
 
 		~TaskManager();
 
-		void SpawnJobsForSystemTasks(const std::vector<ISystemTask*>& tasks, const float delta);
+		void SpawnJobsForSystemTasks(const std::vector<SystemTaskBase*>& tasks);
 		void WaitForSystemTasks();
 
     /// This method triggers a synchronized callback to be called once by each thread used by the <c>TaskManagerTBB</c>.
@@ -70,9 +80,10 @@ namespace FusionEngine
 
 		tbb::spin_mutex m_Mutex;
 
-		std::vector<ISystemTask*> m_PrimaryThreadSystemTasks;
-
-		float m_DeltaTime;
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+		std::shared_ptr<PrimaryThreadTaskScheduler> m_PrimaryThreadTaskScheduler;
+#endif
+		std::vector<SystemTaskBase*> m_TasksToExecuteInPrimaryThread;
 
 		std::vector<tbb::task::affinity_id> m_AffinityIDs;
 

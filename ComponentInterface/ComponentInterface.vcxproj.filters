@@ -10,6 +10,9 @@
     <Filter Include="PrecompiledHeaders">
       <UniqueIdentifier>{e7d7fe75-3fb9-48a7-8e58-8d2a51b88fbd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Messaging">
+      <UniqueIdentifier>{eb7b6468-f606-44d3-be0b-6b38aabb98fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionEntity.cpp">
@@ -34,6 +37,7 @@
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionRouterTask.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">
@@ -82,5 +86,18 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionSerialisationError.h" />
+    <ClInclude Include="..\EngineFramework\include\FusionRouter.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EngineFramework\include\FusionMessage.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EngineFramework\include\FusionAddress.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EngineFramework\include\FusionTaskRouter.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EngineFramework\include\FusionRouterTask.h" />
   </ItemGroup>
 </Project>

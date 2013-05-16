@@ -34,6 +34,7 @@
 
 #include "FusionCLRenderComponent.h"
 #include "FusionCLRenderExtension.h"
+#include "FusionCLRenderSystemMessageTypes.h"
 #include "FusionCLRenderTask.h"
 
 #include "FusionGraphicalProfilerTask.h"
@@ -63,13 +64,13 @@ namespace FusionEngine
 		CLRenderWorld::Register(engine);
 	}
 
-	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
+	std::shared_ptr<SystemWorldBase> CLRenderSystem::CreateWorld()
 	{
 		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);
 	}
 
 	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
-		: ISystemWorld(system),
+		: SystemWorldBase(system),
 		m_PhysWorld(nullptr),
 		m_PhysDebugDrawEnabled(false),
 		m_DebugTextEnabled(false),
@@ -156,21 +157,6 @@ namespace FusionEngine
 		}
 		for (auto it = removed.begin(), end = removed.end(); it != end; ++it)
 			m_Extensions.erase(*it);
-	}
-
-	void CLRenderWorld::EnqueueViewportRenderAction(const RenderAction& action)
-	{
-		m_RenderTask->EnqueueViewportRenderAction(action);
-	}
-
-	void CLRenderWorld::EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action)
-	{
-		m_RenderTask->EnqueueViewportRenderAction(vp, action);
-	}
-
-	void CLRenderWorld::EnqueueWorldRenderAction(const RenderAction& action)
-	{
-		m_RenderTask->EnqueueWorldRenderAction(action);
 	}
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const
@@ -307,9 +293,28 @@ namespace FusionEngine
 		}
 	}
 
-	std::vector<ISystemTask*> CLRenderWorld::GetTasks()
+	void CLRenderWorld::ProcessMessage(SystemWorldBase::Message message)
 	{
-		std::vector<ISystemTask*> tasks;
+		switch (message.messageType)
+		{
+		case CLRenderSystemMessageType::SetRenderAction:
+			{
+				auto action = boost::any_cast<RenderAction>(message.data);
+				m_RenderTask->SetRenderAction(action);
+			}
+			break;
+		case CLRenderSystemMessageType::RemoveRenderAction:
+			{
+				auto action = boost::any_cast<RenderAction>(message.data);
+				m_RenderTask->RemoveRenderAction(action);
+			}
+			break;
+		}
+	}
+
+	std::vector<SystemTaskBase*> CLRenderWorld::GetTasks()
+	{
+		std::vector<SystemTaskBase*> tasks;
 		tasks.push_back(m_RenderTask);
 		//tasks.push_back(m_GUITask);
 		tasks.push_back(m_GraphicalProfilerTask);

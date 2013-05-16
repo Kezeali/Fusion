@@ -35,14 +35,23 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionVectorTypes.h"
+#include "FusionViewport.h"
 
 #include <ClanLib/display.h>
 
 #include <functional>
+#include <string>
 
 namespace FusionEngine
 {
-		typedef std::function<void (clan::Canvas, Vector2)> RenderAction;
+	typedef std::function<void (clan::Canvas, Vector2)> RenderActionFunctor;
+	struct RenderAction
+	{
+		std::string identifier;
+		ViewportPtr viewport;
+		bool world;
+		RenderActionFunctor func;
+	};
 }
 
 #endif

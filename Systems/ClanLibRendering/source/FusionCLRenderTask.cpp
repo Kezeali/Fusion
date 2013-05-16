@@ -62,7 +62,7 @@ namespace FusionEngine
 {
 
 	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "CLRenderTask"),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer)
 	{
@@ -75,27 +75,19 @@ namespace FusionEngine
 	{
 	}
 
-	void CLRenderTask::EnqueueViewportRenderAction(const RenderAction& action)
+	void CLRenderTask::SetRenderAction(const RenderAction& action)
 	{
-		m_RenderActions.Push(action);
+		m_RenderActions[action.identifier] = action;
 	}
 
-	void CLRenderTask::EnqueueViewportRenderAction(const ViewportPtr& vp, const RenderAction& action)
+	void CLRenderTask::RemoveRenderAction(const RenderAction& action)
 	{
-		ViewportRenderAction entry;
-		entry.viewport = vp;
-		entry.action = action;
-		m_SingleViewportRenderActions.Push(entry);
-	}
-
-	void CLRenderTask::EnqueueWorldRenderAction(const RenderAction& action)
-	{
-		m_WorldRenderActions.Push(action);
+		m_RenderActions.erase(action.identifier);
 	}
 
 //#define FSN_CLRENDER_PARALLEL_UPDATE
 
-	void CLRenderTask::Update(const float delta)
+	void CLRenderTask::Update()
 	{
 		m_RenderWorld->AddQueuedViewports();
 
@@ -140,32 +132,6 @@ namespace FusionEngine
 				}
 			});
 		}
-
-		//{
-		//	FSN_PROFILE("DefineNewSprites");
-		//	auto& spritesToDefine = m_RenderWorld->GetSpritesToDefine();
-		//	for (auto it = sprites.begin(); it != sprites.end(); ++it)
-		//	{
-		//		const auto& sprite = *it;
-		//		if (sprite->RequiresSpriteDefinition())
-		//			m_RenderWorld->GetSpritesToDefine().push_back(sprite);
-		//	}
-		//	tbb::parallel_for(tbb::blocked_range<size_t>(0, std::min(spritesToDefine.size(), 10u)), [&spritesToDefine](const tbb::blocked_range<size_t>& r)
-		//	{
-		//		for (auto i = r.begin(), end = r.end(); i != end; ++i)
-		//		{
-		//			auto& sprite = spritesToDefine[i];
-		//			
-		//			sprite->DefineSpriteIfNecessary();
-		//		}
-		//	});
-
-		//	//for (auto it = sprites.begin(); it != sprites.end(); ++it)
-		//	//{
-		//	//	const auto& sprite = *it;
-		//	//	sprite->CreateSpriteIfNecessary(gc);
-		//	//}
-		//}
 
 		{
 			FSN_PROFILE("Depth Sort");
@@ -259,9 +225,11 @@ namespace FusionEngine
 			
 			Vector2 camera_pos(p.x, p.y);
 
-			auto action = m_RenderActions.GetAction();
-			if (action)
-				action(canvas, camera_pos);
+			for (const auto& action : m_RenderActions)
+			{
+				if (action.second.func)
+					action.second.func(canvas, camera_pos);
+			}
 		}
 
 		//{
@@ -452,7 +420,7 @@ namespace FusionEngine
 
 
 	CLRenderGUITask::CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer)
-		: ISystemTask(sysworld),
+		: SystemTaskBase(sysworld, "CLRenderGUITask"),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer),
 		m_Canvas(canvas)
@@ -476,7 +444,7 @@ namespace FusionEngine
 		return modifier;
 	}
 
-	void CLRenderGUITask::Update(const float delta)
+	void CLRenderGUITask::Update()
 	{
 		auto context = Rocket::Core::GetContext(0);
 

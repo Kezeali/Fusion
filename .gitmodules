@@ -1,0 +1,3 @@
+[submodule "EASTL"]
+	path = EASTL
+	url = git@github.com:paulhodge/EASTL.git

@@ -42,7 +42,7 @@
 namespace FusionEngine
 {
 
-	class ISystemWorld;
+	class SystemWorldBase;
 	class ComponentTypeInfoCache;
 
 	//! Stores component worlds
@@ -52,12 +52,12 @@ namespace FusionEngine
 		ComponentUniverse();
 		virtual ~ComponentUniverse();
 
-		void AddWorld(const std::shared_ptr<ISystemWorld>& world);
-		void RemoveWorld(const std::shared_ptr<ISystemWorld>& world);
-		void OnBeginStep();
-		void OnEndStep();
-		void CheckMessages();
-		std::shared_ptr<ISystemWorld> GetWorldByComponentType(const std::string& type);
+		void AddWorld(const std::shared_ptr<SystemWorldBase>& world);
+		void RemoveWorld(const std::shared_ptr<SystemWorldBase>& world);
+		void CheckMessages(const std::shared_ptr<SystemWorldBase>& world);
+		std::shared_ptr<SystemWorldBase> GetWorldByComponentType(const std::string& type);
+
+		std::map<std::string, std::shared_ptr<SystemWorldBase>> GetWorlds() const;
 
 		ComponentPtr InstantiateComponent(const std::string& type);
 
@@ -65,7 +65,8 @@ namespace FusionEngine
 		void OnDeactivated(const ComponentPtr& component);
 
 	private:
-		std::set<std::shared_ptr<ISystemWorld>> m_Worlds;
+		typedef std::map<std::string, std::shared_ptr<SystemWorldBase>> WorldsMap_t;
+		WorldsMap_t m_Worlds;
 
 		struct tag {
 			struct type {};
@@ -73,11 +74,9 @@ namespace FusionEngine
 		};
 		typedef boost::bimaps::bimap<
 			boost::bimaps::unordered_set_of< boost::bimaps::tagged<std::string, tag::type> >,
-			boost::bimaps::unordered_multiset_of< boost::bimaps::tagged<std::shared_ptr<ISystemWorld>, tag::world> >
+			boost::bimaps::unordered_multiset_of< boost::bimaps::tagged<std::shared_ptr<SystemWorldBase>, tag::world> >
 		> ComponentTypes_t;
 		ComponentTypes_t m_ComponentTypes;
-
-		boost::mutex m_Mutex;
 
 		std::shared_ptr<ComponentTypeInfoCache> m_ComponentTypeInfoCache;
 	};

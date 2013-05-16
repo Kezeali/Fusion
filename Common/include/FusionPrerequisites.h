@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2010-2011 Fusion Project Team
+*  Copyright (c) 2010-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the

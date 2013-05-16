@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -33,12 +33,97 @@
 
 #include "FusionLogger.h"
 
+#include <algorithm>
 #include <functional>
 
 #include <tbb/tbb.h>
 
 namespace FusionEngine
 {
+
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+	class PrimaryThreadTask
+	{
+	public:
+		PrimaryThreadTask(SystemTaskBase* implementation);
+
+		void IncrementDependencyCount() { ++m_UnexecutedDependencies; }
+
+		int DecrementDependencyCount() { return --m_UnexecutedDependencies; }
+
+		int UnexecutedDependencies() const { return m_UnexecutedDependencies; }
+
+		void Execute();
+
+	private:
+		SystemTaskBase* m_Implementation;
+
+		tbb::atomic<int> m_UnexecutedDependencies;
+	};
+
+	class PrimaryThreadTaskScheduler : public Singleton<PrimaryThreadTaskScheduler>
+	{
+	public:
+		PrimaryThreadTaskScheduler();
+
+		void AddTask(std::unique_ptr<PrimaryThreadTask> task);
+
+		void Enqueue(PrimaryThreadTask* ready_task);
+
+		void Process();
+
+		bool IsDone() const;
+
+	private:
+		std::vector<std::unique_ptr<PrimaryThreadTask>> m_Tasks;
+
+		tbb::concurrent_queue<PrimaryThreadTask*> m_ReadyTaskQueue;
+	};
+
+	PrimaryThreadTask::PrimaryThreadTask(SystemTaskBase* implementation)
+		: m_Implementation(implementation)
+	{
+	}
+
+	void PrimaryThreadTask::Execute()
+	{
+		FSN_ASSERT(m_UnexecutedDependencies == 0);
+		ExecuteTaskImplementation(m_Implementation);
+	}
+
+	PrimaryThreadTaskScheduler::PrimaryThreadTaskScheduler()
+	{
+	}
+
+	void PrimaryThreadTaskScheduler::AddTask(std::unique_ptr<PrimaryThreadTask> task)
+	{
+		m_Tasks.push_back(std::move(task));
+	}
+	
+	void PrimaryThreadTaskScheduler::Enqueue(PrimaryThreadTask* ready_task)
+	{
+		m_ReadyTaskQueue.push(ready_task);
+	}
+
+	void PrimaryThreadTaskScheduler::Process()
+	{
+		PrimaryThreadTask* readyTask;
+		while (m_ReadyTaskQueue.try_pop(readyTask))
+		{
+			FSN_ASSERT(!m_Tasks.empty());
+			FSN_ASSERT(std::count(m_Tasks.cbegin(), m_Tasks.cend(), readyTask) == 1);
+			FSN_ASSERT(readyTask->UnexecutedDependencies() == 0);
+			readyTask->Execute();
+			m_Tasks.erase(std::remove(m_Tasks.begin(), m_Tasks.end(), readyTask));
+		}
+	}
+
+	bool PrimaryThreadTaskScheduler::IsDone() const
+	{
+		FSN_ASSERT(m_ReadyTaskQueue.empty() || !m_Tasks.empty());
+		return m_Tasks.empty();
+	}
+#endif
 
 	namespace tasks
 	{
@@ -117,52 +202,6 @@ namespace FusionEngine
 		delete m_TbbScheduler;
 	}
 
-	class FunctorTask : public tbb::task
-	{
-	public:
-		FunctorTask(const std::function<void (void)>& functor)
-			: m_Function(functor)
-		{
-		}
-
-		virtual tbb::task* execute()
-		{
-			FSN_ASSERT(m_Function);
-
-			m_Function();
-
-			return NULL;
-		}
-
-	protected:
-		std::function<void (void)> m_Function;
-	};
-
-	class FunctorSupertask : public tbb::task
-	{
-	public:
-		FunctorSupertask(const std::vector<std::function<void (void)>>& functors)
-			: m_Functors(functors)
-		{
-		}
-
-		virtual tbb::task* execute()
-		{
-			FSN_ASSERT(!m_Functors.empty());
-
-			for (auto it = m_Functors.begin(), end = m_Functors.end(); it != end; ++it)
-			{
-				auto& functor = *it;
-				functor();
-			}
-
-			return NULL;
-		}
-
-	protected:
-		std::vector<std::function<void (void)>> m_Functors;
-	};
-
 	template <class T>
 	class FunctionTask : public tbb::task
 	{
@@ -172,7 +211,7 @@ namespace FusionEngine
 		{
 		}
 
-		virtual tbb::task* execute()
+		virtual tbb::task* execute() override
 		{
 			m_Function();
 
@@ -183,36 +222,76 @@ namespace FusionEngine
 		T m_Function;
 	};
 
-	class IntrusiveSystemTask : tbb::task
+	namespace
+	{
+		void ExecuteTaskImplementation(SystemTaskBase* task_implementation)
+		{
+			FSN_PROFILE(task_implementation->GetName());
+			try
+			{
+				task_implementation->Update();
+			}
+			catch (std::exception& e)
+			{
+				AddLogEntry(e.what(), LOG_CRITICAL);
+				SendToConsole(e.what());
+			}
+		}
+	}
+
+	class DepTask : public tbb::task
 	{
 	public:
-		IntrusiveSystemTask(std::vector<ISystemTask*> subtasks, float delta)
-			: m_Subtasks(subtasks),
-			m_Delta(delta)
+		DepTask(SystemTaskBase* implementation)
+			: m_Implementation(implementation)
 		{
 		}
 
-		virtual tbb::task* execute()
+		void AddDependant(tbb::task* dependant)
 		{
-			FSN_ASSERT(!m_Subtasks.empty());
+			FSN_ASSERT(this->state() != executing);
+			dependant->increment_ref_count();
+			m_Successors.push_back(dependant);
+		}
 
-			for (auto it = m_Subtasks.begin(), end = m_Subtasks.end(); it != end; ++it)
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+		void AddDependant(PrimaryThreadTask* dependant)
+		{
+			FSN_ASSERT(this->state() != executing);
+			dependant->IncrementDependencyCount();
+			m_PrimaryThreadSuccessors.push_back(dependant);
+		}
+#endif
+
+		SystemTaskBase* GetImplementation() const { return m_Implementation; }
+
+		virtual tbb::task* execute() override
+		{
+			ExecuteTaskImplementation(m_Implementation);
+			for (auto successor : m_Successors)
 			{
-				auto& subtask = *it;
-				FSN_ASSERT(subtask != nullptr);
-				subtask->Update(m_Delta);
+				if (successor->decrement_ref_count() == 0) // if this was the last prerequisite that the next task was waiting on
+					task::spawn(*successor);
 			}
-
+			m_Successors.clear();
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+			for (auto successorPrim : m_PrimaryThreadSuccessors)
+			{
+				if (successorPrim->DecrementDependencyCount() == 0)
+					PrimaryThreadTaskScheduler::getSingleton().Enqueue(successorPrim);
+			}
+			m_PrimaryThreadSuccessors.clear();
+#endif
 			return NULL;
 		}
 
 	protected:
-		std::vector<ISystemTask*> m_Subtasks;
-		const float m_Delta;
+		SystemTaskBase* m_Implementation;
+		std::vector<tbb::task*> m_Successors;
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+		std::vector<PrimaryThreadTask*> m_PrimaryThreadSuccessors;
+#endif
 	};
-
-	typedef FunctorTask SystemTask;
-	typedef FunctorSupertask SystemSupertask;
 
 	// Allows FunctionTask objects to be made for lambdas
 	template <class T>
@@ -221,14 +300,12 @@ namespace FusionEngine
 		return new( root->allocate_additional_child_of(*root) ) FunctionTask<T>(fn);
 	}
 
-	void TaskManager::SpawnJobsForSystemTasks(const std::vector<ISystemTask*>& tasks, const float delta)
+	void TaskManager::SpawnJobsForSystemTasks(const std::vector<SystemTaskBase*>& tasks)
 	{
 		// Call this from the primary thread to schedule system work
 		FSN_ASSERT(IsPrimaryThread());
 
 		FSN_ASSERT(!tasks.empty());
-
-		m_DeltaTime = delta;
 
 		FSN_ASSERT(m_SystemTasksRoot != NULL);
 
@@ -236,51 +313,54 @@ namespace FusionEngine
 		//  Support the eventual wait_for_all by setting reference count to 1 now
 		m_SystemTasksRoot->set_ref_count(1);
 
+		std::vector<DepTask*> spawnedTasks;
+		std::unordered_map<std::string, DepTask*> namedTasks;
+
 		// now schedule the tasks, based upon their PerformanceHint order
 		tbb::task_list taskList;
 
 		auto affinityIterator = m_AffinityIDs.begin();
 		for (auto it = tasks.begin(), end = tasks.end(); it != end; ++it)
 		{
-			auto task = *it;
+			auto taskImplementation = *it;
 
-			FSN_ASSERT(task);
+			FSN_ASSERT(taskImplementation);
 
-			if (task->IsPrimaryThreadOnly())
+			if (taskImplementation->IsPrimaryThreadOnly())
 			{
-				m_PrimaryThreadSystemTasks.push_back(task);
+#if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+				m_PrimaryThreadTaskScheduler->AddTask(std::unique_ptr<PrimaryThreadTask>(new PrimaryThreadTask(taskImplementation)));
+#else
+				m_TasksToExecuteInPrimaryThread.push_back(taskImplementation);
+#endif
 			}
 			else
 			{
-				//auto systemTask = new( m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot) ) SystemTask(std::bind(&ISystemTask::Update, task, delta));
-				//FSN_ASSERT(systemTask != nullptr);
-
-				auto systemTask = MakeFunctionTask(m_SystemTasksRoot, [task, delta]()
-				{
-					//FSN_ASSERT(task->GetSystemWorld() && task->GetSystemWorld()->GetSystem(), "Invalid task");
-					FSN_PROFILE(task->GetName());
-					try
-					{
-						task->Update(delta);
-					}
-					catch (std::exception& e)
-					{
-						AddLogEntry(e.what(), LOG_CRITICAL);
-						SendToConsole(e.what());
-					}
-				});
-				FSN_ASSERT(systemTask != nullptr);
-
 				// Affinity will increase the chances that each SystemTask will be assigned
 				//  to a unique thread
 				const auto affinityId = *(affinityIterator++);
 				if (affinityIterator == m_AffinityIDs.end())
 					affinityIterator = m_AffinityIDs.begin();
-				systemTask->set_affinity(affinityId);
 
-				taskList.push_back(*systemTask);
+				auto tbbTask = new DepTask(taskImplementation);
+				tbbTask->set_affinity(affinityId);
+
+				spawnedTasks.push_back(tbbTask);
+				namedTasks.insert(std::make_pair(taskImplementation->GetName(), tbbTask));
+
+				taskList.push_back(*tbbTask);
 			}
+		}
 
+		for (auto task : spawnedTasks)
+		{
+			auto deps = task->GetImplementation()->GetDependencies();
+			for (auto dep : deps)
+			{
+				auto entry = namedTasks.find(dep);
+				if (entry != namedTasks.cend())
+					entry->second->AddDependant(task);
+			}
 		}
 
 		// Only system tasks spawn here. They in their turn will spawn descendant tasks.
@@ -296,29 +376,21 @@ namespace FusionEngine
 //		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 //#endif
 
-		// Run primary-thread tasks
-		for (auto it = m_PrimaryThreadSystemTasks.begin() ; it != m_PrimaryThreadSystemTasks.end(); ++it)
+#if !defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
+		for (auto taskImplementation : m_TasksToExecuteInPrimaryThread)
 		{
-			FSN_PROFILE((*it)->GetSystemWorld()->GetSystem()->GetName());
-
-			try
-			{
-				(*it)->Update(m_DeltaTime);
-			}
-			catch (std::exception& e)
-			{
-				AddLogEntry(e.what(), LOG_CRITICAL);
-				SendToConsole(e.what());
-			}
+			ExecuteTaskImplementation(taskImplementation);
 		}
+		m_TasksToExecuteInPrimaryThread.clear();
+#else
+		m_PrimaryThreadTaskScheduler->Process();
+#endif
 
 //#ifdef _WIN32
 //		SetThreadPriority( GetCurrentThread(), THREAD_PRIORITY_NORMAL );
 //#endif
 
-		m_PrimaryThreadSystemTasks.clear();
-
-		// Contribute to the parallel execution & capture thread errors
+		// Contribute to the parallel execution & capture task errors
 		try
 		{
 			m_SystemTasksRoot->wait_for_all();

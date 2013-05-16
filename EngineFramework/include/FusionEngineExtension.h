@@ -43,7 +43,7 @@ namespace FusionEngine
 
 	class RendererExtension;
 
-	class ISystemWorld;
+	class SystemWorldBase;
 
 	class ArchetypeFactory;
 	class ComponentFactory;
@@ -87,7 +87,7 @@ namespace FusionEngine
 
 		virtual void RegisterScriptType(asIScriptEngine* engine) {}
 
-		virtual void OnWorldCreated(const std::shared_ptr<ISystemWorld>& world) = 0;
+		virtual void OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world) = 0;
 
 		virtual void Update(float time, float dt) = 0;
 
