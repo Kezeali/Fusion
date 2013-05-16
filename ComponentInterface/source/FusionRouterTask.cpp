@@ -19,35 +19,22 @@
 *
 *    3. This notice may not be removed or altered from any source distribution.
 *
-*  File Author:
+*
+*  File Author(s):
+*
 *    Elliot Hayward
 */
 
-#ifndef H_FusionRouter
-#define H_FusionRouter
+#include "PrecompiledHeaders.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
+#include "Messaging/FusionRouterTask.h"
 
-#include "FusionPrerequisites.h"
-
-#include "FusionMessage.h"
-
-#include <tbb/concurrent_queue.h>
-
-namespace FusionEngine { namespace Messaging
+namespace FusionEngine
 {
 
-	class Router
-	{
-	public:
-		void PostMessage(Message message);
+	RouterTask::RouterTask(SystemWorldBase* sysworld, Renderer* const renderer);
+		RouterTask::~RouterTask();
 
-	private:
-		tbb::concurrent_queue<Message> m_OutgoingMessages;
-	};
+		void Update() override;
 
-} }
-
-#endif
+}

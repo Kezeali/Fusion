@@ -34,33 +34,27 @@
 
 #include "FusionAddress.h"
 
+#include <boost/any.hpp>
+
 namespace FusionEngine { namespace Messaging
 {
 
 	struct Message
 	{
-		Address targetName;
+		Address address;
 		char messageType;
 		boost::any data;
+
 		Message()
 			: messageType(0)
 		{}
-		Message(TargetType targetType, std::string targetName, char messageType, boost::any data)
-			: targetType(targetType),
-			targetName(targetName),
+		Message(Address address, char messageType, boost::any data)
+			: address(address),
 			messageType(messageType),
 			data(data)
 		{}
 		Message(const Message& other)
-			: targetType(other.targetType),
-			targetName(other.targetName),
-			messageType(other.messageType),
-			data(other.data)
-		{
-		}
-		Message(Message&& other)
-			: targetType(other.targetType),
-			targetName(other.targetName),
+			: address(other.address),
 			messageType(other.messageType),
 			data(other.data)
 		{

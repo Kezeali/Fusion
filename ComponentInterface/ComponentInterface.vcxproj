@@ -115,11 +115,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\EngineFramework\include\FusionAddress.h" />
-    <ClInclude Include="..\EngineFramework\include\FusionMessage.h" />
-    <ClInclude Include="..\EngineFramework\include\FusionRouter.h" />
     <ClInclude Include="..\EngineFramework\include\FusionRouterTask.h" />
-    <ClInclude Include="..\EngineFramework\include\FusionTaskRouter.h" />
     <ClInclude Include="include\FusionArchetypalEntityManager.h" />
     <ClInclude Include="include\FusionCommandQueue.h" />
     <ClInclude Include="include\FusionComponentFactory.h" />
@@ -141,6 +137,11 @@
     <ClInclude Include="include\FusionSyncSigScriptInterface.h" />
     <ClInclude Include="include\FusionThreadSafeProperty.h" />
     <ClInclude Include="include\FusionTransformComponent.h" />
+    <ClInclude Include="include\Messaging\FusionAddress.h" />
+    <ClInclude Include="include\Messaging\FusionMessage.h" />
+    <ClInclude Include="include\Messaging\FusionRouter.h" />
+    <ClInclude Include="include\Messaging\FusionRouterTask.h" />
+    <ClInclude Include="include\Messaging\FusionTaskRouter.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>

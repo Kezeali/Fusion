@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<logicalClassDesignerModel xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" xmlns:dm1="http://schemas.microsoft.com/dsltools/Kernel" xmlns:dm2="http://schemas.microsoft.com/dsltools/Component" xmlns:dm3="http://schemas.microsoft.com/dsltools/UseCase" xmlns:dm4="http://schemas.microsoft.com/dsltools/Activity" xmlns:dm5="http://schemas.microsoft.com/dsltools/Interaction" xmlns:dm6="http://schemas.microsoft.com/dsltools/UmlModelLibrary" xmlns:dm7="http://schemas.microsoft.com/dsltools/UmlDiagrams" xmlns:dm8="http://schemas.microsoft.com/dsltools/ModelStore" xmlns:dm9="http://schemas.microsoft.com/VisualStudio/TeamArchitect/SequenceDesigner" dslVersion="1.0.0.0" Id="ee0aad87-571e-4ccf-b404-dec98a98785a" name="Fusion" linkedPackageId="f2b61fa4-bddc-4cec-b044-6f435550177a" xmlns="http://schemas.microsoft.com/dsltools/LogicalClassDesigner">
+  <ownedCommentsInternal>
+    <comment Id="1e7c08a1-f856-42bb-8c42-9e117e17836b">
+      <elementDefinition Id="b77f4125-2b67-4c56-8ac6-c5c96dd719b0" />
+      <body>Routes messages to its parent world</body>
+      <annotatedElements>
+        <classMoniker Id="3d48a9b4-9359-4e7a-997e-532a6d6e431c" LastKnownName="RouterTask" />
+      </annotatedElements>
+    </comment>
+    <comment Id="34c57528-7bb5-4990-8e48-ebcd3c92350d">
+      <elementDefinition Id="b47ed8b5-dca9-4fb4-a4e3-2a381bc97ce5" />
+      <body>Downstream routers are stored as weak smart pointers</body>
+    </comment>
+  </ownedCommentsInternal>
+  <profileInstances>
+    <packageHasProfileInstances Id="c64ef73c-da50-4b72-8796-605eefc42e4f">
+      <profileInstance Id="045fdf25-ba99-413a-bd1b-ab24c1b6547a" name="StandardProfileL2">
+        <elementDefinition Id="e34d544e-0fea-4ed6-ac5e-1b74119ac791" />
+      </profileInstance>
+      <elementDefinition Id="0caec977-1f8c-4ba3-a7db-8cc9ad9cc73b" />
+    </packageHasProfileInstances>
+    <packageHasProfileInstances Id="f5fb7aff-d5bf-42a7-ab87-359eeb1277e2">
+      <profileInstance Id="8c20f1f5-836d-4eb2-8ecb-6b0e87a719fd" name="StandardProfileL3">
+        <elementDefinition Id="532ea607-fb19-44b8-8502-3351b05452be" />
+      </profileInstance>
+      <elementDefinition Id="29349502-908c-4fda-9054-c48619c59ed0" />
+    </packageHasProfileInstances>
+  </profileInstances>
+  <packagedElements>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="a6cbaef5-09d0-44bf-84a5-5b7ce1b3050d" name="Message" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="74051987-3202-4cd0-87cd-65b47e5d21fc" />
+        <targetEnds>
+          <association Id="fd6c181f-352c-44f4-9fb3-ca86e4d3a39f" isDerived="false" sourceEndRoleName="Message" targetEndRoleName="Address" isLeaf="false" isAbstract="false">
+            <classMoniker Id="a6052172-89c6-4b1c-aec8-b2a3cf77372c" LastKnownName="Address" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="636a7bae-7cd3-4cf1-90d5-ca3870b019f4" name="Message" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="Composite" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="bb18721b-7cb4-4182-9d03-1c0b60d90083" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="bfa84a1c-1053-417c-83f4-5b469813caa3" name="Address" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="true">
+                  <elementDefinition Id="758eb3d0-6c2a-41b4-b3e2-b2e649e5c1bd" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="fe553f20-0257-439f-84d2-b64592f2cdd0" />
+          </association>
+        </targetEnds>
+        <ownedAttributesInternal>
+          <property Id="e121871c-a8a5-46b2-9cb9-4a8a587874bd" name="ToAddress" isLeaf="false" isStatic="false" isReadOnly="false" isUnique="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+            <elementDefinition Id="c8f80613-b638-4e68-bf5d-57bc6a05b68d" />
+            <type_NamedElement>
+              <referencedTypeMoniker Id="346bfd55-d08a-41c3-a52b-366af2fdb54c" LastKnownName="Address" />
+            </type_NamedElement>
+          </property>
+          <property Id="127c1280-5741-4172-83bb-91639b0fe714" name="FromAddress" isLeaf="false" isStatic="false" isReadOnly="false" isUnique="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+            <elementDefinition Id="a54a5313-2a00-421f-adcc-c6e9d944f485" />
+            <type_NamedElement>
+              <referencedTypeMoniker Id="346bfd55-d08a-41c3-a52b-366af2fdb54c" LastKnownName="Address" />
+            </type_NamedElement>
+          </property>
+          <property Id="879265b6-ad13-49dc-a1bb-8eed73551d4c" name="Content" isLeaf="false" isStatic="false" isReadOnly="false" isUnique="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+            <elementDefinition Id="d7ea6620-03cf-4c2e-a487-9143f747eb98" />
+          </property>
+        </ownedAttributesInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="a6052172-89c6-4b1c-aec8-b2a3cf77372c" name="Address" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="e7a80227-8773-4d24-a718-3514c62a4cd9" />
+        <ownedAttributesInternal>
+          <property Id="b4f6904b-545a-414d-84f3-c4140f1a8550" name="RouterID" isLeaf="false" isStatic="false" isReadOnly="false" isUnique="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+            <elementDefinition Id="8fa72084-70b4-438f-8c47-ce8bfb560967" />
+          </property>
+        </ownedAttributesInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <Interface Id="0889a035-961b-448f-ab33-0dcd2d90af62" name="IRouter" isAbstract="false" isLeaf="false">
+        <elementDefinition Id="6cafaf1a-35b0-4000-890d-440d6bfd7d6c" />
+        <suppliersInternal>
+          <dependency Id="5a898be7-d33b-4b2d-a5db-13037f418375">
+            <classMoniker Id="a6cbaef5-09d0-44bf-84a5-5b7ce1b3050d" LastKnownName="Message" />
+            <elementDefinition Id="cab4939e-0328-489f-adaf-737e682e168c" />
+          </dependency>
+        </suppliersInternal>
+        <ownedOperations>
+          <operation Id="ba346047-1d8c-4b94-9d7e-807529d07bbf" name="GetID" isLeaf="false" isStatic="false" isAbstract="true" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="b79ebb10-fba2-4e47-8378-8e385f75b22c" />
+          </operation>
+          <operation Id="0696e7a4-c67c-4a74-b0a6-9c4af8136945" name="ReceiveMessage" isLeaf="false" isStatic="false" isAbstract="true" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="e9e5006d-b3d6-4868-b651-4e613ba9890b" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="639698d7-ee56-4e5f-9325-42e060435f8f" name="Message" direction="In" isUnique="false">
+                  <elementDefinition Id="70a35ac9-27a9-4cbb-8e83-e95dd5c27523" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+          <operation Id="227c19ed-4c8a-49f4-b261-607c413ce0df" name="AddDownstream" isLeaf="false" isStatic="false" isAbstract="true" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="9f738750-1323-4e8c-b48c-eba9a1cf8333" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="769f86a0-1b3f-4ede-8e9f-286d425e447b" name="IRouter" direction="In" isUnique="false">
+                  <elementDefinition Id="6d8fbb95-3c10-4cca-a4c5-ab14b951ee1c" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+          <operation Id="eb421c1a-5087-4b17-a1f6-4c641f072320" name="RemoveDownstream" isLeaf="false" isStatic="false" isAbstract="true" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="5eb87e9e-45fe-4868-8356-a0ffe076499b" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="79dd150a-cd4a-4c1f-abe1-2524230a1a28" name="IRouter" direction="In" isUnique="false">
+                  <elementDefinition Id="a7691cef-030c-49a6-874c-8ceb6fbf65c1" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperations>
+      </Interface>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="3359cc6d-1633-40e1-86ab-848f0dfaa8bf" name="Router" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="a1305a02-1b59-47f1-aabf-0008c9ae7928" />
+        <suppliersInternal>
+          <interfaceRealization Id="9cdfd611-bf96-4ed8-b5fd-f5a485af9b6f">
+            <interfaceMoniker Id="0889a035-961b-448f-ab33-0dcd2d90af62" LastKnownName="IRouter" />
+            <elementDefinition Id="a20af740-d6ae-4a03-aeb7-74ecb49b0f03" />
+          </interfaceRealization>
+          <dependency Id="5991c20c-c068-4b8c-bc4e-002a85ebea5e">
+            <classMoniker Id="a6cbaef5-09d0-44bf-84a5-5b7ce1b3050d" LastKnownName="Message" />
+            <elementDefinition Id="497baa37-52c5-471d-8f8b-151a214de4ac" />
+          </dependency>
+          <dependency Id="0031af3b-328f-4257-a630-a9cedca9a7ab" name="Upstream">
+            <classMoniker Id="3359cc6d-1633-40e1-86ab-848f0dfaa8bf" LastKnownName="Router" />
+            <elementDefinition Id="7b1057ed-f240-4d81-84fb-b550909a134b" />
+          </dependency>
+        </suppliersInternal>
+        <targetEnds>
+          <association Id="11d00a1f-7063-4f2d-bc64-d2d4a85d1501" isDerived="false" sourceEndRoleName="Router" targetEndRoleName="Router" isLeaf="false" name="Downstream" isAbstract="false">
+            <classMoniker Id="3359cc6d-1633-40e1-86ab-848f0dfaa8bf" LastKnownName="Router" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="9b782b10-dc2f-4031-8196-d27eec442081" name="Router" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="Shared" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="c5bcaf89-b734-4d36-a56b-33cb2fb0ba26" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="c7b033bc-5c86-46f4-8c9e-9f4bc734006c" name="Router" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+                  <elementDefinition Id="e2bdbffa-aaf4-42a0-bf43-74bf712abd73" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="a8c46e0a-69ff-4a06-93ef-228cb0817fa4" />
+          </association>
+        </targetEnds>
+        <ownedOperationsInternal>
+          <operation Id="d0277b9b-0fb6-4aa5-8d0a-03ae1b361cd7" name="GetID" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="5722faa5-d804-4de6-98c1-c77501f07aa2" />
+          </operation>
+          <operation Id="7b5a4ff6-c394-4ead-be53-32efba5080bc" name="ReceiveMessage" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="f4de0f95-0733-490f-b115-7cd524f8f4c9" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="a7ef9973-0d13-4399-a35b-b40e1547fd76" name="Message" direction="In" isUnique="false">
+                  <elementDefinition Id="44591911-6990-45c6-9f8e-0c275a6bafcd" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+          <operation Id="0bfe0291-da93-4383-80cf-c424380c0698" name="ProcessMessage" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="03ca1b6e-2e8f-4698-aef3-7f538f1ce653" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="f7551881-91a2-47a2-be2c-0e703ba6593e" name="Message" direction="In" isUnique="false">
+                  <elementDefinition Id="08bc094e-200b-4fe5-9e50-dadbe21e2d99" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+          <operation Id="ee0d75b7-6d2b-4f55-91d0-c7f5a501d015" name="ProcessMessageQueue" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="cb9aa145-5efe-4060-88a5-b5980968db33" />
+          </operation>
+          <operation Id="90d94bc2-f4dd-4e4a-82a8-9c311d7b82fc" name="AddDownstream" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="67ed0f56-834b-45bf-a82a-d812a4e8d897" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="ff33dcc2-9901-49a3-8aaf-e5ae9acd4472" name="IRouter" direction="In" isUnique="false">
+                  <elementDefinition Id="4d3d6620-6578-4a0b-95a1-09f89fe262dd" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+          <operation Id="39baea0e-1157-4be1-bbe1-8830d6589393" name="RemoveDownstream" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="6dd84402-ee49-47f7-a186-5c4224eec40d" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="8d0f10b3-d46a-4f27-bfd8-505f5afb0e42" name="IRouter" direction="In" isUnique="false">
+                  <elementDefinition Id="e0f9a08b-797e-4fda-b523-181ad1164234" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperationsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <packageHasNamedElement>
+      <referencedType Id="346bfd55-d08a-41c3-a52b-366af2fdb54c" name="Address" isAbstract="false" isLeaf="false" cachedFullName="FusionModel::Address">
+        <elementDefinition Id="e7a80227-8773-4d24-a718-3514c62a4cd9" />
+      </referencedType>
+    </packageHasNamedElement>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="63047155-629f-42ab-8789-073e6891a146" name="TaskRouter" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="e7ab463b-d132-4516-b08c-2ae72844530a" />
+        <generalsInternal>
+          <generalization Id="ffd3d742-5f3e-470c-bc88-a57aa8ab7df3" isSubstitutable="false">
+            <classMoniker Id="3359cc6d-1633-40e1-86ab-848f0dfaa8bf" LastKnownName="Router" />
+            <elementDefinition Id="50bc5e60-70b1-43f4-a15b-9c0f5bbe9886" />
+          </generalization>
+        </generalsInternal>
+        <ownedOperationsInternal>
+          <operation Id="dc576424-fb55-4a33-b7f9-72b5bd152c71" name="ProcessMessage" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="61e408cd-e447-49f9-ab58-fd883e2d08e8" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="92a4fb98-0c35-4224-a1b3-e65c0fb69813" name="Message" direction="In" isUnique="false">
+                  <elementDefinition Id="650d92c5-9690-404d-89d7-ef52fed2b05a" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperationsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="3d48a9b4-9359-4e7a-997e-532a6d6e431c" name="RouterTask" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="5688564c-88f1-4a2f-9282-da15ebb93fa7" />
+        <targetEnds>
+          <association Id="80cbeed3-52cc-42c1-a593-33464dfb23a0" isDerived="false" sourceEndRoleName="RouterTask" targetEndRoleName="TaskRouter" isLeaf="false" isAbstract="false">
+            <classMoniker Id="63047155-629f-42ab-8789-073e6891a146" LastKnownName="TaskRouter" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="5116247d-6ea8-45b3-a582-36ddd4da9184" name="RouterTask" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="Composite" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="35c90d28-e9cc-42b6-aec1-7286a42ad300" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="ec09e8e7-ef6b-4b18-bbbd-71b019d58c3b" name="TaskRouter" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="true">
+                  <elementDefinition Id="5e80a173-1a47-4148-86c7-414cef64c3f3" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="1add78c6-760b-4c50-9192-e218f84c5b39" />
+          </association>
+          <association Id="be504df8-6607-4580-b399-a570c3507899" isDerived="false" sourceEndRoleName="RouterTask" targetEndRoleName="SystemWorldBase" isLeaf="false" isAbstract="false">
+            <classMoniker Id="92938ca7-ba96-42b7-9dc9-0e10fe001d12" LastKnownName="SystemWorldBase" />
+            <relationshipOwnedElementsInternal>
+              <associationHasOwnedEnds>
+                <memberEnd Id="9725fdd8-b3ff-4d21-87b6-22237d95d3c9" name="RouterTask" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false" isNavigableOwned="false">
+                  <elementDefinition Id="2a49d1b6-b04d-4df1-8019-0d71ef4aea72" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+              <associationHasOwnedEnds>
+                <memberEnd Id="d5f4e056-6a03-474b-b401-2f96e75eeee6" name="SystemWorldBase" isLeaf="false" isStatic="false" isReadOnly="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+                  <elementDefinition Id="1f1d9ff9-7b78-46ce-9632-e6de26d79805" />
+                </memberEnd>
+              </associationHasOwnedEnds>
+            </relationshipOwnedElementsInternal>
+            <elementDefinition Id="b36895ba-6966-44cd-b117-9ee31d9b06b1" />
+          </association>
+        </targetEnds>
+        <ownedAttributesInternal>
+          <property Id="a15c9d63-73f8-41e0-80ed-a2fe1d2c0580" name="Router" isLeaf="false" isStatic="false" isReadOnly="false" isUnique="false" isDerived="false" isDerivedUnion="false" aggregation="None" isComposite="false">
+            <elementDefinition Id="e37340db-b801-440e-9e90-c90e221835ca" />
+            <type_NamedElement>
+              <referencedTypeMoniker Id="656016ba-e498-4af0-863a-86de54a9b41b" LastKnownName="TaskRouter" />
+            </type_NamedElement>
+          </property>
+        </ownedAttributesInternal>
+        <ownedOperationsInternal>
+          <operation Id="0d4863be-95b5-4415-a9ea-d314c3203037" name="Update" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="00191c91-20d2-4696-8a6d-7fa78221421a" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="e24ce07f-38c0-4114-9b07-b2827b65d22f" name="float" direction="In" isUnique="false">
+                  <elementDefinition Id="18908673-0fea-4135-959d-6acb0967af2c" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperationsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+    <packageHasNamedElement>
+      <referencedType Id="656016ba-e498-4af0-863a-86de54a9b41b" name="TaskRouter" isAbstract="false" isLeaf="false" cachedFullName="FusionModel::TaskRouter">
+        <elementDefinition Id="e7ab463b-d132-4516-b08c-2ae72844530a" />
+      </referencedType>
+    </packageHasNamedElement>
+    <logicalClassDesignerModelHasTypes>
+      <class Id="92938ca7-ba96-42b7-9dc9-0e10fe001d12" name="SystemWorldBase" isAbstract="false" isLeaf="false" isActiveClass="false">
+        <elementDefinition Id="99824063-971c-4bfb-946b-4590c1130e65" />
+        <ownedOperationsInternal>
+          <operation Id="74dc0cd9-996a-40f8-947f-cc8a6b2bbfb9" name="ProcessMessage" isLeaf="false" isStatic="false" isAbstract="false" concurrency="Sequential" isQuery="false">
+            <elementDefinition Id="53b62a22-c5c9-4d9b-913d-fcafdbff0638" />
+            <ownedParameters>
+              <operationHasOwnedParameters>
+                <parameter Id="5668c8c6-bf86-424c-adc2-6bcbd7f1f3b9" name="Message" direction="In" isUnique="false">
+                  <elementDefinition Id="7a419c8a-8062-4442-9a43-0ec1e4810ab2" />
+                </parameter>
+              </operationHasOwnedParameters>
+            </ownedParameters>
+          </operation>
+        </ownedOperationsInternal>
+      </class>
+    </logicalClassDesignerModelHasTypes>
+  </packagedElements>
+  <package Id="f2b61fa4-bddc-4cec-b044-6f435550177a" name="FusionModel">
+    <elementDefinition Id="52c6ba36-93f3-46ab-b25c-20f95b1b94d1" />
+  </package>
+</logicalClassDesignerModel>

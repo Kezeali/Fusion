@@ -86,18 +86,21 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionSerialisationError.h" />
-    <ClInclude Include="..\EngineFramework\include\FusionRouter.h">
-      <Filter>Messaging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EngineFramework\include\FusionMessage.h">
-      <Filter>Messaging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EngineFramework\include\FusionAddress.h">
-      <Filter>Messaging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\EngineFramework\include\FusionTaskRouter.h">
-      <Filter>Messaging</Filter>
-    </ClInclude>
     <ClInclude Include="..\EngineFramework\include\FusionRouterTask.h" />
+    <ClInclude Include="include\Messaging\FusionAddress.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Messaging\FusionMessage.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Messaging\FusionRouter.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Messaging\FusionRouterTask.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Messaging\FusionTaskRouter.h">
+      <Filter>Messaging</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
