@@ -51,7 +51,7 @@ namespace FusionEngine
 
 	typedef std::shared_ptr<SystemWorldBase> SystemWorldPtr;
 
-	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
+	enum class SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
 
 	//! Component System
 	class IComponentSystem
@@ -84,54 +84,25 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
-		/*void SendMessage(Message message)
+		enum EngineRequest
 		{
-			m_OutgoingMessages.push(message);
-		}
-
-		void ReceiveMessage(Message message)
-		{
-			m_IncommingMessages.push(message);
-		}
-
-		void PostSelfMessage(const char type, boost::any data)
-		{
-			ReceiveMessage(Message(Message::TargetType::System, GetSystem()->GetName(), type, data));
-		}
-
-		void PostSystemMessage(std::string systemName, const char type, boost::any data)
-		{
-			SendMessage(Message(Message::TargetType::System, systemName, type, data));
-		}
-
-		enum class EngineMessage
-		{
-			RefreshComponentTypes
+			Placeholder
 		};
 
-		void PostEngineMessage(EngineMessage message)
+		struct UniverseRequest
 		{
-			SendMessage(Message(Message::TargetType::Engine, "", 0, message));
-		}
-
-		bool TryPopOutgoingMessage(Message& message)
-		{
-			return m_OutgoingMessages.try_pop(message);
-		}
-
-		bool TryPopIncommingMessage(Message& message)
-		{
-			return m_IncommingMessages.try_pop(message);
-		}
-
-		void ProcessReceivedMessages()
-		{
-			Message message;
-			while (TryPopIncommingMessage(message))
+			enum Type
 			{
-				ProcessMessage(message);
-			}
-		}*/
+				RefreshComponentTypes
+			};
+
+			Type type;
+			SystemWorldBase* world;
+		}
+		
+		void SendEngineRequest(EngineRequest request);
+
+		void SendUniverseRequest(UniverseRequest request);
 
 		virtual void ProcessMessage(Messaging::Message message) = 0;
 
@@ -156,6 +127,8 @@ namespace FusionEngine
 
 		virtual SystemTaskBase* GetTask() { return nullptr; }
 
+		Messaging::Router* GetRouter() const { return m_RouterTask.get(); }
+
 		virtual std::vector<SystemTaskBase*> GetTasks()
 		{
 			FSN_ASSERT(GetTask() != nullptr);
@@ -174,7 +147,7 @@ namespace FusionEngine
 	class SystemTaskBase
 	{
 	public:
-		SystemTaskBase(SystemWorldBase* world, const std::string& name)
+		SystemTaskBase(SystemWorldBase* world, const eastl::string& name)
 			: m_SystemWorld(world),
 			m_Name(name)
 		{}
@@ -184,7 +157,7 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
-		std::string GetName() const { return m_Name; }
+		eastl::string GetName() const { return m_Name; }
 
 		virtual void Update() = 0;
 
@@ -206,7 +179,7 @@ namespace FusionEngine
 
 	protected:
 		SystemWorldBase *m_SystemWorld;
-		std::string m_Name;
+		eastl::string m_Name;
 	};
 
 

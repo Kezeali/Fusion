@@ -29,12 +29,29 @@
 
 #include "Messaging/FusionRouterTask.h"
 
+#include "FusionDeltaTime.h"
+
 namespace FusionEngine
 {
 
-	RouterTask::RouterTask(SystemWorldBase* sysworld, Renderer* const renderer);
-		RouterTask::~RouterTask();
+	RouterTask::RouterTask(SystemWorldBase* sysworld, const eastl::string& name)
+		: SystemTaskBase(sysworld, name),
+		Router(Messaging::Address(name))
+	{
+	}
 
-		void Update() override;
+	RouterTask::~RouterTask()
+	{
+	}
+
+	void RouterTask::Update()
+	{
+		Process(DeltaTime::GetDeltaTime() * 0.9f);
+	}
+
+	void RouterTask::ProcessMessage(Messaging::Message message)
+	{
+		m_SystemWorld->ProcessMessage(message);
+	}
 
 }

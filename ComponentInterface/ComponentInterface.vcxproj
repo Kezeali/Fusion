@@ -107,6 +107,7 @@
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />
     <ClCompile Include="source\FusionPropertySignalingSystem.cpp" />
+    <ClCompile Include="source\FusionRouter.cpp" />
     <ClCompile Include="source\FusionRouterTask.cpp" />
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

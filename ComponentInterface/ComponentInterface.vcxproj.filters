@@ -38,6 +38,9 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionRouterTask.cpp" />
+    <ClCompile Include="source\FusionRouter.cpp">
+      <Filter>Messaging</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">

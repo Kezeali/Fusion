@@ -36,16 +36,16 @@
 
 #include "FusionComponentSystem.h"
 
-#include "FusionTaskRouter.h"
+#include "Messaging/FusionRouter.h"
 
 namespace FusionEngine
 {
 	
 	//! Router task
-	class RouterTask : public SystemTaskBase
+	class RouterTask : public SystemTaskBase, public Messaging::Router
 	{
 	public:
-		RouterTask(SystemWorldBase* sysworld, Renderer* const renderer);
+		RouterTask(SystemWorldBase* sysworld, const eastl::string& name);
 		~RouterTask();
 
 		SystemType GetTaskType() const { return SystemType::Messaging; }
@@ -56,10 +56,10 @@ namespace FusionEngine
 		{
 			return true;
 		}
+
 		void Update() override;
 
-	private:
-		Messaging::TaskRouter m_Router;
+		virtual void ProcessMessage(Messaging::Message message) override;
 	};
 
 }

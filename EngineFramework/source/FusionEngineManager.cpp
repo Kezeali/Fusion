@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -45,6 +45,7 @@
 #include "FusionGUI.h"
 #include "FusionLog.h"
 #include "FusionLogger.h"
+#include "Messaging/FusionRouter.h"
 #include "FusionNetworkManager.h"
 #include "FusionP2PEntityInstantiator.h"
 #include "FusionPacketDispatcher.h"
@@ -191,7 +192,11 @@ namespace FusionEngine
 
 			// Init component / entity management
 			m_EvesdroppingManager.reset(new EvesdroppingManager());
+
+			m_MessageRouter.reset(new Messaging::Router("Engine"));
 			m_ComponentUniverse.reset(new ComponentUniverse());
+			m_MessageRouter->AddDownstream(m_ComponentUniverse.get()); // Message router
+
 			m_EntitySynchroniser.reset(new EntitySynchroniser(m_InputManager.get(), m_CameraSynchroniser.get(), m_StreamingManager.get()));
 
 			m_EntityManager.reset(new EntityManager(m_InputManager.get(), m_EntitySynchroniser.get(), m_StreamingManager.get(), m_ComponentUniverse.get(), m_CellArchivist.get()));

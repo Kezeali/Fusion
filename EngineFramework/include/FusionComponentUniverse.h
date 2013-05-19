@@ -32,6 +32,8 @@
 
 #include "FusionComponentFactory.h"
 
+#include "Messaging/FusionRouter.h"
+
 #include <boost/bimap.hpp>
 #include <boost/bimap/unordered_multiset_of.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
@@ -46,7 +48,7 @@ namespace FusionEngine
 	class ComponentTypeInfoCache;
 
 	//! Stores component worlds
-	class ComponentUniverse : public ComponentFactory
+	class ComponentUniverse : public ComponentFactory, public Messaging::Router
 	{
 	public:
 		ComponentUniverse();
@@ -54,7 +56,6 @@ namespace FusionEngine
 
 		void AddWorld(const std::shared_ptr<SystemWorldBase>& world);
 		void RemoveWorld(const std::shared_ptr<SystemWorldBase>& world);
-		void CheckMessages(const std::shared_ptr<SystemWorldBase>& world);
 		std::shared_ptr<SystemWorldBase> GetWorldByComponentType(const std::string& type);
 
 		std::map<std::string, std::shared_ptr<SystemWorldBase>> GetWorlds() const;
@@ -79,6 +80,8 @@ namespace FusionEngine
 		ComponentTypes_t m_ComponentTypes;
 
 		std::shared_ptr<ComponentTypeInfoCache> m_ComponentTypeInfoCache;
+
+		void ProcessMessage(Messaging::Message message) override;
 	};
 
 }

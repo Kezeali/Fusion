@@ -91,6 +91,8 @@ namespace FusionEngine
 
 		virtual void Update(float time, float dt) = 0;
 
+		IComponentSystem* GetSystem() const;
+
 		void RequestQuit() { m_Quit = true; }
 		bool HasRequestedQuit() const { return m_Quit; }
 

@@ -34,11 +34,15 @@
 
 #include "FusionRouter.h"
 
+#include <functional>
+
 namespace FusionEngine { namespace Messaging
 {
 
 	class TaskRouter : public Router
 	{
+	public:
+		TaskRouter(std::function<Messaging::Message> message_processor);
 	};
 
 } }

@@ -2,6 +2,7 @@
 *.sdf
 *.suo
 *.vcxproj.user
+*.csproj.user
 *.opensdf
 ipch
 /lib

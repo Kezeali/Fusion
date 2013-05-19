@@ -38,6 +38,7 @@ namespace FusionEngine
 {
 
 	ComponentUniverse::ComponentUniverse()
+		: Router("Universe")
 	{
 		m_ComponentTypeInfoCache = std::make_shared<ComponentTypeInfoCache>();
 	}
@@ -62,6 +63,8 @@ namespace FusionEngine
 			world->OnWorldAdded(it->first);
 		}
 
+		AddDownstream(world->GetRouter());
+
 		m_Worlds[name] = world;
 	}
 
@@ -69,6 +72,8 @@ namespace FusionEngine
 	{
 		const auto name = world->GetSystem()->GetName();
 		m_Worlds.erase(name);
+
+		RemoveDownstream(world->GetRouter());
 
 		for (auto it = m_Worlds.begin(); it != m_Worlds.end(); ++it)
 		{
@@ -79,52 +84,22 @@ namespace FusionEngine
 		m_ComponentTypes.by<tag::world>().erase(world);
 	}
 
-	void ComponentUniverse::CheckMessages(const std::shared_ptr<SystemWorldBase>& world)
+	void ComponentUniverse::ProcessMessage(Messaging::Message message)
 	{
-		SystemWorldBase::Message message;
-		while (world->TryPopOutgoingMessage(message))
+		auto request = boost::any_cast<SystemWorldBase::UniverseRequest>(message.data);
+		switch (request.type)
 		{
-			switch (message.targetType)
+		case SystemWorldBase::UniverseRequest::RefreshComponentTypes:
 			{
-			case SystemWorldBase::Message::TargetType::System:
-				if (!message.targetName.empty())
-				{
-					auto entry = m_Worlds.find(message.targetName);
-					if (entry != m_Worlds.end())
-					{
-						entry->second->ReceiveMessage(message);
-					}
-				}
-				else
-				{
-					for (const auto& targetWorld : m_Worlds)
-						targetWorld.second->ReceiveMessage(message);
-				}
-				break;
-			case SystemWorldBase::Message::TargetType::Engine:
-				if (message.targetName.empty())
-				{
-					switch (boost::any_cast<SystemWorldBase::EngineMessage>(message.data))
-					{
-					case SystemWorldBase::EngineMessage::RefreshComponentTypes:
-						{
-							m_ComponentTypes.by<tag::world>().erase(world);
+				m_ComponentTypes.by<tag::world>().erase(request.world);
 
-							auto types = world->GetTypes();
-							for (auto it = types.begin(), end = types.end(); it != end; ++it)
-							{
-								m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, world));
-							}
-						}
-						break;
-					}
-				}
-				else
+				auto types = request.world->GetTypes();
+				for (auto it = types.begin(), end = types.end(); it != end; ++it)
 				{
-					// TODO?: move CheckMessages into the engine manager so it can pass messages to extensions
+					m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, request.world));
 				}
-				break;
 			}
+			break;
 		}
 	}
 

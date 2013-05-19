@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -115,6 +115,8 @@ namespace FusionEngine
 		std::shared_ptr<ConsoleStdOutWriter> m_CoutWriter;
 
 		std::unique_ptr<EvesdroppingManager> m_EvesdroppingManager;
+
+		std::unique_ptr<Messaging::Router> m_MessageRouter;
 
 		LogPtr m_Log;
 

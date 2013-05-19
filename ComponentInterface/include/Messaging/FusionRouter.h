@@ -35,6 +35,7 @@
 #include "FusionMessage.h"
 
 #include <tbb/concurrent_queue.h>
+#include <EASTL/hash_map.h>
 
 namespace FusionEngine { namespace Messaging
 {
@@ -42,9 +43,24 @@ namespace FusionEngine { namespace Messaging
 	class Router
 	{
 	public:
-		void PostMessage(Message message);
+		Router(Address address);
+		virtual ~Router();
+
+		Address GetAddress() const { return m_Address; }
+
+		void AddDownstream(Router* downstream);
+		void RemoveDownstream(Router* downstream);
+
+		void Process(float timelimit);
+
+		void ReceiveMessage(Message message);
 
 	private:
+		virtual void ProcessMessage(Message message) { FSN_ASSERT_FAIL("A message was addressed to router '" + std::string(GetAddress().data(), GetAddress().length()) + "', which has no processor."); }
+
+		Address m_Address;
+		Router* m_Upstream;
+		eastl::hash_map<Address, Router*> m_Downstream;
 		tbb::concurrent_queue<Message> m_OutgoingMessages;
 	};
 
