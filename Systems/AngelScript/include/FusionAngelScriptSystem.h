@@ -35,6 +35,8 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionSystemWorld.h"
+#include "FusionSystemTask.h"
 #include "FusionEntityComponent.h"
 
 #include "FusionResource.h"
@@ -89,7 +91,7 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
-	class AngelScriptWorld : public SystemWorldBase, public std::enable_shared_from_this<AngelScriptWorld>
+	class AngelScriptWorld : public SystemWorldBase
 	{
 		friend class AngelScriptTask;
 		friend class AngelScriptInstantiationTask;
@@ -122,7 +124,7 @@ namespace FusionEngine
 		void OnWorldAdded(const std::string& other_world);
 		void OnWorldRemoved(const std::string& other_world);
 
-		//void ProcessMessage(SystemWorldBase::Message message);
+		void ProcessMessage(Messaging::Message message) override;
 
 		SystemTaskBase* GetTask();
 		std::vector<SystemTaskBase*> GetTasks();

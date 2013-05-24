@@ -32,6 +32,9 @@
 #include "FusionCLRenderSystem.h"
 #include "FusionCLRenderSystemMessageTypes.h"
 
+#include "FusionSystemWorld.h"
+#include "Messaging/FusionRouter.h"
+
 #include "FusionDeltaTime.h"
 
 #include "FusionProfiling.h"
@@ -228,7 +231,7 @@ namespace FusionEngine
 
 			auto font = m_DebugFont;
 
-			m_SystemWorld->PostSystemMessage("CLRenderSystem", char(CLRenderSystemMessageType::SetRenderAction), [graphRect, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
+			m_SystemWorld->GetRouter()->ReceiveMessage(Messaging::Message("CLRenderSystem", char(CLRenderSystemMessageType::SetRenderAction), [graphRect, lines, colours, labels, font](clan::Canvas canvas, Vector2 cam_pos)
 			{
 				clan::Colorf colour = clan::Colorf::lightyellow;
 				canvas.draw_box(graphRect, colour);
@@ -252,7 +255,7 @@ namespace FusionEngine
 
 					fontCopy.draw_text(canvas, clan::Pointf(textX, textTop + textLineHeight * i), text, lineColour);
 				}
-			});
+			}));
 		}
 	}
 

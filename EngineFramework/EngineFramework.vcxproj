@@ -197,6 +197,9 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
+    <ProjectReference Include="..\EASTL\EASTL.vcxproj">
+      <Project>{401362da-d2c6-4417-aaa0-47afb7ad5aac}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Network\Network.vcxproj">
       <Project>{80cbb172-cb75-4b4e-aad8-ebce1301971b}</Project>
     </ProjectReference>

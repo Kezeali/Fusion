@@ -40,6 +40,8 @@
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
 
+#include "Messaging/FusionRouter.h"
+
 // Collision handling
 #include "FusionBox2DSystemMessageTypes.h"
 #include "FusionB2ContactListenerASScript.h"
@@ -578,6 +580,10 @@ namespace FusionEngine
 	{
 	}
 
+	void AngelScriptWorld::ProcessMessage(Messaging::Message message)
+	{
+	}
+
 	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
 	{
 		std::string scriptComponentInterface;
@@ -1055,7 +1061,12 @@ namespace FusionEngine
 
 		ComponentTypeInfoCache::getSingleton().ClearCache();
 
-		PostEngineMessage(EngineMessage::RefreshComponentTypes);
+		{
+		ComponentDispatchRequest request;
+		request.type = ComponentDispatchRequest::RefreshComponentTypes;
+		request.world = this;
+		SendComponentDispatchRequest(request);
+		}
 
 		SendToConsole("Finished Building Scripts");
 	}
@@ -1158,7 +1169,7 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			if (scriptComponent->HasContactListener())
-				PostSystemMessage("Box2DWorld", char(Box2DSystemMessageType::RemoveContactListener), scriptComponent->GetContactListener());
+				GetRouter()->ReceiveMessage(Messaging::Message("Box2DWorld", char(Box2DSystemMessageType::RemoveContactListener), scriptComponent->GetContactListener()));
 			// Find and remove the deactivated script
 			{
 				auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
@@ -1339,7 +1350,7 @@ namespace FusionEngine
 				|| script->HasMethod(m_EventHandlerMethodDeclarations[EventHandlerMethodTypeIds::CollisionExit]);
 			if (hasCollisionHandler)
 			{
-				PostSystemMessage("Box2DWorld", char(Box2DSystemMessageType::AddContactListener), script->GetContactListener());
+				GetRouter()->ReceiveMessage(Messaging::Message("Box2DWorld", char(Box2DSystemMessageType::AddContactListener), script->GetContactListener()));
 			}
 			// Initialise the event-handler method index
 			for (size_t i = 0; i < m_EventHandlerMethodDeclarations.size(); ++i)

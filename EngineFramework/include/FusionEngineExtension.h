@@ -52,6 +52,8 @@ namespace FusionEngine
 	class RegionCellArchivist;
 	class StreamingManager;
 
+	class IComponentSystem;
+
 	class SaveDataArchive;
 
 	class WorldSaver;

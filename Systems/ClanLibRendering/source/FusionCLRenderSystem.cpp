@@ -293,7 +293,7 @@ namespace FusionEngine
 		}
 	}
 
-	void CLRenderWorld::ProcessMessage(SystemWorldBase::Message message)
+	void CLRenderWorld::ProcessMessage(Messaging::Message message)
 	{
 		switch (message.messageType)
 		{

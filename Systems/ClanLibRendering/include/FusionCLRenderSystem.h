@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionSystemWorld.h"
 #include "FusionRenderAction.h"
 #include "FusionViewport.h"
 

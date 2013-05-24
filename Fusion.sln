@@ -377,8 +377,8 @@ Global
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Debug|Win32.ActiveCfg = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Debug|Win32.Build.0 = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Any CPU.ActiveCfg = Debug|Win32
-		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.ActiveCfg = Fast Debug|Win32
+		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.Build.0 = Fast Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.ActiveCfg = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.Build.0 = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Release|Any CPU.ActiveCfg = Release|Win32

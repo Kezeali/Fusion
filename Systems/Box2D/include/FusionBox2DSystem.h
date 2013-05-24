@@ -36,6 +36,9 @@
 
 #include "FusionComponentSystem.h"
 #include "FusionEntityComponent.h"
+#include "FusionSystemWorld.h"
+#include "FusionSystemTask.h"
+#include "Messaging/FusionMessage.h"
 
 class b2World;
 
@@ -74,7 +77,7 @@ namespace FusionEngine
 	class TransformPinner;
 
 	//! Manages a b2World
-	class Box2DWorld : public SystemWorldBase, public std::enable_shared_from_this<Box2DWorld>
+	class Box2DWorld : public SystemWorldBase
 	{
 		friend class Box2DTask;
 		friend class Box2DInterpolateTask;

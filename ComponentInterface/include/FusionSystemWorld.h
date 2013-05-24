@@ -53,7 +53,7 @@ namespace FusionEngine
 	class RouterTask;
 
 	//! World
-	class SystemWorldBase : std::enable_shared_from_this<SystemWorldBase>
+	class SystemWorldBase : public std::enable_shared_from_this<SystemWorldBase>
 	{
 	public:
 		SystemWorldBase(IComponentSystem* system);

@@ -489,7 +489,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Box2DWorld::ProcessMessage(SystemWorldBase::Message message)
+	void Box2DWorld::ProcessMessage(Messaging::Message message)
 	{
 		switch (message.messageType)
 		{
@@ -532,7 +532,7 @@ namespace FusionEngine
 		for (auto it = m_BodiesToCreate.begin(), end = m_BodiesToCreate.end(); it != end; ++it)
 		{
 			auto& body = *it;
-			body->ConstructBody(m_World, this->shared_from_this());
+			body->ConstructBody(m_World, std::dynamic_pointer_cast<Box2DWorld>(this->shared_from_this()));
 		}
 
 		// Copy the newly-created bodies into the active list:
