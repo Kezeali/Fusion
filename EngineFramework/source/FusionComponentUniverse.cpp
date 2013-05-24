@@ -30,6 +30,7 @@
 #include "FusionComponentUniverse.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionSystemWorld.h"
 #include "FusionComponentTypeInfo.h"
 
 #include <tbb/parallel_for.h>
@@ -86,17 +87,17 @@ namespace FusionEngine
 
 	void ComponentUniverse::ProcessMessage(Messaging::Message message)
 	{
-		auto request = boost::any_cast<SystemWorldBase::UniverseRequest>(message.data);
+		auto request = boost::any_cast<SystemWorldBase::ComponentDispatchRequest>(message.data);
 		switch (request.type)
 		{
-		case SystemWorldBase::UniverseRequest::RefreshComponentTypes:
+		case SystemWorldBase::ComponentDispatchRequest::RefreshComponentTypes:
 			{
-				m_ComponentTypes.by<tag::world>().erase(request.world);
+				m_ComponentTypes.by<tag::world>().erase(request.world->GetShared());
 
 				auto types = request.world->GetTypes();
 				for (auto it = types.begin(), end = types.end(); it != end; ++it)
 				{
-					m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, request.world));
+					m_ComponentTypes.by<tag::type>().insert(std::make_pair(*it, request.world->GetShared()));
 				}
 			}
 			break;

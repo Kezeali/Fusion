@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2011 Fusion Project Team
+*  Copyright (c) 2011-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -34,13 +34,11 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionEntityComponent.h"
+#include "FusionSystemType.h"
 
-#include "FusionVectorTypes.h"
-
-#include "Messaging/FusionRouterTask.h"
-
-#include <tbb/concurrent_queue.h>
+#include <angelscript.h>
+#include <memory>
+#include <string>
 
 namespace FusionEngine
 {
@@ -50,8 +48,6 @@ namespace FusionEngine
 	class IComponentSystem;
 
 	typedef std::shared_ptr<SystemWorldBase> SystemWorldPtr;
-
-	enum class SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
 
 	//! Component System
 	class IComponentSystem
@@ -67,131 +63,6 @@ namespace FusionEngine
 
 		virtual std::shared_ptr<SystemWorldBase> CreateWorld() = 0;
 	};
-
-	//! World
-	class SystemWorldBase
-	{
-	public:
-		SystemWorldBase(IComponentSystem* system)
-			: m_System(system)
-		{}
-		virtual ~SystemWorldBase() {}
-
-		IComponentSystem* GetSystem() const
-    {
-        return m_System;
-    }
-
-		SystemType GetSystemType() const;
-
-		enum EngineRequest
-		{
-			Placeholder
-		};
-
-		struct UniverseRequest
-		{
-			enum Type
-			{
-				RefreshComponentTypes
-			};
-
-			Type type;
-			SystemWorldBase* world;
-		}
-		
-		void SendEngineRequest(EngineRequest request);
-
-		void SendUniverseRequest(UniverseRequest request);
-
-		virtual void ProcessMessage(Messaging::Message message) = 0;
-
-		virtual void OnWorldAdded(const std::string& other_world_name) {}
-		virtual void OnWorldRemoved(const std::string& other_world_name) {}
-
-		virtual std::vector<std::string> GetTypes() const = 0;
-		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
-
-		//! Allows a system to prevent an entity from activating until all required resources are loaded
-		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
-		//! Cancel preparation & drop any references to the given component
-		virtual void CancelPreparation(const ComponentPtr& component)
-		{
-			if (component->IsPreparing())
-				FSN_EXCEPT(NotImplementedException, "CancelPreparation() isn't implemented by " + GetSystem()->GetName());
-		}
-		//! Called when a component is activated
-		virtual void OnActivation(const ComponentPtr& component) = 0;
-		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
-		virtual void OnDeactivation(const ComponentPtr& component) = 0;
-
-		virtual SystemTaskBase* GetTask() { return nullptr; }
-
-		Messaging::Router* GetRouter() const { return m_RouterTask.get(); }
-
-		virtual std::vector<SystemTaskBase*> GetTasks()
-		{
-			FSN_ASSERT(GetTask() != nullptr);
-			std::vector<SystemTaskBase*> tasks(1);
-			tasks[0] = GetTask();
-			return tasks;
-		}
-
-	private:
-		IComponentSystem* m_System;
-
-		std::unique_ptr<RouterTask> m_RouterTask;
-	};
-
-	//! Task
-	class SystemTaskBase
-	{
-	public:
-		SystemTaskBase(SystemWorldBase* world, const eastl::string& name)
-			: m_SystemWorld(world),
-			m_Name(name)
-		{}
-		virtual ~SystemTaskBase() {}
-
-		SystemWorldBase* GetSystemWorld() const { return m_SystemWorld; }
-
-		SystemType GetSystemType() const;
-
-		eastl::string GetName() const { return m_Name; }
-
-		virtual void Update() = 0;
-
-		virtual SystemType GetTaskType() const = 0;
-
-		virtual std::vector<std::string> GetDependencies() const { return std::vector<std::string>(); }
-
-		enum PerformanceHint : uint16_t
-		{
-			LongSerial = 0,
-			LongParallel,
-			Short,
-			NoPerformanceHint,
-			NumPerformanceHints
-		};
-		virtual PerformanceHint GetPerformanceHint() const { return NoPerformanceHint; }
-
-		virtual bool IsPrimaryThreadOnly() const = 0;
-
-	protected:
-		SystemWorldBase *m_SystemWorld;
-		eastl::string m_Name;
-	};
-
-
-	inline SystemType SystemTaskBase::GetSystemType() const
-	{
-		return GetSystemWorld()->GetSystemType();
-	}
-
-	inline SystemType SystemWorldBase::GetSystemType() const
-	{
-		return GetSystem()->GetType();
-	}
 
 }
 

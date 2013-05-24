@@ -37,6 +37,7 @@
 
 #include "FusionSingleton.h"
 #include "FusionWorldSaver.h"
+#include "Messaging/FusionRouter.h"
 
 #include <ClanLib/display.h>
 #include <ClanLib/sound.h>

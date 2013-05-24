@@ -35,10 +35,11 @@
 #include <tbb/scalable_allocator.h>
 #include <tbb/task.h>
 
+#include <EASTL/string.h>
+
 #include "FusionAssert.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
-#include "FusionHashable.h"
 #include "FusionSlotContainer.h"
 #include "FusionStdHeaders.h"
 #include "FusionStringFormatting.h"

@@ -33,10 +33,14 @@
 
 #include "FusionLogger.h"
 
+#include "FusionSystemTask.h"
+
 #include <algorithm>
 #include <functional>
 
 #include <tbb/tbb.h>
+
+#include <EASTL/hash_map.h>
 
 namespace FusionEngine
 {
@@ -226,7 +230,7 @@ namespace FusionEngine
 	{
 		void ExecuteTaskImplementation(SystemTaskBase* task_implementation)
 		{
-			FSN_PROFILE(task_implementation->GetName());
+			FSN_PROFILE(task_implementation->GetName().c_str());
 			try
 			{
 				task_implementation->Update();
@@ -314,7 +318,7 @@ namespace FusionEngine
 		m_SystemTasksRoot->set_ref_count(1);
 
 		std::vector<DepTask*> spawnedTasks;
-		std::unordered_map<std::string, DepTask*> namedTasks;
+		eastl::hash_map<eastl::string, DepTask*> namedTasks;
 
 		// now schedule the tasks, based upon their PerformanceHint order
 		tbb::task_list taskList;
@@ -346,7 +350,7 @@ namespace FusionEngine
 				tbbTask->set_affinity(affinityId);
 
 				spawnedTasks.push_back(tbbTask);
-				namedTasks.insert(std::make_pair(taskImplementation->GetName(), tbbTask));
+				namedTasks.insert(eastl::make_pair(taskImplementation->GetName(), tbbTask));
 
 				taskList.push_back(*tbbTask);
 			}
@@ -358,7 +362,7 @@ namespace FusionEngine
 			for (auto dep : deps)
 			{
 				auto entry = namedTasks.find(dep);
-				if (entry != namedTasks.cend())
+				if (entry != namedTasks.end())
 					entry->second->AddDependant(task);
 			}
 		}

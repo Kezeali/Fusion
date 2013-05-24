@@ -109,6 +109,8 @@
     <ClCompile Include="source\FusionPropertySignalingSystem.cpp" />
     <ClCompile Include="source\FusionRouter.cpp" />
     <ClCompile Include="source\FusionRouterTask.cpp" />
+    <ClCompile Include="source\FusionSystemTask.cpp" />
+    <ClCompile Include="source\FusionSystemWorld.cpp" />
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -136,6 +138,9 @@
     <ClInclude Include="include\FusionSerialisationError.h" />
     <ClInclude Include="include\FusionSynchronisedSignalingSystem.h" />
     <ClInclude Include="include\FusionSyncSigScriptInterface.h" />
+    <ClInclude Include="include\FusionSystemTask.h" />
+    <ClInclude Include="include\FusionSystemType.h" />
+    <ClInclude Include="include\FusionSystemWorld.h" />
     <ClInclude Include="include\FusionThreadSafeProperty.h" />
     <ClInclude Include="include\FusionTransformComponent.h" />
     <ClInclude Include="include\Messaging\FusionAddress.h" />

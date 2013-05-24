@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
+#include "FusionSystemTask.h"
 
 #include "Messaging/FusionRouter.h"
 

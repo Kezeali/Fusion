@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
+#include "FusionSystemTask.h"
 
 #include "FusionEntityManager.h"
 #include "FusionRegionMapLoader.h"

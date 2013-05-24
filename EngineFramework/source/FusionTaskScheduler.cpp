@@ -31,6 +31,9 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionStreamingSystem.h"
+#include "FusionSystemWorld.h"
+#include "FusionSystemTask.h"
+#include "FusionSystemType.h"
 #include "FusionProfiling.h"
 
 #include <functional>
@@ -104,7 +107,7 @@ namespace FusionEngine
 	};
 
 	SystemTaskExecutor::SystemTaskExecutor(SystemWorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks)
-		: SystemTaskBase(world, world->GetSystem()->GetName()),
+		: SystemTaskBase(world, world->GetSystem()->GetName().c_str()),
 		m_SubTasks(sub_tasks)
 	{
 		FSN_ASSERT(!sub_tasks.empty());
@@ -138,14 +141,14 @@ namespace FusionEngine
 	}
 
 	const size_t s_NumSystemTypeCombinations = 6;
-	const uint8_t s_SystemTypeCombinations[s_NumSystemTypeCombinations] =
+	const std::uint8_t s_SystemTypeCombinations[s_NumSystemTypeCombinations] =
 	{
-		SystemType::Simulation,
-		SystemType::Rendering,
-		SystemType::Streaming,
-		SystemType::Simulation | SystemType::Rendering,
-		SystemType::Rendering | SystemType::Streaming,
-		SystemType::Simulation | SystemType::Streaming
+		(std::uint8_t)SystemType::Simulation,
+		(std::uint8_t)SystemType::Rendering,
+		(std::uint8_t)SystemType::Streaming,
+		(std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Rendering,
+		(std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming,
+		(std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming
 	};
 
 	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<SystemWorldBase>>& universe)
@@ -186,7 +189,7 @@ namespace FusionEngine
 
 					std::vector<SystemTaskBase*> systemTypeTasks;
 					std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
-						[systemTypeCombination, primaryThread](SystemTaskBase* task) { return (task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
+						[systemTypeCombination, primaryThread](SystemTaskBase* task) { return ((std::uint8_t)task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
 
 					if (systemTypeTasks.size() > 1)
 					{
@@ -206,9 +209,9 @@ namespace FusionEngine
 
 			m_SortedTasks.push_back(m_StreamingTask.get());
 
-			m_GroupedSortedTasks[SystemType::Streaming].push_back(m_StreamingTask.get());
-			m_GroupedSortedTasks[SystemType::Streaming | SystemType::Rendering].push_back(m_StreamingTask.get());
-			m_GroupedSortedTasks[SystemType::Streaming | SystemType::Simulation].push_back(m_StreamingTask.get());
+			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming].push_back(m_StreamingTask.get());
+			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming | (std::uint8_t)SystemType::Rendering].push_back(m_StreamingTask.get());
+			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming | (std::uint8_t)SystemType::Simulation].push_back(m_StreamingTask.get());
 		}
 
 		SortTasks();
@@ -247,7 +250,7 @@ namespace FusionEngine
 		m_LastTime = currentTime;
 
 		uint8_t taskFilter = 0xFF;
-		static const uint8_t everySystemType = (SystemType::Simulation | SystemType::Rendering | SystemType::Streaming);
+		static const uint8_t everySystemType = ((std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming);
 
 		float deltaTime = m_DeltaTime;
 
@@ -278,7 +281,7 @@ namespace FusionEngine
 				{
 					if (m_Accumulator >= m_DeltaTimeMS)
 					{
-						taskFilter = SystemType::Simulation | SystemType::Streaming;
+						taskFilter = (std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming;
 						++m_FramesSkipped;
 					}
 					else
@@ -293,7 +296,7 @@ namespace FusionEngine
 			}
 			else // Render while waiting for enough time to accumulate
 			{
-				taskFilter = SystemType::Rendering;
+				taskFilter = (std::uint8_t)SystemType::Rendering;
 				//deltaTime = timePassed * 0.001f;
 				m_FramesSkipped = 0;
 			}
@@ -308,7 +311,7 @@ namespace FusionEngine
 			return taskFilter;
 
 		// Simulating another step, update the frame count
-		if (taskFilter & SystemType::Simulation)
+		if (taskFilter & (std::uint8_t)SystemType::Simulation)
 			++DeltaTime::m_Tick; // (this is just stored here until I implement networking again)
 
 		if (m_ThreadingEnabled)
@@ -336,11 +339,11 @@ namespace FusionEngine
 			for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 			{
 				auto world = *it;
-				if (world->GetSystemType() & taskFilter)
+				if ((std::uint8_t)world->GetSystemType() & taskFilter)
 					world->GetTask()->Update();
 			}
 
-			if (taskFilter & SystemType::Streaming)
+			if (taskFilter & (std::uint8_t)SystemType::Streaming)
 			{
 				m_EntityManager->UpdateActiveRegions();
 				m_EntityManager->ProcessActiveEntities(deltaTime);

@@ -41,6 +41,8 @@
     <ClCompile Include="source\FusionRouter.cpp">
       <Filter>Messaging</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionSystemWorld.cpp" />
+    <ClCompile Include="source\FusionSystemTask.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionEntity.h">
@@ -105,5 +107,8 @@
     <ClInclude Include="include\Messaging\FusionTaskRouter.h">
       <Filter>Messaging</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionSystemTask.h" />
+    <ClInclude Include="include\FusionSystemWorld.h" />
+    <ClInclude Include="include\FusionSystemType.h" />
   </ItemGroup>
 </Project>

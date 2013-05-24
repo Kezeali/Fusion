@@ -30,6 +30,7 @@
 #include "Messaging/FusionRouterTask.h"
 
 #include "FusionDeltaTime.h"
+#include "FusionSystemWorld.h"
 
 namespace FusionEngine
 {

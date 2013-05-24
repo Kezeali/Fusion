@@ -19,12 +19,14 @@
 *
 *    3. This notice may not be removed or altered from any source distribution.
 *
-*  File Author:
+*
+*  File Author(s):
+*
 *    Elliot Hayward
 */
 
-#ifndef H_FusionRouter
-#define H_FusionRouter
+#ifndef H_FusionSystemType
+#define H_FusionSystemType
 
 #if _MSC_VER > 1000
 #pragma once
@@ -32,40 +34,13 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionMessage.h"
+#include <cstdint>
 
-#include "FusionAssert.h"
-
-#include <tbb/concurrent_queue.h>
-#include <EASTL/hash_map.h>
-
-namespace FusionEngine { namespace Messaging
+namespace FusionEngine
 {
 
-	class Router
-	{
-	public:
-		Router(Address address);
-		virtual ~Router();
+	enum class SystemType : std::uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
 
-		Address GetAddress() const { return m_Address; }
-
-		void AddDownstream(Router* downstream);
-		void RemoveDownstream(Router* downstream);
-
-		void Process(float timelimit);
-
-		void ReceiveMessage(Message message);
-
-	private:
-		virtual void ProcessMessage(Message message) { FSN_ASSERT_FAIL("A message was addressed to router '" + std::string(GetAddress().data(), GetAddress().length()) + "', which has no processor."); }
-
-		Address m_Address;
-		Router* m_Upstream;
-		eastl::hash_map<Address, Router*> m_Downstream;
-		tbb::concurrent_queue<Message> m_OutgoingMessages;
-	};
-
-} }
+}
 
 #endif

@@ -65,6 +65,7 @@
 #include "FusionScriptSound.h"
 #include "FusionStreamingManager.h"
 #include "FusionSpriteDefinition.h"
+#include "FusionSystemType.h"
 #include "FusionTaskManager.h"
 #include "FusionTaskScheduler.h"
 
@@ -733,9 +734,12 @@ namespace FusionEngine
 #endif
 
 				// Execute only Rendering and Streaming in editmode or while connecting
-				const auto executed = m_Scheduler->Execute((m_EditMode || connecting) ? (SystemType::Rendering | SystemType::Streaming) : (SystemType::Rendering | SystemType::Simulation | SystemType::Streaming));
+				const auto executed = m_Scheduler->Execute(
+					(m_EditMode || connecting) ?
+					((std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming) :
+					((std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming));
 
-				if (executed & SystemType::Rendering)
+				if (executed & (std::uint8_t)SystemType::Rendering)
 				{
 					m_DisplayWindow.flip(0);
 					gc.clear();
@@ -763,7 +767,7 @@ namespace FusionEngine
 					m_ResourceManager->DeliverLoadedResources(frameTimeRemaining);
 				}
 
-				if (executed & SystemType::Streaming)
+				if (executed & (std::uint8_t)SystemType::Streaming)
 				{
 					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
 				}
@@ -780,7 +784,7 @@ namespace FusionEngine
 				}
 #endif
 
-				if (executed & SystemType::Simulation)
+				if (executed & (std::uint8_t)SystemType::Simulation)
 				{
 					{
 						std::pair<std::string, bool> enqueued;

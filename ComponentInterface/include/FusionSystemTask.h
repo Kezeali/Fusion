@@ -19,12 +19,14 @@
 *
 *    3. This notice may not be removed or altered from any source distribution.
 *
-*  File Author:
+*
+*  File Author(s):
+*
 *    Elliot Hayward
 */
 
-#ifndef H_FusionRouter
-#define H_FusionRouter
+#ifndef H_FusionSystemTask
+#define H_FusionSystemTask
 
 #if _MSC_VER > 1000
 #pragma once
@@ -32,40 +34,57 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionMessage.h"
-
-#include "FusionAssert.h"
+#include "FusionEntityComponent.h"
+#include "FusionSystemType.h"
 
 #include <tbb/concurrent_queue.h>
-#include <EASTL/hash_map.h>
 
-namespace FusionEngine { namespace Messaging
+#include <EASTL/string.h>
+
+namespace FusionEngine
 {
 
-	class Router
+	class SystemWorldBase;
+
+	//! Task
+	class SystemTaskBase
 	{
 	public:
-		Router(Address address);
-		virtual ~Router();
+		SystemTaskBase(SystemWorldBase* world, const eastl::string& name)
+			: m_SystemWorld(world),
+			m_Name(name)
+		{}
+		virtual ~SystemTaskBase() {}
 
-		Address GetAddress() const { return m_Address; }
+		SystemWorldBase* GetSystemWorld() const { return m_SystemWorld; }
 
-		void AddDownstream(Router* downstream);
-		void RemoveDownstream(Router* downstream);
+		SystemType GetSystemType() const;
 
-		void Process(float timelimit);
+		eastl::string GetName() const { return m_Name; }
 
-		void ReceiveMessage(Message message);
+		virtual void Update() = 0;
 
-	private:
-		virtual void ProcessMessage(Message message) { FSN_ASSERT_FAIL("A message was addressed to router '" + std::string(GetAddress().data(), GetAddress().length()) + "', which has no processor."); }
+		virtual SystemType GetTaskType() const = 0;
 
-		Address m_Address;
-		Router* m_Upstream;
-		eastl::hash_map<Address, Router*> m_Downstream;
-		tbb::concurrent_queue<Message> m_OutgoingMessages;
+		virtual std::vector<eastl::string> GetDependencies() const { return std::vector<eastl::string>(); }
+
+		enum PerformanceHint : uint16_t
+		{
+			LongSerial = 0,
+			LongParallel,
+			Short,
+			NoPerformanceHint,
+			NumPerformanceHints
+		};
+		virtual PerformanceHint GetPerformanceHint() const { return NoPerformanceHint; }
+
+		virtual bool IsPrimaryThreadOnly() const = 0;
+
+	protected:
+		SystemWorldBase *m_SystemWorld;
+		eastl::string m_Name;
 	};
 
-} }
+}
 
 #endif

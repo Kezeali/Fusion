@@ -34,8 +34,6 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
-
 #include <tbb/task.h>
 #include <tbb/task_scheduler_init.h>
 #include <tbb/tbb_thread.h>
@@ -50,6 +48,8 @@ namespace FusionEngine
 
 	class PrimaryThreadTaskScheduler;
 #endif
+
+	class SystemTaskBase;
 
 	typedef eastl::vector<SystemTaskBase*> TaskGroup;
 

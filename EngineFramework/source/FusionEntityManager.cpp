@@ -40,6 +40,7 @@
 #include "FusionClientOptions.h"
 #include "FusionComponentFactory.h"
 #include "FusionComponentSystem.h"
+#include "FusionSystemWorld.h"
 #include "FusionDeltaTime.h"
 #include "FusionEntitySynchroniser.h"
 #include "FusionExceptionFactory.h"
