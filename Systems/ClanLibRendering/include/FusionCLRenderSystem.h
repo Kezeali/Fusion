@@ -58,15 +58,15 @@ namespace FusionEngine
 
 	class CLRenderExtension;
 
-	class CLRenderSystem : public IComponentSystem
+	class CLRenderSystem : public System::ISystem
 	{
 	public:
 		CLRenderSystem(const clan::Canvas& window, CameraSynchroniser* camera_sync);
 
-		std::shared_ptr<SystemWorldBase> CreateWorld();
+		std::shared_ptr<System::WorldBase> CreateWorld();
 
 	private:
-		SystemType GetType() const { return SystemType::Rendering; }
+		System::SystemType GetType() const { return System::Rendering; }
 
 		std::string GetName() const { return "CLRenderSystem"; }
 
@@ -79,10 +79,10 @@ namespace FusionEngine
 	class SpriteDefinitionCache;
 
 	//! ClanLib Renderer
-	class CLRenderWorld : public SystemWorldBase
+	class CLRenderWorld : public System::WorldBase
 	{
 	public:
-		CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync);
+		CLRenderWorld(System::ISystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync);
 		virtual ~CLRenderWorld();
 
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
@@ -122,7 +122,7 @@ namespace FusionEngine
 
 		void ProcessMessage(Messaging::Message message) override;
 
-		std::vector<SystemTaskBase*> GetTasks();
+		System::TaskList_t MakeTasksList() const override;
 
 		CLRenderTask* m_RenderTask;
 		CLRenderGUITask* m_GUITask;

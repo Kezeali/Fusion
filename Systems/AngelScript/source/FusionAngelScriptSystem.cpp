@@ -70,6 +70,8 @@
 namespace FusionEngine
 {
 
+	using namespace System;
+
 	//! Exception while preprocessing a component script
 	class PreprocessorException : public Exception
 	{
@@ -542,13 +544,13 @@ namespace FusionEngine
 			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 	}
 
-	std::shared_ptr<SystemWorldBase> AngelScriptSystem::CreateWorld()
+	std::shared_ptr<System::WorldBase> AngelScriptSystem::CreateWorld()
 	{
 		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager);
 	}
 
-	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
-		: SystemWorldBase(system),
+	AngelScriptWorld::AngelScriptWorld(System::ISystem* system, const std::shared_ptr<ScriptManager>& manager)
+		: WorldBase(system),
 		m_ScriptManager(manager)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
@@ -1190,16 +1192,11 @@ namespace FusionEngine
 		}
 	}
 
-	SystemTaskBase* AngelScriptWorld::GetTask()
+	TaskList_t AngelScriptWorld::MakeTasksList() const
 	{
-		return m_InstantiateTask;
-	}
-
-	std::vector<SystemTaskBase*> AngelScriptWorld::GetTasks()
-	{
-		std::vector<SystemTaskBase*> tasks;
-		tasks.push_back(m_ASTask);
-		tasks.push_back(m_InstantiateTask);
+		TaskList_t tasks;
+		tasks.push_back(*m_ASTask);
+		tasks.push_back(*m_InstantiateTask);
 		return tasks;
 	}
 

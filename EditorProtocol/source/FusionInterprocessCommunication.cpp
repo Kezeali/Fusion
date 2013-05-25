@@ -138,7 +138,7 @@ namespace FusionEngine { namespace Interprocess {
 
 	void EditorServiceHandler::MakeResourceList(std::vector<ResourceFile>& out, const std::vector<std::string>& files)
 	{
-		for (auto file : files)
+		for (const auto& file : files)
 		{
 			ResourceFile resource;
 			resource.path = file;

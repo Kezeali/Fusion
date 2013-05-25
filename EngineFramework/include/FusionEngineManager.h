@@ -54,12 +54,16 @@ namespace FusionEngine
 
 	class ArchetypeFactory;
 	class ArchetypeFactoryManager;
-	class IComponentSystem;
+	namespace System
+	{
+		class ISystem;
+	}
 	class ComponentUniverse;
 	class ConsoleStdOutWriter;
 	class EngineExtension;
 	class EntitySynchroniser;
 	class EvesdroppingManager;
+	class GameMapLoader;
 	class GameMap;
 	class GUI;
 	class InputManager;
@@ -95,7 +99,7 @@ namespace FusionEngine
 
 		void AddExtension(const std::shared_ptr<EngineExtension>& extension);
 
-		void AddSystem(std::unique_ptr<IComponentSystem>&& system);
+		void AddSystem(std::unique_ptr<System::ISystem>&& system);
 
 		void Run();
 
@@ -175,7 +179,7 @@ namespace FusionEngine
 		std::set<std::string> m_EnabledExtensions; // Loaded from options
 		std::vector<std::shared_ptr<EngineExtension>> m_ActiveExtensions;
 
-		std::map<std::string, std::unique_ptr<IComponentSystem>> m_Systems;
+		std::map<std::string, std::unique_ptr<System::ISystem>> m_Systems;
 
 		std::shared_ptr<TaskManager> m_TaskManager;
 		std::shared_ptr<TaskScheduler> m_Scheduler;

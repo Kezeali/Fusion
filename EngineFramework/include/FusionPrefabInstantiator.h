@@ -38,7 +38,10 @@
 namespace FusionEngine
 {
 
-	class SystemWorldBase;
+	namespace System
+	{
+		class WorldBase;
+	}
 
 	class PrefabInstantiationException : public Exception
 	{

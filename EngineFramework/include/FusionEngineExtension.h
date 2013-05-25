@@ -43,7 +43,11 @@ namespace FusionEngine
 
 	class RendererExtension;
 
-	class SystemWorldBase;
+	namespace System
+	{
+		class WorldBase;
+		class ISystem;
+	}
 
 	class ArchetypeFactory;
 	class ComponentFactory;
@@ -51,8 +55,6 @@ namespace FusionEngine
 	class EntityManager;
 	class RegionCellArchivist;
 	class StreamingManager;
-
-	class IComponentSystem;
 
 	class SaveDataArchive;
 
@@ -89,11 +91,11 @@ namespace FusionEngine
 
 		virtual void RegisterScriptType(asIScriptEngine* engine) {}
 
-		virtual void OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world) = 0;
+		virtual void OnWorldCreated(const std::shared_ptr<System::WorldBase>& world) = 0;
 
 		virtual void Update(float time, float dt) = 0;
 
-		IComponentSystem* GetSystem() const;
+		virtual System::ISystem* GetSystem() const = 0;
 
 		void RequestQuit() { m_Quit = true; }
 		bool HasRequestedQuit() const { return m_Quit; }

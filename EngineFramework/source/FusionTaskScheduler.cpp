@@ -29,6 +29,7 @@
 
 #include "FusionTaskScheduler.h"
 
+#include "FusionComponentSystem.h"
 #include "FusionDeltaTime.h"
 #include "FusionStreamingSystem.h"
 #include "FusionSystemWorld.h"
@@ -42,6 +43,8 @@
 
 namespace FusionEngine
 {
+	
+	using namespace System;
 
 	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionCellArchivist* archivist)
 		: m_TaskManager(task_manager),
@@ -89,7 +92,7 @@ namespace FusionEngine
 	class SystemTaskExecutor : public SystemTaskBase
 	{
 	public:
-		SystemTaskExecutor(SystemWorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks);
+		SystemTaskExecutor(WorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks);
 
 	private:
 		void Update() override;
@@ -106,7 +109,7 @@ namespace FusionEngine
 		bool m_PrimaryThreadOnly;
 	};
 
-	SystemTaskExecutor::SystemTaskExecutor(SystemWorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks)
+	SystemTaskExecutor::SystemTaskExecutor(WorldBase* world, const std::vector<SystemTaskBase*>& sub_tasks)
 		: SystemTaskBase(world, world->GetSystem()->GetName().c_str()),
 		m_SubTasks(sub_tasks)
 	{
@@ -143,78 +146,78 @@ namespace FusionEngine
 	const size_t s_NumSystemTypeCombinations = 6;
 	const std::uint8_t s_SystemTypeCombinations[s_NumSystemTypeCombinations] =
 	{
-		(std::uint8_t)SystemType::Simulation,
-		(std::uint8_t)SystemType::Rendering,
-		(std::uint8_t)SystemType::Streaming,
-		(std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Rendering,
-		(std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming,
-		(std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming
+		SystemType::Simulation,
+		SystemType::Rendering,
+		SystemType::Streaming,
+		SystemType::Simulation | SystemType::Rendering,
+		SystemType::Rendering | SystemType::Streaming,
+		SystemType::Simulation | SystemType::Streaming
 	};
 
-	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<SystemWorldBase>>& universe)
+	void TaskScheduler::SetUniverse(const std::vector<std::shared_ptr<WorldBase>>& universe)
 	{
 		m_ComponentWorlds = universe;
 
 		//m_ResortTasks = true;
 
-		m_SortedTasks.clear();
-		for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
-		{
-			auto world = *it;
-			auto tasks = world->GetTasks();
+		//m_SortedTasks.clear();
+		//for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
+		//{
+		//	auto world = *it;
+		//	auto tasks = world->GetTasks();
 
-			FSN_ASSERT(!tasks.empty());
+		//	FSN_ASSERT(!tasks.empty());
 
-			for (int i = 0; i < 2; ++i)
-			{
-				const bool primaryThread = i == 0;
-				// Grab the tasks that do / don't need to run in the primary thread
-				std::vector<SystemTaskBase*> threadRestrictionTasks;
-				std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(threadRestrictionTasks),
-					[primaryThread](SystemTaskBase* task) { return (task->IsPrimaryThreadOnly() == primaryThread); });
-				if (threadRestrictionTasks.size() > 1)
-				{
-					// Create a proxy-task to execute all the tasks for this system if there is more than one
-					SystemTaskBase* task = new SystemTaskExecutor(world.get(), threadRestrictionTasks);
-					m_SortedTasks.push_back(task);
-					m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
-				}
-				else if (!threadRestrictionTasks.empty())
-					m_SortedTasks.push_back(threadRestrictionTasks.front());
+		//	for (int i = 0; i < 2; ++i)
+		//	{
+		//		const bool primaryThread = i == 0;
+		//		// Grab the tasks that do / don't need to run in the primary thread
+		//		std::vector<SystemTaskBase*> threadRestrictionTasks;
+		//		std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(threadRestrictionTasks),
+		//			[primaryThread](SystemTaskBase* task) { return (task->IsPrimaryThreadOnly() == primaryThread); });
+		//		if (threadRestrictionTasks.size() > 1)
+		//		{
+		//			// Create a proxy-task to execute all the tasks for this system if there is more than one
+		//			SystemTaskBase* task = new SystemTaskExecutor(world.get(), threadRestrictionTasks);
+		//			m_SortedTasks.push_back(task);
+		//			m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
+		//		}
+		//		else if (!threadRestrictionTasks.empty())
+		//			m_SortedTasks.push_back(threadRestrictionTasks.front());
 
-				// Grab all the tasks for each combination of SystemTypes
-				for (int i = 0; i < s_NumSystemTypeCombinations; ++i)
-				{
-					const uint8_t systemTypeCombination = s_SystemTypeCombinations[i];
+		//		// Grab all the tasks for each combination of SystemTypes
+		//		for (int i = 0; i < s_NumSystemTypeCombinations; ++i)
+		//		{
+		//			const uint8_t systemTypeCombination = s_SystemTypeCombinations[i];
 
-					std::vector<SystemTaskBase*> systemTypeTasks;
-					std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
-						[systemTypeCombination, primaryThread](SystemTaskBase* task) { return ((std::uint8_t)task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
+		//			std::vector<SystemTaskBase*> systemTypeTasks;
+		//			std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(systemTypeTasks),
+		//				[systemTypeCombination, primaryThread](SystemTaskBase* task) { return (task->GetTaskType() & systemTypeCombination) != 0 && (task->IsPrimaryThreadOnly() == primaryThread); });
 
-					if (systemTypeTasks.size() > 1)
-					{
-						auto task = new SystemTaskExecutor(world.get(), systemTypeTasks);
-						m_GroupedSortedTasks[systemTypeCombination].push_back(task);
-						m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
-					}
-					else if (!systemTypeTasks.empty())
-						m_GroupedSortedTasks[systemTypeCombination].push_back(systemTypeTasks.front());
-				}
-			}
-		}
+		//			if (systemTypeTasks.size() > 1)
+		//			{
+		//				auto task = new SystemTaskExecutor(world.get(), systemTypeTasks);
+		//				m_GroupedSortedTasks[systemTypeCombination].push_back(task);
+		//				m_ProxyTasks.push_back(std::unique_ptr<SystemTaskBase>(task));
+		//			}
+		//			else if (!systemTypeTasks.empty())
+		//				m_GroupedSortedTasks[systemTypeCombination].push_back(systemTypeTasks.front());
+		//		}
+		//	}
+		//}
 
 		if (m_EntityManager)
 		{
 			m_StreamingTask.reset(new StreamingTask(m_EntityManager, m_Archivist));
 
-			m_SortedTasks.push_back(m_StreamingTask.get());
+			//m_SortedTasks.push_back(m_StreamingTask.get());
 
-			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming].push_back(m_StreamingTask.get());
-			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming | (std::uint8_t)SystemType::Rendering].push_back(m_StreamingTask.get());
-			m_GroupedSortedTasks[(std::uint8_t)SystemType::Streaming | (std::uint8_t)SystemType::Simulation].push_back(m_StreamingTask.get());
+			//m_GroupedSortedTasks[SystemType::Streaming].push_back(m_StreamingTask.get());
+			//m_GroupedSortedTasks[SystemType::Streaming | SystemType::Rendering].push_back(m_StreamingTask.get());
+			//m_GroupedSortedTasks[SystemType::Streaming | SystemType::Simulation].push_back(m_StreamingTask.get());
 		}
 
-		SortTasks();
+		//SortTasks();
 	}
 
 	namespace
@@ -250,7 +253,7 @@ namespace FusionEngine
 		m_LastTime = currentTime;
 
 		uint8_t taskFilter = 0xFF;
-		static const uint8_t everySystemType = ((std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming);
+		static const uint8_t everySystemType = (SystemType::Simulation | SystemType::Rendering | SystemType::Streaming | SystemType::Messaging | SystemType::Editor);
 
 		float deltaTime = m_DeltaTime;
 
@@ -281,7 +284,7 @@ namespace FusionEngine
 				{
 					if (m_Accumulator >= m_DeltaTimeMS)
 					{
-						taskFilter = (std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming;
+						taskFilter = SystemType::Simulation | SystemType::Streaming;
 						++m_FramesSkipped;
 					}
 					else
@@ -296,7 +299,7 @@ namespace FusionEngine
 			}
 			else // Render while waiting for enough time to accumulate
 			{
-				taskFilter = (std::uint8_t)SystemType::Rendering;
+				taskFilter = SystemType::Rendering;
 				//deltaTime = timePassed * 0.001f;
 				m_FramesSkipped = 0;
 			}
@@ -311,27 +314,59 @@ namespace FusionEngine
 			return taskFilter;
 
 		// Simulating another step, update the frame count
-		if (taskFilter & (std::uint8_t)SystemType::Simulation)
+		if (taskFilter & SystemType::Simulation)
 			++DeltaTime::m_Tick; // (this is just stored here until I implement networking again)
 
 		if (m_ThreadingEnabled)
 		{
-			if (m_ResortTasks)
-			{
-				SortTasks();
-				m_ResortTasks = false;
-			}
+			//if (m_ResortTasks)
+			//{
+			//	SortTasks();
+			//	m_ResortTasks = false;
+			//}
+
+			std::vector<std::vector<SystemTaskBase*>> taskLists;
+			taskLists.reserve(m_ComponentWorlds.size());
 
 			// Schedule the tasks for component-worlds that are ready for execution
 			if ((taskFilter & everySystemType) == everySystemType)
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks);
+				for (const auto& world : m_ComponentWorlds)
+				{
+					auto t = world->GetTasks();
+					std::vector<SystemTaskBase*> tasks;
+					for (auto it = t.begin(); it != t.end(); ++it)
+						tasks.push_back(&(*it));
+					if (!tasks.empty())
+						taskLists.push_back(tasks);
+				}
 			}
 			else
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_GroupedSortedTasks[taskFilter]);
+				for (const auto& world : m_ComponentWorlds)
+				{
+					auto t = world->GetTasks();
+					std::vector<SystemTaskBase*> tasks;
+					for (auto it = t.begin(); it != t.end(); ++it)
+						tasks.push_back(&(*it));
+					auto newEnd = std::remove_if(tasks.begin(), tasks.end(), [taskFilter](SystemTaskBase* task) { return (task->GetTaskType() & taskFilter) != 0; });
+					if (newEnd != tasks.end())
+						tasks.erase(newEnd, tasks.end());
+					if (!tasks.empty())
+						taskLists.push_back(std::move(tasks));
+				}
 			}
 
+			if ((taskFilter & System::Streaming) != 0)
+			{
+				//TaskList_t tasks;
+				//tasks.push_back(*m_StreamingTask.get());
+				std::vector<SystemTaskBase*> tasks;
+				tasks.push_back(m_StreamingTask.get());
+				taskLists.push_back(std::move(tasks));
+			}
+
+			m_TaskManager->SpawnJobsForSystemTasks(taskLists);
 			m_TaskManager->WaitForSystemTasks();
 		}
 		else // ... not threading enabled:
@@ -339,11 +374,12 @@ namespace FusionEngine
 			for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 			{
 				auto world = *it;
-				if ((std::uint8_t)world->GetSystemType() & taskFilter)
-					world->GetTask()->Update();
+				for (auto& task : world->GetTasks())
+					if ((task.GetTaskType() & taskFilter) != 0)
+						task.Update();
 			}
 
-			if (taskFilter & (std::uint8_t)SystemType::Streaming)
+			if (taskFilter & SystemType::Streaming)
 			{
 				m_EntityManager->UpdateActiveRegions();
 				m_EntityManager->ProcessActiveEntities(deltaTime);

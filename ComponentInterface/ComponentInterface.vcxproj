@@ -141,6 +141,7 @@
     <ClInclude Include="include\FusionSystemTask.h" />
     <ClInclude Include="include\FusionSystemType.h" />
     <ClInclude Include="include\FusionSystemWorld.h" />
+    <ClInclude Include="include\FusionTaskList.h" />
     <ClInclude Include="include\FusionThreadSafeProperty.h" />
     <ClInclude Include="include\FusionTransformComponent.h" />
     <ClInclude Include="include\Messaging\FusionAddress.h" />

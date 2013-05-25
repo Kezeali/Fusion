@@ -42,13 +42,13 @@ namespace FusionEngine
 {
 	
 	//! Router task
-	class RouterTask : public SystemTaskBase, public Messaging::Router
+	class RouterTask : public System::SystemTaskBase, public Messaging::Router
 	{
 	public:
-		RouterTask(SystemWorldBase* sysworld, const eastl::string& name);
+		RouterTask(System::WorldBase* sysworld, const eastl::string& name);
 		~RouterTask();
 
-		SystemType GetTaskType() const { return SystemType::Messaging; }
+		System::SystemType GetTaskType() const { return System::Messaging; }
 
 		PerformanceHint GetPerformanceHint() const { return Short; }
 

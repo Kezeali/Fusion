@@ -62,7 +62,10 @@ void intrusive_ptr_release(asIScriptFunction *ptr);
 namespace FusionEngine
 {
 
-	class SystemWorldBase;
+	namespace System
+	{
+		class WorldBase;
+	}
 	class AngelScriptWorld;
 	class Box2DWorld;
 	class CLRenderWorld;
@@ -77,6 +80,8 @@ namespace FusionEngine
 
 	class WorldSaver;
 	class SaveDataArchive;
+
+	class EditorSystem;
 
 	class EditorOverlay;
 	class SelectionDrawer;
@@ -128,7 +133,9 @@ namespace FusionEngine
 		void SetWorldSaver(WorldSaver* saver) { m_Saver = saver; }
 		void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) { m_DataArchiver = archiver; }
 
-		void OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world);
+		System::ISystem* GetSystem() const;
+
+		void OnWorldCreated(const std::shared_ptr<System::WorldBase>& world);
 
 		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw);
 
@@ -230,6 +237,8 @@ namespace FusionEngine
 		std::shared_ptr<ComponentFactory> m_ComponentFactory;
 		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
 		std::shared_ptr<EntityManager> m_EntityManager;
+
+		std::shared_ptr<EditorSystem> m_EditorSystem;
 
 		int m_NextFactoryId;
 		std::unordered_map<int, std::shared_ptr<boost::signals2::scoped_connection>> m_ArchetypeFactoryLoadConnections;

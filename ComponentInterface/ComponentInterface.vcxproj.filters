@@ -110,5 +110,6 @@
     <ClInclude Include="include\FusionSystemTask.h" />
     <ClInclude Include="include\FusionSystemWorld.h" />
     <ClInclude Include="include\FusionSystemType.h" />
+    <ClInclude Include="include\FusionTaskList.h" />
   </ItemGroup>
 </Project>

@@ -66,6 +66,7 @@ using namespace RakNet;
 namespace FusionEngine
 {
 	using namespace EntitySerialisationUtils;
+	using namespace System;
 
 	ConsolidatedInput::ConsolidatedInput(InputManager *input_manager)
 		: m_LocalManager(input_manager),
@@ -1870,7 +1871,7 @@ namespace FusionEngine
 		return allAreActive;
 	}
 
-	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<SystemWorldBase>& world, const ComponentPtr& component)
+	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<WorldBase>& world, const ComponentPtr& component)
 	{
 #ifdef FSN_PROFILING_ENABLED
 		Profiling::getSingleton().AddTime("~Activated" + component->GetType(), double(1.0));

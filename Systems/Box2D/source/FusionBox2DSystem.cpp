@@ -48,6 +48,7 @@ namespace FusionEngine
 {
 
 	using namespace Maths;
+	using namespace System;
 
 	class Box2DContactListenerDelegator : public b2ContactListener
 	{
@@ -99,7 +100,7 @@ namespace FusionEngine
 	{
 	}
 
-	std::shared_ptr<SystemWorldBase> Box2DSystem::CreateWorld()
+	std::shared_ptr<WorldBase> Box2DSystem::CreateWorld()
 	{
 		return std::make_shared<Box2DWorld>(this);
 	}
@@ -284,8 +285,8 @@ namespace FusionEngine
 		}
 	};
 
-	Box2DWorld::Box2DWorld(IComponentSystem* system)
-		: SystemWorldBase(system)
+	Box2DWorld::Box2DWorld(System::ISystem* system)
+		: WorldBase(system)
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity);
@@ -508,11 +509,11 @@ namespace FusionEngine
 		}
 	}
 
-	std::vector<SystemTaskBase*> Box2DWorld::GetTasks()
+	TaskList_t Box2DWorld::MakeTasksList() const
 	{
-		std::vector<SystemTaskBase*> tasks(2);
-		tasks[0] = m_B2DTask;
-		tasks[1] = m_B2DInterpTask;
+		TaskList_t tasks;
+		tasks.push_back(*m_B2DTask);
+		tasks.push_back(*m_B2DInterpTask);
 		return tasks;
 	}
 

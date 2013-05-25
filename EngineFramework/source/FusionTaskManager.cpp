@@ -45,6 +45,8 @@
 namespace FusionEngine
 {
 
+	using namespace System;
+
 #if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
 	class PrimaryThreadTask
 	{
@@ -304,12 +306,12 @@ namespace FusionEngine
 		return new( root->allocate_additional_child_of(*root) ) FunctionTask<T>(fn);
 	}
 
-	void TaskManager::SpawnJobsForSystemTasks(const std::vector<SystemTaskBase*>& tasks)
+	void TaskManager::SpawnJobsForSystemTasks(std::vector<std::vector<SystemTaskBase*>>& taskLists)
 	{
 		// Call this from the primary thread to schedule system work
 		FSN_ASSERT(IsPrimaryThread());
 
-		FSN_ASSERT(!tasks.empty());
+		FSN_ASSERT(!taskLists.empty());
 
 		FSN_ASSERT(m_SystemTasksRoot != NULL);
 
@@ -318,15 +320,17 @@ namespace FusionEngine
 		m_SystemTasksRoot->set_ref_count(1);
 
 		std::vector<DepTask*> spawnedTasks;
-		eastl::hash_map<eastl::string, DepTask*> namedTasks;
+		std::unordered_map<std::string, DepTask*> namedTasks;
 
 		// now schedule the tasks, based upon their PerformanceHint order
 		tbb::task_list taskList;
 
 		auto affinityIterator = m_AffinityIDs.begin();
-		for (auto it = tasks.begin(), end = tasks.end(); it != end; ++it)
+		for (auto taskListIt = taskLists.begin(); taskListIt != taskLists.end(); ++taskListIt)
 		{
-			auto taskImplementation = *it;
+			auto taskIt = taskListIt->begin();
+			FSN_ASSERT(taskIt != taskListIt->end());
+			auto taskImplementation = *taskIt;
 
 			FSN_ASSERT(taskImplementation);
 
@@ -346,20 +350,37 @@ namespace FusionEngine
 				if (affinityIterator == m_AffinityIDs.end())
 					affinityIterator = m_AffinityIDs.begin();
 
-				auto tbbTask = new DepTask(taskImplementation);
-				tbbTask->set_affinity(affinityId);
+				auto primaryTbbTask = new(m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot)) DepTask(taskImplementation);
+				primaryTbbTask->set_affinity(affinityId);
 
-				spawnedTasks.push_back(tbbTask);
-				namedTasks.insert(eastl::make_pair(taskImplementation->GetName(), tbbTask));
+				// Tasks in this list will be checked for inter-world dependencies
+				spawnedTasks.push_back(primaryTbbTask);
+				// Dependencies will be looked up in this container
+				if (taskImplementation->GetSystemWorld() != nullptr)
+					namedTasks.insert(std::make_pair(taskImplementation->GetSystemName(), primaryTbbTask));
 
-				taskList.push_back(*tbbTask);
+				taskList.push_back(*primaryTbbTask);
+
+				auto prerequisiteTbbTask = primaryTbbTask;
+				for (++taskIt; taskIt != taskListIt->end(); ++taskIt)
+				{
+					auto successorTaskImplementation = (*taskIt);
+
+					auto successorTbbTask = new(m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot)) DepTask(successorTaskImplementation);
+					successorTbbTask->set_affinity(affinityId);
+
+					spawnedTasks.push_back(successorTbbTask);
+
+					prerequisiteTbbTask->AddDependant(successorTbbTask);
+					prerequisiteTbbTask = successorTbbTask;
+				}
 			}
 		}
 
 		for (auto task : spawnedTasks)
 		{
 			auto deps = task->GetImplementation()->GetDependencies();
-			for (auto dep : deps)
+			for (const auto& dep : deps)
 			{
 				auto entry = namedTasks.find(dep);
 				if (entry != namedTasks.end())

@@ -50,13 +50,13 @@ namespace FusionEngine
 	class B2DebugDraw;
 
 	//! ClanLib render task
-	class CLRenderTask : public SystemTaskBase
+	class CLRenderTask : public System::SystemTaskBase
 	{
 	public:
 		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
 		~CLRenderTask();
 
-		SystemType GetTaskType() const { return SystemType::Rendering; }
+		System::SystemType GetTaskType() const { return System::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 
@@ -97,7 +97,7 @@ namespace FusionEngine
 		RenderActionsMap m_WorldRenderActions;
 	};
 
-	class CLRenderGUITask : public SystemTaskBase
+	class CLRenderGUITask : public System::SystemTaskBase
 	{
 	public:
 		CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer);
@@ -105,7 +105,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Simulation; }
+		System::SystemType GetTaskType() const { return System::Simulation; }
 
 		PerformanceHint GetPerformanceHint() const { return Short; }
 

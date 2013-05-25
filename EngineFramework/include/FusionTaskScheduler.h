@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
+#include "FusionSystemTask.h"
 #include "FusionTaskManager.h"
 #include "FusionStreamingManager.h"
 
@@ -45,6 +45,11 @@
 namespace FusionEngine
 {
 
+	namespace System
+	{
+		class WorldBase;
+	}
+
 	class RegionCellArchivist;
 
 	class TaskScheduler
@@ -54,7 +59,7 @@ namespace FusionEngine
 
 		~TaskScheduler();
 
-		void SetUniverse(const std::vector<std::shared_ptr<SystemWorldBase>>& universe);
+		void SetUniverse(const std::vector<std::shared_ptr<System::WorldBase>>& universe);
 
 		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
 
@@ -88,12 +93,12 @@ namespace FusionEngine
 
 		Timer m_Timer;
 		
-		std::vector<std::shared_ptr<SystemWorldBase>> m_ComponentWorlds;
-		std::vector<SystemTaskBase*> m_SortedTasks; // All tasks (simulation and render tasks)
-		std::vector<SystemTaskBase*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
+		std::vector<std::shared_ptr<System::WorldBase>> m_ComponentWorlds;
+		std::vector<System::SystemTaskBase*> m_SortedTasks; // All tasks (simulation and render tasks)
+		std::vector<System::SystemTaskBase*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
 
-		std::vector<std::unique_ptr<SystemTaskBase>> m_ProxyTasks; // This is to make sure they are deleted
-		std::unique_ptr<SystemTaskBase> m_StreamingTask;
+		std::vector<std::unique_ptr<System::SystemTaskBase>> m_ProxyTasks; // This is to make sure they are deleted
+		std::unique_ptr<System::SystemTaskBase> m_StreamingTask;
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;

@@ -38,6 +38,8 @@
 namespace FusionEngine
 {
 
+	using namespace System;
+
 	ComponentUniverse::ComponentUniverse()
 		: Router("Universe")
 	{
@@ -48,7 +50,7 @@ namespace FusionEngine
 	{
 	}
 
-	void ComponentUniverse::AddWorld(const std::shared_ptr<SystemWorldBase>& world)
+	void ComponentUniverse::AddWorld(const std::shared_ptr<WorldBase>& world)
 	{
 		const auto name = world->GetSystem()->GetName();
 
@@ -69,7 +71,7 @@ namespace FusionEngine
 		m_Worlds[name] = world;
 	}
 
-	void ComponentUniverse::RemoveWorld(const std::shared_ptr<SystemWorldBase>& world)
+	void ComponentUniverse::RemoveWorld(const std::shared_ptr<WorldBase>& world)
 	{
 		const auto name = world->GetSystem()->GetName();
 		m_Worlds.erase(name);
@@ -87,10 +89,10 @@ namespace FusionEngine
 
 	void ComponentUniverse::ProcessMessage(Messaging::Message message)
 	{
-		auto request = boost::any_cast<SystemWorldBase::ComponentDispatchRequest>(message.data);
+		auto request = boost::any_cast<WorldBase::ComponentDispatchRequest>(message.data);
 		switch (request.type)
 		{
-		case SystemWorldBase::ComponentDispatchRequest::RefreshComponentTypes:
+		case WorldBase::ComponentDispatchRequest::RefreshComponentTypes:
 			{
 				m_ComponentTypes.by<tag::world>().erase(request.world->GetShared());
 
@@ -104,17 +106,17 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<SystemWorldBase> ComponentUniverse::GetWorldByComponentType(const std::string& type)
+	std::shared_ptr<WorldBase> ComponentUniverse::GetWorldByComponentType(const std::string& type)
 	{
 		const auto& types = m_ComponentTypes.by<tag::type>();
 		auto _where = types.find(type);
 		if (_where != types.end())
 			return _where->second;
 		else
-			return std::shared_ptr<SystemWorldBase>();
+			return std::shared_ptr<WorldBase>();
 	}
 
-	std::map<std::string, std::shared_ptr<SystemWorldBase>> ComponentUniverse::GetWorlds() const
+	std::map<std::string, std::shared_ptr<WorldBase>> ComponentUniverse::GetWorlds() const
 	{
 		return m_Worlds;
 	}

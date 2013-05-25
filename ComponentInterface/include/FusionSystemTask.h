@@ -41,24 +41,28 @@
 
 #include <EASTL/string.h>
 
-namespace FusionEngine
+#include <boost/intrusive/slist_hook.hpp>
+
+namespace FusionEngine { namespace System
 {
 
-	class SystemWorldBase;
+	class WorldBase;
 
 	//! Task
-	class SystemTaskBase
+	class SystemTaskBase : public boost::intrusive::slist_base_hook<>
 	{
 	public:
-		SystemTaskBase(SystemWorldBase* world, const eastl::string& name)
+		SystemTaskBase(WorldBase* world, const eastl::string& name)
 			: m_SystemWorld(world),
 			m_Name(name)
 		{}
 		virtual ~SystemTaskBase() {}
 
-		SystemWorldBase* GetSystemWorld() const { return m_SystemWorld; }
+		WorldBase* GetSystemWorld() const { return m_SystemWorld; }
 
 		SystemType GetSystemType() const;
+
+		std::string GetSystemName() const;
 
 		eastl::string GetName() const { return m_Name; }
 
@@ -66,7 +70,7 @@ namespace FusionEngine
 
 		virtual SystemType GetTaskType() const = 0;
 
-		virtual std::vector<eastl::string> GetDependencies() const { return std::vector<eastl::string>(); }
+		virtual std::vector<std::string> GetDependencies() const { return std::vector<std::string>(); }
 
 		enum PerformanceHint : uint16_t
 		{
@@ -81,10 +85,10 @@ namespace FusionEngine
 		virtual bool IsPrimaryThreadOnly() const = 0;
 
 	protected:
-		SystemWorldBase *m_SystemWorld;
+		WorldBase *m_SystemWorld;
 		eastl::string m_Name;
 	};
 
-}
+} }
 
 #endif

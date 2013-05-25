@@ -32,10 +32,6 @@
 #pragma once
 #endif
 
-#if _MSC_VER > 1000 && _MSC_VER < 1700
-#error Visual Studio 2012 or later required (for c++11 features)
-#endif
-
 //#include "FusionStdHeaders.h"
 
 #ifdef MessageBox
@@ -72,7 +68,6 @@ namespace FusionEngine
 	class ComponentFactory;
 	class Console;
 	class Editor;
-	class EditorMapEntity;
 	class Entity;
 	class EntityRepo;
 	class EntitySynchroniser;
@@ -80,8 +75,6 @@ namespace FusionEngine
 	class Exception;
 	class FileSystemException;
 	class Fixture;
-	class GameMap;
-	class GameMapLoader;
 	class InputDefinitionLoader;
 	class InputManager;
 	class EntityInstantiator;
@@ -108,11 +101,7 @@ namespace FusionEngine
 	class ResourceManager;
 	class ScriptedSlotWrapper;
 	class ScriptManager;
-	class Shape;
 	class StreamingManager;
-	class System;
-	class SystemMessage;
-	class SystemsManager;
 
 }
 

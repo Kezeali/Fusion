@@ -42,7 +42,7 @@
 namespace FusionEngine
 {
 
-	class StreamingTask : public SystemTaskBase
+	class StreamingTask : public System::SystemTaskBase
 	{
 	public:
 		StreamingTask(EntityManager* streaming_manager, RegionCellArchivist* archivist)
@@ -54,7 +54,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Simulation; }
+		System::SystemType GetTaskType() const { return System::Simulation; }
 
 		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
 
@@ -68,7 +68,7 @@ namespace FusionEngine
 		RegionCellArchivist* m_Archivist;
 	};
 
-	class StreamingTaskB : public SystemTaskBase
+	class StreamingTaskB : public System::SystemTaskBase
 	{
 	public:
 		StreamingTaskB(EntityManager* streaming_manager)
@@ -79,7 +79,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Rendering; }
+		System::SystemType GetTaskType() const { return System::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
 

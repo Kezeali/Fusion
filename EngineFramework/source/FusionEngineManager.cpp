@@ -85,6 +85,8 @@
 namespace FusionEngine
 {
 
+	using namespace System;
+
 	EngineManager::EngineManager(const std::vector<std::string>& args)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
@@ -591,7 +593,7 @@ namespace FusionEngine
 		m_Extensions.push_back(extension);
 	}
 
-	void EngineManager::AddSystem(std::unique_ptr<IComponentSystem>&& system)
+	void EngineManager::AddSystem(std::unique_ptr<System::ISystem>&& system)
 	{
 		const std::string name = system->GetName();
 		m_Systems.insert(std::make_pair(name, std::move(system)));
@@ -643,7 +645,7 @@ namespace FusionEngine
 			m_GotFocusSlot = m_DisplayWindow.sig_got_focus().connect(m_ResourceManager.get(), &ResourceManager::CheckForChanges);
 
 			// Create worlds
-			std::vector<std::shared_ptr<SystemWorldBase>> worlds;
+			std::vector<std::shared_ptr<WorldBase>> worlds;
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
 				auto world = it->second->CreateWorld();
@@ -653,6 +655,12 @@ namespace FusionEngine
 				for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
 					(*exit)->OnWorldCreated(world);
 				// Add the world's tasks to the scheduler
+				worlds.push_back(world);
+			}
+			for (auto& extension : m_Extensions)
+			{
+				auto world = extension->GetSystem()->CreateWorld();
+				m_ComponentUniverse->AddWorld(world);
 				worlds.push_back(world);
 			}
 			m_Scheduler->SetUniverse(worlds);
@@ -736,10 +744,10 @@ namespace FusionEngine
 				// Execute only Rendering and Streaming in editmode or while connecting
 				const auto executed = m_Scheduler->Execute(
 					(m_EditMode || connecting) ?
-					((std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Streaming) :
-					((std::uint8_t)SystemType::Rendering | (std::uint8_t)SystemType::Simulation | (std::uint8_t)SystemType::Streaming));
+					(SystemType::Rendering | SystemType::Streaming) :
+					(SystemType::Rendering | SystemType::Simulation | SystemType::Streaming));
 
-				if (executed & (std::uint8_t)SystemType::Rendering)
+				if (executed & SystemType::Rendering)
 				{
 					m_DisplayWindow.flip(0);
 					gc.clear();
@@ -767,7 +775,7 @@ namespace FusionEngine
 					m_ResourceManager->DeliverLoadedResources(frameTimeRemaining);
 				}
 
-				if (executed & (std::uint8_t)SystemType::Streaming)
+				if (executed & SystemType::Streaming)
 				{
 					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
 				}
@@ -784,7 +792,7 @@ namespace FusionEngine
 				}
 #endif
 
-				if (executed & (std::uint8_t)SystemType::Simulation)
+				if (executed & SystemType::Simulation)
 				{
 					{
 						std::pair<std::string, bool> enqueued;

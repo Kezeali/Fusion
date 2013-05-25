@@ -35,7 +35,9 @@
 namespace FusionEngine
 {
 
-	RouterTask::RouterTask(SystemWorldBase* sysworld, const eastl::string& name)
+	using namespace System;
+
+	RouterTask::RouterTask(WorldBase* sysworld, const eastl::string& name)
 		: SystemTaskBase(sysworld, name),
 		Router(Messaging::Address(name))
 	{

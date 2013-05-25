@@ -59,7 +59,10 @@
 namespace FusionEngine
 {
 
-	class SystemWorldBase;
+	namespace System
+	{
+		class WorldBase;
+	}
 
 	class ArchetypeFactory;
 	class SaveDataArchive;
@@ -264,7 +267,7 @@ namespace FusionEngine
 		bool prepareEntity(const EntityPtr &entity);
 		//! returns true if all components were ready and thus activated
 		bool attemptToActivateEntity(const EntityPtr &entity);
-		bool attemptToActivateComponent(const std::shared_ptr<SystemWorldBase>& world, const ComponentPtr& component);
+		bool attemptToActivateComponent(const std::shared_ptr<System::WorldBase>& world, const ComponentPtr& component);
 		
 		void deactivateEntity(const EntityPtr& entity);
 		void deactivateComponent(const ComponentPtr& component);

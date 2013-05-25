@@ -40,20 +40,19 @@
 #include <memory>
 #include <string>
 
-namespace FusionEngine
+namespace FusionEngine { namespace System
 {
 
 	class SystemTaskBase;
-	class SystemWorldBase;
-	class IComponentSystem;
+	class WorldBase;
 
-	typedef std::shared_ptr<SystemWorldBase> SystemWorldPtr;
+	typedef std::shared_ptr<WorldBase> SystemWorldPtr;
 
 	//! Component System
-	class IComponentSystem
+	class ISystem
 	{
 	public:
-		virtual ~IComponentSystem() {}
+		virtual ~ISystem() {}
 
 		virtual SystemType GetType() const = 0;
 
@@ -61,9 +60,9 @@ namespace FusionEngine
 
 		virtual void RegisterScriptInterface(asIScriptEngine* engine) {}
 
-		virtual std::shared_ptr<SystemWorldBase> CreateWorld() = 0;
+		virtual std::shared_ptr<WorldBase> CreateWorld() = 0;
 	};
 
-}
+} }
 
 #endif

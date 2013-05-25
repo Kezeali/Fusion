@@ -25,24 +25,57 @@
 *    Elliot Hayward
 */
 
-#include "PrecompiledHeaders.h"
+#ifndef H_FusionTaskList
+#define H_FusionTaskList
 
-#include "FusionSystemTask.h"
+#if _MSC_VER > 1000
+#pragma once
+#endif
 
-#include "FusionComponentSystem.h"
-#include "FusionSystemWorld.h"
+#include "FusionPrerequisites.h"
+
+#include <boost/intrusive/slist.hpp>
 
 namespace FusionEngine { namespace System
 {
 
-	SystemType SystemTaskBase::GetSystemType() const
-	{
-		return GetSystemWorld()->GetSystemType();
-	}
+	class SystemTaskBase;
 
-	std::string SystemTaskBase::GetSystemName() const
-	{
-		return GetSystemWorld()->GetSystem()->GetName();
-	}
+	typedef boost::intrusive::slist<SystemTaskBase, boost::intrusive::constant_time_size<false>, boost::intrusive::cache_last<true>> TaskList_t;
+
+	//class TaskGroup
+	//{
+	//public:
+	//	TaskGroup(TaskGroup&& other)
+	//	{
+	//		swap(other);
+	//	}
+
+	//	TaskGroup& operator= (TaskGroup&& other)
+	//	{
+	//		swap(other);
+	//		return *this;
+	//	}
+
+	//	void swap(TaskGroup& other)
+	//	{
+	//		std::swap(initialTask, other.initialTask);
+	//		subsequentTasks.swap(other.subsequentTasks);
+	//	}
+
+	//	bool IsPrimaryThreadOnly() const { return initialTask->IsPrimaryThreadOnly(); }
+
+	//	SystemTaskBase* initialTask;
+	//	TaskList_t subsequentTasks;
+
+	//private:
+	//	TaskGroup(const TaskGroup&)
+	//	{}
+
+	//	TaskGroup& operator= (const TaskGroup& other)
+	//	{}
+	//};
 
 } }
+
+#endif

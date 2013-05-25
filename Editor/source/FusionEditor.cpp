@@ -56,6 +56,8 @@
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionBinaryStream.h"
 
+#include "FusionComponentSystem.h"
+
 #include "FusionAngelScriptSystem.h"
 #include "FusionBox2DSystem.h"
 #include "FusionCLRenderSystem.h"
@@ -100,6 +102,71 @@ void intrusive_ptr_release(asIScriptFunction *ptr)
 
 namespace FusionEngine
 {
+
+	class EditorSystem : public System::ISystem
+	{
+		System::SystemType GetType() const override
+		{
+			return System::Editor;
+		}
+
+		std::string GetName() const override
+		{
+			return "Editor";
+		}
+
+		void RegisterScriptInterface(asIScriptEngine* engine) override;
+
+		std::shared_ptr<System::WorldBase> CreateWorld() override;
+	};
+
+	class EditorWorld : public System::WorldBase
+	{
+	public:
+		EditorWorld(System::ISystem* system)
+			: WorldBase(system)
+		{
+		}
+
+		void ProcessMessage(Messaging::Message message) override;
+
+		std::vector<std::string> GetTypes() const override
+		{
+			return std::vector<std::string>();
+		}
+		ComponentPtr InstantiateComponent(const std::string& type) override
+		{
+			return ComponentPtr();
+		}
+
+		void OnActivation(const ComponentPtr& component) override
+		{
+		}
+		void OnDeactivation(const ComponentPtr& component) override
+		{
+		}
+
+		System::TaskList_t MakeTasksList() const override;
+	};
+
+	void EditorSystem::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+	}
+
+	std::shared_ptr<System::WorldBase> EditorSystem::CreateWorld()
+	{
+		return std::make_shared<EditorWorld>(this);
+	}
+
+	void EditorWorld::ProcessMessage(Messaging::Message message)
+	{
+	}
+
+	System::TaskList_t EditorWorld::MakeTasksList() const
+	{
+		System::TaskList_t taskList;
+		return std::move(taskList);
+	}
 
 	class ResourceBrowserDataSource : public Rocket::Controls::DataSource
 	{
@@ -939,6 +1006,8 @@ namespace FusionEngine
 		m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
 
 		m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindowForSelected(); });
+
+		m_EditorSystem = std::make_shared<EditorSystem>();
 	}
 
 	Editor::~Editor()
@@ -1385,7 +1454,7 @@ namespace FusionEngine
 		ScriptManager::getSingleton().AddFile("/Data/core/gui/gui_popup.as", "gui_popup.as");
 	}
 
-	void Editor::OnWorldCreated(const std::shared_ptr<SystemWorldBase>& world)
+	void Editor::OnWorldCreated(const std::shared_ptr<System::WorldBase>& world)
 	{
 		if (auto asw = std::dynamic_pointer_cast<AngelScriptWorld>(world))
 		{
@@ -1416,6 +1485,11 @@ namespace FusionEngine
 				m_EditCam = camera;
 			}
 		}
+	}
+
+	System::ISystem* Editor::GetSystem() const
+	{
+		return m_EditorSystem.get();
 	}
 
 	class PhysVFS : public VirtualFilesystem
@@ -1521,7 +1595,7 @@ namespace FusionEngine
 		WindowDropTarget::DropEvent dropEvent;
 		if (m_DropTarget->TryPopDropEvent(dropEvent))
 		{
-			for (auto file : dropEvent.filesList)
+			for (const auto& file : dropEvent.filesList)
 				DragDrop(file);
 		}
 
@@ -2963,14 +3037,14 @@ namespace FusionEngine
 
 	void Editor::SaveEntities(OCellStream& file, const std::set<EntityPtr>& entities)
 	{
-		auto bb = GetBBOf([&entities](std::function<void (EntityPtr)> fn) { for (auto entity : entities) fn(entity); });
+		auto bb = GetBBOf([&entities](std::function<void (EntityPtr)> fn) { for (const auto& entity : entities) fn(entity); });
 		auto c = bb.get_center();
 		Vector2 center(c.x, c.y);
 		if (file)
 		{
 			IO::Streams::CellStreamWriter writer(&file);
 			writer.Write(GetNumSelected());
-			for (auto entity : entities)
+			for (const auto& entity : entities)
 			{
 				{
 					auto transform = entity->GetComponent<ITransform>();

@@ -31,50 +31,51 @@
 
 #include "FusionComponentSystem.h"
 #include "Messaging/FusionRouterTask.h"
+#include "FusionSystemTask.h"
 
-namespace FusionEngine
+namespace FusionEngine { namespace System
 {
 
-	SystemWorldBase::SystemWorldBase(IComponentSystem* system)
+	WorldBase::WorldBase(ISystem* system)
 		: m_System(system)
 	{
 		m_RouterTask = new RouterTask(this, Messaging::Address(system->GetName().data(), system->GetName().length()));
 	}
 
-	SystemWorldBase::~SystemWorldBase()
+	WorldBase::~WorldBase()
 	{
 		delete m_RouterTask;
 	}
 
-	SystemType SystemWorldBase::GetSystemType() const
+	SystemType WorldBase::GetSystemType() const
 	{
 		return GetSystem()->GetType();
 	}
 
-	void SystemWorldBase::SendEngineRequest(EngineRequest request)
+	void WorldBase::SendEngineRequest(EngineRequest request)
 	{
 		m_RouterTask->ReceiveMessage(Messaging::Message("Engine", 0, request));
 	}
 
-	void SystemWorldBase::SendComponentDispatchRequest(ComponentDispatchRequest request)
+	void WorldBase::SendComponentDispatchRequest(ComponentDispatchRequest request)
 	{
 		m_RouterTask->ReceiveMessage(Messaging::Message("Universe", 0, request));
 	}
 
-	void SystemWorldBase::CancelPreparation(const ComponentPtr& component)
+	void WorldBase::CancelPreparation(const ComponentPtr& component)
 	{
 		if (component->IsPreparing())
 			FSN_EXCEPT(NotImplementedException, "CancelPreparation() isn't implemented by " + GetSystem()->GetName());
 	}
 
-	SystemTaskBase* SystemWorldBase::GetTask()
+	TaskList_t WorldBase::GetTasks() const
+	{
+		return MakeTasksList();
+	}
+
+	Messaging::Router* WorldBase::GetRouter() const
 	{
 		return m_RouterTask;
 	}
 
-	Messaging::Router* SystemWorldBase::GetRouter() const
-	{
-		return m_RouterTask;
-	}
-
-}
+} }

@@ -75,3 +75,24 @@ void __cdecl operator delete[](void* pMemory)
 	scalable_free(pMemory);
 #endif
 }
+
+#pragma warning (push)
+#pragma warning (disable:4290)
+void* __cdecl operator new[](std::size_t size) throw (std::bad_alloc)			
+{ 
+#ifdef ENABLE_ALIGNMENT
+	return scalable_aligned_malloc(size, 8);
+#else
+	return scalable_malloc(size);
+#endif
+}
+#pragma warning (pop)
+
+void* __cdecl operator new[](std::size_t size, const std::nothrow_t&)			
+{ 
+#ifdef ENABLE_ALIGNMENT
+	return scalable_aligned_malloc(size, 8);
+#else
+	return scalable_malloc(size);
+#endif
+}

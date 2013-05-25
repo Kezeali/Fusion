@@ -36,11 +36,11 @@
 
 #include <cstdint>
 
-namespace FusionEngine
+namespace FusionEngine { namespace System
 {
 
-	enum class SystemType : std::uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
+	enum SystemType : std::uint8_t { Simulation = 0x01, Rendering = 0x02, Streaming = 0x04, Messaging = 0x08, Editor = 0x10 };
 
-}
+} }
 
 #endif

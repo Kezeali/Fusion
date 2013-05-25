@@ -72,17 +72,17 @@ namespace FusionEngine
 	class AngelScriptTask;
 	class AngelScriptInstantiationTask;
 
-	class AngelScriptSystem : public IComponentSystem
+	class AngelScriptSystem : public System::ISystem
 	{
 	public:
 		AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager);
 		virtual ~AngelScriptSystem()
 		{}
 
-		std::shared_ptr<SystemWorldBase> CreateWorld();
+		std::shared_ptr<System::WorldBase> CreateWorld();
 
 	private:
-		SystemType GetType() const { return SystemType::Simulation; }
+		System::SystemType GetType() const { return System::Simulation; }
 
 		std::string GetName() const { return "AngelScriptSystem"; }
 
@@ -91,12 +91,12 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
-	class AngelScriptWorld : public SystemWorldBase
+	class AngelScriptWorld : public System::WorldBase
 	{
 		friend class AngelScriptTask;
 		friend class AngelScriptInstantiationTask;
 	public:
-		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
+		AngelScriptWorld(System::ISystem* system, const std::shared_ptr<ScriptManager>& manager);
 		~AngelScriptWorld();
 
 		void CreateScriptMethodMap();
@@ -126,8 +126,7 @@ namespace FusionEngine
 
 		void ProcessMessage(Messaging::Message message) override;
 
-		SystemTaskBase* GetTask();
-		std::vector<SystemTaskBase*> GetTasks();
+		System::TaskList_t MakeTasksList() const override;
 
 		struct DependencyNode
 		{
@@ -217,7 +216,7 @@ namespace FusionEngine
 		bool instantiateScript(const boost::intrusive_ptr<ASScript>& script);
 	};
 
-	class AngelScriptTask : public SystemTaskBase
+	class AngelScriptTask : public System::SystemTaskBase
 	{
 	public:
 		AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
@@ -225,7 +224,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Simulation; }
+		System::SystemType GetTaskType() const { return System::Simulation; }
 
 		PerformanceHint GetPerformanceHint() const { return LongParallel; }
 
@@ -253,7 +252,7 @@ namespace FusionEngine
 	};
 
 	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!
-	class AngelScriptInstantiationTask : public SystemTaskBase
+	class AngelScriptInstantiationTask : public System::SystemTaskBase
 	{
 	public:
 		AngelScriptInstantiationTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
@@ -261,7 +260,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Rendering; }
+		System::SystemType GetTaskType() const { return System::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return Short; }
 

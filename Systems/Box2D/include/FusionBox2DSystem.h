@@ -57,7 +57,7 @@ namespace FusionEngine
 	class Box2DContactListener;
 
 	//! Creates Box2DWorld
-	class Box2DSystem : public IComponentSystem
+	class Box2DSystem : public System::ISystem
 	{
 	public:
 		//! CTOR
@@ -66,24 +66,24 @@ namespace FusionEngine
 		{}
 
 	private:
-		SystemType GetType() const { return SystemType::Simulation; }
+		System::SystemType GetType() const { return System::Simulation; }
 
 		std::string GetName() const { return "Box2DSystem"; }
 		
-		std::shared_ptr<SystemWorldBase> CreateWorld();
+		std::shared_ptr<System::WorldBase> CreateWorld();
 	};
 
 	class AuthorityContactManager;
 	class TransformPinner;
 
 	//! Manages a b2World
-	class Box2DWorld : public SystemWorldBase
+	class Box2DWorld : public System::WorldBase
 	{
 		friend class Box2DTask;
 		friend class Box2DInterpolateTask;
 	public:
 		//! CTOR
-		Box2DWorld(IComponentSystem* system);
+		Box2DWorld(System::ISystem* system);
 		~Box2DWorld();
 
 		// NOTE: due to how Box2DBody destruction is handled, Box2DWorld should
@@ -109,7 +109,7 @@ namespace FusionEngine
 		void AddContactListener(const std::shared_ptr<Box2DContactListener>& listener);
 		void RemoveContactListener(const std::shared_ptr<Box2DContactListener>& listener);
 
-		std::vector<SystemTaskBase*> GetTasks();
+		System::TaskList_t MakeTasksList() const override;
 
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
@@ -127,7 +127,7 @@ namespace FusionEngine
 	};
 
 	//! Updates Box2D-based physics components
-	class Box2DTask : public SystemTaskBase
+	class Box2DTask : public System::SystemTaskBase
 	{
 	public:
 		//! CTOR
@@ -137,7 +137,7 @@ namespace FusionEngine
 		void Update() override;
 
 		//! Simulation
-		SystemType GetTaskType() const { return SystemType::Simulation; }
+		System::SystemType GetTaskType() const { return System::Simulation; }
 
 		//! LongSerial
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
@@ -154,7 +154,7 @@ namespace FusionEngine
 	};
 
 	//! Does interpolation on objects for which it is enabled
-	class Box2DInterpolateTask : public SystemTaskBase
+	class Box2DInterpolateTask : public System::SystemTaskBase
 	{
 	public:
 		Box2DInterpolateTask(Box2DWorld* sysworld);
@@ -162,7 +162,7 @@ namespace FusionEngine
 
 		void Update() override;
 
-		SystemType GetTaskType() const { return SystemType::Rendering; }
+		System::SystemType GetTaskType() const { return System::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return Short; }
 

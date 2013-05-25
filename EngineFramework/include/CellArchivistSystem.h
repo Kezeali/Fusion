@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	class CellArchivistSystem : public SystemTaskBase
+	class CellArchivistSystem : public System::SystemTaskBase
 	{
 	public:
 		CellArchivistSystem(RegionCellArchivist* archivist)
@@ -52,7 +52,7 @@ namespace FusionEngine
 
 		void Update(const float delta);
 
-		SystemType GetTaskType() const { return SystemType::Simulation; }
+		System::SystemType GetTaskType() const { return System::Simulation; }
 
 		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
 

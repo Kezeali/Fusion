@@ -53,6 +53,8 @@
 namespace FusionEngine
 {
 
+	using namespace System;
+
 	CLRenderSystem::CLRenderSystem(const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
 		: m_Canvas(canvas),
 		m_CameraSynchroniser(camera_sync)
@@ -64,13 +66,13 @@ namespace FusionEngine
 		CLRenderWorld::Register(engine);
 	}
 
-	std::shared_ptr<SystemWorldBase> CLRenderSystem::CreateWorld()
+	std::shared_ptr<WorldBase> CLRenderSystem::CreateWorld()
 	{
 		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);
 	}
 
-	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
-		: SystemWorldBase(system),
+	CLRenderWorld::CLRenderWorld(System::ISystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
+		: WorldBase(system),
 		m_PhysWorld(nullptr),
 		m_PhysDebugDrawEnabled(false),
 		m_DebugTextEnabled(false),
@@ -312,12 +314,12 @@ namespace FusionEngine
 		}
 	}
 
-	std::vector<SystemTaskBase*> CLRenderWorld::GetTasks()
+	TaskList_t CLRenderWorld::MakeTasksList() const
 	{
-		std::vector<SystemTaskBase*> tasks;
-		tasks.push_back(m_RenderTask);
-		//tasks.push_back(m_GUITask);
-		tasks.push_back(m_GraphicalProfilerTask);
+		TaskList_t tasks;
+		tasks.push_back(*m_RenderTask);
+		//tasks.push_back(*m_GUITask);
+		tasks.push_back(*m_GraphicalProfilerTask);
 		return tasks;
 	}
 

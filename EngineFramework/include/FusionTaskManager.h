@@ -34,6 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionTaskList.h"
+
 #include <tbb/task.h>
 #include <tbb/task_scheduler_init.h>
 #include <tbb/tbb_thread.h>
@@ -49,9 +51,10 @@ namespace FusionEngine
 	class PrimaryThreadTaskScheduler;
 #endif
 
-	class SystemTaskBase;
-
-	typedef eastl::vector<SystemTaskBase*> TaskGroup;
+	namespace System
+	{
+		class SystemTaskBase;
+	}
 
 	class TaskManager
 	{
@@ -60,7 +63,7 @@ namespace FusionEngine
 
 		~TaskManager();
 
-		void SpawnJobsForSystemTasks(const std::vector<SystemTaskBase*>& tasks);
+		void SpawnJobsForSystemTasks(std::vector<std::vector<System::SystemTaskBase*>>& taskLists);
 		void WaitForSystemTasks();
 
     /// This method triggers a synchronized callback to be called once by each thread used by the <c>TaskManagerTBB</c>.
@@ -83,7 +86,7 @@ namespace FusionEngine
 #if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
 		std::shared_ptr<PrimaryThreadTaskScheduler> m_PrimaryThreadTaskScheduler;
 #endif
-		std::vector<SystemTaskBase*> m_TasksToExecuteInPrimaryThread;
+		std::vector<System::SystemTaskBase*> m_TasksToExecuteInPrimaryThread;
 
 		std::vector<tbb::task::affinity_id> m_AffinityIDs;
 

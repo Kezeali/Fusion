@@ -37,14 +37,14 @@
 #include "FusionEntityComponent.h"
 #include "Messaging/FusionMessage.h"
 #include "FusionSystemType.h"
+#include "FusionTaskList.h"
 
 #include <EASTL/string.h>
 
+#include <boost/intrusive/list.hpp>
+
 namespace FusionEngine
 {
-
-	class IComponentSystem;
-	class SystemTaskBase;
 
 	namespace Messaging
 	{
@@ -52,16 +52,24 @@ namespace FusionEngine
 	}
 	class RouterTask;
 
+}
+
+namespace FusionEngine { namespace System
+{
+	
+	class ISystem;
+	class SystemTaskBase;
+
 	//! World
-	class SystemWorldBase : public std::enable_shared_from_this<SystemWorldBase>
+	class WorldBase : public std::enable_shared_from_this<WorldBase>
 	{
 	public:
-		SystemWorldBase(IComponentSystem* system);
-		virtual ~SystemWorldBase();
+		WorldBase(ISystem* system);
+		virtual ~WorldBase();
 
-		std::shared_ptr<SystemWorldBase> GetShared() { return shared_from_this(); }
+		std::shared_ptr<WorldBase> GetShared() { return shared_from_this(); }
 
-		IComponentSystem* GetSystem() const
+		ISystem* GetSystem() const
     {
         return m_System;
     }
@@ -81,7 +89,7 @@ namespace FusionEngine
 			};
 
 			Type type;
-			SystemWorldBase* world;
+			WorldBase* world;
 		};
 		
 		void SendEngineRequest(EngineRequest request);
@@ -105,24 +113,18 @@ namespace FusionEngine
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
 		virtual void OnDeactivation(const ComponentPtr& component) = 0;
 
-		virtual SystemTaskBase* GetTask();
+		TaskList_t GetTasks() const;
 
 		Messaging::Router* GetRouter() const;
 
-		virtual std::vector<SystemTaskBase*> GetTasks()
-		{
-			FSN_ASSERT(GetTask() != nullptr);
-			std::vector<SystemTaskBase*> tasks(1);
-			tasks[0] = GetTask();
-			return tasks;
-		}
-
 	private:
-		IComponentSystem* m_System;
+		System::ISystem* m_System;
 
 		RouterTask* m_RouterTask;
+
+		virtual TaskList_t MakeTasksList() const = 0;
 	};
 
-}
+} }
 
 #endif
