@@ -349,7 +349,7 @@ namespace FusionEngine
 					std::vector<SystemTaskBase*> tasks;
 					for (auto it = t.begin(); it != t.end(); ++it)
 						tasks.push_back(&(*it));
-					auto newEnd = std::remove_if(tasks.begin(), tasks.end(), [taskFilter](SystemTaskBase* task) { return (task->GetTaskType() & taskFilter) != 0; });
+					auto newEnd = std::remove_if(tasks.begin(), tasks.end(), [taskFilter](SystemTaskBase* task) { return (task->GetTaskType() & taskFilter) == 0; });
 					if (newEnd != tasks.end())
 						tasks.erase(newEnd, tasks.end());
 					if (!tasks.empty())
