@@ -56,7 +56,7 @@ namespace FusionEngine
 		virtual ~IRigidBody()
 		{}
 
-		FSN_COIFACE_PROPS(IRigidBody,
+		FSN_COIFACE_BUFFERED_PROPS(IRigidBody,
 			((FSN_GET_SET)(Interpolate)(bool))
 			((FSN_GET)(Mass)(float))
 			((FSN_GET)(Inertia)(float))
@@ -76,48 +76,6 @@ namespace FusionEngine
 
 			((FSN_IS_SET)(Bullet)(bool))
 			((FSN_IS_SET)(FixedRotation)(bool)) )
-
-		//FSN_COIFACE_CTOR(IRigidBody,
-		//	((FSN_GET_SET)(Interpolate))
-		//	((FSN_GET)(Mass))
-		//	((FSN_GET)(Inertia))
-		//	((FSN_GET)(CenterOfMass))
-
-		//	((FSN_GET_SET)(Velocity))
-		//	((FSN_GET_SET)(AngularVelocity))
-
-		//	((FSN_GET_SET)(LinearDamping))
-		//	((FSN_GET_SET)(AngularDamping))
-
-		//	((FSN_GET_SET)(GravityScale))
-
-		//	((FSN_IS_SET)(Active))
-		//	((FSN_IS_SET)(SleepingAllowed))
-		//	((FSN_IS)(Awake))
-
-		//	((FSN_IS_SET)(Bullet))
-		//	((FSN_IS_SET)(FixedRotation)) )
-
-		//ThreadSafeProperty<bool> Interpolate;
-
-		//ThreadSafeProperty<float, NullWriter<float>> Mass;
-		//ThreadSafeProperty<float, NullWriter<float>> Inertia;
-		//ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
-
-		//ThreadSafeProperty<Vector2> Velocity;
-		//ThreadSafeProperty<float> AngularVelocity;
-
-		//ThreadSafeProperty<float> LinearDamping;
-		//ThreadSafeProperty<float> AngularDamping;
-
-		//ThreadSafeProperty<float> GravityScale;
-
-		//ThreadSafeProperty<bool> Active;
-		//ThreadSafeProperty<bool> SleepingAllowed;
-		//ThreadSafeProperty<bool, NullWriter<bool>> Awake;
-
-		//ThreadSafeProperty<bool> Bullet;
-		//ThreadSafeProperty<bool> FixedRotation;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -215,25 +173,12 @@ namespace FusionEngine
 	FSN_BEGIN_COIFACE(IFixture)
 	public:
 
-		FSN_COIFACE_PROPS(IFixture,
+		FSN_COIFACE_BUFFERED_PROPS(IFixture,
 			((FSN_IS_SET)(Sensor)(bool))
 			((FSN_GET_SET)(Density)(float))
 			((FSN_GET_SET)(Friction)(float))
 			((FSN_GET_SET)(Restitution)(float))
 			((FSN_GET)(AABB)(b2AABB)) )
-
-		//FSN_COIFACE_CTOR(IFixture,
-		//	((FSN_IS_SET)(Sensor))
-		//	((FSN_GET_SET)(Density))
-		//	((FSN_GET_SET)(Friction))
-		//	((FSN_GET_SET)(Restitution))
-		//	((FSN_GET)(AABB)) )
-
-		//ThreadSafeProperty<bool> Sensor;
-		//ThreadSafeProperty<float> Density;
-		//ThreadSafeProperty<float> Friction;
-		//ThreadSafeProperty<float> Restitution;
-		//ThreadSafeProperty<b2AABB, NullWriter<b2AABB>> AABB;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -275,7 +220,7 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "ICircleShape"; }
 		virtual ~ICircleShape() {}
 
-		FSN_COIFACE_PROPS(ICircleShape,
+		FSN_COIFACE_BUFFERED_PROPS(ICircleShape,
 			((FSN_GET_SET)(Position)(Vector2))
 			((FSN_GET_SET)(Radius)(float)) )
 
@@ -299,7 +244,7 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IPolygonShape"; }
 		virtual ~IPolygonShape() {}
 
-		FSN_COIFACE_PROPS(IPolygonShape,
+		FSN_COIFACE_BUFFERED_PROPS(IPolygonShape,
 			((FSN_GET_SET)(PolygonFile)(std::string))
 			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_GET)(SkinThickness)(float)) )
@@ -324,7 +269,7 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IBoxShape"; }
 		virtual ~IBoxShape() {}
 
-		FSN_COIFACE_PROPS(IBoxShape,
+		FSN_COIFACE_BUFFERED_PROPS(IBoxShape,
 			((FSN_GET_SET)(Center)(Vector2))
 			((FSN_GET_SET)(Extents)(Vector2))
 			((FSN_GET_SET)(Angle)(float)) )
@@ -350,7 +295,7 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IEdgeShape"; }
 		virtual ~IEdgeShape() {}
 
-		FSN_COIFACE_PROPS(IEdgeShape,
+		FSN_COIFACE_BUFFERED_PROPS(IEdgeShape,
 			((FSN_GET_SET)(PolygonFile)(std::string))
 			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_IS_SET)(Loop)(bool)) )

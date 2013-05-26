@@ -53,6 +53,7 @@
 #endif
 
 #include <boost/any.hpp>
+#include <boost/intrusive_ptr.hpp>
 
 #include <tbb/enumerable_thread_specific.h>
 
@@ -60,60 +61,21 @@
 #include "FusionComponentProperty.h"
 #include "FusionSerialisationHelper.h"
 
-#define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
-#define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
+#include "FusionPropertyDeclarationUtils.h"
 
-#define FSN_PROP_ADDPROPERTY(prop) \
-	prop.SetInterfaceObject(component->AddProperty(BOOST_PP_STRINGIZE(prop), &prop));
-
-#define FSN_INIT_PROP(prop) \
-	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)
-
-#define FSN_INIT_PROP_R(prop) \
-	prop.SetCallbacks<iface>(this, &iface::Get ## prop, nullptr)
-
-#define FSN_INIT_PROP_BOOL(prop) \
-	prop.SetCallbacks(this, &iface::Is ## prop, &iface::Set ## prop)
-
-#define FSN_INIT_PROP_BOOL_R(prop) \
-	prop.SetCallbacks<iface>(this, &iface::Is ## prop, nullptr)
-
-#define FSN_INIT_PROP_W(prop) \
-	prop.SetCallbacks<iface>(this, nullptr, &iface::Set ## prop)
-
-#define FSN_GET_SET (1, 1, FSN_INIT_PROP)
-#define FSN_GET     (1, 0, FSN_INIT_PROP_R)
-#define FSN_SET     (0, 1, FSN_INIT_PROP_W)
-#define FSN_IS_SET  (1, 1, FSN_INIT_PROP_BOOL)
-#define FSN_IS      (1, 0, FSN_INIT_PROP_BOOL_R)
-
-// Accessors for the above tuple macros
-#define FSN_PROP_IS_GETABLE(v) BOOST_PP_TUPLE_ELEM(3, 0, BOOST_PP_SEQ_ELEM(0, v))
-#define FSN_PROP_IS_SETABLE(v) BOOST_PP_TUPLE_ELEM(3, 1, BOOST_PP_SEQ_ELEM(0, v))
-#define FSN_PROP_EXEC_INIT_MACRO(v, p) BOOST_PP_TUPLE_ELEM(3, 2, BOOST_PP_SEQ_ELEM(0, v))(p)
-#define FSN_PROP_IS_READONLY(v) BOOST_PP_NOT(FSN_PROP_IS_SETABLE(v))
-
-#define FSN_PROP_GET_NAME(v) BOOST_PP_SEQ_ELEM(1, v)
-#define FSN_PROP_GET_TYPE(v) BOOST_PP_SEQ_ELEM(2, v)
-#define FSN_PROP_GET_SERIALISER(v) BOOST_PP_SEQ_ELEM(3, v)
-#define FSN_PROP_HAS_SERIALISER(v) BOOST_PP_EQUAL( 4, BOOST_PP_SEQ_SIZE(v) )
-
-#define FSN_INIT_PROPS(r, data, v) \
-	FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v)); \
-	FSN_PROP_ADDPROPERTY(BOOST_PP_SEQ_ELEM(1, v));
 // Generates lines like:
-//  ThreadSafeProperty<T, DefaultStaticWriter<T, GenericPropertySerialiser<T>>> prop_name;
-#define FSN_DEFAULTWRITER_TYPENAME(v) BOOST_PP_CAT(FSN_PROP_GET_NAME(v),Writer_t)
-#define FSN_SERIALISER_PARAM(v) BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser< FSN_PROP_GET_TYPE(v) >)
-#define FSN_NULLWRITER_PARAM(v) NullWriter< ## FSN_PROP_GET_TYPE(v) ## >
-#define FSN_DEFAULTWRITER_typedef(v) typedef DefaultStaticWriter< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA() FSN_SERIALISER_PARAM(v) ## > FSN_DEFAULTWRITER_TYPENAME(v);
-#define FSN_DEFINE_PROPS(r, data, v) \
+//  ThreadSafeProperty<T, DefaultStaticWriter<T>, GenericPropertySerialiser<T>> prop_name;
+#define FSN_BUFFERED_DEFAULTWRITER_TYPENAME(v) BOOST_PP_CAT(FSN_PROP_GET_NAME(v),Writer_t)
+#define FSN_BUFFERED_SERIALISER_PARAM(v) BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser< FSN_PROP_GET_TYPE(v) >)
+#define FSN_BUFFERED_NULLWRITER_PARAM(v) NullWriter< ## FSN_PROP_GET_TYPE(v) ## >
+#define FSN_BUFFERED_DEFAULTWRITER_typedef(v) typedef DefaultStaticWriter< ## FSN_PROP_GET_TYPE(v) BOOST_PP_COMMA() FSN_BUFFERED_SERIALISER_PARAM(v) ## > FSN_BUFFERED_DEFAULTWRITER_TYPENAME(v);
+#define FSN_DEFINE_BUFFERED_PROPS(r, data, v) \
 	ThreadSafeProperty<FSN_PROP_GET_TYPE(v)\
-	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_IS_READONLY(v), FSN_NULLWRITER_PARAM(v), DefaultStaticWriter<FSN_PROP_GET_TYPE(v)>)\
+	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_IS_READONLY(v), FSN_BUFFERED_NULLWRITER_PARAM(v), DefaultStaticWriter<FSN_PROP_GET_TYPE(v)>)\
 	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser<FSN_PROP_GET_TYPE(v)>)\
 	> FSN_PROP_GET_NAME(v);
 
-#define FSN_COIFACE_PROPS(iface_name, properties) \
+#define FSN_COIFACE_BUFFERED_PROPS(iface_name, properties) \
 	void InitProperties()\
 	{\
 	typedef iface_name iface;\
@@ -121,13 +83,11 @@
 	FSN_ASSERT(component);\
 	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
 	}\
-	BOOST_PP_SEQ_FOR_EACH(FSN_DEFINE_PROPS, _, properties)
+	BOOST_PP_SEQ_FOR_EACH(FSN_DEFINE_BUFFERED_PROPS, _, properties)
 
-#define FSN_COIFACE_CTOR FSN_COIFACE_PROPS
-
-#define FSN_COIFACE(interface_name, properties)\
+#define FSN_COIFACE_BUFFERED(interface_name, properties)\
 	FSN_BEGIN_COIFACE(interface_name)\
-	FSN_COIFACE_PROPS(interface_name, properties)\
+	FSN_COIFACE_BUFFERED_PROPS(interface_name, properties)\
 	FSN_END_COIFACE()
 
 namespace FusionEngine
@@ -183,98 +143,6 @@ namespace FusionEngine
 	{
 		void Write(const T&) { FSN_ASSERT_FAIL("Can't set this property"); }
 		bool DumpWrittenValue(T&) { return false; }
-	};
-
-	//! Generic serialiser
-	template <typename T, bool Continuous = false>
-	struct GenericPropertySerialiser
-	{
-		static bool IsContinuous() { return Continuous; }
-		static void Serialise(RakNet::BitStream& stream, const T& value)
-		{
-			SerialisationUtils::write(stream, value);
-		}
-		static void Deserialise(RakNet::BitStream& stream, T& value)
-		{
-			SerialisationUtils::read(stream, value);
-		}
-	};
-
-	//! Container serialiser
-	template <typename T>
-	struct ContainerPropertySerialiser
-	{
-		static bool IsContinuous() { return false; }
-		static void Serialise(RakNet::BitStream& stream, const T& value)
-		{
-			stream.Write(value.size());
-			for (auto it = value.begin(); it != value.end(); ++it)
-				stream.Write(value);
-		}
-		static void Deserialise(RakNet::BitStream& stream, T& value)
-		{
-			auto size = value.size();
-			if (stream.Read(size))
-			{
-				value.resize(size);
-				for (size_t i = 0; i < size; ++i)
-				{
-					if (stream.Read(value[i])) {} else break;
-				}
-			}
-		}
-	};
-
-	// Here is some complicated bullshit that saves maybe 1 ptr's worth of memory
-	//  (over using 2 std::function objects)
-	// Altho, it does allow the handy GetObjectAsComponent method
-	template <class GetT, class SetT>
-	class IGetSetCallback
-	{
-	public:
-		virtual ~IGetSetCallback() {}
-		virtual void Set(SetT) = 0;
-		virtual GetT Get() const = 0;
-		
-		virtual EntityComponent* GetObjectAsComponent() const = 0;
-	};
-
-	template <class C, class GetT, class SetT>
-	class GetSetCallback : public IGetSetCallback<GetT, SetT>
-	{
-	public:
-		typedef SetT value_type_for_set;
-		typedef GetT value_type_for_get;
-
-		typedef void (C::*set_fn_t)(value_type_for_set);
-		typedef value_type_for_get (C::*get_fn_t)(void) const;
-
-		C *m_Object;
-		set_fn_t m_SetFn;
-		get_fn_t m_GetFn;
-
-		GetSetCallback(C *obj, get_fn_t get_fn, set_fn_t set_fn)
-			: m_Object(obj),
-			m_SetFn(set_fn),
-			m_GetFn(get_fn)
-		{}
-
-		void Set(SetT value)
-		{
-			FSN_ASSERT(m_Object); FSN_ASSERT(m_SetFn);
-			(m_Object->*m_SetFn)(value);
-		}
-		GetT Get() const
-		{
-			FSN_ASSERT(m_Object); FSN_ASSERT(m_GetFn);
-			return (m_Object->*m_GetFn)();
-		}
-		
-		EntityComponent* GetObjectAsComponent() const
-		{
-			FSN_ASSERT(m_Object);
-			return dynamic_cast<EntityComponent*>(m_Object);
-		}
 	};
 
 	//! Threadsafe property wrapper
@@ -339,7 +207,10 @@ namespace FusionEngine
 			return *this;
 		}
 
-		void SetInterfaceObject(const boost::intrusive_ptr<ComponentProperty>& obj) { m_InterfaceObject = obj; }
+		void SetInterfaceObject(const boost::intrusive_ptr<ComponentProperty>& obj)
+		{
+			m_InterfaceObject = obj;
+		}
 
 		ComponentProperty* GetInterfaceObject() const
 		{

@@ -734,6 +734,8 @@ namespace FusionEngine
 				// Update GUI
 				m_GUI->Update(dtSeconds);
 
+				m_MessageRouter->Process(0.1f);
+
 				m_InputManager->Update(dtSeconds);
 				m_NetworkManager->DispatchPackets();
 
@@ -780,13 +782,13 @@ namespace FusionEngine
 					m_EntitySynchroniser->ProcessQueue(m_EntityManager.get());
 				}
 
-				//m_ComponentUniverse->CheckMessages();
+				m_ComponentUniverse->Process(0.1f);
 
 				// Propagate property changes
-				{
-					FSN_PROFILE("FireSignals");
-					m_EvesdroppingManager->GetSignalingSystem().Fire();
-				}
+				//{
+				//	FSN_PROFILE("FireSignals");
+				//	m_EvesdroppingManager->GetSignalingSystem().Fire();
+				//}
 
 #ifdef FSN_PROFILING_ENABLED
 				}

@@ -75,7 +75,7 @@ namespace FusionEngine
 #define FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop) \
 struct iface##_##prop {\
 	static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); }\
-	static const type & get_ ## prop ## Value(void *obj) { return GetIface<iface>(obj)->prop.Get(); }\
+	static type get_ ## prop ## Value(void *obj) { return GetIface<iface>(obj)->prop.Get(); }\
 	static void set_ ## prop ## Value(const type & value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); }\
 };
 

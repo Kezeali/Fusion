@@ -59,17 +59,15 @@ namespace FusionEngine
 		//m_LastAngle(0.f)
 	{
 		m_Colour = clan::Colorf::white;
-		AlignmentOrigin.m_Value = clan::origin_center;
-		RotationOrigin.m_Value = clan::origin_center;
-		Alpha.m_Value = 1.f;
-		Scale.m_Value = Vector2(1.f, 1.0f);
-		BaseAngle.m_Value = 0.f;
+		m_AlignmentOrigin = clan::origin_center;
+		m_RotationOrigin = clan::origin_center;
+		m_Alpha = 1.f;
+		m_Scale = Vector2(1.f, 1.0f);
+		m_BaseAngle = 0.f;
 
-		AnimationFinished.m_Value = false;
+		m_AnimationFrame = 0;
 
-		AnimationFrame.m_Value = 0;
-
-		Looping.m_Value = true;
+		m_Looping = true;
 	}
 
 	CLSprite::~CLSprite()
@@ -317,18 +315,16 @@ namespace FusionEngine
 		{
 			m_Sprite = m_SpriteDef->CreateSprite(gc);
 
-			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
-			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
+			m_Sprite.set_alignment(m_AlignmentOrigin, m_AlignmentOffset.x, m_AlignmentOffset.y);
+			m_Sprite.set_rotation_hotspot(m_RotationOrigin, m_RotationOffset.x, m_RotationOffset.y);
 			m_Sprite.set_color(m_Colour);
-			m_Sprite.set_alpha(Alpha.Get());
-			m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-			m_Sprite.set_base_angle(clan::Angle(BaseAngle.Get(), clan::angle_radians));
+			m_Sprite.set_alpha(m_Alpha);
+			m_Sprite.set_scale(m_Scale.x, m_Scale.y);
+			m_Sprite.set_base_angle(clan::Angle(m_BaseAngle, clan::angle_radians));
 
 			m_Sprite.set_angle(clan::Angle(m_Angle, clan::angle_radians));
-
-			m_Sprite.set_frame(AnimationFrame.Get());
-
-			Looping.Set(m_Sprite.is_play_loop());
+			
+			m_Sprite.set_frame(m_AnimationFrame);
 
 			m_RecreateSprite = false;
 		}
@@ -409,66 +405,78 @@ namespace FusionEngine
 
 	void CLSprite::SerialiseOccasional(RakNet::BitStream& stream)
 	{
-		m_SerialisationHelper.writeChanges(true, stream,
-			m_Offset, m_LocalDepth,
-			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
-			GetAlignmentOrigin(), GetAlignmentOffset(),
-			GetRotationOrigin(), GetRotationOffset(),
-			GetColour(),
-			GetAlpha(),
-			GetScale(),
-			GetBaseAngle(),
-			GetAnimationFrame());
+		SerialisationUtils::write(stream, GetOffset());
+		SerialisationUtils::write(stream, GetLocalDepth());
+		
+		SerialisationUtils::write(stream, GetImagePath());
+		SerialisationUtils::write(stream, GetAnimationPath());
+
+		SerialisationUtils::write(stream, GetAlignmentOrigin());
+		SerialisationUtils::write(stream, GetAlignmentOffset());
+		SerialisationUtils::write(stream, GetRotationOrigin());
+		SerialisationUtils::write(stream, GetRotationOffset());
+
+		SerialisationUtils::write(stream, GetColour());
+		SerialisationUtils::write(stream, GetAlpha());
+		SerialisationUtils::write(stream, GetScale());
+		SerialisationUtils::write(stream, GetBaseAngle());
+		SerialisationUtils::write(stream, GetAnimationFrame());
 	}
 
 	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream)
 	{
-		std::bitset<PropsIdx::NumProps> changed;
+		SerialisationUtils::read(stream, m_Offset);
+		SerialisationUtils::read(stream, m_LocalDepth);
+		
+		std::string imagePath;
+		SerialisationUtils::read(stream, imagePath);
+		std::string animationPath;
+		SerialisationUtils::read(stream, animationPath);
 
-		m_SerialisationHelper.readChanges(stream, true, changed,
-			m_Offset, m_LocalDepth,
-			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
-			AlignmentOrigin.m_Value, AlignmentOffset.m_Value,
-			RotationOrigin.m_Value, RotationOffset.m_Value,
-			Colour.m_Value,
-			Alpha.m_Value,
-			Scale.m_Value,
-			BaseAngle.m_Value,
-			AnimationFrame.m_Value
-			);
-		if (changed[PropsIdx::ImagePath]) // file path changed
+		SerialisationUtils::read(stream, m_AlignmentOrigin);
+		SerialisationUtils::read(stream, m_AlignmentOffset);
+		SerialisationUtils::read(stream, m_RotationOrigin);
+		SerialisationUtils::read(stream, m_RotationOffset);
+
+		SerialisationUtils::read(stream, m_Colour);
+		SerialisationUtils::read(stream, m_Alpha);
+		SerialisationUtils::read(stream, m_Scale);
+		SerialisationUtils::read(stream, m_BaseAngle);
+		SerialisationUtils::read(stream, m_AnimationFrame);
+
+		if (imagePath != m_ImagePath) // file path changed
+		{
+			m_ImagePath = imagePath;
 			m_ReloadImage = true;
-		if (changed[PropsIdx::AnimationPath])
+		}
+		if (animationPath != m_AnimationPath)
+		{
+			m_AnimationPath = animationPath;
 			m_ReloadAnimation = true;
+		}
 
-		if (m_Offset != Offset.Get())
-			Offset.MarkChanged();
+		//if (m_Offset != Offset.Get())
+		//	Offset.MarkChanged();
 
-		if (m_LocalDepth != LocalDepth.Get())
-			LocalDepth.MarkChanged();
+		//if (m_LocalDepth != LocalDepth.Get())
+		//	LocalDepth.MarkChanged();
 
-		if (m_ReloadImage)
-			ImagePath.MarkChanged();
+		//if (m_ReloadImage)
+		//	ImagePath.MarkChanged();
 
-		if (m_ReloadAnimation)
-			AnimationPath.MarkChanged();
+		//if (m_ReloadAnimation)
+		//	AnimationPath.MarkChanged();
 
 		if (!m_Sprite.is_null()) // Copy the changes to the clan::Sprite, if it is loaded
 		{
-			if (changed[PropsIdx::AlignmentOrigin] || changed[PropsIdx::AlignmentOffset])
-				m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
-			if (changed[PropsIdx::RotationOrigin] || changed[PropsIdx::RotationOffset])
-				m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
-			if (changed[PropsIdx::Colour])
-				m_Sprite.set_color(Colour.Get());
-			if (changed[PropsIdx::Alpha])
-				m_Sprite.set_alpha(Alpha.Get());
-			if (changed[PropsIdx::Scale])
-				m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-			if (changed[PropsIdx::BaseAngle])
-				m_Sprite.set_base_angle(clan::Angle(BaseAngle.Get(), clan::angle_radians));
+			m_Sprite.set_alignment(m_AlignmentOrigin, m_AlignmentOffset.x, m_AlignmentOffset.y);
+			m_Sprite.set_rotation_hotspot(m_RotationOrigin, m_RotationOffset.x, m_RotationOffset.y);
+			m_Sprite.set_color(m_Colour);
+			m_Sprite.set_alpha(m_Alpha);
+			m_Sprite.set_scale(m_Scale.x, m_Scale.y);
+			m_Sprite.set_base_angle(clan::Angle(m_BaseAngle, clan::angle_radians));
 
-			m_Sprite.set_frame(AnimationFrame.Get());
+			m_Sprite.set_frame(m_AnimationFrame);
 		}
 	}
 
@@ -540,7 +548,6 @@ namespace FusionEngine
 	void CLSprite::SetOffset(const Vector2& value)
 	{
 		m_Offset = value;
-		m_SerialisationHelper.markChanged(PropsIdx::Offset);
 	}
 
 	Vector2 CLSprite::GetOffset() const
@@ -551,7 +558,6 @@ namespace FusionEngine
 	void CLSprite::SetLocalDepth(int value)
 	{
 		m_LocalDepth = value;
-		m_SerialisationHelper.markChanged(PropsIdx::LocalDepth);
 	}
 
 	//void CLSprite::SetInterpolate(bool value)
@@ -563,8 +569,6 @@ namespace FusionEngine
 	{
 		m_ImagePath = value;
 		m_ReloadImage = true;
-		m_SerialisationHelper.markChanged(PropsIdx::ImagePath);
-		m_SerialisationHelper.markChanged(PropsIdx::ReloadImage);
 	}
 
 	const std::string &CLSprite::GetImagePath() const
@@ -576,8 +580,6 @@ namespace FusionEngine
 	{
 		m_AnimationPath = value;
 		m_ReloadAnimation = true;
-		m_SerialisationHelper.markChanged(PropsIdx::AnimationPath);
-		m_SerialisationHelper.markChanged(PropsIdx::ReloadAnimation);
 	}
 
 	const std::string &CLSprite::GetAnimationPath() const
@@ -587,14 +589,13 @@ namespace FusionEngine
 
 	void CLSprite::SetAlignmentOrigin(clan::Origin origin)
 	{
+		m_AlignmentOrigin = origin;
 		if (!m_Sprite.is_null())
 		{
 			clan::Origin ignore; int x, y;
 			m_Sprite.get_alignment(ignore, x, y);
 			m_Sprite.set_alignment(origin, x, y);
 		}
-
-		m_SerialisationHelper.markChanged(PropsIdx::AlignmentOrigin);
 	}
 	
 	clan::Origin CLSprite::GetAlignmentOrigin() const
@@ -606,19 +607,18 @@ namespace FusionEngine
 			return origin;
 		}
 		else
-			return AlignmentOrigin.Get();
+			return m_AlignmentOrigin;
 	}
 
 	void CLSprite::SetAlignmentOffset(const Vector2i& offset)
 	{
+		m_AlignmentOffset = offset;
 		if (!m_Sprite.is_null())
 		{
 			clan::Origin origin; int x, y;
 			m_Sprite.get_alignment(origin, x, y);
 			m_Sprite.set_alignment(origin, offset.x, offset.y);
 		}
-
-		m_SerialisationHelper.markChanged(PropsIdx::AlignmentOffset);
 	}
 
 	Vector2i CLSprite::GetAlignmentOffset() const
@@ -630,19 +630,18 @@ namespace FusionEngine
 			return off;
 		}
 		else
-			return AlignmentOffset.Get();
+			return m_AlignmentOffset;
 	}
 
 	void CLSprite::SetRotationOrigin(clan::Origin origin)
 	{
+		m_RotationOrigin = origin;
 		if (!m_Sprite.is_null())
 		{
 			clan::Origin ignore; int x, y;
 			m_Sprite.get_rotation_hotspot(ignore, x, y);
 			m_Sprite.set_rotation_hotspot(origin, x, y);
 		}
-
-		m_SerialisationHelper.markChanged(PropsIdx::RotationOrigin);
 	}
 
 	clan::Origin CLSprite::GetRotationOrigin() const
@@ -654,19 +653,18 @@ namespace FusionEngine
 			return origin;
 		}
 		else
-			return RotationOrigin.Get();
+			return m_RotationOrigin;
 	}
 
 	void CLSprite::SetRotationOffset(const Vector2i& offset)
 	{
+		m_RotationOffset = offset;
 		if (!m_Sprite.is_null())
 		{
 			clan::Origin origin; int x, y;
 			m_Sprite.get_rotation_hotspot(origin, x, y);
 			m_Sprite.set_rotation_hotspot(origin, offset.x, offset.y);
 		}
-
-		m_SerialisationHelper.markChanged(PropsIdx::RotationOffset);
 	}
 
 	Vector2i CLSprite::GetRotationOffset() const
@@ -678,7 +676,7 @@ namespace FusionEngine
 			return off;
 		}
 		else
-			return RotationOffset.Get();
+			return m_RotationOffset;
 	}
 
 	void CLSprite::SetColour(const clan::Colorf& val)
@@ -687,8 +685,6 @@ namespace FusionEngine
 			m_Sprite.set_color(val);
 
 		m_Colour = val;
-
-		m_SerialisationHelper.markChanged(PropsIdx::Colour);
 	}
 
 	const clan::Colorf &CLSprite::GetColour() const
@@ -703,10 +699,9 @@ namespace FusionEngine
 
 	void CLSprite::SetAlpha(float alpha)
 	{
+		m_Alpha = alpha;
 		if (!m_Sprite.is_null())
 			m_Sprite.set_alpha(alpha);
-
-		m_SerialisationHelper.markChanged(PropsIdx::Alpha);
 	}
 
 	float CLSprite::GetAlpha() const
@@ -714,15 +709,14 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			return m_Sprite.get_alpha();
 		else
-			return Alpha.Get();
+			return m_Alpha;
 	}
 
 	void CLSprite::SetScale(const Vector2& val)
 	{
+		m_Scale = val;
 		if (!m_Sprite.is_null())
 			m_Sprite.set_scale(val.x, val.y);
-
-		m_SerialisationHelper.markChanged(PropsIdx::Scale);
 	}
 
 	Vector2 CLSprite::GetScale() const
@@ -734,15 +728,14 @@ namespace FusionEngine
 			return scale;
 		}
 		else
-			return Scale.Get();
+			return m_Scale;
 	}
 
 	void CLSprite::SetBaseAngle(float val)
 	{
+		m_BaseAngle = val;
 		if (!m_Sprite.is_null())
 			m_Sprite.set_base_angle(clan::Angle(val, clan::angle_radians));
-
-		m_SerialisationHelper.markChanged(PropsIdx::BaseAngle);
 	}
 
 	float CLSprite::GetBaseAngle() const
@@ -753,7 +746,7 @@ namespace FusionEngine
 			return angle.to_radians();
 		}
 		else
-			return BaseAngle.Get();
+			return m_BaseAngle;
 	}
 
 	bool CLSprite::IsAnimationFinished() const
@@ -761,11 +754,12 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			return m_Sprite.is_finished();
 		else
-			return AnimationFinished.Get();
+			return false;
 	}
 
 	void CLSprite::SetAnimationFrame(int frame)
 	{
+		m_AnimationFrame = frame;
 		if (!m_Sprite.is_null())
 			m_Sprite.set_frame(frame);
 	}
@@ -775,7 +769,7 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			return m_Sprite.get_current_frame();
 		else
-			return AnimationFrame.Get();
+			return m_AnimationFrame;
 	}
 
 	void CLSprite::SetPlaying(bool play)
@@ -794,11 +788,12 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			return !m_Sprite.is_finished();
 		else
-			return Playing.Get();
+			return false;
 	}
 
 	void CLSprite::SetLooping(bool loop)
 	{
+		m_Looping = loop;
 		if (!m_Sprite.is_null())
 			m_Sprite.set_play_loop(loop);
 	}
@@ -808,7 +803,7 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			return m_Sprite.is_play_loop();
 		else
-			return Looping.Get();
+			return m_Looping;
 	}
 
 	void CLSprite::Finish()

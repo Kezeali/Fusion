@@ -35,7 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionEntityComponent.h"
-#include "FusionThreadSafeProperty.h"
+#include "FusionStandardProperty.h"
 
 #include "FusionVector2.h"
 
@@ -44,8 +44,6 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IScript)
 	public:
-		//ThreadSafeProperty<std::string> ScriptPath;
-
 		FSN_COIFACE_PROPS(IScript,
 			((FSN_GET_SET)(ScriptPath)(std::string)) )
 

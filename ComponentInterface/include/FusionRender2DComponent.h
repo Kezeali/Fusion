@@ -36,7 +36,7 @@
 
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
-#include "FusionThreadSafeProperty.h"
+#include "FusionStandardProperty.h"
 #include "FusionViewport.h"
 
 #include <ClanLib/Display/2D/color.h>

@@ -47,7 +47,7 @@ namespace FusionEngine
 	
 	FSN_BEGIN_COIFACE(ITransform)
 	public:
-		FSN_COIFACE_PROPS(ITransform,
+		FSN_COIFACE_BUFFERED_PROPS(ITransform,
 			((FSN_GET_SET)(Position)(Vector2))
 			((FSN_GET_SET)(Angle)(float))
 			((FSN_GET_SET)(Depth)(int)) )

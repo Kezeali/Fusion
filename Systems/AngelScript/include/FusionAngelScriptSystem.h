@@ -233,6 +233,13 @@ namespace FusionEngine
 			return false;
 		}
 
+		std::vector<std::string> GetDependencies() const override
+		{
+			std::vector<std::string> deps;
+			deps.push_back("CLRenderTask");
+			return deps;
+		}
+
 	protected:
 		AngelScriptWorld* m_AngelScriptWorld;
 		std::shared_ptr<ScriptManager> m_ScriptManager;

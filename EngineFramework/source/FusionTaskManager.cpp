@@ -355,10 +355,8 @@ namespace FusionEngine
 
 				// Tasks in this list will be checked for inter-world dependencies
 				spawnedTasks.push_back(primaryTbbTask);
-				// Dependencies will be looked up in this container
-				if (taskImplementation->GetSystemWorld() != nullptr)
-					namedTasks.insert(std::make_pair(taskImplementation->GetSystemName(), primaryTbbTask));
 
+				// These will be the initial tasks spawned
 				taskList.push_back(*primaryTbbTask);
 
 				auto prerequisiteTbbTask = primaryTbbTask;
@@ -374,6 +372,10 @@ namespace FusionEngine
 					prerequisiteTbbTask->AddDependant(successorTbbTask);
 					prerequisiteTbbTask = successorTbbTask;
 				}
+
+				// Dependencies will be looked up in this container
+				if (taskImplementation->GetSystemWorld() != nullptr)
+					namedTasks.insert(std::make_pair(taskImplementation->GetSystemName(), prerequisiteTbbTask));
 			}
 		}
 

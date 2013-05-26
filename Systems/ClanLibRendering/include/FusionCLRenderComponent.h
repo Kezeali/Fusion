@@ -89,27 +89,6 @@ namespace FusionEngine
 	public:
 		FSN_LIST_INTERFACES((IRenderCom)(ISprite))
 
-		struct PropsIdx { enum Names : size_t {
-			Offset = 0, LocalDepth,
-			ImagePath, ReloadImage, AnimationPath, ReloadAnimation,
-			AlignmentOrigin, AlignmentOffset, RotationOrigin, RotationOffset,
-			Colour,
-			Alpha,
-			Scale, BaseAngle,
-			AnimationFrame,
-			NumProps
-		}; };
-		typedef SerialisationHelper<
-			Vector2, int, // offset, depth
-			std::string, bool, std::string, bool, // image path, animation path
-			clan::Origin, Vector2i, clan::Origin, Vector2i, // Alignment, rotation hotspot
-			clan::Colorf, // colour
-			float, // alpha
-			Vector2, float, // scale, base-angle
-			int> // animation frame
-			DeltaSerialiser_t;
-		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
-
 		CLSprite();
 		virtual ~CLSprite();
 
@@ -194,7 +173,6 @@ namespace FusionEngine
 		void SetRotationOffset(const Vector2i& offset);
 		Vector2i GetRotationOffset() const;
 
-		clan::Colorf m_Colour;
 		void SetColour(const clan::Colorf& val);
 		const clan::Colorf &GetColour() const;
 		
@@ -221,6 +199,17 @@ namespace FusionEngine
 		void Finish();
 
 		boost::mutex m_Mutex;
+
+		clan::Colorf m_Colour;
+		clan::Origin m_AlignmentOrigin;
+		Vector2i m_AlignmentOffset;
+		clan::Origin m_RotationOrigin;
+		Vector2i m_RotationOffset;
+		float m_Alpha;
+		Vector2 m_Scale;
+		float m_BaseAngle;
+
+		bool m_Looping;
 
 		boost::signals2::scoped_connection m_ImageLoadConnection;
 		ResourcePointer<clan::Texture2D> m_ImageResource;
@@ -274,8 +263,6 @@ namespace FusionEngine
 		bool m_ReloadAnimation;
 
 		bool m_RecreateSprite;
-
-		DeltaSerialiser_t m_SerialisationHelper;
 	};
 
 }
