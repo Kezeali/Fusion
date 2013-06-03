@@ -301,12 +301,14 @@ namespace FusionEngine
 
 		m_B2DTask = new Box2DTask(this, m_World);
 		m_B2DInterpTask = new Box2DInterpolateTask(this);
+		m_B2DSynchTask = new Box2DSynchroniseTask(this);
 	}
 
 	Box2DWorld::~Box2DWorld()
 	{
 		m_ActiveBodies.clear();
 		m_BodiesToCreate.clear();
+		delete m_B2DSynchTask;
 		delete m_B2DInterpTask;
 		delete m_B2DTask;
 		delete m_World;
@@ -340,7 +342,7 @@ namespace FusionEngine
 		return InstantiateComponent(type, Vector2::zero(), 0.f);
 	}
 
-	class StaticTransform : public EntityComponent, public ITransform
+	class StaticTransform : public SynchronisingComponent, public ITransform
 	{
 	public:
 		FSN_LIST_INTERFACES((ITransform))
@@ -401,6 +403,7 @@ namespace FusionEngine
 
 	ComponentPtr Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 	{
+		SynchronisingComponent* component;
 		if (type == "b2RigidBody" 
 			|| type == "b2Dynamic"
 			|| type == "b2Kinematic"
@@ -418,23 +421,25 @@ namespace FusionEngine
 			def.position.Set(pos.x, pos.y);
 			def.angle = angle;
 
-			auto com = new Box2DBody(def);
-			//com->SetInterpolate(def.type != b2_staticBody);
-			return com;
+			component = new Box2DBody(def);
 		}
 		else if (type == "b2Circle")
 		{
-			return new Box2DCircleFixture();
+			component = new Box2DCircleFixture();
 		}
 		else if (type == "b2Polygon")
 		{
-			return new Box2DPolygonFixture();
+			component = new Box2DPolygonFixture();
 		}
 		else if (type == "StaticTransform")
 		{
-			return new StaticTransform(pos, angle);
+			component = new StaticTransform(pos, angle);
 		}
-		return ComponentPtr();
+		else
+			return ComponentPtr();
+
+		component->SetSynchroniser(&m_Synchroniser);
+		return component;
 	}
 
 	void Box2DWorld::OnActivation(const ComponentPtr& component)
@@ -514,11 +519,18 @@ namespace FusionEngine
 		TaskList_t tasks;
 		tasks.push_back(*m_B2DTask);
 		tasks.push_back(*m_B2DInterpTask);
+		tasks.push_back(*m_B2DSynchTask);
 		return tasks;
 	}
 
+	void Box2DWorld::DoSerialProcessing()
+	{
+		for (auto& body : m_ActiveBodies)
+			body->SynchronisePropertiesNow();
+	}
+
 	Box2DTask::Box2DTask(Box2DWorld* sysworld, b2World* const world)
-		: SystemTaskBase(sysworld, "Box2DTask"),
+		: TaskBase(sysworld, "Box2DTask"),
 		m_B2DSysWorld(sysworld),
 		m_World(world)
 	{
@@ -635,7 +647,7 @@ namespace FusionEngine
 	}
 
 	Box2DInterpolateTask::Box2DInterpolateTask(Box2DWorld* sysworld)
-		: SystemTaskBase(sysworld, "Box2DInterpolate"),
+		: TaskBase(sysworld, "Box2DInterpolate"),
 		m_B2DSysWorld(sysworld)
 	{
 	}
@@ -709,6 +721,21 @@ namespace FusionEngine
 				body->Angle.MarkChanged();
 			}
 		}
+	}
+
+	Box2DSynchroniseTask::Box2DSynchroniseTask(Box2DWorld* sysworld)
+		: TaskBase(sysworld, "Box2DSynchroniseTask"),
+		m_B2DSysWorld(sysworld)
+	{
+	}
+
+	Box2DSynchroniseTask::~Box2DSynchroniseTask()
+	{
+	}
+
+	void Box2DSynchroniseTask::Update()
+	{
+		m_B2DSysWorld->m_Synchroniser.Synchronise();
 	}
 
 }

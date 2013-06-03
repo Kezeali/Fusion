@@ -123,12 +123,11 @@ namespace FusionEngine
 		m_Value = any;
 		any->Release(); // Assigning the intrusive-ptr above increments the ref-count
 		//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
-
-		GeneratePersistentFollower();
 	}
 
 	void ScriptAnyTSP::AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id)
 	{
+		/*
 		FSN_PROFILE("ScriptPropAquireSignalGenerator");
 		// Build generators for the app types listed in CommonAppTypes
 		SignalGeneratorAquisitionFactory factory(system, this, own_id);
@@ -139,10 +138,12 @@ namespace FusionEngine
 			m_ChangedCallback = system.MakeGenerator<boost::intrusive_ptr<CScriptAny>>(own_id,
 				[this]()->boost::intrusive_ptr<CScriptAny> { this->Synchronise(); return boost::intrusive_ptr<CScriptAny>(this->Get()); });
 		}
+		*/
 	}
 
 	void ScriptAnyTSP::GeneratePersistentFollower()
 	{
+		/*
 		PropertyFollowerFactory factory(this);
 		boost::mpl::for_each<Scripting::CommonAppTypes>(factory);
 		// Fall back on the any callback (works for script types)
@@ -151,11 +152,12 @@ namespace FusionEngine
 			using namespace std::placeholders;
 			m_PersistentFollower = std::make_shared<PersistentConnectionAgent<boost::intrusive_ptr<CScriptAny>>>(std::bind(&ScriptAnyTSP::Set, this, _1));
 		}
+		*/
 	}
 
 	void ScriptAnyTSP::Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id)
 	{
-		m_PersistentFollower->Subscribe(system, id);
+		//m_PersistentFollower->Subscribe(system, id);
 	}
 
 	bool ScriptAnyTSP::IsDirty()
@@ -191,9 +193,6 @@ namespace FusionEngine
 			return false;
 		else
 		{
-			m_ChangedSinceSerialised = true;
-			if (m_ChangedCallback)
-				m_ChangedCallback();
 			return true;
 		}
 	}
@@ -203,8 +202,6 @@ namespace FusionEngine
 		if (m_Writer.DumpWrittenValue(m_Value))
 		{
 			m_Value->Retrieve(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
-
-			m_ChangedSinceSerialised = true; // The property was changed using Set(...)
 		}
 		else
 		{
@@ -214,8 +211,6 @@ namespace FusionEngine
 
 	void ScriptAnyTSP::Serialise(RakNet::BitStream& stream)
 	{
-		m_PersistentFollower->SaveSubscription(stream);
-
 		// Save prop data
 		FSN_ASSERT(m_Value);
 
@@ -299,9 +294,6 @@ namespace FusionEngine
 
 	void ScriptAnyTSP::Deserialise(RakNet::BitStream& stream)
 	{
-		// Load subscription
-		m_PersistentFollower->LoadSubscription(stream);
-
 		// Load prop data
 		stream.Read(m_TypeId);
 
@@ -366,9 +358,6 @@ namespace FusionEngine
 			auto any = new CScriptAny(ref, typeId, m_Object->GetEngine());
 			m_Writer.Write(any);
 			any->Release();
-
-			if (m_ChangedCallback)
-				m_ChangedCallback();
 		}
 		else
 			FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
@@ -379,9 +368,6 @@ namespace FusionEngine
 		if (any->GetTypeId() == m_TypeId)
 		{
 			m_Writer.Write(any);
-
-			if (m_ChangedCallback)
-				m_ChangedCallback();
 		}
 		else
 			FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");

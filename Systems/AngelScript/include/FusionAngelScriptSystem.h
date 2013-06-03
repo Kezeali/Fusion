@@ -216,7 +216,7 @@ namespace FusionEngine
 		bool instantiateScript(const boost::intrusive_ptr<ASScript>& script);
 	};
 
-	class AngelScriptTask : public System::SystemTaskBase
+	class AngelScriptTask : public System::TaskBase
 	{
 	public:
 		AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
@@ -259,7 +259,7 @@ namespace FusionEngine
 	};
 
 	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!
-	class AngelScriptInstantiationTask : public System::SystemTaskBase
+	class AngelScriptInstantiationTask : public System::TaskBase
 	{
 	public:
 		AngelScriptInstantiationTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);

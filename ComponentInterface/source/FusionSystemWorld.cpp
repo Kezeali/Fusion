@@ -77,5 +77,10 @@ namespace FusionEngine { namespace System
 	{
 		return m_RouterTask;
 	}
+	
+	void WorldBase::SerialProcessing()
+	{
+		DoSerialProcessing();
+	}
 
 } }

@@ -94,11 +94,11 @@ namespace FusionEngine
 		Timer m_Timer;
 		
 		std::vector<std::shared_ptr<System::WorldBase>> m_ComponentWorlds;
-		std::vector<System::SystemTaskBase*> m_SortedTasks; // All tasks (simulation and render tasks)
-		std::vector<System::SystemTaskBase*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
+		std::vector<System::TaskBase*> m_SortedTasks; // All tasks (simulation and render tasks)
+		std::vector<System::TaskBase*> m_GroupedSortedTasks[7]; // Tasks lists for each combination of SystemType flags
 
-		std::vector<std::unique_ptr<System::SystemTaskBase>> m_ProxyTasks; // This is to make sure they are deleted
-		std::unique_ptr<System::SystemTaskBase> m_StreamingTask;
+		std::vector<std::unique_ptr<System::TaskBase>> m_ProxyTasks; // This is to make sure they are deleted
+		std::unique_ptr<System::TaskBase> m_StreamingTask;
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;

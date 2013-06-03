@@ -53,7 +53,7 @@ namespace FusionEngine
 
 	namespace System
 	{
-		class SystemTaskBase;
+		class TaskBase;
 	}
 
 	class TaskManager
@@ -63,7 +63,7 @@ namespace FusionEngine
 
 		~TaskManager();
 
-		void SpawnJobsForSystemTasks(std::vector<std::vector<System::SystemTaskBase*>>& taskLists);
+		void SpawnJobsForSystemTasks(std::vector<std::vector<System::TaskBase*>>& taskLists);
 		void WaitForSystemTasks();
 
     /// This method triggers a synchronized callback to be called once by each thread used by the <c>TaskManagerTBB</c>.
@@ -86,7 +86,7 @@ namespace FusionEngine
 #if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
 		std::shared_ptr<PrimaryThreadTaskScheduler> m_PrimaryThreadTaskScheduler;
 #endif
-		std::vector<System::SystemTaskBase*> m_TasksToExecuteInPrimaryThread;
+		std::vector<System::TaskBase*> m_TasksToExecuteInPrimaryThread;
 
 		std::vector<tbb::task::affinity_id> m_AffinityIDs;
 

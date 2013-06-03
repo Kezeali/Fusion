@@ -35,12 +35,12 @@
 namespace FusionEngine { namespace System
 {
 
-	SystemType SystemTaskBase::GetSystemType() const
+	SystemType TaskBase::GetSystemType() const
 	{
 		return GetSystemWorld()->GetSystemType();
 	}
 
-	std::string SystemTaskBase::GetSystemName() const
+	std::string TaskBase::GetSystemName() const
 	{
 		return GetSystemWorld()->GetSystem()->GetName();
 	}

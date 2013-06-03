@@ -42,11 +42,11 @@
 namespace FusionEngine
 {
 
-	class StreamingTask : public System::SystemTaskBase
+	class StreamingTask : public System::TaskBase
 	{
 	public:
 		StreamingTask(EntityManager* streaming_manager, RegionCellArchivist* archivist)
-			: SystemTaskBase(nullptr, "Streaming"),
+			: TaskBase(nullptr, "Streaming"),
 			m_StreamingManager(streaming_manager),
 			m_Archivist(archivist)
 		{}
@@ -56,7 +56,7 @@ namespace FusionEngine
 
 		System::SystemType GetTaskType() const { return System::Simulation; }
 
-		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return TaskBase::LongSerial; }
 
 		bool IsPrimaryThreadOnly() const
 		{
@@ -68,11 +68,11 @@ namespace FusionEngine
 		RegionCellArchivist* m_Archivist;
 	};
 
-	class StreamingTaskB : public System::SystemTaskBase
+	class StreamingTaskB : public System::TaskBase
 	{
 	public:
 		StreamingTaskB(EntityManager* streaming_manager)
-			: SystemTaskBase(nullptr, "Streaming-CamerasOnly"),
+			: TaskBase(nullptr, "Streaming-CamerasOnly"),
 			m_StreamingManager(streaming_manager)
 		{}
 		~StreamingTaskB() {}
@@ -81,7 +81,7 @@ namespace FusionEngine
 
 		System::SystemType GetTaskType() const { return System::Rendering; }
 
-		PerformanceHint GetPerformanceHint() const { return SystemTaskBase::LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return TaskBase::LongSerial; }
 
 		bool IsPrimaryThreadOnly() const
 		{

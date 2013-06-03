@@ -50,7 +50,7 @@ namespace FusionEngine
 	class B2DebugDraw;
 
 	//! ClanLib render task
-	class CLRenderTask : public System::SystemTaskBase
+	class CLRenderTask : public System::TaskBase
 	{
 	public:
 		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
@@ -97,7 +97,7 @@ namespace FusionEngine
 		RenderActionsMap m_WorldRenderActions;
 	};
 
-	class CLRenderGUITask : public System::SystemTaskBase
+	class CLRenderGUITask : public System::TaskBase
 	{
 	public:
 		CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer);

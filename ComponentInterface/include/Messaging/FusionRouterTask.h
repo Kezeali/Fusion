@@ -42,7 +42,7 @@ namespace FusionEngine
 {
 	
 	//! Router task
-	class RouterTask : public System::SystemTaskBase, public Messaging::Router
+	class RouterTask : public System::TaskBase, public Messaging::Router
 	{
 	public:
 		RouterTask(System::WorldBase* sysworld, const eastl::string& name);

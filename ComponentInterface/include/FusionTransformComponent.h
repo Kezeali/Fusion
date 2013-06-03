@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionEntityComponent.h"
+#include "FusionSynchronisingComponent.h"
 #include "FusionThreadSafeProperty.h"
 
 #include "FusionVector2.h"

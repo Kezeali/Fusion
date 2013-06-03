@@ -43,7 +43,7 @@
 namespace FusionEngine { namespace System
 {
 
-	class SystemTaskBase;
+	class TaskBase;
 	class WorldBase;
 
 	typedef std::shared_ptr<WorldBase> SystemWorldPtr;

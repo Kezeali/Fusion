@@ -35,7 +35,8 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionComponentSystem.h"
-#include "FusionEntityComponent.h"
+#include "FusionSynchronisingComponent.h"
+#include "FusionPropertySynchroniser.h"
 #include "FusionSystemWorld.h"
 #include "FusionSystemTask.h"
 #include "Messaging/FusionMessage.h"
@@ -81,6 +82,7 @@ namespace FusionEngine
 	{
 		friend class Box2DTask;
 		friend class Box2DInterpolateTask;
+		friend class Box2DSynchroniseTask;
 	public:
 		//! CTOR
 		Box2DWorld(System::ISystem* system);
@@ -111,6 +113,8 @@ namespace FusionEngine
 
 		System::TaskList_t MakeTasksList() const override;
 
+		void DoSerialProcessing() override;
+
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
 
@@ -122,12 +126,15 @@ namespace FusionEngine
 		b2World* m_World;
 		Box2DTask* m_B2DTask;
 		Box2DInterpolateTask* m_B2DInterpTask;
+		Box2DSynchroniseTask* m_B2DSynchTask;
 
 		Box2DContactListenerDelegator* m_ContactListenerDelegator;
+
+		PropertySynchronsier m_Synchroniser;
 	};
 
 	//! Updates Box2D-based physics components
-	class Box2DTask : public System::SystemTaskBase
+	class Box2DTask : public System::TaskBase
 	{
 	public:
 		//! CTOR
@@ -154,11 +161,33 @@ namespace FusionEngine
 	};
 
 	//! Does interpolation on objects for which it is enabled
-	class Box2DInterpolateTask : public System::SystemTaskBase
+	class Box2DInterpolateTask : public System::TaskBase
 	{
 	public:
 		Box2DInterpolateTask(Box2DWorld* sysworld);
 		~Box2DInterpolateTask();
+
+		void Update() override;
+
+		System::SystemType GetTaskType() const { return System::Rendering; }
+
+		PerformanceHint GetPerformanceHint() const { return Short; }
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return false;
+		}
+
+	protected:
+		Box2DWorld *m_B2DSysWorld;
+	};
+
+	//! Synchronises properties
+	class Box2DSynchroniseTask : public System::TaskBase
+	{
+	public:
+		Box2DSynchroniseTask(Box2DWorld* sysworld);
+		~Box2DSynchroniseTask();
 
 		void Update() override;
 

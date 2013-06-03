@@ -62,7 +62,7 @@ namespace FusionEngine
 {
 
 	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
-		: SystemTaskBase(sysworld, "CLRenderTask"),
+		: TaskBase(sysworld, "CLRenderTask"),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer)
 	{
@@ -420,7 +420,7 @@ namespace FusionEngine
 
 
 	CLRenderGUITask::CLRenderGUITask(CLRenderWorld* sysworld, const clan::Canvas& canvas, Renderer* const renderer)
-		: SystemTaskBase(sysworld, "CLRenderGUITask"),
+		: TaskBase(sysworld, "CLRenderGUITask"),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer),
 		m_Canvas(canvas)

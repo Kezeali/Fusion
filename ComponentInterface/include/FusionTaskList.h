@@ -39,9 +39,9 @@
 namespace FusionEngine { namespace System
 {
 
-	class SystemTaskBase;
+	class TaskBase;
 
-	typedef boost::intrusive::slist<SystemTaskBase, boost::intrusive::constant_time_size<false>, boost::intrusive::cache_last<true>> TaskList_t;
+	typedef boost::intrusive::slist<TaskBase, boost::intrusive::constant_time_size<false>, boost::intrusive::cache_last<true>> TaskList_t;
 
 	//class TaskGroup
 	//{
@@ -65,7 +65,7 @@ namespace FusionEngine { namespace System
 
 	//	bool IsPrimaryThreadOnly() const { return initialTask->IsPrimaryThreadOnly(); }
 
-	//	SystemTaskBase* initialTask;
+	//	TaskBase* initialTask;
 	//	TaskList_t subsequentTasks;
 
 	//private:

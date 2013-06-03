@@ -51,7 +51,7 @@ namespace FusionEngine
 	class CLRenderWorld;
 
 	//! ClanLib render task
-	class GraphicalProfilerTask : public System::SystemTaskBase
+	class GraphicalProfilerTask : public System::TaskBase
 	{
 	public:
 		GraphicalProfilerTask(CLRenderWorld* sysworld, clan::Canvas canvas);

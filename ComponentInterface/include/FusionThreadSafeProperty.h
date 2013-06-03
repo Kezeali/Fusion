@@ -75,13 +75,21 @@
 	BOOST_PP_COMMA() BOOST_PP_IF(FSN_PROP_HAS_SERIALISER(v), FSN_PROP_GET_SERIALISER(v), GenericPropertySerialiser<FSN_PROP_GET_TYPE(v)>)\
 	> FSN_PROP_GET_NAME(v);
 
+#define FSN_PROP_SET_SYNCH_CALLBACK(prop) \
+	prop.SetRequestSynchonisationCallback(std::bind(&PropertySynchronsier::Enqueue, component->GetSynchroniser(), std::placeholders::_1));
+
+#define FSN_INIT_BUFFERED_PROPS(r, data, v) \
+	FSN_PROP_EXEC_INIT_MACRO(v, BOOST_PP_SEQ_ELEM(1, v)); \
+	FSN_PROP_ADDPROPERTY(BOOST_PP_SEQ_ELEM(1, v)); \
+	FSN_PROP_SET_SYNCH_CALLBACK(BOOST_PP_SEQ_ELEM(1, v));
+
 #define FSN_COIFACE_BUFFERED_PROPS(iface_name, properties) \
 	void InitProperties()\
 	{\
 	typedef iface_name iface;\
-	auto component = dynamic_cast<EntityComponent*>(this);\
+	auto component = dynamic_cast<SynchronisingComponent*>(this);\
 	FSN_ASSERT(component);\
-	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
+	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_BUFFERED_PROPS, _, properties) \
 	}\
 	BOOST_PP_SEQ_FOR_EACH(FSN_DEFINE_BUFFERED_PROPS, _, properties)
 
@@ -162,16 +170,7 @@ namespace FusionEngine
 			m_GetSetCallbacks(nullptr),
 			m_Changed(true)
 		{
-			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
-		}
-		
-		explicit ThreadSafeProperty(const T& value)
-			: m_PropertyID(-1),
-			m_GetSetCallbacks(nullptr),
-			m_Changed(true),
-			m_Value(value)
-		{
-			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
+			m_ReadA = false;
 		}
 
 		// Fundimental and enum types are passed to "Set" by value
@@ -195,9 +194,9 @@ namespace FusionEngine
 				delete m_GetSetCallbacks;
 		}
 		
-		ThreadSafeProperty& operator= (const ThreadSafeProperty& copy)
+		ThreadSafeProperty& operator= (const ThreadSafeProperty& other)
 		{
-			Set(copy.m_Value);
+			Set(other.Value());
 			return *this;
 		}
 
@@ -212,6 +211,7 @@ namespace FusionEngine
 			m_InterfaceObject = obj;
 		}
 
+		// Used to generate objects used by the script interface
 		ComponentProperty* GetInterfaceObject() const
 		{
 			if (m_InterfaceObject)
@@ -221,33 +221,33 @@ namespace FusionEngine
 
 		PropertyID GetID() const { return m_PropertyID; }
 
+		typedef std::function<void (IComponentProperty*)> ChangedCallback_t;
+
+		void SetRequestSynchonisationCallback(const ChangedCallback_t& function)
+		{
+			m_RequestSynchronisationCallback = function;
+		}
+
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id) override
 		{
-			//m_ChangedCallback = system.MakeGenerator<const T&>(own_id, std::bind(&This_t::Get, this));
-			m_ChangedCallback = system.MakeGenerator<const T&>(own_id, [this]()->const T& { this->Synchronise(); return this->Get(); });
 			m_PropertyID = own_id;
-			m_SubscriptionAgent.ActivateSubscription(system);
 		}
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID, PropertyID id) override
 		{
-			if (!std::is_same<Writer, NullWriter<T>>::value)
-			{
-				m_SubscriptionAgent.Subscribe(system, id);
-			}
 		}
 
 		void Synchronise() override
 		{
 			FSN_ASSERT(m_GetSetCallbacks);
 
-			if (m_Writer.DumpWrittenValue(m_Value))
+			if (m_Writer.DumpWrittenValue(Value()))
 			{
-				m_GetSetCallbacks->Set(m_Value);
+				m_GetSetCallbacks->Set(Get());
 			}
 			else if (m_Changed)
 			{
-				m_Value = m_GetSetCallbacks->Get();
+				Value() = m_GetSetCallbacks->Get();
 				m_Changed = false;
 			}
 		}
@@ -259,8 +259,7 @@ namespace FusionEngine
 			//  or constant value)
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
-				m_SubscriptionAgent.SaveSubscription(stream);
-				Serialiser::Serialise(stream, m_Value);
+				Serialiser::Serialise(stream, Get());
 			}
 		}
 
@@ -268,7 +267,6 @@ namespace FusionEngine
 		{
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
-				m_SubscriptionAgent.LoadSubscription(stream);
 				T temp;
 				Serialiser::Deserialise(stream, temp);
 				m_Writer.Write(temp);
@@ -280,9 +278,8 @@ namespace FusionEngine
 			if (!std::is_same<Writer, NullWriter<T>>::value)
 			{
 				Synchronise();
-				m_SubscriptionAgent.LoadSubscription(stream);
-				Serialiser::Deserialise(stream, m_Value);
-				m_GetSetCallbacks->Set(m_Value);
+				Serialiser::Deserialise(stream, Value());
+				m_GetSetCallbacks->Set(Get());
 			}
 		}
 
@@ -291,29 +288,26 @@ namespace FusionEngine
 			return Serialiser::IsContinuous();
 		}
 
-		template <typename T>
+		template <typename X>
 		void SetSpecific(void* value)
 		{
-			m_Writer.Write(*static_cast<T*>(value));
+			Set(*static_cast<X*>(value));
 		}
 		template <>
 		void SetSpecific<bool>(void* value)
 		{
-			m_Writer.Write(reinterpret_cast<bool>(value));
+			Set(reinterpret_cast<bool>(value));
 		}
 
 		void* GetRef() override
 		{
-			return &m_Value;
+			return &(Value());
 		}
 		void SetAny(void* value, int type_id) override
 		{
 			if (Scripting::RegisteredAppType<T>::type_id == type_id)
 			{
 				SetSpecific<T>(value);
-
-				if (m_ChangedCallback)
-					m_ChangedCallback();
 			}
 		}
 
@@ -334,24 +328,22 @@ namespace FusionEngine
 		void MarkChanged()
 		{
 			m_Changed = true;
-			if (m_ChangedCallback)
-				m_ChangedCallback();
+			if (m_RequestSynchronisationCallback)
+				m_RequestSynchronisationCallback(this);
 		}
 
-		const T& Get() const { return m_Value; }
+		const T& Get() const
+		{
+			return Value();
+		}
 		void Set(const T& value)
 		{
 			m_Writer.Write(value);
-
-			if (m_ChangedCallback)
-				m_ChangedCallback();
+			if (m_RequestSynchronisationCallback)
+				m_RequestSynchronisationCallback(this);
 		}
 
 	private:
-		typename PropertySignalingSystem_t::GeneratorDetail_t::Impl<const T&>::GeneratorFn_t m_ChangedCallback;
-
-		PersistentConnectionAgent<const T&> m_SubscriptionAgent;
-
 		PropertyID m_PropertyID;
 
 		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
@@ -359,11 +351,29 @@ namespace FusionEngine
 		boost::intrusive_ptr<ComponentProperty> m_InterfaceObject;
 
 		bool m_Changed;
-	public:
-		T m_Value;
-	private:
+		T m_ValueA, m_ValueB;
+		tbb::atomic<bool> m_ReadA;
 
 		Writer m_Writer;
+
+		ChangedCallback_t m_RequestSynchronisationCallback;
+
+		T& Value()
+		{
+			if (m_ReadA)
+				return m_ValueA;
+			else
+				return m_ValueB;
+		}
+		
+		const T& Value() const
+		{
+			if (m_ReadA)
+				return m_ValueA;
+			else
+				return m_ValueB;
+		}
+
 	};
 
 }

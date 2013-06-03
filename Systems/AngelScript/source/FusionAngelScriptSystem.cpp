@@ -1243,7 +1243,7 @@ namespace FusionEngine
 	}
 
 	AngelScriptTask::AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
-		: SystemTaskBase(sysworld, "AngelScript"),
+		: TaskBase(sysworld, "AngelScript"),
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{
@@ -1273,7 +1273,7 @@ namespace FusionEngine
 	}
 
 	AngelScriptInstantiationTask::AngelScriptInstantiationTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
-		: SystemTaskBase(sysworld, "AngelScriptInstantiation"),
+		: TaskBase(sysworld, "AngelScriptInstantiation"),
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{

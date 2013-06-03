@@ -51,7 +51,7 @@ namespace FusionEngine
 {
 
 	GraphicalProfilerTask::GraphicalProfilerTask(CLRenderWorld* sysworld, clan::Canvas canvas)
-		: SystemTaskBase(sysworld, "GraphicalProfilerTask"),
+		: TaskBase(sysworld, "GraphicalProfilerTask"),
 		m_RenderWorld(sysworld),
 		m_PollingInterval(0.1f),
 		m_LastPolledTime(0.0f),

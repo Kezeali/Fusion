@@ -116,9 +116,9 @@ namespace FusionEngine
 
 		int m_EntityWrapperTypeId;
 
-		PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
+		//PropertySignalingSystem_t::GeneratorDetail_t::Impl<boost::intrusive_ptr<CScriptAny>>::GeneratorFn_t m_ChangedCallback;
 
-		PersistentFollowerPtr m_PersistentFollower;
+		//PersistentFollowerPtr m_PersistentFollower;
 
 		// Stores the pointer-id if this property is an entity pointer which needs to be resolved
 		std::uint32_t m_PointerID;

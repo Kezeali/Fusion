@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2012-2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -36,10 +36,6 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionTransformComponent.h"
 
-//#define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
-//	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
-//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ &get_" #prop "()", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
-
 #define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
 	ThreadSafeProperty<iface, type>::RegisterProp(engine, scriptType);\
 	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
@@ -59,17 +55,6 @@ namespace FusionEngine
 	}
 
 }
-
-//#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-//	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
-//	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property<" scriptType ">@ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-//	/*r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_@+)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);*/\
-//	FSN_ASSERT(r >= 0);}
-//
-//#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-//	struct iface##_##prop { static ComponentProperty* get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.GetInterfaceObject(); } };\
-//	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const Property<" scriptType ">@ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-//	FSN_ASSERT(r >= 0);}
 
 //! Macro that defines the struct used by FSN_REGISTER_PROP_ACCESSOR
 #define FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop) \
@@ -101,8 +86,6 @@ FSN_PROP_REGISTRATION_HELPER_STRUCT(iface, type, prop)\
 	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), scriptType " get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ## Value ), asCALL_CDECL_OBJLAST);\
 	FSN_ASSERT(r >= 0);\
 }
-
-//r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " & get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ## Value ), asCALL_CDECL_OBJLAST);
 
 namespace FusionEngine
 {

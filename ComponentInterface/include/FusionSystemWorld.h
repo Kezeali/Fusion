@@ -58,7 +58,7 @@ namespace FusionEngine { namespace System
 {
 	
 	class ISystem;
-	class SystemTaskBase;
+	class TaskBase;
 
 	//! World
 	class WorldBase : public std::enable_shared_from_this<WorldBase>
@@ -117,12 +117,16 @@ namespace FusionEngine { namespace System
 
 		Messaging::Router* GetRouter() const;
 
+		void SerialProcessing();
+
 	private:
 		System::ISystem* m_System;
 
 		RouterTask* m_RouterTask;
 
 		virtual TaskList_t MakeTasksList() const = 0;
+
+		virtual void DoSerialProcessing() {}
 	};
 
 } }

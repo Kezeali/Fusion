@@ -107,8 +107,10 @@
     <ClCompile Include="source\FusionEntity.cpp" />
     <ClCompile Include="source\FusionEntityComponent.cpp" />
     <ClCompile Include="source\FusionPropertySignalingSystem.cpp" />
+    <ClCompile Include="source\FusionPropertySynchroniser.cpp" />
     <ClCompile Include="source\FusionRouter.cpp" />
     <ClCompile Include="source\FusionRouterTask.cpp" />
+    <ClCompile Include="source\FusionSynchronisingComponent.cpp" />
     <ClCompile Include="source\FusionSystemTask.cpp" />
     <ClCompile Include="source\FusionSystemWorld.cpp" />
     <ClCompile Include="source\PrecompiledHeaders.cpp">
@@ -133,11 +135,13 @@
     <ClInclude Include="include\FusionPhysicalComponent.h" />
     <ClInclude Include="include\FusionPropertyDeclarationUtils.h" />
     <ClInclude Include="include\FusionPropertySignalingSystem.h" />
+    <ClInclude Include="include\FusionPropertySynchroniser.h" />
     <ClInclude Include="include\FusionPropertySyncSigDetail.h" />
     <ClInclude Include="include\FusionRender2DComponent.h" />
     <ClInclude Include="include\FusionScriptComponent.h" />
     <ClInclude Include="include\FusionSerialisationError.h" />
     <ClInclude Include="include\FusionStandardProperty.h" />
+    <ClInclude Include="include\FusionSynchronisingComponent.h" />
     <ClInclude Include="include\FusionSynchronisedSignalingSystem.h" />
     <ClInclude Include="include\FusionSyncSigScriptInterface.h" />
     <ClInclude Include="include\FusionSystemTask.h" />

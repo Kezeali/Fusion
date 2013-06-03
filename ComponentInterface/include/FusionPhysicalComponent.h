@@ -224,9 +224,6 @@ namespace FusionEngine
 			((FSN_GET_SET)(Position)(Vector2))
 			((FSN_GET_SET)(Radius)(float)) )
 
-		//ThreadSafeProperty<Vector2> Position;
-		//ThreadSafeProperty<float> Radius;
-
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
 
@@ -249,10 +246,6 @@ namespace FusionEngine
 			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_GET)(SkinThickness)(float)) )
 
-		//ThreadSafeProperty<std::string> PolygonFile;
-		//ThreadSafeProperty<std::vector<Vector2>> Verts;
-		//ThreadSafeProperty<float, NullWriter<float>> SkinThickness;
-
 	protected:
 		virtual const std::string& GetPolygonFile() const = 0;
 		virtual void SetPolygonFile(const std::string& path) = 0;
@@ -273,10 +266,6 @@ namespace FusionEngine
 			((FSN_GET_SET)(Center)(Vector2))
 			((FSN_GET_SET)(Extents)(Vector2))
 			((FSN_GET_SET)(Angle)(float)) )
-
-		//ThreadSafeProperty<Vector2> Center;
-		//ThreadSafeProperty<Vector2> Extents;
-		//ThreadSafeProperty<float> Angle;
 
 	protected:
 		virtual Vector2 GetCenter() const = 0;
@@ -299,10 +288,6 @@ namespace FusionEngine
 			((FSN_GET_SET)(PolygonFile)(std::string))
 			((FSN_GET_SET)(Verts)(std::vector<Vector2>)(ContainerPropertySerialiser<std::vector<Vector2>>))
 			((FSN_IS_SET)(Loop)(bool)) )
-
-		//ThreadSafeProperty<std::string> PolygonFile;
-		//ThreadSafeProperty<std::vector<Vector2>> Verts;
-		//ThreadSafeProperty<bool> Loop;
 
 	protected:
 		virtual const std::string& GetPolygonFile() const = 0;

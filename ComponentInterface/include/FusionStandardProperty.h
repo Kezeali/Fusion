@@ -70,7 +70,6 @@ namespace FusionEngine
 			: m_PropertyID(-1),
 			m_GetSetCallbacks(nullptr)
 		{
-			m_SubscriptionAgent.SetHandlerFn(std::bind(&This_t::Set, this, std::placeholders::_1));
 		}
 
 		~StandardProperty()
@@ -108,9 +107,7 @@ namespace FusionEngine
 
 		void AquireSignalGenerator(PropertySignalingSystem_t& system, PropertyID own_id) override
 		{
-			m_ChangedCallback = system.MakeGenerator<T>(own_id, [this]()->T { return this->Get(); });
 			m_PropertyID = own_id;
-			m_SubscriptionAgent.ActivateSubscription(system);
 		}
 
 		void Follow(PropertySignalingSystem_t& system, PropertyID own_id, PropertyID id) override
@@ -125,7 +122,6 @@ namespace FusionEngine
 		{
 			if (m_GetSetCallbacks->HasSet())
 			{
-				m_SubscriptionAgent.SaveSubscription(stream);
 				Serialiser::Serialise(stream, m_GetSetCallbacks->Get());
 			}
 		}
@@ -133,7 +129,6 @@ namespace FusionEngine
 		{
 			if (m_GetSetCallbacks->HasSet())
 			{
-				m_SubscriptionAgent.LoadSubscription(stream);
 				T temp;
 				Serialiser::Deserialise(stream, temp);
 				m_GetSetCallbacks->Set(temp);
@@ -169,9 +164,6 @@ namespace FusionEngine
 			if (Scripting::RegisteredAppType<T>::type_id == type_id)
 			{
 				SetSpecific<T>(value);
-
-				if (m_ChangedCallback)
-					m_ChangedCallback();
 			}
 		}
 
@@ -179,22 +171,13 @@ namespace FusionEngine
 		void Set(type_for_set value)
 		{
 			m_GetSetCallbacks->Set(value);
-
-			if (m_ChangedCallback)
-				m_ChangedCallback();
 		}
 
 		void MarkChanged()
 		{
-			if (m_ChangedCallback)
-				m_ChangedCallback();
 		}
 
 	protected:
-		typename PropertySignalingSystem_t::GeneratorDetail_t::Impl<const T&>::GeneratorFn_t m_ChangedCallback;
-
-		PersistentConnectionAgent<const T&> m_SubscriptionAgent;
-
 		PropertyID m_PropertyID;
 
 		IGetSetCallback<type_for_get, type_for_set>* m_GetSetCallbacks;

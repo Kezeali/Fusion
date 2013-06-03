@@ -45,18 +45,18 @@
 
 namespace FusionEngine { namespace System
 {
-
+	
 	class WorldBase;
 
 	//! Task
-	class SystemTaskBase : public boost::intrusive::slist_base_hook<>
+	class TaskBase : public boost::intrusive::slist_base_hook<>
 	{
 	public:
-		SystemTaskBase(WorldBase* world, const eastl::string& name)
+		TaskBase(WorldBase* world, const eastl::string& name)
 			: m_SystemWorld(world),
 			m_Name(name)
 		{}
-		virtual ~SystemTaskBase() {}
+		virtual ~TaskBase() {}
 
 		WorldBase* GetSystemWorld() const { return m_SystemWorld; }
 

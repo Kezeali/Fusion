@@ -53,7 +53,7 @@ namespace FusionEngine
 	class Box2DWorld;
 	class Box2DFixture;
 
-	class Box2DBody : public EntityComponent, public ITransform, public IRigidBody
+	class Box2DBody : public SynchronisingComponent, public ITransform, public IRigidBody
 	{
 		friend class Box2DWorld;
 		friend class Box2DTask;
@@ -327,7 +327,7 @@ namespace FusionEngine
 		}
 	};
 
-	class Box2DFixture : public EntityComponent, public IFixture
+	class Box2DFixture : public SynchronisingComponent, public IFixture
 	{
 		friend class Box2DWorld;
 		friend class Box2DBody;

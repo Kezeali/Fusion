@@ -51,7 +51,7 @@ namespace FusionEngine
 	class PrimaryThreadTask
 	{
 	public:
-		PrimaryThreadTask(SystemTaskBase* implementation);
+		PrimaryThreadTask(TaskBase* implementation);
 
 		void IncrementDependencyCount() { ++m_UnexecutedDependencies; }
 
@@ -62,7 +62,7 @@ namespace FusionEngine
 		void Execute();
 
 	private:
-		SystemTaskBase* m_Implementation;
+		TaskBase* m_Implementation;
 
 		tbb::atomic<int> m_UnexecutedDependencies;
 	};
@@ -86,7 +86,7 @@ namespace FusionEngine
 		tbb::concurrent_queue<PrimaryThreadTask*> m_ReadyTaskQueue;
 	};
 
-	PrimaryThreadTask::PrimaryThreadTask(SystemTaskBase* implementation)
+	PrimaryThreadTask::PrimaryThreadTask(TaskBase* implementation)
 		: m_Implementation(implementation)
 	{
 	}
@@ -230,7 +230,7 @@ namespace FusionEngine
 
 	namespace
 	{
-		void ExecuteTaskImplementation(SystemTaskBase* task_implementation)
+		void ExecuteTaskImplementation(TaskBase* task_implementation)
 		{
 			FSN_PROFILE(task_implementation->GetName().c_str());
 			try
@@ -248,7 +248,7 @@ namespace FusionEngine
 	class DepTask : public tbb::task
 	{
 	public:
-		DepTask(SystemTaskBase* implementation)
+		DepTask(TaskBase* implementation)
 			: m_Implementation(implementation)
 		{
 		}
@@ -269,7 +269,7 @@ namespace FusionEngine
 		}
 #endif
 
-		SystemTaskBase* GetImplementation() const { return m_Implementation; }
+		TaskBase* GetImplementation() const { return m_Implementation; }
 
 		virtual tbb::task* execute() override
 		{
@@ -292,7 +292,7 @@ namespace FusionEngine
 		}
 
 	protected:
-		SystemTaskBase* m_Implementation;
+		TaskBase* m_Implementation;
 		std::vector<tbb::task*> m_Successors;
 #if defined(FSN_ALLOW_PRIMARY_THREAD_TASK_DEPENDENCIES)
 		std::vector<PrimaryThreadTask*> m_PrimaryThreadSuccessors;
@@ -306,7 +306,7 @@ namespace FusionEngine
 		return new( root->allocate_additional_child_of(*root) ) FunctionTask<T>(fn);
 	}
 
-	void TaskManager::SpawnJobsForSystemTasks(std::vector<std::vector<SystemTaskBase*>>& taskLists)
+	void TaskManager::SpawnJobsForSystemTasks(std::vector<std::vector<TaskBase*>>& taskLists)
 	{
 		// Call this from the primary thread to schedule system work
 		FSN_ASSERT(IsPrimaryThread());

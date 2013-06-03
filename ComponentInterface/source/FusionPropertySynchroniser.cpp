@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,46 +25,29 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCellArchivistSystem
-#define H_FusionCellArchivistSystem
+#include "PrecompiledHeaders.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
+#include "FusionPropertySynchroniser.h"
 
-#include "FusionPrerequisites.h"
+#include "FusionSynchronisingComponent.h"
 
-#include "FusionSystemTask.h"
-
-#include "FusionRegionMapLoader.h"
+#include "FusionComponentProperty.h"
 
 namespace FusionEngine
 {
 
-	class CellArchivistSystem : public System::TaskBase
+	void PropertySynchronsier::Enqueue(IComponentProperty* synchronised_property)
 	{
-	public:
-		CellArchivistSystem(RegionCellArchivist* archivist)
-			: TaskBase(nullptr, "CellArchivist"),
-			m_Archivist(archivist)
-		{}
-		~CellArchivistSystem() {}
+		m_ChangedProperties.push(synchronised_property);
+	}
 
-		void Update(const float delta);
-
-		System::SystemType GetTaskType() const { return System::Simulation; }
-
-		PerformanceHint GetPerformanceHint() const { return TaskBase::LongSerial; }
-
-		bool IsPrimaryThreadOnly() const
+	void PropertySynchronsier::Synchronise()
+	{
+		IComponentProperty* prop;
+		while (m_ChangedProperties.try_pop(prop))
 		{
-			return false;
+			prop->Synchronise();
 		}
-
-	protected:
-		RegionCellArchivist* m_Archivist;
-	};
+	}
 
 }
-
-#endif

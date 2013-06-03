@@ -76,6 +76,8 @@ namespace FusionEngine
 
 		prop->AquireSignalGenerator(EvesdroppingManager::getSingleton().GetSignalingSystem());
 
+		OnPropertyAdded(prop);
+
 		return prop;
 	}
 
@@ -175,5 +177,5 @@ namespace FusionEngine
 
 		OnPostDeserialisation();
 	}
-
+	
 }

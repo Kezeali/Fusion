@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2012 Fusion Project Team
+*  Copyright (c) 2013 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCellArchivistSystem
-#define H_FusionCellArchivistSystem
+#ifndef H_FusionSynchronisingComponent
+#define H_FusionSynchronisingComponent
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,35 +34,37 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionSystemTask.h"
+#include "FusionEntityComponent.h"
 
-#include "FusionRegionMapLoader.h"
+#include <tbb/concurrent_queue.h>
 
 namespace FusionEngine
 {
 
-	class CellArchivistSystem : public System::TaskBase
+	class IComponentProperty;
+	class PropertySynchronsier;
+	
+	class SynchronisingComponent : public EntityComponent
 	{
 	public:
-		CellArchivistSystem(RegionCellArchivist* archivist)
-			: TaskBase(nullptr, "CellArchivist"),
-			m_Archivist(archivist)
-		{}
-		~CellArchivistSystem() {}
+		SynchronisingComponent();
+		virtual ~SynchronisingComponent() {}
+		void SetSynchroniser(PropertySynchronsier* synchroniser) { m_Synchroniser = synchroniser; }
+		PropertySynchronsier* GetSynchroniser() const;
 
-		void Update(const float delta);
+	private:
+		PropertySynchronsier* m_Synchroniser;
+	};
 
-		System::SystemType GetTaskType() const { return System::Simulation; }
+	class PropertySynchronsier
+	{
+	public:
+		void Enqueue(IComponentProperty* synchronised_property);
 
-		PerformanceHint GetPerformanceHint() const { return TaskBase::LongSerial; }
+		void Synchronise();
 
-		bool IsPrimaryThreadOnly() const
-		{
-			return false;
-		}
-
-	protected:
-		RegionCellArchivist* m_Archivist;
+	private:
+		tbb::concurrent_queue<IComponentProperty*> m_ChangedProperties;
 	};
 
 }

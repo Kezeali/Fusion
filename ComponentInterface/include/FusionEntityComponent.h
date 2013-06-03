@@ -305,7 +305,10 @@ namespace FusionEngine
 		//std::shared_ptr<ComponentImpl> m_Impl;
 
 		std::shared_ptr<std::map<std::string, size_t>> m_PropertiesMap;
+
+		virtual void OnPropertyAdded(const PropertyPtr& prop) {}
 	};
+
 
 //! Calls InitProperties() on the given interface type
 #define FSN_INIT_INTERFACE(r, data, elem) elem::InitProperties();
