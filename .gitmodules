@@ -1,3 +1,6 @@
 [submodule "EASTL"]
 	path = EASTL
 	url = git@github.com:paulhodge/EASTL.git
+[submodule "external/EASTL"]
+	path = external/EASTL
+	url = git@github.com:Kezeali/EASTL.git

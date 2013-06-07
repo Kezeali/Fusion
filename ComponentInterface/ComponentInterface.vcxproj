@@ -166,9 +166,6 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include="..\EASTL\EASTL.vcxproj">
-      <Project>{401362da-d2c6-4417-aaa0-47afb7ad5aac}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Input\Input.vcxproj">
       <Project>{a16cd0db-0d43-4611-88e6-d2203cb9511b}</Project>
       <Private>false</Private>

@@ -56,7 +56,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EditorApp", "EditorApp", "{
 EndProject
 Project("{F088123C-0E9E-452A-89E6-6BA2F21D5CAC}") = "FusionModel", "FusionModel\FusionModel.modelproj", "{04A92360-7AEC-4814-BB09-2EA05AD27F99}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EASTL", "EASTL\EASTL.vcxproj", "{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EASTL", "external\EASTL.vcxproj", "{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -376,11 +376,11 @@ Global
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Debug|Win32.ActiveCfg = Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Debug|Win32.Build.0 = Debug|Win32
-		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Any CPU.ActiveCfg = Debug|Win32
+		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Any CPU.ActiveCfg = Fast Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.ActiveCfg = Fast Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Mixed Platforms.Build.0 = Fast Debug|Win32
-		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.ActiveCfg = Debug|Win32
-		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.Build.0 = Debug|Win32
+		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.ActiveCfg = Fast Debug|Win32
+		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Fast Debug|Win32.Build.0 = Fast Debug|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Release|Any CPU.ActiveCfg = Release|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{401362DA-D2C6-4417-AAA0-47AFB7AD5AAC}.Release|Mixed Platforms.Build.0 = Release|Win32
