@@ -30,12 +30,14 @@
 
 #include "FusionPrerequisites.h"
 
+#include "DllConfig.h"
+
 #include "FusionTypes.h"
 
 namespace FusionEngine
 {
 
-	class WorldSaver
+	class FSN_DLL_API WorldSaver
 	{
 	public:
 		virtual ~WorldSaver() {}

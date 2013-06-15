@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir)Systems\AngelScript\include;$(SolutionDir)Systems\Box2D\include;$(SolutionDir)Systems\ClanLibRendering\include;$(SolutionDir)Common\include;$(SolutionDir)ComponentInterface\include;$(SolutionDir)EngineFramework\include;$(SolutionDir)Input\include;$(SolutionDir)Network\include;$(SolutionDir)Visual\include;$(SolutionDir)external;$(SolutionDir)EASTL\include;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\angelscriptDev\sdk\angelscript\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb_oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet\include;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Systems\AngelScript\include;$(SolutionDir)Systems\Box2D\include;$(SolutionDir)Systems\ClanLibRendering\include;$(SolutionDir)Common\include;$(SolutionDir)ComponentInterface\include;$(SolutionDir)EngineFramework\include;$(SolutionDir)Input\include;$(SolutionDir)Network\include;$(SolutionDir)Visual\include;$(SolutionDir)external;$(SolutionDir)external\EASTL\include;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\angelscriptDev\sdk\angelscript\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb_oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet\include;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;$(IncludePath)</IncludePath>
     <ExecutablePath>$(SolutionDir)..\FusionDependencies\bin;$(ExecutablePath)</ExecutablePath>
     <LibraryPath>$(SolutionDir)lib\$(Configuration);$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\angelscriptDev\sdk\angelscript\lib;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\lib;$(SolutionDir)..\FusionDependencies\tbb_oss\lib\ia32\vc10;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -17,6 +17,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4482</DisableSpecificWarnings>
       <StringPooling>true</StringPooling>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
     </Link>

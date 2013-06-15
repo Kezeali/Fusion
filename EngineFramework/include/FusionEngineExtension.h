@@ -30,6 +30,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include "DllConfig.h"
+
 #include <ClanLib/display.h>
 
 #include <deque>
@@ -60,7 +62,7 @@ namespace FusionEngine
 
 	class WorldSaver;
 
-	class EngineExtension
+	class FSN_DLL_API EngineExtension
 	{
 	public:
 		EngineExtension() : m_Quit(false) {}

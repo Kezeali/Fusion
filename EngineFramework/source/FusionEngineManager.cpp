@@ -603,6 +603,8 @@ namespace FusionEngine
 	{
 		try
 		{
+			Initialise();
+
 			// TODO: add resource loaders from systems
 			AddResourceLoaders();
 

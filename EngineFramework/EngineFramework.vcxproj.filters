@@ -208,5 +208,7 @@
     <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\DllConfig.h" />
+    <ClInclude Include="include\FusionEngineManagerInterface.h" />
   </ItemGroup>
 </Project>

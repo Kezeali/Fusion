@@ -32,6 +32,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionEngineManagerInterface.h"
+
 #include "FusionTypes.h"
 #include "FusionVectorTypes.h"
 
@@ -80,15 +82,13 @@ namespace FusionEngine
 	void BootUp();
 
 	//! EngineManager
-	class EngineManager : public WorldSaver, public Singleton<EngineManager>
+	class EngineManager : public EngineManagerInterface, public WorldSaver, public Singleton<EngineManager>
 	{
 	public:
 		//! CTOR
 		EngineManager(const std::vector<std::string>& args);
 		//! DTOR
-		~EngineManager();
-
-		void Initialise();
+		virtual ~EngineManager();
 
 		const clan::DisplayWindow& GetDisplayWindow() const;
 		const clan::Canvas& GetCanvas() const;
@@ -97,19 +97,19 @@ namespace FusionEngine
 		const std::shared_ptr<ScriptManager>& GetScriptManager() const;
 		CameraSynchroniser* GetCameraSynchroniser() const;
 
-		void AddExtension(const std::shared_ptr<EngineExtension>& extension);
+		void AddExtension(const std::shared_ptr<EngineExtension>& extension) override;
 
-		void AddSystem(std::unique_ptr<System::ISystem>&& system);
+		void AddSystem(std::unique_ptr<System::ISystem>&& system) override;
 
-		void Run();
+		void Run() override;
 
 		//! Saves immediately
-		void Save(const std::string& name, bool quick = false);
+		void Save(const std::string& name, bool quick = false) override;
 		//! Load immediately
-		void Load(const std::string& name);
+		void Load(const std::string& name) override;
 
-		void EnqueueSave(const std::string& name, bool quick = false);
-		void EnqueueLoad(const std::string& name);
+		void EnqueueSave(const std::string& name, bool quick = false) override;
+		void EnqueueLoad(const std::string& name) override;
 
 		unsigned int RequestPlayer();
 
@@ -186,6 +186,8 @@ namespace FusionEngine
 
 		clan::Slot m_GotFocusSlot;
 		clan::Slot m_GotMouseSlot;
+
+		void Initialise();
 
 		void ReadOptions(const ClientOptions& options);
 
