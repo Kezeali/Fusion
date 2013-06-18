@@ -57,7 +57,7 @@ namespace FusionEngine
 	{
 	public:
 		//! CTOR
-		EngineManagerInterface(const std::vector<std::string>& args);
+		//EngineManagerInterface(const std::vector<std::string>& args);
 		//! DTOR
 		virtual ~EngineManagerInterface() {}
 
