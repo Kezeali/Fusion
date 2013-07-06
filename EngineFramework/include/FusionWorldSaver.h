@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	class FSN_DLL_API WorldSaver
+	class WorldSaver
 	{
 	public:
 		virtual ~WorldSaver() {}

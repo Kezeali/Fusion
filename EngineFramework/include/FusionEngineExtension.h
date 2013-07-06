@@ -62,7 +62,7 @@ namespace FusionEngine
 
 	class WorldSaver;
 
-	class FSN_DLL_API EngineExtension
+	class EngineExtension
 	{
 	public:
 		EngineExtension() : m_Quit(false) {}

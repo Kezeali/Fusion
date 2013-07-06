@@ -53,7 +53,7 @@ namespace FusionEngine
 	class EngineExtension;
 
 	//! EngineManager
-	class FSN_DLL_API EngineManagerInterface
+	class EngineManagerInterface
 	{
 	public:
 		//! CTOR

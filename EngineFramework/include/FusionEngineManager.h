@@ -79,14 +79,19 @@ namespace FusionEngine
 	class TaskManager;
 	class TaskScheduler;
 
-	void BootUp();
+	namespace EngineFramework
+	{
+		FSN_DLL_API void Run(const std::vector<std::string>& args, clan::DisplayWindow window);
+	}
 
 	//! EngineManager
-	class EngineManager : public EngineManagerInterface, public WorldSaver, public Singleton<EngineManager>
+	class EngineManager : public WorldSaver, public Singleton<EngineManager>
 	{
 	public:
 		//! CTOR
 		EngineManager(const std::vector<std::string>& args);
+		//! CTOR
+		EngineManager(const std::vector<std::string>& args, clan::DisplayWindow window);
 		//! DTOR
 		virtual ~EngineManager();
 
@@ -97,19 +102,19 @@ namespace FusionEngine
 		const std::shared_ptr<ScriptManager>& GetScriptManager() const;
 		CameraSynchroniser* GetCameraSynchroniser() const;
 
-		void AddExtension(const std::shared_ptr<EngineExtension>& extension) override;
+		void AddExtension(const std::shared_ptr<EngineExtension>& extension);
 
-		void AddSystem(std::unique_ptr<System::ISystem>&& system) override;
+		void AddSystem(std::unique_ptr<System::ISystem>&& system);
 
-		void Run() override;
+		void Run();
 
 		//! Saves immediately
-		void Save(const std::string& name, bool quick = false) override;
+		void Save(const std::string& name, bool quick = false);
 		//! Load immediately
-		void Load(const std::string& name) override;
+		void Load(const std::string& name);
 
-		void EnqueueSave(const std::string& name, bool quick = false) override;
-		void EnqueueLoad(const std::string& name) override;
+		void EnqueueSave(const std::string& name, bool quick = false);
+		void EnqueueLoad(const std::string& name);
 
 		unsigned int RequestPlayer();
 
@@ -187,7 +192,7 @@ namespace FusionEngine
 		clan::Slot m_GotFocusSlot;
 		clan::Slot m_GotMouseSlot;
 
-		void Initialise();
+		void Initialise(clan::DisplayWindow window);
 
 		void ReadOptions(const ClientOptions& options);
 

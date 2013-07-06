@@ -87,7 +87,42 @@ namespace FusionEngine
 
 	using namespace System;
 
+	namespace EngineFramework
+	{
+		void Run(const std::vector<std::string>& args, clan::DisplayWindow window)
+		{
+			auto engineManager = new EngineManager(args, window);
+		}
+	}
+
 	EngineManager::EngineManager(const std::vector<std::string>& args)
+		: m_EditMode(false),
+		m_DisplayDimensions(800, 600),
+		m_Fullscreen(false),
+		m_SaveProfilerData(false)
+	{
+		// Configure PhysFS
+		SetupPhysFS::configure("lastflare", "Fusion", "zip");
+
+		// Clear cache
+		//SetupPhysFS::clear_temp();
+
+		// Init Logger
+		m_Logger.reset(new Logger);
+
+		// Init profiling
+		m_Profiling.reset(new Profiling);
+		
+		// Init Console
+		m_Console.reset(new Console);
+
+		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
+			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
+
+		Initialise();
+	}
+
+	EngineManager::EngineManager(const std::vector<std::string>& args, clan::DisplayWindow window)
 		: m_EditMode(false),
 		m_DisplayDimensions(800, 600),
 		m_Fullscreen(false),
@@ -119,7 +154,7 @@ namespace FusionEngine
 		m_Console->UnbindCommand("cam_range");
 	}
 
-	void EngineManager::Initialise()
+	void EngineManager::Initialise(clan::DisplayWindow window)
 	{
 		try
 		{
@@ -143,7 +178,7 @@ namespace FusionEngine
 			m_Log = Logger::getSingleton().OpenLog(g_LogGeneral);
 
 			// Init the display window
-			m_DisplayWindow = clan::DisplayWindow("Fusion", m_DisplayDimensions.x, m_DisplayDimensions.y, m_Fullscreen, !m_Fullscreen);
+			m_DisplayWindow = window.is_null() ? clan::DisplayWindow("Fusion", m_DisplayDimensions.x, m_DisplayDimensions.y, m_Fullscreen, !m_Fullscreen) : window;
 
 			m_Canvas = clan::Canvas(m_DisplayWindow);
 
