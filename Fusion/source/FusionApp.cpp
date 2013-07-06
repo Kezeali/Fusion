@@ -49,8 +49,6 @@ public:
 		{
 			EngineManager manager(args);
 
-			manager.AddExtension(std::make_shared<Editor>(args));
-
 			manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
 			manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));
 			manager.AddSystem(std::unique_ptr<CLRenderSystem>(new CLRenderSystem(manager.GetCanvas(), manager.GetCameraSynchroniser())));

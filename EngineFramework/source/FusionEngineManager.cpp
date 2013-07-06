@@ -118,8 +118,6 @@ namespace FusionEngine
 
 		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
 			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
-
-		Initialise();
 	}
 
 	EngineManager::EngineManager(const std::vector<std::string>& args, clan::DisplayWindow window)
