@@ -761,27 +761,27 @@ namespace FusionEngine
 		m_Dragging(false),
 		m_Tool(Tool::None)
 	{
-		auto& context = GUI::getSingleton().CreateContext("editor");
-		context->SetMouseShowPeriod(500);
+		//auto& context = GUI::getSingleton().CreateContext("editor");
+		//context->SetMouseShowPeriod(500);
 
-		m_GUIContext = context->m_Context;
+		//m_GUIContext = context->m_Context;
 
-		MessageBoxMaker::AddFactory("error",
-			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
-		{
-			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "Data/core/gui/message_box.rml"));
+		//MessageBoxMaker::AddFactory("error",
+		//	[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
+		//{
+		//	boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "Data/core/gui/message_box.rml"));
 
-			messageBox->SetType("error_message");
-			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
-			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
+		//	messageBox->SetType("error_message");
+		//	messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
+		//	messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
 
-			MessageBox* messageBoxRawPtr = messageBox.get();
-			messageBox->GetEventSignal("accept_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
-				messageBoxRawPtr->release();
-			});
+		//	MessageBox* messageBoxRawPtr = messageBox.get();
+		//	messageBox->GetEventSignal("accept_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
+		//		messageBoxRawPtr->release();
+		//	});
 
-			return messageBox.get();
-		});
+		//	return messageBox.get();
+		//});
 
 		Console::getSingleton().BindCommand("editor_load", [this](const std::vector<std::string>& cmdargs)->std::string
 		{
