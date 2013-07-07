@@ -138,7 +138,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\DllConfig.h" />
     <ClInclude Include="include\FusionActiveEntityDirectory.h" />
     <ClInclude Include="include\FusionArchetype.h" />
     <ClInclude Include="include\FusionArchetypeFactory.h" />
