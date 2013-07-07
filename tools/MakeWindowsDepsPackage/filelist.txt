@@ -2,10 +2,12 @@ angelscriptDev\sdk\add_on\scriptany
 angelscriptDev\sdk\angelscript\include
 angelscriptDev\sdk\angelscript\lib
 bin
+GWEN\gwen\bin
+GWEN\gwen\include
+GWEN\gwen\lib\windows\vs2010
 include
 kyotocabinet
 lib
-libRocket
 RakNet
 support
 tbb_oss
