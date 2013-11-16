@@ -35,16 +35,13 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionComponentInspector.h"
-#include "FusionElementPropertyConnection.h"
+//#include "FusionElementPropertyConnection.h"
 #include "FusionPropertySignalingSystem.h"
 
 #include "FusionInspectorUtils.h"
 
 #include "FusionArchetypalEntityManager.h"
 #include "FusionResourceEditorFactory.h"
-
-#include <Rocket/Core.h>
-#include <Rocket/Controls.h>
 
 #include <boost/variant.hpp>
 #include <functional>
@@ -101,7 +98,7 @@ namespace FusionEngine { namespace Inspectors
 		//! Follow callback type
 		typedef std::function<void (PropertyID)> FollowCallback_t;
 
-		typedef typename boost::intrusive_ptr<Rocket::Core::Element> InputElementPtr;
+		typedef typename boost::intrusive_ptr<Gwen::Controls::Base> InputElementPtr;
 
 		ResourceEditorFactory* m_ResourceEditors;
 
@@ -873,22 +870,22 @@ namespace FusionEngine { namespace Inspectors
 							}
 						}
 						// If this input has a callback for setting up a "follow" connection
-						if (entry->second.follow_callback)
-						{
-							Rocket::Core::ElementList propertyLinkElems;
-							drag_element->GetElementsByTagName(propertyLinkElems, "proplink");
-							if (!propertyLinkElems.empty())
-							{
-								auto elem = propertyLinkElems.front();
-								if (auto linkInfo = dynamic_cast<ElementPropertyConnection*>(elem))
-								{
-									for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-									{
-										entry->second.follow_callback(linkInfo->GetComponentPropertyId());
-									}
-								}
-							}
-						}
+						//if (entry->second.follow_callback)
+						//{
+						//	Rocket::Core::ElementList propertyLinkElems;
+						//	drag_element->GetElementsByTagName(propertyLinkElems, "proplink");
+						//	if (!propertyLinkElems.empty())
+						//	{
+						//		auto elem = propertyLinkElems.front();
+						//		if (auto linkInfo = dynamic_cast<ElementPropertyConnection*>(elem))
+						//		{
+						//			for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+						//			{
+						//				entry->second.follow_callback(linkInfo->GetComponentPropertyId());
+						//			}
+						//		}
+						//	}
+						//}
 					}
 				}
 			}

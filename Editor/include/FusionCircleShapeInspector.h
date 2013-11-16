@@ -34,18 +34,17 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspector.h"
 
 #include "FusionPhysicalComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class CircleShapeInspector : public GenericInspector<ICircleShape>
+	class CircleShapeInspector : public ComponentInspector
 	{
 	public:
-		CircleShapeInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(CircleShapeInspector, ComponentInspector)
 		{
 			InitUI();
 		}

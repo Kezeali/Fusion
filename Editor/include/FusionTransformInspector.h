@@ -34,24 +34,22 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionTransformComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class TransformInspector : public GenericInspector<ITransform>
+	class TransformInspector : public ComponentInspectorBase
 	{
 	public:
-		TransformInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(TransformInspector, ComponentInspectorBase)
 		{
-			InitUI();
 		}
 
 	private:
-		void InitUI();
+		void InitUI() override;
 	};
 
 } }

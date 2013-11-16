@@ -30,12 +30,10 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentInspector.h"
+//#include "FusionComponentInspector.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionAngelScriptComponent.h"
-
-#include <Rocket/Controls/ElementFormControlInput.h>
-#include <Rocket/Core/EventListener.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
@@ -45,32 +43,32 @@
 namespace FusionEngine { namespace Inspectors
 {
 
-	class ASScriptInspector : public ComponentInspector
+	class ASScriptInspector : public ComponentInspectorBase
 	{
 	public:
-		ASScriptInspector(const Rocket::Core::String& tag);
+		GWEN_CONTROL(ASScriptInspector, ComponentInspectorBase);
 
 		void SetComponents(const std::vector<ComponentPtr>& components);
 		void ReleaseComponents();
 
 	private:
-		struct ScriptPropertyInput
-		{
-			std::string name;
-			unsigned int index;
-			int type_id;
-			size_t array_index;
-			boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input;
-		};
-		boost::multi_index_container<ScriptPropertyInput, boost::multi_index::indexed_by<
-			boost::multi_index::sequenced<>,
-			boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>, &ScriptPropertyInput::input>>,
-			boost::multi_index::ordered_non_unique<boost::multi_index::member<ScriptPropertyInput, unsigned int, &ScriptPropertyInput::index>>
-		>> m_Inputs;
+		//struct ScriptPropertyInput
+		//{
+		//	std::string name;
+		//	unsigned int index;
+		//	int type_id;
+		//	size_t array_index;
+		//	Gwen::Controls::Base* input;
+		//};
+		//boost::multi_index_container<ScriptPropertyInput, boost::multi_index::indexed_by<
+		//	boost::multi_index::sequenced<>,
+		//	boost::multi_index::ordered_unique<boost::multi_index::member<ScriptPropertyInput, boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>, &ScriptPropertyInput::input>>,
+		//	boost::multi_index::ordered_non_unique<boost::multi_index::member<ScriptPropertyInput, unsigned int, &ScriptPropertyInput::index>>
+		//>> m_Inputs;
 
 		std::vector<ComponentIPtr<ASScript>> m_Components;
 
-		boost::intrusive_ptr<Rocket::Core::Element> m_PropertiesSection;
+		//boost::intrusive_ptr<Rocket::Core::Element> m_PropertiesSection;
 
 		std::vector<SyncSig::HandlerConnection_t> m_Connections;
 
@@ -83,17 +81,17 @@ namespace FusionEngine { namespace Inspectors
 				(*it)->SetPropertyRaw(index, &value, typeId);
 		}
 
-		void AddPropertyControl(Rocket::Core::Element* parent, unsigned int index, const std::string& name, unsigned int type_id);
+		//void AddPropertyControl(Rocket::Core::Element* parent, unsigned int index, const std::string& name, unsigned int type_id);
 
 		void InitUI();
 
 		void RefreshPropertyValue(unsigned int index);
 
-		void RefreshPropertyValue(const ScriptPropertyInput& prop, const ComponentIPtr<ASScript>& component, bool first = true);
+		//void RefreshPropertyValue(const ScriptPropertyInput& prop, const ComponentIPtr<ASScript>& component, bool first = true);
 
 		void ResetUIValues();
 
-		void ProcessEvent(Rocket::Core::Event& ev);
+		//void ProcessEvent(Rocket::Core::Event& ev);
 	};
 
 } }

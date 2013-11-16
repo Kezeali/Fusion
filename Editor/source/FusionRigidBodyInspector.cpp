@@ -36,39 +36,39 @@ namespace FusionEngine { namespace Inspectors
 
 	void RigidBodyInspector::InitUI()
 	{
-		AddProperty("Interpolate", AddToggleInput("Interpolate",
-			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Interpolate.Set(value); }),
-			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Interpolate.Get(); })
-			));
+		//AddProperty("Interpolate", AddToggleInput("Interpolate",
+		//	BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Interpolate.Set(value); }),
+		//	BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Interpolate.Get(); })
+		//	));
 
-		AddProperty("LinearDamping", AddTextInput("LinearDamping",
-			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->LinearDamping.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->LinearDamping.Get(); })
-			));
-		AddProperty("AngularDamping", AddTextInput("AngularDamping",
-			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->AngularDamping.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->AngularDamping.Get(); })
-			));
+		//AddProperty("LinearDamping", AddTextInput("LinearDamping",
+		//	FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->LinearDamping.Set(value); }),
+		//	FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->LinearDamping.Get(); })
+		//	));
+		//AddProperty("AngularDamping", AddTextInput("AngularDamping",
+		//	FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->AngularDamping.Set(value); }),
+		//	FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->AngularDamping.Get(); })
+		//	));
 
-		AddProperty("GravityScale", AddTextInput("GravityScale",
-			FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->GravityScale.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->GravityScale.Get(); })
-			));
-		
-		AddProperty("SleepingAllowed", AddToggleInput("SleepingAllowed",
-			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->SleepingAllowed.Set(value); }),
-			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->SleepingAllowed.Get(); })
-			));
-		
-		AddProperty("Bullet", AddToggleInput("Bullet",
-			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Bullet.Set(value); }),
-			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Bullet.Get(); })
-			));
-		
-		AddProperty("FixedRotation", AddToggleInput("FixedRotation",
-			BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->FixedRotation.Set(value); }),
-			BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->FixedRotation.Get(); })
-			));
+		//AddProperty("GravityScale", AddTextInput("GravityScale",
+		//	FloatSetter_t([](float value, ComponentIPtr<IRigidBody> component) { component->GravityScale.Set(value); }),
+		//	FloatGetter_t([](ComponentIPtr<IRigidBody> component)->float { return component->GravityScale.Get(); })
+		//	));
+		//
+		//AddProperty("SleepingAllowed", AddToggleInput("SleepingAllowed",
+		//	BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->SleepingAllowed.Set(value); }),
+		//	BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->SleepingAllowed.Get(); })
+		//	));
+		//
+		//AddProperty("Bullet", AddToggleInput("Bullet",
+		//	BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->Bullet.Set(value); }),
+		//	BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->Bullet.Get(); })
+		//	));
+		//
+		//AddProperty("FixedRotation", AddToggleInput("FixedRotation",
+		//	BoolSetter_t([](bool value, ComponentIPtr<IRigidBody> component) { component->FixedRotation.Set(value); }),
+		//	BoolGetter_t([](ComponentIPtr<IRigidBody> component)->bool { return component->FixedRotation.Get(); })
+		//	));
 	}
 
 } }

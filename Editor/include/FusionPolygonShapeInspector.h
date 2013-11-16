@@ -34,23 +34,21 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionPhysicalComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class PolygonShapeInspector : public GenericInspector<IPolygonShape>
+	class PolygonShapeInspector : public ComponentInspectorBase
 	{
 	public:
-		PolygonShapeInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(PolygonShapeInspector, ComponentInspectorBase)
 		{
-			InitUI();
 		}
 
-		void InitUI();
+		void InitUI() override;
 	};
 
 } }

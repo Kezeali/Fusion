@@ -34,23 +34,21 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionPhysicalComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class FixtureInspector : public GenericInspector<IFixture>
+	class FixtureInspector : public ComponentInspectorBase
 	{
 	public:
-		FixtureInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(FixtureInspector, ComponentInspectorBase)
 		{
-			InitUI();
 		}
 
-		void InitUI();
+		void InitUI() override;
 	};
 
 } }

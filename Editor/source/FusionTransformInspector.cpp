@@ -29,11 +29,6 @@
 
 #include "FusionTransformInspector.h"
 
-#include "FusionInspectorUtils.h"
-
-#include <Rocket/Core.h>
-#include <Rocket/Controls.h>
-
 #include <boost/lexical_cast.hpp>
 
 namespace FusionEngine { namespace Inspectors
@@ -41,32 +36,32 @@ namespace FusionEngine { namespace Inspectors
 
 	void TransformInspector::InitUI()
 	{
-		auto x = AddTextInput("X",
-			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
-			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
-			6
-			);
-		auto y = AddTextInput("Y",
-			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(component->Position.Get().x, value)); }),
-			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().y; }),
-			6
-			);
-		AddProperty("Position", x);
-		AddProperty("Position", y);
+		//auto x = AddTextInput("X",
+		//	FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
+		//	FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().x; }),
+		//	6
+		//	);
+		//auto y = AddTextInput("Y",
+		//	FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Position.Set(Vector2(component->Position.Get().x, value)); }),
+		//	FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Position.Get().y; }),
+		//	6
+		//	);
+		//AddProperty("Position", x);
+		//AddProperty("Position", y);
 
-		AddProperty("Angle",
-		AddTextInput("Angle",
-			FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Angle.Set(value); }),
-			FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Angle.Get(); }),
-			5
-			));
+		//AddProperty("Angle",
+		//AddTextInput("Angle",
+		//	FloatSetter_t([](float value, ComponentIPtr<ITransform> component) { component->Angle.Set(value); }),
+		//	FloatGetter_t([](ComponentIPtr<ITransform> component)->float { return component->Angle.Get(); }),
+		//	5
+		//	));
 
-		AddProperty("Depth",
-		AddTextInput("Depth",
-			IntSetter_t([](int value, ComponentIPtr<ITransform> component) { component->Depth.Set(value); }),
-			IntGetter_t([](ComponentIPtr<ITransform> component)->int { return component->Depth.Get(); }),
-			3
-			));
+		//AddProperty("Depth",
+		//AddTextInput("Depth",
+		//	IntSetter_t([](int value, ComponentIPtr<ITransform> component) { component->Depth.Set(value); }),
+		//	IntGetter_t([](ComponentIPtr<ITransform> component)->int { return component->Depth.Get(); }),
+		//	3
+		//	));
 	}
 
 } }

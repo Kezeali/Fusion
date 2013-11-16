@@ -41,7 +41,6 @@
 #include "FusionSingleton.h"
 
 #include "FusionRocketInterface.h"
-#include "FusionRocketReferenceCountable.h"
 #include "FusionScriptModule.h"
 #include "FusionSlotContainer.h"
 

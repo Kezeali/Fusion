@@ -38,15 +38,14 @@
 
 #include "FusionEntityComponent.h"
 
-#include <Rocket/Core.h>
-
 #include <functional>
 #include <unordered_map>
 #include <string>
 
 #include <boost/intrusive_ptr.hpp>
 
-#include "FusionRocketReferenceCountable.h"
+#include <Gwen/Controls/GroupBox.h>
+
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"
@@ -61,14 +60,10 @@ namespace FusionEngine { namespace Inspectors
 
 	struct EquivalentInspectorKey;
 
-	class ElementGroup : public Rocket::Core::Element
+	class ElementGroup : public Gwen::Controls::Base
 	{
 	public:
-		ElementGroup(const Rocket::Core::String& tag);
-
-		~ElementGroup()
-		{
-		}
+		GWEN_CONTROL(ElementGroup, Gwen::Controls::Base);
 
 		void AddEntity(const EntityPtr& entity);
 		//! Passes all components to inspectors
@@ -90,16 +85,16 @@ namespace FusionEngine { namespace Inspectors
 
 		void ProcessComponent(const ComponentPtr& component, bool removable = true);
 
-		static inline boost::intrusive_ptr<Rocket::Core::Element> AddSubsection(Rocket::Core::Element* parent, const std::string& name, Rocket::Core::Element* inspector);
+		static Gwen::Controls::Base* AddSubsection(Gwen::Controls::Base* parent, const std::string& name, Gwen::Controls::Base* inspector);
 
 		void AddFooter();
 
-		Rocket::Core::Element* GetSubsectionByChild(Rocket::Core::Element* button)
+		Gwen::Controls::Base* GetSubsectionByChild(Gwen::Controls::Base* button)
 		{
-			Rocket::Core::Element* parent = button->GetParentNode();
-			while (parent && parent->GetTagName() != "inspector_section");
+			Gwen::Controls::Base* parent = button->GetParent();
+			while (parent && std::string(parent->GetIdentifier()) != "inspector_section");
 			{
-				parent = parent->GetParentNode();
+				parent = parent->GetParent();
 			} 
 			return parent;
 		}
@@ -109,7 +104,7 @@ namespace FusionEngine { namespace Inspectors
 
 		std::shared_ptr<SubsectionCollection> m_Subsections;
 
-		Rocket::Core::Element* body;
+		Gwen::Controls::Base* body;
 
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToProcess;
 		std::vector<ComponentPtr> m_ComponentsToRemove;
@@ -127,33 +122,33 @@ namespace FusionEngine { namespace Inspectors
 
 		void AddSubsection(const EquivalentInspectorKey& key, const std::string& name, Inspectors::ComponentInspector* inspector, const ComponentPtr& initial_component, bool removable);
 
-		void ProcessEvent(Rocket::Core::Event& ev);
+		//void ProcessEvent(Rocket::Core::Event& ev);
 
 		void OnUpdate();
 		
 	};
 
-	inline boost::intrusive_ptr<Rocket::Core::Element> ElementGroup::AddSubsection(Rocket::Core::Element* parent, const std::string& name, Rocket::Core::Element* inspector)
+	Gwen::Controls::Base* ElementGroup::AddSubsection(Gwen::Controls::Base* parent, const std::string& name, Gwen::Controls::Base* inspector)
 	{
-		boost::intrusive_ptr<Rocket::Core::Element> subsection;
-		// Subsection
-		subsection = Rocket::Core::Factory::InstanceElement(parent, "inspector_section", "inspector_section", Rocket::Core::XMLAttributes());
-		// Header (title)
-		auto header = Rocket::Core::Factory::InstanceElement(subsection.get(), "header", "header", Rocket::Core::XMLAttributes());
-		subsection->AppendChild(header);
-		Rocket::Core::Factory::InstanceElementText(header, Rocket::Core::String(name.data(), name.data() + name.length()));
-		header->RemoveReference();
-		// This element can be collapsed to hide the inspector
-		auto collapse = Rocket::Core::Factory::InstanceElement(subsection.get(), "collapsible", "collapsible", Rocket::Core::XMLAttributes());
-		collapse->SetPseudoClass("collapsed", true);
+		Gwen::Controls::Base* subsection = nullptr;
+		//// Subsection
+		//subsection = Rocket::Core::Factory::InstanceElement(parent, "inspector_section", "inspector_section", Rocket::Core::XMLAttributes());
+		//// Header (title)
+		//auto header = Rocket::Core::Factory::InstanceElement(subsection.get(), "header", "header", Rocket::Core::XMLAttributes());
+		//subsection->AppendChild(header);
+		//Rocket::Core::Factory::InstanceElementText(header, Rocket::Core::String(name.data(), name.data() + name.length()));
+		//header->RemoveReference();
+		//// This element can be collapsed to hide the inspector
+		//auto collapse = Rocket::Core::Factory::InstanceElement(subsection.get(), "collapsible", "collapsible", Rocket::Core::XMLAttributes());
+		//collapse->SetPseudoClass("collapsed", true);
 
-		collapse->AppendChild(inspector);
+		//collapse->AppendChild(inspector);
 
-		subsection->AppendChild(collapse);
-		collapse->RemoveReference();
+		//subsection->AppendChild(collapse);
+		//collapse->RemoveReference();
 
-		parent->AppendChild(subsection.get());
-		subsection->RemoveReference();
+		//parent->AppendChild(subsection.get());
+		//subsection->RemoveReference();
 
 		return subsection;
 	}

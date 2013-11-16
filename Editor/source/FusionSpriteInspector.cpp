@@ -36,6 +36,7 @@ namespace FusionEngine { namespace Inspectors
 
 	void SpriteInspector::InitUI()
 	{
+		/*
 		AddProperty("ImagePath", AddTextInput("Image",
 			StringSetter_t([](std::string path, ComponentIPtr<ISprite> component) { component->ImagePath.Set(path); }),
 			StringGetter_t([](ComponentIPtr<ISprite> component)->std::string { return component->ImagePath.Get(); }),
@@ -106,6 +107,7 @@ namespace FusionEngine { namespace Inspectors
 			IntSetter_t([](int frame, ComponentIPtr<ISprite> component) { component->AnimationFrame.Set(frame); }),
 			IntGetter_t([](ComponentIPtr<ISprite> component) { return component->AnimationFrame.Get(); })
 			));
+			*/
 	}
 
 } }

@@ -50,11 +50,7 @@
 #include <queue>
 #include <unordered_map>
 
-namespace Rocket { namespace Core {
-	class Context;
-	class ElementDocument;
-	class EventListener;
-} }
+namespace Gwen { namespace Controls { class Canvas; } }
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr);
 void intrusive_ptr_release(asIScriptFunction *ptr);
@@ -71,12 +67,9 @@ namespace FusionEngine
 	class CLRenderWorld;
 	class Viewport;
 
-	class ContextMenu;
-	class MenuItem;
+	//class DialogListener;
 
-	class DialogListener;
-
-	class DockedWindowManager;
+	//class DockedWindowManager;
 
 	class WorldSaver;
 	class SaveDataArchive;
@@ -86,10 +79,10 @@ namespace FusionEngine
 	class EditorOverlay;
 	class SelectionDrawer;
 
-	class PreviewFormatter;
+	//class PreviewFormatter;
 
 	class ResourceDatabase;
-	class ResourceBrowserDataSource;
+	//class ResourceBrowserDataSource;
 
 	class ResourceEditor;
 
@@ -144,7 +137,7 @@ namespace FusionEngine
 		std::vector<std::shared_ptr<RendererExtension>> MakeRendererExtensions() const;
 
 		const std::shared_ptr<Viewport>& GetViewport() const { return m_Viewport; }
-		Rocket::Core::Context* GetGUIContext() const { return m_GUIContext; }
+		//Rocket::Core::Context* GetGUIContext() const { return m_GUIContext; }
 
 		void Save();
 		void Save(const std::string& name);		
@@ -262,33 +255,25 @@ namespace FusionEngine
 		bool m_SaveMap;
 		bool m_LoadMap;
 
-		Rocket::Core::Context* m_GUIContext;
+		Gwen::Controls::Canvas* m_GUIContext;
 
 		std::string m_SaveName;
 
-		std::shared_ptr<DialogListener> m_SaveDialogListener;
-		std::shared_ptr<DialogListener> m_OpenDialogListener;
+		//std::shared_ptr<DialogListener> m_SaveDialogListener;
+		//std::shared_ptr<DialogListener> m_OpenDialogListener;
 
-		boost::intrusive_ptr<ContextMenu> m_RightClickMenu;
-		boost::intrusive_ptr<MenuItem> m_PropertiesMenu;
-		boost::intrusive_ptr<MenuItem> m_EntitySelectionMenu;
+		//std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
 
-		std::shared_ptr<PreviewFormatter> m_PreviewFormatter;
-
-		std::shared_ptr<DockedWindowManager> m_DockedWindows;
+		//std::shared_ptr<DockedWindowManager> m_DockedWindows;
 
 		std::unordered_map<std::string, InspectorFactory> m_InspectorTypes;
 
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
 
 		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
-		std::shared_ptr<ResourceBrowserDataSource> m_ResourceBrowserDataSource;
+		//std::shared_ptr<ResourceBrowserDataSource> m_ResourceBrowserDataSource;
 
 		std::map<std::string, std::shared_ptr<ResourceEditor>> m_ResourceEditors;
-		
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_ResourceBrowser;
-
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_Background;
 
 		Vector2 m_CamVelocity;
 

@@ -34,23 +34,21 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionRender2DComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class SpriteInspector : public GenericInspector<ISprite>
+	class SpriteInspector : public ComponentInspectorBase
 	{
 	public:
-		SpriteInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(SpriteInspector, ComponentInspectorBase)
 		{
-			InitUI();
 		}
 
-		void InitUI();
+		void InitUI() override;
 	};
 
 } }

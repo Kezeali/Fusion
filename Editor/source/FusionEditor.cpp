@@ -40,9 +40,6 @@
 #include "FusionEditorRectangleTool.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
-#include "FusionFilesystemDataSource.h"
-#include "FusionGUI.h"
-#include "FusionMessageBox.h"
 #include "FusionClientOptions.h"
 #include "FusionPhysFS.h"
 #include "FusionPolygonResourceEditor.h"
@@ -65,27 +62,27 @@
 #include "FusionRenderer.h"
 
 #include "FusionBox2DComponent.h"
+#include "FusionRender2DComponent.h"
+#include "FUsionScriptComponent.h"
 
 #include "FusionElementInspectorGroup.h"
 
-#include "FusionTransformInspector.h"
-#include "FusionRigidBodyInspector.h"
-#include "FusionFixtureInspector.h"
-#include "FusionCircleShapeInspector.h"
-#include "FusionPolygonShapeInspector.h"
-#include "FusionSpriteInspector.h"
-#include "FusionASScriptInspector.h"
+//#include "FusionTransformInspector.h"
+//#include "FusionRigidBodyInspector.h"
+//#include "FusionFixtureInspector.h"
+//#include "FusionCircleShapeInspector.h"
+//#include "FusionPolygonShapeInspector.h"
+//#include "FusionSpriteInspector.h"
+//#include "FusionASScriptInspector.h"
 
 #include "FusionEntityInspector.h"
 
-#include "FusionContextMenu.h"
-
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <Rocket/Controls/DataFormatter.h>
-#include <Rocket/Controls/DataSource.h>
-#include <Rocket/Core/ElementDocument.h>
-#include <Rocket/Core/StreamMemory.h>
+#include <Gwen/Controls/Canvas.h>
+#include <Gwen/Controls/ComboBox.h>
+#include <Gwen/Controls/Dialogs/Query.h>
+#include <Gwen/Controls/WindowControl.h>
 #include <oleidl.h>
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range2d.h>
@@ -168,102 +165,6 @@ namespace FusionEngine
 		return std::move(taskList);
 	}
 
-	class ResourceBrowserDataSource : public Rocket::Controls::DataSource
-	{
-	public:
-		ResourceBrowserDataSource(const std::shared_ptr<ResourceDatabase>& database)
-			: Rocket::Controls::DataSource("resource_browser"),
-			filesystem_ds(nullptr),
-			m_ResourceDatabase(database)
-		{
-			using namespace std::placeholders;
-			m_OnResourceLoadedConnection =
-				ResourceManager::getSingleton().SignalResourceLoaded.connect(std::bind(&ResourceBrowserDataSource::OnResourceLoaded, this, _1));
-
-			filesystem_ds = dynamic_cast<FilesystemDataSource*>(Rocket::Controls::DataSource::GetDataSource("filesystem"));
-		}
-		~ResourceBrowserDataSource()
-		{
-			m_OnResourceLoadedConnection.disconnect();
-		}
-
-		void OnResourceLoaded(const ResourceDataPtr& resource);
-
-	private:
-		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
-		int GetNumRows(const Rocket::Core::String& table);
-
-		FilesystemDataSource* filesystem_ds;
-
-		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
-
-		boost::signals2::connection m_OnResourceLoadedConnection;
-	};
-
-	void ResourceBrowserDataSource::OnResourceLoaded(const ResourceDataPtr& resource)
-	{
-		if (filesystem_ds)
-		{
-			try
-			{
-				auto entry = filesystem_ds->ReverseLookup(resource->GetPath());
-				NotifyRowChange(entry.first, entry.second, 1);
-			}
-			catch (FileSystemException&)
-			{
-			}
-		}
-	}
-
-	void ResourceBrowserDataSource::GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns)
-	{
-		if (filesystem_ds)
-		{
-			filesystem_ds->GetRow(row, table, row_index, columns);
-			for (auto it = columns.begin(); it != columns.end(); ++it)
-			{
-				if (*it == "resource_type")
-				{
-					const std::string path = filesystem_ds->GetPath(filesystem_ds->PreproPath(table.CString()), row_index);
-					const std::string type = m_ResourceDatabase->GetResourceType(path);
-					row.insert(row.begin() + std::distance(columns.begin(), it), Rocket::Core::String(type.c_str()));
-				}
-			}
-		}
-	}
-
-	int ResourceBrowserDataSource::GetNumRows(const Rocket::Core::String& table)
-	{
-		if (filesystem_ds)
-		{
-			return filesystem_ds->GetNumRows(table);
-		}
-		else
-			return 0;
-	}
-
-	class PreviewFormatter : public Rocket::Controls::DataFormatter
-	{
-	public:
-		PreviewFormatter()
-			: Rocket::Controls::DataFormatter("resource_preview")
-		{}
-
-	private:
-		void FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data)
-		{
-			if (!raw_data.empty())
-			{
-				formatted_data =
-					"<span style=\"icon-decorator: image; icon-image:" + raw_data[0] + ";\" "
-					"onmouseover=\"%this:GeneratePreviewPopup('" + raw_data[0] + "', event);\" "
-					"onmouseover=\"%this:HidePreviewPopup('" + raw_data[0] + "', event);\">" +
-					raw_data[0] +
-					"</span>";
-			}
-		}
-	};
-
 	inline void RemoveEqualElems(const boost::filesystem::path& base, boost::filesystem::path& subdir)
 	{
 		boost::filesystem::path path;
@@ -284,66 +185,6 @@ namespace FusionEngine
 		RemoveEqualElems(base, subdirPath);
 		return subdirPath.string();
 	}
-
-	class DialogListener : public Rocket::Core::EventListener
-	{
-	public:
-		DialogListener(const std::function<void (const std::map<std::string, std::string>&)>& callback)
-			: m_Callback(callback)
-		{
-		}
-
-		void Attach(const boost::intrusive_ptr<Rocket::Core::ElementDocument>& document)
-		{
-			if (m_Document)
-			{
-				m_Document->RemoveEventListener("submit", this);
-				m_Document->RemoveEventListener("close", this);
-			}
-			m_Document = document;
-			if (m_Document)
-			{
-				m_Document->AddEventListener("submit", this);
-				m_Document->AddEventListener("close", this);
-			}
-		}
-
-		void SetCallback(const std::function<void (const std::map<std::string, std::string>&)>& callback)
-		{
-			m_Callback = callback;
-		}
-
-		void ProcessEvent(Rocket::Core::Event& e)
-		{
-			if (e == "submit")
-			{
-				std::map<std::string, std::string> results;
-
-				auto params = e.GetParameters();
-				Rocket::Core::String key, value;
-				for (int pos = 0; params->Iterate(pos, key, value);)
-				{
-					results.insert(std::make_pair(key.CString(), value.CString()));
-					value.Clear();
-				}
-
-				m_Callback(results);
-			}
-			else if (e == "close")
-			{
-				std::map<std::string, std::string> results;
-				results["result"] = "cancel";
-				m_Callback(results);
-			}
-
-			m_Document->Hide();
-			m_Document->GetContext()->UnloadDocument(m_Document.get());
-			m_Document.reset();
-		}
-
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_Document;
-		std::function<void (std::map<std::string, std::string>)> m_Callback;
-	};
 
 	//! Implements b2QueryCallback, returning all entities within an AABB that satisfy the passed function
 	class EntityQuery : public b2QueryCallback
@@ -494,257 +335,8 @@ namespace FusionEngine
 		}
 	}
 
-	class EntitySelector : public Rocket::Core::Element
+	inline bool MouseOverUI(Gwen::Controls::Canvas* context)
 	{
-	public:
-		EntitySelector(const Rocket::Core::String& tag)
-			: Rocket::Core::Element(tag)
-		{
-			Rocket::Core::XMLAttributes attributes;
-			auto element = Rocket::Core::Factory::InstanceElement(this, "select", "select", attributes); FSN_ASSERT(element);
-			if (m_Select = dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(element))
-			{
-				AppendChild(m_Select.get());
-			}
-			element->RemoveReference();
-
-			element = Rocket::Core::Factory::InstanceElement(this, "button", "button", attributes); FSN_ASSERT(element);
-			AppendChild(element);
-			Rocket::Core::Factory::InstanceElementText(element, "Go");
-			element->RemoveReference();
-		}
-		~EntitySelector()
-		{
-		}
-
-		void SetEntities(const std::vector<EntityPtr>& entities)
-		{
-			m_Entities = entities;
-			size_t i = 0;
-			for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it, ++i)
-			{
-				const auto& entity = *it;
-				std::string name = entity->GetName();
-				if (entity->IsSyncedEntity())
-					name += "ID: " + boost::lexical_cast<std::string>(entity->GetID());
-				if (name.empty() && entity->IsPseudoEntity())
-					name += "Unnamed Pseudo-Entity " + boost::lexical_cast<std::string>(i);
-				m_Select->Add(name.c_str(), name.c_str());
-			}
-		}
-
-		typedef std::function<void (const EntityPtr&)> Callback_t;
-
-		void SetCallback(Callback_t callback)
-		{
-			m_Callback = callback;
-		}
-
-		void ProcessEvent(Rocket::Core::Event& ev)
-		{
-			Rocket::Core::Element::ProcessEvent(ev);
-			if (ev == "change" || (ev.GetTargetElement()->GetTagName() == "button" && ev == "click"))
-			{
-				auto selection = m_Select->GetSelection();
-				if (selection >= 0 && (size_t)selection < m_Entities.size())
-				{
-					m_Callback(m_Entities[selection]);
-				}
-			}
-		}
-
-		std::vector<EntityPtr> m_Entities;
-		boost::intrusive_ptr<Rocket::Controls::ElementFormControlSelect> m_Select;
-		Callback_t m_Callback;
-	};
-
-
-	class InspectorSection : public Rocket::Core::Element/*, public Rocket::Core::EventListener*/
-	{
-	public:
-		InspectorSection(const Rocket::Core::String& tag)
-			: Rocket::Core::Element(tag),
-			header(nullptr)
-		{}
-
-		void ProcessEvent(Rocket::Core::Event& ev)
-		{
-			Rocket::Core::Element::ProcessEvent(ev);
-			if (ev.GetTargetElement() == header && ev == "click")
-			{
-				Rocket::Core::ElementList elements;
-				GetElementsByTagName(elements, "collapsible");
-				for (auto it = elements.begin(), end = elements.end(); it != end; ++it)
-				{
-					Rocket::Core::Element* elem = *it;
-					elem->SetPseudoClass("collapsed", !elem->IsPseudoClassSet("collapsed"));
-				}
-			}
-		}
-
-		Rocket::Core::Element* header;
-
-		void OnChildAdd(Element* child)
-		{
-			if (child->GetTagName() == "header")
-			{
-				/*if (header)
-					header->RemoveEventListener("click", this);*/
-				header = child;
-				//header->AddEventListener("click", this);
-			}
-		}
-
-		void OnChildRemove(Element* child)
-		{
-			if (child == header)
-			{
-				//header->RemoveEventListener("click", this);
-				header = nullptr;
-			}
-		}
-	};
-
-	class DockedWindowManager
-	{
-	public:
-		DockedWindowManager(Editor* editor)
-			: m_Listener(editor)
-		{
-			// TODO: add an OnResize method (called by the editor's OnWindowResize handler)
-			//  that updates the docked window sizes to relative to the window (requires another
-			//  setting for each window defining their resize mode - static, relative, fill edge)
-		}
-
-		~DockedWindowManager()
-		{
-		}
-
-		enum Side
-		{
-			Left,
-			Top,
-			Right,
-			Bottom
-		};
-
-		void AddWindow(Rocket::Core::ElementDocument* window, Side dock_side)
-		{
-			m_Listener.AddWindow(window, dock_side);
-		}
-
-		void RemoveWindow(Rocket::Core::ElementDocument* window)
-		{
-			m_Listener.RemoveWindow(window);
-		}
-
-	private:
-		class EventListener : public Rocket::Core::EventListener
-		{
-		public:
-			EventListener(Editor* editor)
-				: m_Editor(editor)
-			{
-				m_Editor->GetGUIContext()->AddEventListener("resize", this);
-			}
-
-			~EventListener()
-			{
-				if (m_Editor->GetGUIContext())
-					m_Editor->GetGUIContext()->RemoveEventListener("resize", this);
-
-				auto attached = m_AttachedDocuments;
-				m_AttachedDocuments.clear();
-				for (auto it = attached.begin(); it != attached.end(); ++it)
-				{
-					it->first->RemoveEventListener("close", this);
-					it->first->RemoveEventListener("hide", this);
-					it->first->RemoveEventListener("resize", this);
-				}
-			}
-
-			void AddWindow(Rocket::Core::ElementDocument* window, DockedWindowManager::Side dock_side)
-			{
-				auto r = m_AttachedDocuments.insert(std::make_pair(window, dock_side));
-				FSN_ASSERT(r.second); // don't allow duplicates
-
-				window->AddEventListener("close", this);
-				window->AddEventListener("hide", this);
-				window->AddEventListener("resize", this);
-			}
-
-			void RemoveWindow(Rocket::Core::ElementDocument* window)
-			{
-				window->RemoveEventListener("close", this);
-				window->RemoveEventListener("hide", this);
-				window->RemoveEventListener("resize", this);
-				m_AttachedDocuments.erase(window);
-			}
-
-			void ShrinkArea(boost::intrusive_ptr<Rocket::Core::ElementDocument> document, DockedWindowManager::Side side)
-			{
-				switch (side)
-				{
-				case DockedWindowManager::Left:
-					m_Area.left = std::max(m_Area.left, document->GetOffsetWidth() / m_Editor->GetGUIContext()->GetDimensions().x);
-					break;
-				case DockedWindowManager::Top:
-					m_Area.top = std::max(m_Area.top, document->GetOffsetHeight() / m_Editor->GetGUIContext()->GetDimensions().y);
-					break;
-				case DockedWindowManager::Right:
-					m_Area.right = std::min(m_Area.right, document->GetOffsetLeft() / m_Editor->GetGUIContext()->GetDimensions().x);
-					break;
-				case DockedWindowManager::Bottom:
-					m_Area.bottom = std::min(m_Area.bottom, document->GetOffsetTop() / m_Editor->GetGUIContext()->GetDimensions().y);
-					break;
-				};
-			}
-
-			void ProcessEvent(Rocket::Core::Event& ev)
-			{
-				FSN_ASSERT(m_Editor);
-
-				if (ev == "resize" || ev == "hide" || ev == "close")
-				{
-					m_Area.left = m_Area.top = 0.f;
-					m_Area.right = m_Area.bottom = 1.f;
-
-					for (auto it = m_AttachedDocuments.begin(); it != m_AttachedDocuments.end(); ++it)
-					{
-						if (it->first->IsVisible())
-							ShrinkArea(it->first, it->second);
-					}
-
-					m_Editor->GetViewport()->SetArea(m_Area);
-				}
-			}
-
-			void OnDetach(Rocket::Core::Element* element)
-			{
-				if (auto window = dynamic_cast<Rocket::Core::ElementDocument*>(element))
-					m_AttachedDocuments.erase(window);
-			}
-
-			Editor* m_Editor;
-
-			clan::Rectf m_Area;
-
-			std::map<Rocket::Core::ElementDocument*, DockedWindowManager::Side> m_AttachedDocuments;
-		};
-
-		EventListener m_Listener;
-	};
-
-	inline bool MouseOverUI(Rocket::Core::Context* context)
-	{
-		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
-		{
-			auto doc = context->GetDocument(i);
-			if (doc->GetTitle() != "background" && doc->IsPseudoClassSet("hover"))
-				return true;
-		}
-		if (GUI::getSingleton().GetConsoleWindow()->IsPseudoClassSet("hover"))
-			return true;
 		return false;
 	}
 
@@ -887,44 +479,44 @@ namespace FusionEngine
 		m_EditorOverlay = std::make_shared<EditorOverlay>(m_PolygonTool, m_RectangleTool, m_CircleTool);
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
-		m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
-		{
-			if (params.at("result") == "ok")
-			{
-				auto path = params.at("path");
-				if (!path.empty())
-				{
-					auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
-					if (path.empty() || path == "ok")
-						path = basepath.string();
-					else
-						path = FilesystemDataSource::PreprocessPath(path);
-					auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
-					saveName.replace_extension();
-					m_SaveName = saveName.generic_string();
-					m_SaveMap = true;
-				}
-			}
-		});
-		m_OpenDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
-		{
-			if (params.at("result") == "ok")
-			{
-				auto path = params.at("path");
-				if (!path.empty())
-				{
-					auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
-					if (path.empty() || path == "ok")
-						path = basepath.string();
-					else
-						path = FilesystemDataSource::PreprocessPath(path);
-					auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
-					saveName.replace_extension();
-					m_SaveName = saveName.generic_string();
-					m_LoadMap = true;
-				}
-			}
-		});
+		//m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
+		//{
+		//	if (params.at("result") == "ok")
+		//	{
+		//		auto path = params.at("path");
+		//		if (!path.empty())
+		//		{
+		//			auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
+		//			if (path.empty() || path == "ok")
+		//				path = basepath.string();
+		//			else
+		//				path = FilesystemDataSource::PreprocessPath(path);
+		//			auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
+		//			saveName.replace_extension();
+		//			m_SaveName = saveName.generic_string();
+		//			m_SaveMap = true;
+		//		}
+		//	}
+		//});
+		//m_OpenDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
+		//{
+		//	if (params.at("result") == "ok")
+		//	{
+		//		auto path = params.at("path");
+		//		if (!path.empty())
+		//		{
+		//			auto basepath = boost::filesystem::path(PHYSFS_getWriteDir()) / "Editor";
+		//			if (path.empty() || path == "ok")
+		//				path = basepath.string();
+		//			else
+		//				path = FilesystemDataSource::PreprocessPath(path);
+		//			auto saveName = boost::filesystem::path(RemoveBasePath(basepath, path)) / params.at("filename");
+		//			saveName.replace_extension();
+		//			m_SaveName = saveName.generic_string();
+		//			m_LoadMap = true;
+		//		}
+		//	}
+		//});
 
 		{
 			auto polygonResourceEditor = std::make_shared<PolygonResourceEditor>();
@@ -948,9 +540,9 @@ namespace FusionEngine
 		}
 
 		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
-		m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);
+		//m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);
 
-		{
+		/*{
 			auto tag = "inspector_" + ITransform::GetTypeName();
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<Inspectors::TransformInspector>())->RemoveReference();
@@ -995,17 +587,15 @@ namespace FusionEngine
 			tag = "inspector_section";
 			Rocket::Core::Factory::RegisterElementInstancer(Rocket::Core::String(tag.data(), tag.data() + tag.length()),
 				new Rocket::Core::ElementInstancerGeneric<InspectorSection>())->RemoveReference();
-		}
+		}*/
 
-		//m_PreviewFormatter.reset(new PreviewFormatter);
+		//m_RightClickMenu = boost::intrusive_ptr<ContextMenu>(new ContextMenu(m_GUIContext, true), false);
+		//m_PropertiesMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Properties", "properties"), false);
+		//m_RightClickMenu->AddChild(m_PropertiesMenu.get());
+		//m_EntitySelectionMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Select", "select"), false);
+		//m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
 
-		m_RightClickMenu = boost::intrusive_ptr<ContextMenu>(new ContextMenu(m_GUIContext, true), false);
-		m_PropertiesMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Properties", "properties"), false);
-		m_RightClickMenu->AddChild(m_PropertiesMenu.get());
-		m_EntitySelectionMenu = boost::intrusive_ptr<MenuItem>(new MenuItem("Select", "select"), false);
-		m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
-
-		m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindowForSelected(); });
+		//m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindowForSelected(); });
 
 		m_EditorSystem = std::make_shared<EditorSystem>();
 	}
@@ -1022,14 +612,14 @@ namespace FusionEngine
 	{
 		Deactivate();
 
-		m_ResourceBrowser.reset();
-		m_DockedWindows.reset();
-		m_EntitySelectionMenu.reset();
-		m_PropertiesMenu.reset();
-		m_RightClickMenu.reset();
+		//m_ResourceBrowser.reset();
+		//m_DockedWindows.reset();
+		//m_EntitySelectionMenu.reset();
+		//m_PropertiesMenu.reset();
+		//m_RightClickMenu.reset();
 		// These need to be cleaned up before the GUI context is destroyed
-		m_SaveDialogListener.reset();
-		m_OpenDialogListener.reset();
+		//m_SaveDialogListener.reset();
+		//m_OpenDialogListener.reset();
 	}
 
 	class Win32DropTargetImpl;
@@ -1373,15 +963,15 @@ namespace FusionEngine
 		m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
 		m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
 
-		m_DockedWindows = std::make_shared<DockedWindowManager>(this);
+		//m_DockedWindows = std::make_shared<DockedWindowManager>(this);
 
-		m_Background = m_GUIContext->LoadDocument("Data/core/gui/editor_background.rml");
-		m_Background->RemoveReference();
+		//m_Background = m_GUIContext->LoadDocument("Data/core/gui/editor_background.rml");
+		//m_Background->RemoveReference();
 
-		m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
-		m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
+		//m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
+		//m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
 
-		m_Background->Show();
+		//m_Background->Show();
 
 		m_DropTarget = std::make_shared<Win32DropTarget>(m_DisplayWindow);
 		m_DropTarget->GetSigDragEnter().connect([this](const Vector2i& drop_location)->bool
@@ -1403,7 +993,7 @@ namespace FusionEngine
 
 		m_DropTarget.reset();
 
-		m_Background.reset();
+		//m_Background.reset();
 
 		m_EditorOverlay->m_EditCam.reset();
 
@@ -1447,7 +1037,7 @@ namespace FusionEngine
 		m_AngelScriptWorld = asw;
 
 		ScriptManager::getSingleton().RegisterGlobalObject("Editor editor", this);
-		ScriptManager::getSingleton().RegisterGlobalObject("FilesystemDataSource filesystem_datasource", Rocket::Controls::DataSource::GetDataSource("filesystem"));
+		//ScriptManager::getSingleton().RegisterGlobalObject("FilesystemDataSource filesystem_datasource", Rocket::Controls::DataSource::GetDataSource("filesystem"));
 		if (m_Active)
 			BuildCreateEntityScript();
 
@@ -1681,34 +1271,34 @@ namespace FusionEngine
 
 	void Editor::ShowSaveMapDialog()
 	{
-		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+		//auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
-		Rocket::Core::String title("Save Map");
-		document->SetTitle(title);
-		if (auto okButton = document->GetElementById("button_ok"))
-			okButton->SetInnerRML("Save");
-		if (auto fileList = document->GetElementById("file_list"))
-			fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+		//Rocket::Core::String title("Save Map");
+		//document->SetTitle(title);
+		//if (auto okButton = document->GetElementById("button_ok"))
+		//	okButton->SetInnerRML("Save");
+		//if (auto fileList = document->GetElementById("file_list"))
+		//	fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
 
-		m_SaveDialogListener->Attach(document);
-		document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
-		document->RemoveReference();
+		//m_SaveDialogListener->Attach(document);
+		//document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+		//document->RemoveReference();
 	}
 
 	void Editor::ShowLoadMapDialog()
 	{
-		auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+		//auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
-		Rocket::Core::String title("Open Map");
-		document->SetTitle(title);
-		if (auto okButton = document->GetElementById("button_ok"))
-			okButton->SetInnerRML("Open");
-		if (auto fileList = document->GetElementById("file_list"))
-			fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+		//Rocket::Core::String title("Open Map");
+		//document->SetTitle(title);
+		//if (auto okButton = document->GetElementById("button_ok"))
+		//	okButton->SetInnerRML("Open");
+		//if (auto fileList = document->GetElementById("file_list"))
+		//	fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
 
-		m_OpenDialogListener->Attach(document);
-		document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
-		document->RemoveReference();
+		//m_OpenDialogListener->Attach(document);
+		//document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+		//document->RemoveReference();
 	}
 
 	void Editor::ShowSaveDialog(const std::string& title, const std::string& initial_path)
@@ -1719,18 +1309,18 @@ namespace FusionEngine
 		}
 		else
 		{
-			auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+			//auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
-			Rocket::Core::String title("Save Map");
-			document->SetTitle(title);
-			if (auto okButton = document->GetElementById("button_ok"))
-				okButton->SetInnerRML("Save");
-			if (auto fileList = document->GetElementById("file_list"))
-				fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+			//Rocket::Core::String title("Save Map");
+			//document->SetTitle(title);
+			//if (auto okButton = document->GetElementById("button_ok"))
+			//	okButton->SetInnerRML("Save");
+			//if (auto fileList = document->GetElementById("file_list"))
+			//	fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
 
-			m_SaveDialogListener->Attach(document);
-			document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
-			document->RemoveReference();
+			//m_SaveDialogListener->Attach(document);
+			//document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+			//document->RemoveReference();
 		}
 	}
 
@@ -1742,18 +1332,18 @@ namespace FusionEngine
 		}
 		else
 		{
-			auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
+			//auto document = m_GUIContext->LoadDocument("Data/core/gui/file_dialog.rml");
 
-			Rocket::Core::String title("Open Map");
-			document->SetTitle(title);
-			if (auto okButton = document->GetElementById("button_ok"))
-				okButton->SetInnerRML("Open");
-			if (auto fileList = document->GetElementById("file_list"))
-				fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
+			//Rocket::Core::String title("Open Map");
+			//document->SetTitle(title);
+			//if (auto okButton = document->GetElementById("button_ok"))
+			//	okButton->SetInnerRML("Open");
+			//if (auto fileList = document->GetElementById("file_list"))
+			//	fileList->SetAttribute("source", "filesystem.#write_dir/Editor");
 
-			m_OpenDialogListener->Attach(document);
-			document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
-			document->RemoveReference();
+			//m_OpenDialogListener->Attach(document);
+			//document->Show(Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS);
+			//document->RemoveReference();
 		}
 	}
 
@@ -1773,7 +1363,8 @@ namespace FusionEngine
 		}
 		catch (std::exception& e)
 		{
-			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			auto messageTitle = std::string("Failed");
+			auto messageText = std::string(e.what());
 		}
 	}
 
@@ -1796,7 +1387,8 @@ namespace FusionEngine
 		}
 		catch (std::exception& e)
 		{
-			MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", std::string("title:Failed, message:") + e.what());
+			auto messageTitle = std::string("Failed");
+			auto messageText = std::string(e.what());
 		}
 	}
 
@@ -1814,24 +1406,27 @@ namespace FusionEngine
 					PhysVFS vfs;
 					GameMap::CompileMap(vfs, mapName, m_StreamingManager->GetCellSize(), m_MapLoader.get(), m_NonStreamedEntities, m_EntityInstantiator.get());
 
-					auto mb = MessageBoxMaker::Create(Rocket::Core::GetContext("editor"), "error", "title:Success, message:Compiled " + mapName);
-					mb->Show();
+					auto messageTitle = std::string("Success");
+					auto messageText = std::string("Compiled ") + mapName;
 				}
 				else
 				{
 					SendToConsole("Failed to compile map: failed to create map folder");
-					MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:Failed to create map folder");
+					auto messageTitle = std::string("Compilation Failed");
+					auto messageText = std::string("Failed to create map folder");
 				}
 			}
 			catch (FileSystemException& e)
 			{
 				SendToConsole("Failed to compile map: " + e.GetDescription());
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+				auto messageTitle = std::string("Compilation Failed");
+				auto messageText = e.GetDescription();
 			}
 			catch (Exception& e)
 			{
 				SendToConsole("Failed to compile map: " + e.GetDescription());
-				MessageBoxMaker::Show(Rocket::Core::GetContext("editor"), "error", "title:Compilation Failed, message:" + e.GetDescription());
+				auto messageTitle = std::string("Compilation Failed");
+				auto messageText = e.GetDescription();
 			}
 			m_MapLoader->Start();
 			m_StreamingManager->Update(true);
@@ -1862,67 +1457,36 @@ namespace FusionEngine
 
 	bool Editor::IsResourceBrowserVisible() const
 	{
-		return m_ResourceBrowser && m_ResourceBrowser->IsVisible();
+		//return m_ResourceBrowser && m_ResourceBrowser->IsVisible();
+		return false;
 	}
-
-	class FunctorEventListener : public Rocket::Core::EventListener
-	{
-	public:
-		FunctorEventListener()
-		{}
-
-		FunctorEventListener(const std::function<void (Rocket::Core::Event&)>& handler)
-			: m_Handler(handler)
-		{}
-
-		~FunctorEventListener()
-		{
-		}
-
-	private:
-		void ProcessEvent(Rocket::Core::Event& ev) { FSN_ASSERT(m_Handler); m_Handler(ev); }
-
-		void OnAttach(Rocket::Core::Element* element)
-		{
-			m_AttachedElements.insert(element);
-		}
-
-		void OnDetach(Rocket::Core::Element* element)
-		{
-			m_AttachedElements.erase(element);
-		}
-
-		std::function<void (Rocket::Core::Event&)> m_Handler;
-
-		std::set<Rocket::Core::Element*> m_AttachedElements;
-	};
 
 	void Editor::ShowResourceBrowser()
 	{
-		if (!m_ResourceBrowser)
-		{
-			m_ResourceBrowser = m_GUIContext->LoadDocument("Data/core/gui/resource_browser.rml");
-			m_ResourceBrowser->RemoveReference();
+		//if (!m_ResourceBrowser)
+		//{
+		//	m_ResourceBrowser = m_GUIContext->LoadDocument("Data/core/gui/resource_browser.rml");
+		//	m_ResourceBrowser->RemoveReference();
 
-			m_DockedWindows->AddWindow(m_ResourceBrowser.get(), DockedWindowManager::Left);
-		}
-		if (m_ResourceBrowser)
-		{
-			m_ResourceBrowser->Show();
+		//	m_DockedWindows->AddWindow(m_ResourceBrowser.get(), DockedWindowManager::Left);
+		//}
+		//if (m_ResourceBrowser)
+		//{
+		//	m_ResourceBrowser->Show();
 
-			auto area = m_Viewport->GetArea();
-			area.left = m_ResourceBrowser->GetOffsetWidth() / m_DisplayWindow.get_gc().get_width();
-			m_Viewport->SetArea(area);
-		}
+		//	auto area = m_Viewport->GetArea();
+		//	area.left = m_ResourceBrowser->GetOffsetWidth() / m_DisplayWindow.get_gc().get_width();
+		//	m_Viewport->SetArea(area);
+		//}
 	}
 
 	void Editor::HideResourceBrowser()
 	{
-		if (m_ResourceBrowser)
-		{
-			m_ResourceBrowser->Hide();
-			m_Viewport->SetArea(0.f, 0.f, 1.f, 1.f);
-		}
+		//if (m_ResourceBrowser)
+		//{
+		//	m_ResourceBrowser->Hide();
+		//	m_Viewport->SetArea(0.f, 0.f, 1.f, 1.f);
+		//}
 	}
 
 	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, EntityInstantiator* instantiator, ComponentFactory* factory, EntityManager* entityManager)
@@ -2425,8 +1989,8 @@ namespace FusionEngine
 				if (ev.ctrl)
 				{
 					m_Dragging = true;
-					GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Move;");
-					GUI::getSingleton().GetContext()->SetMouseCursor("Move");
+					//GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Move;");
+					//GUI::getSingleton().GetContext()->SetMouseCursor("Move");
 				}
 
 				OnMouseDown_Selection(ev);
@@ -2520,8 +2084,8 @@ namespace FusionEngine
 				}
 			}
 
-			GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");
-			GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
+			//GUI::getSingleton().GetContext()->GetRootElement()->SetAttribute("style", "cursor: Arrow;");
+			//GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 			m_Dragging = false;
 			m_ReceivedMouseDown = false;
 		}
@@ -2613,62 +2177,62 @@ namespace FusionEngine
 	{
 		if (m_Active)
 		{
-			m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
-			m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
+			//m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
+			//m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
 		}
 	}
 
-	void ClearCtxMenu(MenuItem *menu)
-	{
-		menu->RemoveAllChildren();
-	}
+	//void ClearCtxMenu(MenuItem *menu)
+	//{
+	//	menu->RemoveAllChildren();
+	//}
 
-	boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
-	{
-		boost::intrusive_ptr<MenuItem> item(new MenuItem(title, value), false);
-		item->SignalClicked.connect(on_clicked);
-		parent->AddChild(item.get());
+	//boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
+	//{
+	//	boost::intrusive_ptr<MenuItem> item(new MenuItem(title, value), false);
+	//	item->SignalClicked.connect(on_clicked);
+	//	parent->AddChild(item.get());
 
-		return item;
-	}
+	//	return item;
+	//}
 
-	boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
-	{
-		return AddMenuItem(parent, title, "", on_clicked);
-	}
+	//boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
+	//{
+	//	return AddMenuItem(parent, title, "", on_clicked);
+	//}
 
 	void Editor::ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities)
 	{
-		ClearCtxMenu(m_PropertiesMenu.get());
-		ClearCtxMenu(m_EntitySelectionMenu.get());
+		//ClearCtxMenu(m_PropertiesMenu.get());
+		//ClearCtxMenu(m_EntitySelectionMenu.get());
 
-		AddMenuItem(m_EntitySelectionMenu.get(),
-			"Deselect All",
-			std::bind(&Editor::DeselectAll, this));
+		//AddMenuItem(m_EntitySelectionMenu.get(),
+		//	"Deselect All",
+		//	std::bind(&Editor::DeselectAll, this));
 
-		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
-		{
-			const auto &entity = *it;
+		//for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+		//{
+		//	const auto &entity = *it;
 
-			const std::string title = (entity->GetName().empty() ? std::string("Unnamed") : entity->GetName()) +
-				(entity->IsSyncedEntity() ? " (" +  boost::lexical_cast<std::string>(entity->GetID()) + ")" : "");
+		//	const std::string title = (entity->GetName().empty() ? std::string("Unnamed") : entity->GetName()) +
+		//		(entity->IsSyncedEntity() ? " (" +  boost::lexical_cast<std::string>(entity->GetID()) + ")" : "");
 
-			// Add an item for this entity to the Properties sub-menu
-			auto item = AddMenuItem(m_PropertiesMenu.get(),
-				title, entity->GetName(),
-				[this, entity](const MenuItemEvent& e) { CreatePropertiesWindow(entity); }
-			);
-			item->SetBGColour(m_EditorOverlay->GetColour(entity));
+		//	// Add an item for this entity to the Properties sub-menu
+		//	auto item = AddMenuItem(m_PropertiesMenu.get(),
+		//		title, entity->GetName(),
+		//		[this, entity](const MenuItemEvent& e) { CreatePropertiesWindow(entity); }
+		//	);
+		//	item->SetBGColour(m_EditorOverlay->GetColour(entity));
 
-			// Add an item for this entity to the Select sub-menu
-			item = AddMenuItem(m_EntitySelectionMenu.get(),
-				title, entity->GetName(),
-				[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
-			);
-			item->SetBGColour(m_EditorOverlay->GetColour(entity));
-		}
+		//	// Add an item for this entity to the Select sub-menu
+		//	item = AddMenuItem(m_EntitySelectionMenu.get(),
+		//		title, entity->GetName(),
+		//		[this, entity](const MenuItemEvent& e) { if (!m_ShiftSelect) DeselectAll(); SelectEntity(entity); }
+		//	);
+		//	item->SetBGColour(m_EditorOverlay->GetColour(entity));
+		//}
 
-		m_RightClickMenu->Show(position.x, position.y);
+		//m_RightClickMenu->Show(position.x, position.y);
 	}
 
 	bool Editor::TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const
@@ -2969,8 +2533,8 @@ namespace FusionEngine
 	{
 		DeselectEntity(entity);
 
-		ClearCtxMenu(m_PropertiesMenu.get());
-		ClearCtxMenu(m_EntitySelectionMenu.get());
+		//ClearCtxMenu(m_PropertiesMenu.get());
+		//ClearCtxMenu(m_EntitySelectionMenu.get());
 
 		auto it = std::remove(m_NonStreamedEntities.begin(), m_NonStreamedEntities.end(), entity);
 		if (it != m_NonStreamedEntities.end())
@@ -3139,26 +2703,31 @@ namespace FusionEngine
 	class InspectorGenerator
 	{
 	public:
-		Rocket::Core::ElementDocument* doc;
-		Rocket::Core::Element* body;
+		Gwen::Controls::WindowControl* window;
+		Gwen::Controls::Base* body;
 
-		boost::intrusive_ptr<EntitySelector> entity_selector;
-		boost::intrusive_ptr<Inspectors::ElementEntityInspector> entity_inspector;
-		boost::intrusive_ptr<Inspectors::ElementGroup> inspector_group;
+		//boost::intrusive_ptr<EntitySelector> entity_selector;
+		Inspectors::ElementEntityInspector* entity_inspector;
+		Inspectors::ElementGroup* inspector_group;
+
+		Gwen::Controls::ComboBox* entitySelector;
 
 		std::vector<EntityPtr> entities;
 
-		InspectorGenerator(Rocket::Core::ElementDocument* doc_)
-			: doc(doc_)
+		std::function<void (const EntityPtr& entity)> entitySelectorCallback;
+
+		InspectorGenerator(Gwen::Controls::Canvas* gui_canvas)
 		{
-			FSN_ASSERT(doc);
+			window = new Gwen::Controls::WindowControl(gui_canvas);
 
-			body = doc->GetFirstChild()->GetElementById("content");
-			if (!body)
-			{
-				FSN_EXCEPT(Exception, (doc->GetSourceURL() + " is missing the content element").CString());
-			}
+			window->SetTitle(L"Properties");
+			window->SetSize(200, 200);
+			window->SetPos(0, 0);
+			window->SetDeleteOnClose(true);
 
+			entitySelector = new Gwen::Controls::ComboBox(window);
+			//entitySelector->onSelection.Add(this, &InspectorGenerator::EntitySelector_OnSelection);
+			/*
 			auto element = doc->CreateElement("entity_selector"); FSN_ASSERT(element);
 			if (entity_selector = dynamic_cast<EntitySelector*>(element))
 			{
@@ -3190,6 +2759,7 @@ namespace FusionEngine
 				FSN_EXCEPT(Exception, "Failed to create inspector_group element.");
 			}
 			element->RemoveReference();
+			*/
 		}
 
 		void ProcessEntity(const EntityPtr& entity)
@@ -3197,6 +2767,17 @@ namespace FusionEngine
 			entities.push_back(entity);
 
 			inspector_group->AddEntity(entity);
+		}
+
+		void SetEntitySelectorCallback(std::function<void (const EntityPtr& entity)> fn)
+		{
+			entitySelectorCallback = fn;
+		}
+
+		void EntitySelector_OnSelection()
+		{
+			EntityPtr entitySelected;
+			entitySelectorCallback(entitySelected);
 		}
 
 		void Generate()
@@ -3207,8 +2788,6 @@ namespace FusionEngine
 				if (entities.size() > 1)
 				{
 					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
-
-					entity_inspector->SetPseudoClass("unavailable", true);
 				}
 				else if (!entities.empty())
 				{
@@ -3222,21 +2801,21 @@ namespace FusionEngine
 					else
 						title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
 
-					entity_inspector->SetPseudoClass("unavailable", false);
 					entity_inspector->SetEntity(front);
 				}
 				if (!title.empty())
-					doc->SetTitle(doc->GetTitle() + (": " + title).c_str());
+					window->SetTitle(Gwen::Utility::Format(L"Properties: %s", title));
 			}
-			if (auto titleElem = doc->GetElementById("title"))
-				titleElem->SetInnerRML(doc->GetTitle());
 
 			inspector_group->AddFooter();
 
 			inspector_group->DoneAddingEntities();
 
 			// Set entities
-			entity_selector->SetEntities(entities);
+			for (auto entity : entities)
+			{
+				entitySelector->AddItem(Gwen::Utility::StringToUnicode(entity->GetName()));
+			}
 		}
 	};
 
@@ -3259,7 +2838,7 @@ namespace FusionEngine
 		});
 		generator.inspector_group->SetResourceEditorFactory(this);
 		
-		generator.entity_selector->SetCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
+		generator.SetEntitySelectorCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
 		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)->ComponentPtr
 		{
 			if (!entity->GetArchetypeDefinitionAgent())
@@ -3289,7 +2868,8 @@ namespace FusionEngine
 
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback)
 	{
-		auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
+		//auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
+
 		//{
 		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
 		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
@@ -3297,20 +2877,21 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc);
+		InspectorGenerator generator(m_GUIContext);
 		InitInspectorGenerator(generator, close_callback);
 
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			generator.ProcessEntity(*it);
 		generator.Generate();
 
-		doc->Show();
-		doc->RemoveReference();
+		//doc->Show();
+		//doc->RemoveReference();
 	}
 
 	void Editor::CreatePropertiesWindowForSelected()
 	{
-		auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
+		//auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
+
 		//{
 		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
 		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
@@ -3318,14 +2899,14 @@ namespace FusionEngine
 		//	strm->RemoveReference();
 		//}
 
-		InspectorGenerator generator(doc);
+		InspectorGenerator generator(m_GUIContext);
 		InitInspectorGenerator(generator, std::function<void (void)>());
 
 		ForEachSelected([&generator](const EntityPtr& entity) { generator.ProcessEntity(entity); });
 		generator.Generate();
 		
-		doc->Show();
-		doc->RemoveReference();
+		//doc->Show();
+		//doc->RemoveReference();
 	}
 
 	void Editor_StartResourceEditor(const std::string& path, Editor* obj)

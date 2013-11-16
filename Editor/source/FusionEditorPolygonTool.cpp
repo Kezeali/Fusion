@@ -29,8 +29,8 @@
 
 #include "FusionEditorPolygonTool.h"
 
-#include "FusionGUI.h"
 #include <ClanLib/core.h>
+#include <Gwen/Gwen.h>
 
 namespace FusionEngine
 {
@@ -68,8 +68,8 @@ namespace FusionEngine
 
 		m_DrawFeedbackTri = false;
 
-		m_GuiDoc->Close();
-		m_GuiDoc.reset();
+		//m_GuiDoc->Close();
+		//m_GuiDoc.reset();
 
 		m_Active = false;
 	}
@@ -402,21 +402,6 @@ namespace FusionEngine
 
 	void EditorPolygonTool::CreateGui()
 	{
-		if (!m_GuiDoc)
-		{
-			m_GuiDoc = GUI::getSingleton().GetContext("editor")->LoadDocument("/Data/core/gui/editor_shapetool_toolbar.rml");
-			m_GuiDoc->RemoveReference();
-
-			//if (auto body = m_GuiDoc->GetElementById("content"))
-			//	Rocket::Core::Factory::InstanceElementText(body, "Polygon Tool");
-
-			if (auto title = m_GuiDoc->GetElementById("title"))
-				Rocket::Core::Factory::InstanceElementText(title, "Polygon Tool");
-		}
-		if (m_GuiDoc)
-		{
-			m_GuiDoc->Show();
-		}
 	}
 
 }

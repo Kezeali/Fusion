@@ -2,28 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="include\FusionEditor.h" />
-    <ClInclude Include="include\FusionInspectorBase.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionTransformInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionInspectorUtils.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionRigidBodyInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionSpriteInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionComponentInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionASScriptInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionCircleShapeInspector.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionEntityInspector.h">
@@ -32,16 +11,7 @@
     <ClInclude Include="include\FusionElementInspectorGroup.h">
       <Filter>Inspectors</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionFixtureInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionElementPropertyConnection.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionResourceDatabase.h" />
-    <ClInclude Include="include\FusionPolygonShapeInspector.h">
-      <Filter>Inspectors</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionPolygonResourceEditor.h">
       <Filter>ResourceEditors</Filter>
     </ClInclude>
@@ -73,6 +43,9 @@
       <Filter>Inspectors</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionWindowDropTarget.h" />
+    <ClInclude Include="include\FusionComponentInspectorBase.h">
+      <Filter>Inspectors</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -90,37 +63,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionEditor.cpp" />
-    <ClCompile Include="source\FusionTransformInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionASScriptInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionInspectorBase.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionSpriteInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionEntityInspector.cpp">
       <Filter>Inspectors</Filter>
     </ClCompile>
     <ClCompile Include="source\FusionElementInspectorGroup.cpp">
       <Filter>Inspectors</Filter>
     </ClCompile>
-    <ClCompile Include="source\FusionCircleShapeInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionRigidBodyInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionFixtureInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionResourceDatabase.cpp" />
-    <ClCompile Include="source\FusionPolygonShapeInspector.cpp">
-      <Filter>Inspectors</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionPolygonResourceEditor.cpp">
       <Filter>ResourceEditors</Filter>
     </ClCompile>
@@ -138,6 +87,9 @@
     </ClCompile>
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionComponentInspectorBase.cpp">
+      <Filter>Inspectors</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

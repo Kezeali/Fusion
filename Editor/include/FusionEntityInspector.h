@@ -36,30 +36,23 @@
 
 #include "FusionTypes.h"
 
-#include <Rocket/Core/Element.h>
-#include <Rocket/Core/Factory.h>
-
 #include <deque>
 #include <functional>
 #include <string>
 
 #include <boost/intrusive_ptr.hpp>
 
-#include "FusionRocketReferenceCountable.h"
+#include <Gwen/Controls/Base.h>
 
 #include "FusionConsole.h"
-
-namespace Rocket { namespace Controls {
-	class ElementFormControlInput;
-} }
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class ElementEntityInspector : public Rocket::Core::Element
+	class ElementEntityInspector : public Gwen::Controls::Base
 	{
 	public:
-		ElementEntityInspector(const Rocket::Core::String& tag);
+		GWEN_CONTROL(ElementEntityInspector, Gwen::Controls::Base);
 		~ElementEntityInspector()
 		{
 			SendToConsole("Closed inspector");
@@ -81,38 +74,38 @@ namespace FusionEngine { namespace Inspectors
 
 		std::function<void (void)> m_CloseCallback;
 
-		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> apply_button;
+		//boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> apply_button;
 
-		struct Input
-		{
-			boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> ui_element;
+		//struct Input
+		//{
+		//	boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> ui_element;
 
-			std::function<void (const EntityPtr& entity)> publishToEntity;
-			std::function<void (const EntityPtr& entity)> receiveFromEntity;
-		};
+		//	std::function<void (const EntityPtr& entity)> publishToEntity;
+		//	std::function<void (const EntityPtr& entity)> receiveFromEntity;
+		//};
 
-		std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
+		//std::map<boost::intrusive_ptr<Rocket::Core::Element>, Input> m_Inputs;
 
-		std::deque<boost::intrusive_ptr<Rocket::Core::Element>> m_InlineSections;
-		class InlineSection
-		{
-		public:
-			InlineSection(ElementEntityInspector* parent_)
-				: parent(parent_)
-			{
-				auto line = Rocket::Core::Factory::InstanceElement(parent, "p", "p", Rocket::Core::XMLAttributes());
-				parent->AppendChild(line);
-				line->RemoveReference();
-				parent->m_InlineSections.push_back(line);
-			}
-			~InlineSection()
-			{
-				parent->m_InlineSections.pop_back();
-			}
+		//std::deque<boost::intrusive_ptr<Rocket::Core::Element>> m_InlineSections;
+		//class InlineSection
+		//{
+		//public:
+		//	InlineSection(ElementEntityInspector* parent_)
+		//		: parent(parent_)
+		//	{
+		//		auto line = Rocket::Core::Factory::InstanceElement(parent, "p", "p", Rocket::Core::XMLAttributes());
+		//		parent->AppendChild(line);
+		//		line->RemoveReference();
+		//		parent->m_InlineSections.push_back(line);
+		//	}
+		//	~InlineSection()
+		//	{
+		//		parent->m_InlineSections.pop_back();
+		//	}
 
-			ElementEntityInspector* parent;
-			boost::intrusive_ptr<Rocket::Core::Element> line;
-		};
+		//	ElementEntityInspector* parent;
+		//	boost::intrusive_ptr<Rocket::Core::Element> line;
+		//};
 
 		void InitUI();
 
@@ -122,7 +115,7 @@ namespace FusionEngine { namespace Inspectors
 		void AddTextInput(const std::string& name, StringGetter_t getter, int size = 0);
 		void AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter);
 
-		void ProcessEvent(Rocket::Core::Event& ev);
+		//void ProcessEvent(Rocket::Core::Event& ev);
 	};
 
 } }

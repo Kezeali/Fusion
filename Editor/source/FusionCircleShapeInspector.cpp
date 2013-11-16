@@ -29,11 +29,26 @@
 
 #include "FusionCircleShapeInspector.h"
 
+#include <Gwen/Controls/Property/Checkbox.h>
+#include <Gwen/Controls/Property/Text.h>
+
+#include <boost/lexical_cast.hpp>
+
+using namespace Gwen;
+
 namespace FusionEngine { namespace Inspectors
 {
 
 	void CircleShapeInspector::InitUI()
 	{
+		//auto row = props->Add(L"X", new Controls::Property::Checkbox( props ));
+		//row->onChange.Add(this, [](Controls::Base* control)
+		//{
+		//	Controls::PropertyRow* row = (Controls::PropertyRow*)control;
+		//	Controls::Property::Checkbox* checkbox = dynamic_cast<Controls::Property::Checkbox*>(row->GetProperty());
+		//	checkbox->m_Checkbox->IsChecked()
+		//});
+		/*
 		AddProperty("Position", AddTextInput("Y",
 			FloatSetter_t([](float value, ComponentIPtr<ICircleShape> component) { component->Position.Set(Vector2(value, component->Position.Get().y)); }),
 			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Position.Get().y; })
@@ -47,6 +62,7 @@ namespace FusionEngine { namespace Inspectors
 			FloatSetter_t([](float value, ComponentIPtr<ICircleShape> component) { component->Radius.Set(value); }),
 			FloatGetter_t([](ComponentIPtr<ICircleShape> component)->float { return component->Radius.Get(); })
 			));
+			*/
 	}
 
 } }

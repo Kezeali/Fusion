@@ -10,14 +10,14 @@
     <Filter Include="Map\Async Loading">
       <UniqueIdentifier>{8aefb84e-f9d7-4a15-b7a2-ba350ef57548}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GUI">
-      <UniqueIdentifier>{12ceb53f-9497-4022-acc8-0e93c0757aeb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PrecompiledHeaders">
       <UniqueIdentifier>{59dbc461-2340-4c1e-a7f0-26fb95578c2d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Archetypes">
       <UniqueIdentifier>{d862b419-14cd-4f32-aa82-6f18f43e0186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{9a7e2e9d-4724-4323-a5bf-4dd579308228}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -39,27 +39,6 @@
     <ClCompile Include="source\FusionStreamingManager.cpp">
       <Filter>Map\Async Loading</Filter>
     </ClCompile>
-    <ClCompile Include="source\FusionContextMenu.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionElementSelectableDataGrid.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionEntityDecorator.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionEntityDecoratorInstancer.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionGUI.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionMessageBox.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionRocketInterface.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionP2PEntityInstantiator.cpp">
       <Filter>Instantiation</Filter>
     </ClCompile>
@@ -70,9 +49,6 @@
     <ClCompile Include="source\FusionEngineManager.cpp" />
     <ClCompile Include="source\FusionComponentScriptTypeRegistration.cpp" />
     <ClCompile Include="source\FusionEntityScriptBinding.cpp" />
-    <ClCompile Include="source\FusionFilesystemDataSource.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionArchetypeFactory.cpp">
       <Filter>Archetypes</Filter>
     </ClCompile>
@@ -90,9 +66,6 @@
     </ClCompile>
     <ClCompile Include="source\FusionNetworkedRegionCellCache.cpp">
       <Filter>Map\Async Loading</Filter>
-    </ClCompile>
-    <ClCompile Include="source\FusionProgressDisplay.cpp">
-      <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
@@ -125,27 +98,6 @@
     <ClInclude Include="include\FusionStreamingManager.h">
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionContextMenu.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionElementSelectableDataGrid.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionEntityDecorator.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionEntityDecoratorInstancer.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionGUI.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionMessageBox.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionRocketInterface.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionP2PEntityInstantiator.h">
       <Filter>Instantiation</Filter>
     </ClInclude>
@@ -157,12 +109,6 @@
     <ClInclude Include="include\FusionEngineExtension.h" />
     <ClInclude Include="include\FusionComponentScriptTypeRegistration.h" />
     <ClInclude Include="include\FusionWorldSaver.h" />
-    <ClInclude Include="include\FusionRocketReferenceCountable.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionFilesystemDataSource.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="include\FusionArchetypeFactory.h">
       <Filter>Archetypes</Filter>
     </ClInclude>
@@ -198,9 +144,6 @@
     </ClInclude>
     <ClInclude Include="include\FusionRegionFileLoadedCallbackHandle.h">
       <Filter>Map\Async Loading</Filter>
-    </ClInclude>
-    <ClInclude Include="include\FusionProgressDisplay.h">
-      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionCellFileManager.h">
       <Filter>Map</Filter>

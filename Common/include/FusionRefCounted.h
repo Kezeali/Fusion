@@ -265,12 +265,12 @@ namespace FusionEngine
 			asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 	}
 
-	inline void intrusive_ptr_add_ref(RefCounted *ptr)
+	void intrusive_ptr_add_ref(RefCounted *ptr)
 	{
 		ptr->addRef();
 	}
 
-	inline void intrusive_ptr_release(RefCounted *ptr)
+	void intrusive_ptr_release(RefCounted *ptr)
 	{
 		ptr->release();
 	}

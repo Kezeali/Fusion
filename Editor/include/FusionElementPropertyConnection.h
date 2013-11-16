@@ -30,8 +30,6 @@
 
 #include "FusionPrerequisites.h"
 
-#include <Rocket/Core/Element.h>
-
 #include "FusionEntityComponent.h"
 
 #include <functional>

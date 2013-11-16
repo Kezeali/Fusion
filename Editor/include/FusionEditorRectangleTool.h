@@ -99,8 +99,6 @@ namespace FusionEngine
 		bool m_MouseDown;
 		Vector2 m_DragFrom;
 
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
-
 		void CreateGui();
 
 	};

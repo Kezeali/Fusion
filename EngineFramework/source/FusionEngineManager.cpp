@@ -42,7 +42,6 @@
 #include "FusionEngineExtension.h"
 #include "FusionEntityManager.h"
 #include "FusionEntitySynchroniser.h"
-#include "FusionGUI.h"
 #include "FusionLog.h"
 #include "FusionLogger.h"
 #include "Messaging/FusionRouter.h"

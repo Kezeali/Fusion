@@ -34,23 +34,21 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionInspectorBase.h"
+#include "FusionComponentInspectorBase.h"
 
 #include "FusionPhysicalComponent.h"
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	class RigidBodyInspector : public GenericInspector<IRigidBody>
+	class RigidBodyInspector : public ComponentInspectorBase
 	{
 	public:
-		RigidBodyInspector(const Rocket::Core::String& tag)
-			: GenericInspector(tag)
+		GWEN_CONTROL_INLINE(RigidBodyInspector, ComponentInspectorBase)
 		{
-			InitUI();
 		}
 
-		void InitUI();
+		void InitUI() override;
 	};
 
 } }

@@ -32,9 +32,6 @@
 #include "FusionComponentInspector.h"
 #include "FusionEntity.h"
 
-#include <Rocket/Core.h>
-#include <Rocket/Controls.h>
-
 #include <boost/lexical_cast.hpp>
 
 #include <boost/multi_index_container.hpp>
@@ -149,7 +146,7 @@ namespace FusionEngine { namespace Inspectors
 				inspectorComponents.push_back(component);
 		}
 
-		int AddNewEntry(const EquivalentInspectorKey& key, Rocket::Core::Element* subsection, Inspectors::ComponentInspector* inspector, const ComponentPtr& component)
+		int AddNewEntry(const EquivalentInspectorKey& key, Gwen::Controls::Base* subsection, Inspectors::ComponentInspector* inspector, const ComponentPtr& component)
 		{
 			SubsectionData newData;
 			newData.button_code = m_NextId++;
@@ -183,9 +180,9 @@ namespace FusionEngine { namespace Inspectors
 			}
 		}
 
-		std::vector<boost::intrusive_ptr<Rocket::Core::Element>> GetSubsections(const ComponentPtr& component)
+		std::vector<Gwen::Controls::Base*> GetSubsections(const ComponentPtr& component)
 		{
-			std::vector<boost::intrusive_ptr<Rocket::Core::Element>> subsections;
+			std::vector<Gwen::Controls::Base*> subsections;
 			GetSubsections(component, std::back_inserter(subsections));
 			return subsections;
 		}
@@ -199,14 +196,14 @@ namespace FusionEngine { namespace Inspectors
 				*output_it++ = entry.first->subsection;
 		}
 
-		boost::intrusive_ptr<Rocket::Core::Element> GetSubsection(int code)
+		Gwen::Controls::Base* GetSubsection(int code)
 		{
 			auto& byButtonCode = m_Subsections.get<tags::button_code>();
 			auto entry = byButtonCode.find(code);
 			if (entry != byButtonCode.end())
 				return entry->subsection;
 			else
-				return boost::intrusive_ptr<Rocket::Core::Element>();
+				return nullptr;
 		}
 
 		Inspectors::ComponentInspector* GetInspector(int code)
@@ -260,7 +257,7 @@ namespace FusionEngine { namespace Inspectors
 
 			EquivalentInspectorKey inspector_key;
 
-			Rocket::Core::Element* subsection;
+			Gwen::Controls::Base* subsection;
 
 			Inspectors::ComponentInspector* inspector;
 
@@ -278,14 +275,13 @@ namespace FusionEngine { namespace Inspectors
 		std::map<ComponentInspector*, std::vector<ComponentPtr>> m_Inspectors;
 	};
 
-	ElementGroup::ElementGroup(const Rocket::Core::String& tag)
-		: Rocket::Core::Element(tag),
+	GWEN_CONTROL_CONSTRUCTOR(ElementGroup),
 		m_Subsections(new SubsectionCollection())
 	{
-		body = Rocket::Core::Factory::InstanceElement(this, "div", "div", Rocket::Core::XMLAttributes());
-		FSN_ASSERT(body);
-		this->AppendChild(body);
-		body->RemoveReference();
+		//body = Rocket::Core::Factory::InstanceElement(this, "div", "div", Rocket::Core::XMLAttributes());
+		//FSN_ASSERT(body);
+		//this->AppendChild(body);
+		//body->RemoveReference();
 	}
 
 	void ElementGroup::AddEntity(const EntityPtr& entity)
@@ -303,13 +299,9 @@ namespace FusionEngine { namespace Inspectors
 	void ElementGroup::DoneAddingEntities()
 	{
 		m_Subsections->InitInspectors();
-		/*([](ComponentInspector* inspector, <something> components)
-		{
-			inspector->SetComponents(components);
-		});*/
 
-		SetPseudoClass("single_entity", m_Entities.size() == 1);
-		SetPseudoClass("multi_entity", m_Entities.size() > 1);
+		//SetPseudoClass("single_entity", m_Entities.size() == 1);
+		//SetPseudoClass("multi_entity", m_Entities.size() > 1);
 	}
 
 	void ElementGroup::ProcessComponent(const ComponentPtr& component, bool removable)
@@ -349,37 +341,38 @@ namespace FusionEngine { namespace Inspectors
 			// New component / interface type
 			auto tag = "inspector_" + inspector_type;
 			fe_tolower(tag);
-			Rocket::Core::String rocketTag(tag.data(), tag.data() + tag.length());
-			auto element = Rocket::Core::Factory::InstanceElement(body, rocketTag, "inspector", Rocket::Core::XMLAttributes());
-			auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
-			if (inspector)
-			{
-				//auto& value = m_Inspectors[key];
-				//value.first = inspector;
-				//value.second.push_back(component);
+			Gwen::Controls::Base* inspector = nullptr;
+			//Rocket::Core::String rocketTag(tag.data(), tag.data() + tag.length());
+			//auto element = Rocket::Core::Factory::InstanceElement(body, rocketTag, "inspector", Rocket::Core::XMLAttributes());
+			//auto inspector = dynamic_cast<Inspectors::ComponentInspector*>(element);
+			//if (inspector)
+			//{
+			//	//auto& value = m_Inspectors[key];
+			//	//value.first = inspector;
+			//	//value.second.push_back(component);
 
-				// The title format is "interface (actual type) - identifier"
-				auto name = component->GetType();
-				if (name != inspector_type)
-					name = inspector_type + " (" + name + ")";
-				if (!component->GetIdentifier().empty())
-					name += " - " + component->GetIdentifier();
+			//	// The title format is "interface (actual type) - identifier"
+			//	auto name = component->GetType();
+			//	if (name != inspector_type)
+			//		name = inspector_type + " (" + name + ")";
+			//	if (!component->GetIdentifier().empty())
+			//		name += " - " + component->GetIdentifier();
 
-				// Pass the tool executors onward
-				FSN_ASSERT(m_CircleToolExecutor);
-				FSN_ASSERT(m_RectangleToolExecutor);
-				FSN_ASSERT(m_PolygonToolExecutor);
-				inspector->SetCircleToolExecutor(m_CircleToolExecutor);
-				inspector->SetRectangleToolExecutor(m_RectangleToolExecutor);
-				inspector->SetPolygonToolExecutor(m_PolygonToolExecutor);
-				inspector->SetResourceEditorFactory(m_ResourceEditorFactory);
+			//	// Pass the tool executors onward
+			//	FSN_ASSERT(m_CircleToolExecutor);
+			//	FSN_ASSERT(m_RectangleToolExecutor);
+			//	FSN_ASSERT(m_PolygonToolExecutor);
+			//	inspector->SetCircleToolExecutor(m_CircleToolExecutor);
+			//	inspector->SetRectangleToolExecutor(m_RectangleToolExecutor);
+			//	inspector->SetPolygonToolExecutor(m_PolygonToolExecutor);
+			//	inspector->SetResourceEditorFactory(m_ResourceEditorFactory);
 
-				//inspector->InitUI();
+			//	//inspector->InitUI();
 
-				AddSubsection(key, name, inspector, component, removable);
-			}
-			if (element)
-				element->RemoveReference();
+			//	AddSubsection(key, name, inspector, component, removable);
+			//}
+			//if (element)
+			//	element->RemoveReference();
 
 			return inspector != nullptr;
 		}
@@ -388,12 +381,12 @@ namespace FusionEngine { namespace Inspectors
 			// Existing type
 			//entry->second.second.push_back(component);
 			m_Subsections->Add(key, component);
-			if (!removable)
-			{
-				auto subsections = m_Subsections->GetSubsections(component);
-				for (auto it = subsections.begin(); it != subsections.end(); ++it)
-					(*it)->SetClass("locked_component", true);
-			}
+			//if (!removable)
+			//{
+			//	auto subsections = m_Subsections->GetSubsections(component);
+			//	for (auto it = subsections.begin(); it != subsections.end(); ++it)
+			//		(*it)->SetClass("locked_component", true);
+			//}
 			return true;
 		}
 	}
@@ -403,70 +396,71 @@ namespace FusionEngine { namespace Inspectors
 		auto subsection = AddSubsection(body, name, inspector);
 
 		int code =
-			m_Subsections->AddNewEntry(key, subsection.get(), inspector, initial_component);
+			m_Subsections->AddNewEntry(key, subsection, inspector, initial_component);
 
-		if (!removable)
-		{
-			subsection->SetClass("locked_component", true);
-		}
+		//if (!removable)
+		//{
+		//	subsection->SetClass("locked_component", true);
+		//}
 
-		Rocket::Core::ElementList headerElems;
-		subsection->GetElementsByTagName(headerElems, "header");
-		FSN_ASSERT(!headerElems.empty());
+		//Rocket::Core::ElementList headerElems;
+		//subsection->GetElementsByTagName(headerElems, "header");
+		//FSN_ASSERT(!headerElems.empty());
 
-		auto header = headerElems.front();
+		//auto header = headerElems.front();
 
-		//  'Remove' button
-		Rocket::Core::XMLAttributes formAttributes;
-		formAttributes.Set("code", code);
-		auto form = Rocket::Core::Factory::InstanceElement(header, "form", "form", formAttributes);
-		header->AppendChild(form);
+		////  'Remove' button
+		//Rocket::Core::XMLAttributes formAttributes;
+		//formAttributes.Set("code", code);
+		//auto form = Rocket::Core::Factory::InstanceElement(header, "form", "form", formAttributes);
+		//header->AppendChild(form);
 
-		Rocket::Core::XMLAttributes buttonAttributes;
-		buttonAttributes.Set("type", "submit");
-		buttonAttributes.Set("name", "result");
-		buttonAttributes.Set("value", "remove_component");
-		auto removeButton = Rocket::Core::Factory::InstanceElement(header, "input", "input", buttonAttributes);
-		form->AppendChild(removeButton);
-		removeButton->RemoveReference();
+		//Rocket::Core::XMLAttributes buttonAttributes;
+		//buttonAttributes.Set("type", "submit");
+		//buttonAttributes.Set("name", "result");
+		//buttonAttributes.Set("value", "remove_component");
+		//auto removeButton = Rocket::Core::Factory::InstanceElement(header, "input", "input", buttonAttributes);
+		//form->AppendChild(removeButton);
+		//removeButton->RemoveReference();
 
-		form->RemoveReference();
+		//form->RemoveReference();
 	}
 
 	void ElementGroup::AddFooter()
 	{
-		Rocket::Core::XMLAttributes formAttributes;
-		formAttributes.Set("class", "footer");
-		auto footer = Rocket::Core::Factory::InstanceElement(this, "form", "form", formAttributes);
+		//Rocket::Core::XMLAttributes formAttributes;
+		//formAttributes.Set("class", "footer");
+		//auto footer = Rocket::Core::Factory::InstanceElement(this, "form", "form", formAttributes);
 
-		Rocket::Core::XMLAttributes inputAttributes;
+		//Rocket::Core::XMLAttributes inputAttributes;
 
-		inputAttributes.Set("type", "text");
-		inputAttributes.Set("name", "component_type");
-		inputAttributes.Set("size", 20);
-		auto typeBox = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
-		footer->AppendChild(typeBox);
-		typeBox->RemoveReference();
+		//inputAttributes.Set("type", "text");
+		//inputAttributes.Set("name", "component_type");
+		//inputAttributes.Set("size", 20);
+		//auto typeBox = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
+		//footer->AppendChild(typeBox);
+		//typeBox->RemoveReference();
 
-		inputAttributes.Set("name", "component_id");
-		auto idBox = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
-		footer->AppendChild(idBox);
-		idBox->RemoveReference();
+		//inputAttributes.Set("name", "component_id");
+		//auto idBox = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
+		//footer->AppendChild(idBox);
+		//idBox->RemoveReference();
 
-		inputAttributes.Clear();
-		inputAttributes.Set("type", "submit");
-		inputAttributes.Set("name", "result");
-		inputAttributes.Set("value", "add_component");
-		auto addButton = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
-		//addButton->SetClass("add_component", true);
-		Rocket::Core::Factory::InstanceElementText(addButton, "Add Component");
-		footer->AppendChild(addButton);
-		addButton->RemoveReference();
+		//inputAttributes.Clear();
+		//inputAttributes.Set("type", "submit");
+		//inputAttributes.Set("name", "result");
+		//inputAttributes.Set("value", "add_component");
+		//auto addButton = Rocket::Core::Factory::InstanceElement(footer, "input", "input", inputAttributes);
+		////addButton->SetClass("add_component", true);
+		//Rocket::Core::Factory::InstanceElementText(addButton, "Add Component");
+		//footer->AppendChild(addButton);
+		//addButton->RemoveReference();
 
-		this->AppendChild(footer);
-		footer->RemoveReference();
+		//this->AppendChild(footer);
+		//footer->RemoveReference();
 	}
 
+	/*
 	void ElementGroup::ProcessEvent(Rocket::Core::Event& ev)
 	{
 		Rocket::Core::Element::ProcessEvent(ev);
@@ -497,7 +491,7 @@ namespace FusionEngine { namespace Inspectors
 				if (code != -1)
 				{
 					auto components = m_Subsections->GetComponents(code);
-					std::set<boost::intrusive_ptr<Rocket::Core::Element>> subsectionsToRemove;
+					std::set<Gwen::Controls::Base*> subsectionsToRemove;
 
 					for (auto it = components.begin(), end = components.end(); it != end; ++it)
 					{
@@ -516,10 +510,11 @@ namespace FusionEngine { namespace Inspectors
 			}
 		}
 	}
+	*/
 
 	void ElementGroup::OnUpdate()
 	{
-		Rocket::Core::Element::OnUpdate();
+		//Rocket::Core::Element::OnUpdate();
 
 		bool newComponentAdded = false;
 		for (auto it = m_ComponentsToProcess.begin(); it != m_ComponentsToProcess.end();)
@@ -567,7 +562,7 @@ namespace FusionEngine { namespace Inspectors
 						auto subsectionsToRemove = m_Subsections->GetSubsections(*cIt);
 						for (auto it = subsectionsToRemove.begin(), end = subsectionsToRemove.end(); it != end; ++it)
 						{
-							body->RemoveChild(it->get());
+							//body->RemoveChild(it->get());
 						}
 
 						m_Subsections->RemoveEntries(component);

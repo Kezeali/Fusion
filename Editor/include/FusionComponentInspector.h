@@ -37,9 +37,12 @@
 #include "FusionEntityComponent.h"
 
 #include <boost/intrusive_ptr.hpp>
-#include <Rocket/Core/Element.h>
+#include <Gwen/Gwen.h>
+#include <Gwen/Align.h>
+#include <Gwen/Controls/WindowControl.h>
+#include <Gwen/Controls/Properties.h>
+#include <Gwen/Controls/PropertyTree.h>
 
-#include "FusionRocketReferenceCountable.h"
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"
@@ -49,12 +52,12 @@ namespace FusionEngine { namespace Inspectors
 {
 
 	//! Component inspector interface
-	class ComponentInspector : public Rocket::Core::Element
+	class ComponentInspector : public Gwen::Controls::Base
 	{
 	public:
-		ComponentInspector(const Rocket::Core::String& tag)
-			: Rocket::Core::Element(tag)
-		{}
+		GWEN_CONTROL_INLINE(ComponentInspector, Gwen::Controls::Base)
+		{
+		}
 		virtual ~ComponentInspector() {}
 
 		virtual void SetComponents(const std::vector<ComponentPtr>& components) = 0;

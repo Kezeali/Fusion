@@ -44,7 +44,6 @@
 
 #include "FusionPlayerRegistry.h"
 #include "FusionInputHandler.h"
-#include "FusionGUI.h"
 
 #include "FusionProfiling.h"
 #include "FusionNetworkManager.h"

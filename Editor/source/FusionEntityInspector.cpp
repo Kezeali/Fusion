@@ -31,20 +31,14 @@
 
 #include "FusionEntity.h"
 
-#include "FusionInspectorUtils.h"
-
 #include "FusionArchetypalEntityManager.h"
-
-#include <Rocket/Core.h>
-#include <Rocket/Controls.h>
 
 #include <boost/lexical_cast.hpp>
 
 namespace FusionEngine { namespace Inspectors
 {
 
-	ElementEntityInspector::ElementEntityInspector(const Rocket::Core::String& tag)
-		: Rocket::Core::Element(tag)
+	GWEN_CONTROL_CONSTRUCTOR(ElementEntityInspector)
 	{
 		InitUI();
 	}
@@ -59,7 +53,7 @@ namespace FusionEngine { namespace Inspectors
 
 	void ElementEntityInspector::InitUI()
 	{
-		using namespace std::placeholders;
+		/*using namespace std::placeholders;
 
 		{
 			InlineSection line(this);
@@ -144,54 +138,54 @@ namespace FusionEngine { namespace Inspectors
 			Rocket::Core::Factory::InstanceElementText(element, "Apply To Instances");
 
 			addControl(this, apply_button, element);
-		}
+		}*/
 	}
 
 	void ElementEntityInspector::AddTextInput(const std::string& name, StringSetter_t setter, StringGetter_t getter, int size)
 	{
-		auto parent = !m_InlineSections.empty() ? m_InlineSections.back() : boost::intrusive_ptr<Rocket::Core::Element>(this);
+		//auto parent = !m_InlineSections.empty() ? m_InlineSections.back() : boost::intrusive_ptr<Rocket::Core::Element>(this);
 
-		// Make sure title and textbox are on the same line
-		boost::intrusive_ptr<Rocket::Core::Element> block =
-			Rocket::Core::Factory::InstanceElement(parent.get(), "line", "line", Rocket::Core::XMLAttributes());
-		block->RemoveReference();
-		parent->AppendChild(block.get());
-		
+		//// Make sure title and textbox are on the same line
+		//boost::intrusive_ptr<Rocket::Core::Element> block =
+		//	Rocket::Core::Factory::InstanceElement(parent.get(), "line", "line", Rocket::Core::XMLAttributes());
+		//block->RemoveReference();
+		//parent->AppendChild(block.get());
+		//
 
-		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+		//boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
 
-		auto lowerName = fe_newlower(name);
+		//auto lowerName = fe_newlower(name);
 
-		Rocket::Core::Factory::InstanceElementText(block.get(), name.c_str());
+		//Rocket::Core::Factory::InstanceElementText(block.get(), name.c_str());
 
-		Rocket::Core::XMLAttributes attributes;
-		attributes.Set("type", "text");
-		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
-		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
-		attributes.Set("enter_event", true);
-		attributes.Set("value", "");
-		if (size <= 0)
-			attributes.Set("size", 10);
-		else
-			attributes.Set("size", size);
-		if(!setter)
-			attributes.Set("readonly", "true");
-		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(block.get(),
-			"input",
-			"input",
-			attributes);
+		//Rocket::Core::XMLAttributes attributes;
+		//attributes.Set("type", "text");
+		//attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
+		//attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		//attributes.Set("enter_event", true);
+		//attributes.Set("value", "");
+		//if (size <= 0)
+		//	attributes.Set("size", 10);
+		//else
+		//	attributes.Set("size", size);
+		//if(!setter)
+		//	attributes.Set("readonly", "true");
+		//Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(block.get(),
+		//	"input",
+		//	"input",
+		//	attributes);
 
-		addControl(block.get(), input_element, element);
+		//addControl(block.get(), input_element, element);
 
 
-		if (input_element)
-		{
-			Input inputData;
-			inputData.ui_element = input_element;
-			inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(input_element->GetValue().CString(), entity); };
-			inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { input_element->SetValue(getter(entity).c_str()); };
-			m_Inputs[input_element] = inputData;
-		}
+		//if (input_element)
+		//{
+		//	Input inputData;
+		//	inputData.ui_element = input_element;
+		//	inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(input_element->GetValue().CString(), entity); };
+		//	inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { input_element->SetValue(getter(entity).c_str()); };
+		//	m_Inputs[input_element] = inputData;
+		//}
 	}
 
 	void ElementEntityInspector::AddTextInput(const std::string& name, StringGetter_t getter, int size)
@@ -199,7 +193,7 @@ namespace FusionEngine { namespace Inspectors
 		AddTextInput(name, StringSetter_t(), getter, size);
 	}
 
-	namespace {
+	/*namespace {
 		bool SetCheckbox(const boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, bool value, bool first = true)
 		{
 			auto type = input->GetAttribute("type", Rocket::Core::String(""));
@@ -238,122 +232,122 @@ namespace FusionEngine { namespace Inspectors
 				return false;
 			}
 		}
-	}
+	}*/
 
 	void ElementEntityInspector::AddToggleInput(const std::string& name, BoolSetter_t setter, BoolGetter_t getter)
 	{
-		auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
-		this->AppendChild(line);
+		//auto line = Rocket::Core::Factory::InstanceElement(this, "p", "p", Rocket::Core::XMLAttributes());
+		//this->AppendChild(line);
 
-		boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
+		//boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput> input_element;
 
-		auto lowerName = fe_newlower(name);
+		//auto lowerName = fe_newlower(name);
 
-		Rocket::Core::Factory::InstanceElementText(line, name.c_str());
+		//Rocket::Core::Factory::InstanceElementText(line, name.c_str());
 
-		Rocket::Core::XMLAttributes attributes;
-		attributes.Set("type", "checkbox");
-		attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
-		attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
-		attributes.Set("value", Rocket::Core::String(lowerName.c_str()));
-		Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
-			"input",
-			"input",
-			attributes);
+		//Rocket::Core::XMLAttributes attributes;
+		//attributes.Set("type", "checkbox");
+		//attributes.Set("id", Rocket::Core::String((lowerName + "_input").c_str()));
+		//attributes.Set("name", Rocket::Core::String(lowerName.c_str()));
+		//attributes.Set("value", Rocket::Core::String(lowerName.c_str()));
+		//Rocket::Core::Element* element = Rocket::Core::Factory::InstanceElement(line,
+		//	"input",
+		//	"input",
+		//	attributes);
 
-		addControl(line, input_element, element);
+		//addControl(line, input_element, element);
 
-		line->RemoveReference();
+		//line->RemoveReference();
 
-		if (input_element)
-		{
-			Input inputData;
-			inputData.ui_element = input_element;
-			inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(GetCheckbox(input_element), entity); };
-			inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { SetCheckbox(input_element, getter(entity)); };
-			m_Inputs[input_element] = inputData;
-		}
+		//if (input_element)
+		//{
+		//	Input inputData;
+		//	inputData.ui_element = input_element;
+		//	inputData.publishToEntity = [setter, input_element](const EntityPtr& entity) { setter(GetCheckbox(input_element), entity); };
+		//	inputData.receiveFromEntity = [getter, input_element](const EntityPtr& entity) { SetCheckbox(input_element, getter(entity)); };
+		//	m_Inputs[input_element] = inputData;
+		//}
 	}
 
-	void ClearUIValue(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& element)
-	{
-		auto type = element->GetAttribute("type", Rocket::Core::String(""));
-		if (type == "text")
-		{
-			element->SetValue("");
-		}
-		else if (type == "checkbox")
-		{
-			element->RemoveAttribute("checked");
-		}
-	}
+	//void ClearUIValue(boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& element)
+	//{
+	//	auto type = element->GetAttribute("type", Rocket::Core::String(""));
+	//	if (type == "text")
+	//	{
+	//		element->SetValue("");
+	//	}
+	//	else if (type == "checkbox")
+	//	{
+	//		element->RemoveAttribute("checked");
+	//	}
+	//}
 
-	class SetUIValueVisitor
-	{
-	public:
-		SetUIValueVisitor(const EntityPtr& entity_)
-			: entity(entity_)
-		{}
-		EntityPtr entity;
-		bool operator() (boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, ElementEntityInspector::StringGetter_t& getter) const
-		{
-			auto type = input->GetAttribute("type", Rocket::Core::String(""));
-			if (type == "text")
-			{
-				std::string value = getter(entity);
-				input->SetValue(value.c_str());
-				return true;
-			}
-			else
-				return false;
-		}
-	};
+	//class SetUIValueVisitor
+	//{
+	//public:
+	//	SetUIValueVisitor(const EntityPtr& entity_)
+	//		: entity(entity_)
+	//	{}
+	//	EntityPtr entity;
+	//	bool operator() (boost::intrusive_ptr<Rocket::Controls::ElementFormControlInput>& input, ElementEntityInspector::StringGetter_t& getter) const
+	//	{
+	//		auto type = input->GetAttribute("type", Rocket::Core::String(""));
+	//		if (type == "text")
+	//		{
+	//			std::string value = getter(entity);
+	//			input->SetValue(value.c_str());
+	//			return true;
+	//		}
+	//		else
+	//			return false;
+	//	}
+	//};
 
 	void ElementEntityInspector::ResetUIValues()
 	{
-		for (auto it = m_Inputs.begin(), end = m_Inputs.end(); it != end; ++it)
-			ClearUIValue(it->second.ui_element);
+		//for (auto it = m_Inputs.begin(), end = m_Inputs.end(); it != end; ++it)
+		//	ClearUIValue(it->second.ui_element);
 
-		for (auto inputIt = m_Inputs.begin(), inputEnd = m_Inputs.end(); inputIt != inputEnd; ++inputIt)
-		{
-			inputIt->second.receiveFromEntity(m_Entity);
-		}
+		//for (auto inputIt = m_Inputs.begin(), inputEnd = m_Inputs.end(); inputIt != inputEnd; ++inputIt)
+		//{
+		//	inputIt->second.receiveFromEntity(m_Entity);
+		//}
 	}
 
-	void ElementEntityInspector::ProcessEvent(Rocket::Core::Event& ev)
-	{
-		Rocket::Core::Element::ProcessEvent(ev);
-		if (ev.GetTargetElement() == apply_button.get() && ev == "mouseup")
-		{
-			if (auto agent = m_Entity->GetArchetypeDefinitionAgent())
-			{
-				SendToConsole("Pushing archetype config");
-				agent->PushState();
-			}
-		}
-		try
-		{
-			const bool isSelectElem =
-				dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(ev.GetTargetElement()) ||
-				dynamic_cast<Rocket::Controls::ElementFormControlDataSelect*>(ev.GetTargetElement());
-			if (ev == "enter" || (isSelectElem && ev == "change"))
-			{
-				auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(ev.GetTargetElement()));
-				if (entry != m_Inputs.end())
-				{
-					auto& inputData = entry->second;
-					if (inputData.publishToEntity)
-						inputData.publishToEntity(m_Entity);
+	//void ElementEntityInspector::ProcessEvent(Rocket::Core::Event& ev)
+	//{
+	//	Rocket::Core::Element::ProcessEvent(ev);
+	//	if (ev.GetTargetElement() == apply_button.get() && ev == "mouseup")
+	//	{
+	//		if (auto agent = m_Entity->GetArchetypeDefinitionAgent())
+	//		{
+	//			SendToConsole("Pushing archetype config");
+	//			agent->PushState();
+	//		}
+	//	}
+	//	try
+	//	{
+	//		const bool isSelectElem =
+	//			dynamic_cast<Rocket::Controls::ElementFormControlSelect*>(ev.GetTargetElement()) ||
+	//			dynamic_cast<Rocket::Controls::ElementFormControlDataSelect*>(ev.GetTargetElement());
+	//		if (ev == "enter" || (isSelectElem && ev == "change"))
+	//		{
+	//			auto entry = m_Inputs.find(boost::intrusive_ptr<Rocket::Core::Element>(ev.GetTargetElement()));
+	//			if (entry != m_Inputs.end())
+	//			{
+	//				auto& inputData = entry->second;
+	//				if (inputData.publishToEntity)
+	//					inputData.publishToEntity(m_Entity);
 
-					if (ev == "enter")
-						entry->first->Blur();
-				}
-			}
-		}
-		catch (boost::bad_lexical_cast&)
-		{
-			ResetUIValues();
-		}
-	}
+	//				if (ev == "enter")
+	//					entry->first->Blur();
+	//			}
+	//		}
+	//	}
+	//	catch (boost::bad_lexical_cast&)
+	//	{
+	//		ResetUIValues();
+	//	}
+	//}
 
 } }

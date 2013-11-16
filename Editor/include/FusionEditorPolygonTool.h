@@ -45,9 +45,7 @@
 
 #include "FusionEditorShapeTool.h"
 
-namespace Rocket { namespace Core {
-	class ElementDocument;
-} }
+#include <Gwen/Gwen.h>
 
 namespace FusionEngine
 {
@@ -55,7 +53,7 @@ namespace FusionEngine
 	typedef std::function<void (const std::vector<Vector2>&)> PolygonToolCallback_t;
 	typedef std::function<void (const std::vector<Vector2>&, const PolygonToolCallback_t&)> PolygonToolExecutor_t;
 
-	//! Polig' n' al-tool
+	//! Polygon.com
 	class EditorPolygonTool : public ShapeTool
 	{
 	public:
@@ -103,7 +101,7 @@ namespace FusionEngine
 		std::set<size_t> m_GrabbedVerts;
 		size_t m_TempGrabbedVert;
 		
-		boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
+		//boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
 
 		void UpdateFeedbackPoint(const Vector2& pos, bool to_nearest_edge);
 
