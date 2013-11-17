@@ -111,7 +111,7 @@ namespace FusionEngine
 		// IDrawable
 		void Draw(clan::Canvas& canvas, const Vector2& offset);
 
-		void CreateSpriteIfNecessary(clan::GraphicContext& gc);
+		void CreateSpriteIfNecessary(clan::Canvas& canvas);
 
 		void DefineSpriteIfNecessary();
 

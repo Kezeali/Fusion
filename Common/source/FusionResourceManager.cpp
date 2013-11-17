@@ -215,11 +215,11 @@ namespace FusionEngine
 				}
 			}
 
-			// Initialize a vdir
-			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			// Initialize a fs
+			clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
 			// Run the load function
-			loader.load(resource.get(), vdir, loader.userData);
+			loader.load(resource.get(), fs, loader.userData);
 		}
 	}
 
@@ -263,12 +263,12 @@ namespace FusionEngine
 	//		}
 	//	}
 
-	//	// Initialize a vdir
-	//	clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+	//	// Initialize a fs
+	//	clan::FileSystem fs(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 	//	// Run the load function
 	//	ResourceLoader &loader = _where->second;
-	//	loader.load(resource.get(), vdir, loader.userData);
+	//	loader.load(resource.get(), fs, loader.userData);
 	//}
 
 	void ResourceManager::Load()
@@ -762,12 +762,12 @@ namespace FusionEngine
 				FSN_EXCEPT(ExCode::FileType, "Attempted to load unknown resource type '" + resource->GetType() + "'");
 			}
 
-			// Initialize a vdir
-			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			// Initialize a fs
+			clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
 			// Run the load function
 			ActiveResourceLoader& loader = _where->second;
-			loader.load(resource.get(), vdir, loader.userData);
+			loader.load(resource.get(), fs, loader.userData);
 		}
 	}
 
@@ -785,13 +785,13 @@ namespace FusionEngine
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where != m_ResourceLoaders.end())
 		{
-			// Initialize a vdir
-			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			// Initialize a fs
+			clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
 			// Run the load function
 			ActiveResourceLoader& loader = _where->second;
 			if (loader.activeOperations & ActiveResourceLoader::ActiveOperation::Unload)
-				loader.unload(resource.get(), vdir, loader.userData);
+				loader.unload(resource.get(), fs, loader.userData);
 			else
 				return false;
 		}
@@ -803,13 +803,13 @@ namespace FusionEngine
 		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
 		if (entry != m_ResourceLoaders.end())
 		{
-			// Initialize a vdir
-			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			// Initialize a fs
+			clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
 			// Run the function
 			ActiveResourceLoader& loader = entry->second;
 			if (loader.hasChanged)
-				return loader.hasChanged(resource.get(), vdir, loader.userData);
+				return loader.hasChanged(resource.get(), fs, loader.userData);
 			else
 				return false;
 		}
@@ -822,14 +822,14 @@ namespace FusionEngine
 		ResourceLoaderMap::iterator entry = m_ResourceLoaders.find(resource->GetType());
 		if (entry != m_ResourceLoaders.end())
 		{
-			// Initialize a vdir
-			clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			// Initialize a fs
+			clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
 			ActiveResourceLoader& loader = entry->second;
 			// Only run if the loader has a hasChanged function, and Reload is allowed for this type at the moment
 			if (loader.hasChanged && loader.activeOperations & ActiveResourceLoader::ActiveOperation::Reload && loader.activeOperations & ActiveResourceLoader::ActiveOperation::Load)
 			{
-				return loader.hasChanged(resource.get(), vdir, loader.userData);
+				return loader.hasChanged(resource.get(), fs, loader.userData);
 			}
 			else
 				return false;

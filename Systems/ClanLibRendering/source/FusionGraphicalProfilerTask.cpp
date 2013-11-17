@@ -243,7 +243,7 @@ namespace FusionEngine
 
 				auto fontCopy = font; // draw_text isn't const, ugg.
 
-				const auto textLineHeight = fontCopy.get_text_size(canvas.get_gc(), "X").height;
+				const auto textLineHeight = fontCopy.get_text_size(canvas, "X").height;
 
 				const float textX = graphRect.right;
 				const float textTop = graphRect.bottom - textLineHeight * lines.size();

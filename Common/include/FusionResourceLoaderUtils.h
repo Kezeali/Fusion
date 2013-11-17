@@ -51,7 +51,7 @@ namespace FusionEngine
 	FileMetadata CreateFileMetadata(const std::string& path, std::istream& stream);
 
 	//! Returns true when a resource using FileMetadata has changed
-	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 }
 
 #endif

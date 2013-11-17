@@ -79,7 +79,7 @@ namespace FusionEngine
 		return metadata;
 	}
 
-	bool ResourceModTimeHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, const FileMetadata& metadata)
+	bool ResourceModTimeHasChanged(ResourceContainer* resource, clan::FileSystem fs, const FileMetadata& metadata)
 	{
 		const auto path = resource->GetPath();
 
@@ -88,9 +88,9 @@ namespace FusionEngine
 		return currentModTime != metadata.modTime;
 	}
 
-	bool ResourceContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, const FileMetadata& metadata)
+	bool ResourceContentHasChanged(ResourceContainer* resource, clan::FileSystem fs, const FileMetadata& metadata)
 	{
-		clan::IODevice device = vdir.open_file_read(resource->GetPath());
+		clan::IODevice device = fs.open_file(resource->GetPath(), clan::File::open_existing, clan::File::access_read);
 
 		// Compare length
 		if (device.get_size() != metadata.length)
@@ -102,12 +102,12 @@ namespace FusionEngine
 		return newChecksum != metadata.checksum;
 	}
 
-	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		FileMetadata metadata;
 		if (resource->TryGetMetadata(metadata))
 		{
-			return ResourceModTimeHasChanged(resource, vdir, metadata) || ResourceContentHasChanged(resource, vdir, metadata);
+			return ResourceModTimeHasChanged(resource, fs, metadata) || ResourceContentHasChanged(resource, fs, metadata);
 		}
 		else
 			return false;

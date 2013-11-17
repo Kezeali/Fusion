@@ -168,7 +168,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadPolygonResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -197,7 +197,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadPolygonResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadPolygonResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

@@ -100,7 +100,7 @@ namespace FusionEngine
 	}
 
 
-	ticpp::Document OpenXml(const std::string &filename, clan::VirtualDirectory vdir)
+	ticpp::Document OpenXml(const std::string &filename, clan::FileSystem vdir)
 	{
 		ticpp::Document doc;
 		try
@@ -125,7 +125,7 @@ namespace FusionEngine
 		return doc;
 	}
 
-	std::string &OpenString(std::string &content, const std::string &filename, clan::VirtualDirectory vdir)
+	std::string &OpenString(std::string &content, const std::string &filename, clan::FileSystem vdir)
 	{
 		try
 		{
@@ -143,7 +143,7 @@ namespace FusionEngine
 		return content;
 	}
 
-	std::string OpenString(const std::string &filename, clan::VirtualDirectory vdir)
+	std::string OpenString(const std::string &filename, clan::FileSystem vdir)
 	{
 		std::string content;
 		try
@@ -162,7 +162,7 @@ namespace FusionEngine
 		return content;
 	}
 
-	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::VirtualDirectory vdir)
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::FileSystem vdir)
 	{
 		try
 		{
@@ -177,7 +177,7 @@ namespace FusionEngine
 		}
 	}
 
-	void SaveString(const std::string &content, const std::string &filename, clan::VirtualDirectory vdir)
+	void SaveString(const std::string &content, const std::string &filename, clan::FileSystem vdir)
 	{
 		try
 		{
@@ -193,42 +193,42 @@ namespace FusionEngine
 
 	ticpp::Document OpenXml_PhysFS(const std::string &filename)
 	{
-		// Make a vdir
-		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// Make a fs
+		clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
-		return OpenXml(filename, vdir);
+		return OpenXml(filename, fs);
 	}
 
 	std::string OpenString_PhysFS(const std::string &filename)
 	{
-		// Make a vdir
-		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// Make a fs
+		clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
-		return OpenString(filename, vdir);
+		return OpenString(filename, fs);
 	}
 
 	std::string &OpenString_PhysFS(std::string& content, const std::string &filename)
 	{
-		// Make a vdir
-		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// Make a fs
+		clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
-		return OpenString(content, filename, vdir);
+		return OpenString(content, filename, fs);
 	}
 
 	void SaveXml_PhysFS(const ticpp::Document& doc, const std::string &filename)
 	{
-		// make a vdir
-		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// make a fs
+		clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
-		SaveXml(doc, filename, vdir);
+		SaveXml(doc, filename, fs);
 	}
 
 	void SaveString_PhysFS(const std::string &content, const std::string &filename)
 	{
-		// make a vdir
-		clan::VirtualDirectory vdir(clan::VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// make a fs
+		clan::FileSystem fs(new VirtualFileSource_PhysFS());
 
-		SaveString(content, filename, vdir);
+		SaveString(content, filename, fs);
 	}
 
 }

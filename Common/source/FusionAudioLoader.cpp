@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 
-	void LoadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
+	void LoadAudio(ResourceContainer* resource, clan::FileSystem fs, boost::any)
 	{
 		if (resource->IsLoaded())
 			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
@@ -49,7 +49,7 @@ namespace FusionEngine
 		clan::SoundProvider* sp;
 		try
 		{
-			clan::IODevice file = vdir.open_file_read(resource->GetPath());
+			clan::IODevice file = fs.open_file(resource->GetPath());
 			sp = clan::SoundProviderFactory::load(file, false, clan::PathHelp::get_extension(resource->GetPath()));
 
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
@@ -65,7 +65,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudio(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
+	void UnloadAudio(ResourceContainer* resource, clan::FileSystem fs, boost::any)
 	{
 		if (resource->IsLoaded())
 		{
@@ -75,7 +75,7 @@ namespace FusionEngine
 		resource->SetDataPtr(NULL);
 	}
 
-	void LoadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
+	void LoadAudioStream(ResourceContainer* resource, clan::FileSystem fs, boost::any)
 	{
 		if (resource->IsLoaded())
 			delete static_cast<clan::SoundBuffer*>(resource->GetDataPtr());
@@ -84,7 +84,7 @@ namespace FusionEngine
 		clan::SoundProvider* sp;
 		try
 		{
-			clan::IODevice file = vdir.open_file_read(resource->GetPath());
+			clan::IODevice file = fs.open_file(resource->GetPath());
 			sp = clan::SoundProviderFactory::load(file, true, clan::PathHelp::get_extension(resource->GetPath()));
 
 			resource->SetMetadata(CreateFileMetadata(resource->GetPath(), IO::CLStream(file)));
@@ -100,7 +100,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAudioStream(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any)
+	void UnloadAudioStream(ResourceContainer* resource, clan::FileSystem fs, boost::any)
 	{
 		if (resource->IsLoaded())
 		{

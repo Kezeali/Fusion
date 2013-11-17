@@ -39,7 +39,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadImageResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -50,7 +50,7 @@ namespace FusionEngine
 		clan::PixelBuffer sp;
 		try
 		{
-			clan::IODevice file = vdir.open_file_read(resource->GetPath());
+			clan::IODevice file = fs.open_file(resource->GetPath());
 			// Load the image
 			sp = clan::ImageProviderFactory::load(file, ext);
 			// Create the resource metadata
@@ -73,7 +73,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadImageResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -83,9 +83,9 @@ namespace FusionEngine
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadTextureResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadTextureResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
-		LoadImageResource(resource, vdir, user_data);
+		LoadImageResource(resource, fs, user_data);
 		if (resource->IsLoaded())
 		{
 			resource->setLoaded(false);
@@ -93,7 +93,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadTexture2DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadTexture2DResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -129,7 +129,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadTexture3DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadTexture3DResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

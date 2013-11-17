@@ -308,7 +308,7 @@ namespace FusionEngine
 		data.Archetype->StreamIn();
 	}
 
-	void LoadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadArchetypeResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -323,7 +323,7 @@ namespace FusionEngine
 
 		try
 		{
-			auto dev = vdir.open_file(resource->GetPath(), clan::File::open_existing, clan::File::access_read);
+			auto dev = fs.open_file(resource->GetPath(), clan::File::open_existing, clan::File::access_read);
 			auto stream = std::make_shared<IO::CLStream>(dev);
 
 			factory->Load(stream, ArchetypeFactoryManager::GetComponentFactory(), ArchetypeFactoryManager::GetEntityManager());
@@ -348,7 +348,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadArchetypeResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

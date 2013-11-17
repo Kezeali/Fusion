@@ -52,8 +52,6 @@
 
 #include "FusionPhysicsDebugDraw.h"
 
-#include <Rocket/Core.h>
-
 #include <tbb/parallel_sort.h>
 #include <tbb/parallel_for.h>
 
@@ -184,7 +182,7 @@ namespace FusionEngine
 		clan::Canvas canvas = m_Renderer->GetCanvas();
 
 		auto& viewports = m_RenderWorld->GetViewports();
-		auto worldGUICtx = Rocket::Core::GetContext("world");
+		//auto worldGUICtx = Rocket::Core::GetContext("world");
 		for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
 		{
 			const auto& vp = *it;
@@ -288,7 +286,7 @@ namespace FusionEngine
 
 					m_DebugFont.draw_text(canvas, pfLoc, line);
 
-					pfLoc.y += m_DebugFont.get_text_size(canvas.get_gc(), line).height;
+					pfLoc.y += m_DebugFont.get_text_size(canvas, line).height;
 				}
 			}
 #endif
@@ -347,7 +345,7 @@ namespace FusionEngine
 						for (auto it = lines.begin(), end = lines.end(); it != end; ++it)
 						{
 							m_DebugFont2.draw_text(canvas, pfLoc, *it);
-							pfLoc.y += m_DebugFont2.get_text_size(canvas.get_gc(), *it).height;
+							pfLoc.y += m_DebugFont2.get_text_size(canvas, *it).height;
 						}
 					}
 				}
@@ -424,64 +422,64 @@ namespace FusionEngine
 		m_Renderer(renderer),
 		m_Canvas(canvas)
 	{
-		m_MouseMoveSlot = canvas.get_window().get_ic().get_mouse().sig_pointer_move().connect(this, &CLRenderGUITask::onMouseMove);
+		//m_MouseMoveSlot = canvas.get_window().get_ic().get_mouse().sig_pointer_move().connect(this, &CLRenderGUITask::onMouseMove);
 	}
 
 	CLRenderGUITask::~CLRenderGUITask()
 	{
 	}
 
-	inline int getRktModifierFlags(const clan::InputEvent &ev)
-	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
-		return modifier;
-	}
+	//inline int getRktModifierFlags(const clan::InputEvent &ev)
+	//{
+	//	int modifier = 0;
+	//	if (ev.alt)
+	//		modifier |= Rocket::Core::Input::KM_ALT;
+	//	if (ev.ctrl)
+	//		modifier |= Rocket::Core::Input::KM_CTRL;
+	//	if (ev.shift)
+	//		modifier |= Rocket::Core::Input::KM_SHIFT;
+	//	return modifier;
+	//}
 
 	void CLRenderGUITask::Update()
 	{
-		auto context = Rocket::Core::GetContext(0);
+		//auto context = Rocket::Core::GetContext(0);
 
-		auto& viewports = m_RenderWorld->GetViewports();
-		while (!m_BufferedEvents.empty())
-		{
-			clan::InputEvent ev = m_BufferedEvents.front();
-			m_BufferedEvents.pop_front();
+		//auto& viewports = m_RenderWorld->GetViewports();
+		//while (!m_BufferedEvents.empty())
+		//{
+		//	clan::InputEvent ev = m_BufferedEvents.front();
+		//	m_BufferedEvents.pop_front();
 
-			auto mousePos = ev.mouse_pos;
-			auto keyState = getRktModifierFlags(ev);
+		//	auto mousePos = ev.mouse_pos;
+		//	auto keyState = getRktModifierFlags(ev);
 
-			for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
-			{
-				const auto& camera = (*it)->GetCamera();
+		//	for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
+		//	{
+		//		const auto& camera = (*it)->GetCamera();
 
-				// Calculate the area on-screen that the viewport takes up
-				clan::Rectf screenArea;
-				m_Renderer->CalculateScreenArea(screenArea, *it, false);
+		//		// Calculate the area on-screen that the viewport takes up
+		//		clan::Rectf screenArea;
+		//		m_Renderer->CalculateScreenArea(screenArea, *it, false);
 
-				if (screenArea.contains(clan::Vec2i(mousePos.x, mousePos.y)))
-				{
-					// Calculate the offset within the world of the viewport
-					clan::Rectf worldArea;
-					m_Renderer->CalculateScreenArea(worldArea, *it, true);
+		//		if (screenArea.contains(clan::Vec2i(mousePos.x, mousePos.y)))
+		//		{
+		//			// Calculate the offset within the world of the viewport
+		//			clan::Rectf worldArea;
+		//			m_Renderer->CalculateScreenArea(worldArea, *it, true);
 
-					mousePos.x += (int)worldArea.left;
-					mousePos.y += (int)worldArea.top;
+		//			mousePos.x += (int)worldArea.left;
+		//			mousePos.y += (int)worldArea.top;
 
-					//for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
-					{
-						context->ProcessMouseMove(mousePos.x, mousePos.y, keyState);
-					}
-				}
-			}
-		}
+		//			//for (int i = 0; i < Rocket::Core::GetNumContexts(); ++i)
+		//			{
+		//				context->ProcessMouseMove(mousePos.x, mousePos.y, keyState);
+		//			}
+		//		}
+		//	}
+		//}
 
-		context->Update();
+		//context->Update();
 	}
 
 	void CLRenderGUITask::onMouseMove(const clan::InputEvent &ev)

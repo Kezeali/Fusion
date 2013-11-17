@@ -167,9 +167,9 @@ namespace FusionEngine
 	};
 
 	//! Archetype resource loader callback
-	void LoadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadArchetypeResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! Archetype resource unloader callback
-	void UnloadArchetypeResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadArchetypeResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 
 	class ArchetypeInstantiator
 	{

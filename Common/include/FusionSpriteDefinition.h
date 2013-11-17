@@ -75,9 +75,9 @@ namespace FusionEngine
 	};
 
 	//! SpriteAnimation resource loader callback
-	void LoadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadAnimationResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! SpriteAnimation resource unloader callback
-	void UnloadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadAnimationResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	
 	//! Sprite factory
 	/*!
@@ -91,22 +91,20 @@ namespace FusionEngine
 
 		void GenerateDescription();
 
-		clan::Sprite CreateSprite(clan::GraphicContext &gc);
+		clan::Sprite CreateSprite(clan::Canvas &gc);
 
 		ResourcePointer<clan::Texture2D> m_Texture;
 		ResourcePointer<SpriteAnimation> m_Animation;
-
-		clan::SpriteDescription m_Description;
 
 		std::function<void (void)> m_UnusedCallback;
 	};
 
 	//! SpriteDefinition resource prereqs loader callback
-	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadSpriteDefinitionResourcePrereqs(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! SpriteDefinition resource loader callback
-	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! SpriteDefinition resource unloader callback
-	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 
 }
 

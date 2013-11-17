@@ -40,7 +40,6 @@
 #include "FusionAssert.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
-#include "FusionSlotContainer.h"
 #include "FusionStdHeaders.h"
 #include "FusionStringFormatting.h"
 #include "FusionVector2.h"

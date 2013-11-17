@@ -90,7 +90,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, std::string("Couldn't write to file: ") + PHYSFS_getLastError());
 	}
 
-	void LoadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadScriptResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
@@ -136,7 +136,7 @@ namespace FusionEngine
 		}
 	}
 
-	void UnloadScriptResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadScriptResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

@@ -998,7 +998,7 @@ namespace FusionEngine
 
 	namespace RegionMap
 	{
-		void LoadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+		void LoadMapRegionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{
@@ -1025,7 +1025,7 @@ namespace FusionEngine
 			}
 		}
 
-		void UnloadMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+		void UnloadMapRegionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{
@@ -1035,7 +1035,7 @@ namespace FusionEngine
 			resource->SetDataPtr(nullptr);
 		}
 
-		void LoadStaticMapRegionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+		void LoadStaticMapRegionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 		{
 			if (resource->IsLoaded())
 			{

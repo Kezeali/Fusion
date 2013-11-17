@@ -35,7 +35,6 @@
 #include "FusionComponentScriptTypeRegistration.h"
 #include "FusionComponentSystem.h"
 #include "FusionComponentUniverse.h"
-#include "FusionContextMenu.h"
 #include "FusionConsole.h"
 #include "FusionConsoleStdOutWriter.h"
 #include "FusionDeltaTime.h"
@@ -117,6 +116,8 @@ namespace FusionEngine
 
 		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
 			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
+
+		Initialise(clan::DisplayWindow());
 	}
 
 	EngineManager::EngineManager(const std::vector<std::string>& args, clan::DisplayWindow window)
@@ -143,7 +144,7 @@ namespace FusionEngine
 		if (!SetupPhysFS::mount(s_PackagesPath, "/" + s_PackagesPath, "zip", false))
 			SendToConsole(std::string("Failed to mount default resource path: ") + PHYSFS_getLastError());
 
-		Initialise();
+		Initialise(window);
 	}
 
 	EngineManager::~EngineManager()
@@ -202,8 +203,8 @@ namespace FusionEngine
 			m_ResourceManager->SetHotReloadingAllowed(options->GetOption_bool("hot_reload"));
 
 			// Init GUI
-			m_GUI.reset(new GUI(m_Canvas));
-			m_GUI->Initialise();
+			//m_GUI.reset(new GUI(m_Canvas));
+			//m_GUI->Initialise();
 
 			m_ScriptSoundOutput = std::make_shared<SoundOutput>(m_SoundOutput);
 
@@ -523,8 +524,8 @@ namespace FusionEngine
 
 		Console::Register(m_ScriptManager.get());
 		RegisterScriptedConsoleCommand(engine);
-		GUI::Register(m_ScriptManager.get());
-		ContextMenu::Register(engine);
+		//GUI::Register(m_ScriptManager.get());
+		//ContextMenu::Register(engine);
 
 		engine->RegisterTypedef("PlayerID", "uint8");
 
@@ -635,7 +636,7 @@ namespace FusionEngine
 	{
 		try
 		{
-			Initialise();
+			//Initialise();
 
 			// TODO: add resource loaders from systems
 			AddResourceLoaders();
@@ -647,7 +648,7 @@ namespace FusionEngine
 			for (auto it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 				it->second->RegisterScriptInterface(m_ScriptManager->GetEnginePtr());
 
-			m_GUI->InitialiseConsole(m_ScriptManager.get());
+			//m_GUI->InitialiseConsole(m_ScriptManager.get());
 
 			{
 				std::unique_ptr<ClientOptions> options(new ClientOptions("settings.xml", "settings"));
@@ -656,6 +657,7 @@ namespace FusionEngine
 				for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
 				{
 					(*exit)->SetDisplay(m_DisplayWindow);
+					(*exit)->SetCanvas(m_Canvas);
 					(*exit)->SetComponentFactory(m_ComponentUniverse);
 					(*exit)->SetEntityInstantiator(m_EntityInstantiator);
 					(*exit)->SetEntityManager(m_EntityManager);
@@ -731,7 +733,9 @@ namespace FusionEngine
 			boost::signals2::scoped_connection rawInputConnection = m_InputManager->SignalRawInput.connect([this](const RawInput& raw)
 			{
 				if (raw.InputType == RawInput::EventType::Button && !raw.ButtonPressed && raw.Code == VK_OEM_3)
-					this->m_GUI->GetConsoleWindow()->Show();
+				{
+					//this->m_GUI->GetConsoleWindow()->Show();
+				}
 			});
 
 			tbb::tick_count time = tbb::tick_count::now();
@@ -766,7 +770,7 @@ namespace FusionEngine
 					ProcessExtensionMessages(*it);
 				}
 				// Update GUI
-				m_GUI->Update(dtSeconds);
+				//m_GUI->Update(dtSeconds);
 
 				m_MessageRouter->Process(0.1f);
 

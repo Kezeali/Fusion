@@ -33,7 +33,7 @@ namespace FusionEngine
 {
 
 	float DeltaTime::m_DT = 0.f;
-	unsigned int DeltaTime::m_ActualDTMS = 0;
+	std::uint64_t DeltaTime::m_ActualDTMS = 0;
 	float DeltaTime::m_Alpha = 0.f;
 	unsigned int DeltaTime::m_FramesSkipped = 0;
 	Tick_t DeltaTime::m_Tick = 0;

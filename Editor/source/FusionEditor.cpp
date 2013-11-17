@@ -40,6 +40,7 @@
 #include "FusionEditorRectangleTool.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionClientOptions.h"
 #include "FusionPhysFS.h"
 #include "FusionPolygonResourceEditor.h"
@@ -77,12 +78,17 @@
 
 #include "FusionEntityInspector.h"
 
+#include <Gwen/Renderers/ClanLib.h>
+#include <Gwen/Input/ClanLib.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Gwen/Controls/Canvas.h>
 #include <Gwen/Controls/ComboBox.h>
 #include <Gwen/Controls/Dialogs/Query.h>
 #include <Gwen/Controls/WindowControl.h>
+#include <Gwen/Skins/Simple.h>
+#include <Gwen/Skins/TexturedBase.h>
 #include <oleidl.h>
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range2d.h>
@@ -1027,6 +1033,35 @@ namespace FusionEngine
 		m_WindowResizeSlot = m_DisplayWindow.sig_resize().connect(this, &Editor::OnWindowResize);
 	}
 
+	void Editor::SetCanvas(const clan::Canvas& canvas)
+	{
+		m_GuiRenderer = std::make_shared<Gwen::Renderer::ClanLib>(canvas, clan::FileSystem(new VirtualFileSource_PhysFS()));
+		auto skin = std::make_shared<Gwen::Skin::TexturedBase>(m_GuiRenderer.get());
+		skin->Init("Data/core/gui/DefaultSkin.png");
+		m_GuiSkin = skin;
+		//
+		// Create a Canvas (it's root, on which all other GWEN panels are created)
+		//
+		Gwen::Controls::Canvas* pCanvas = new Gwen::Controls::Canvas( skin.get() );
+		pCanvas->SetSize(canvas.get_width(), canvas.get_height());
+		pCanvas->SetDrawBackground( true );
+		pCanvas->SetBackgroundColor( Gwen::Color( 150, 170, 170, 255 ) );
+		m_GUIContext = pCanvas;
+
+		auto ic = m_DisplayWindow.get_ic();
+
+		m_GuiInput = std::make_shared<Gwen::Input::ClanLib>();
+		m_GuiInput->Initialize(pCanvas);
+
+		// Mouse Events
+		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseDown));
+		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseUp));
+		m_InputSlots.push_back(ic.get_mouse().sig_pointer_move().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseMove));
+		// KBD events
+		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyDown));
+		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyUp));
+	}
+
 	void Editor::SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader)
 	{
 		m_MapLoader = map_loader;	
@@ -1122,6 +1157,7 @@ namespace FusionEngine
 
 	void Editor::Update(float time, float dt)
 	{
+		
 		// Bodies have to be forced to create since the simulation isn't running
 		m_Box2DWorld->InitialiseActiveComponents();
 

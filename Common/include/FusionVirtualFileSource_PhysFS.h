@@ -28,27 +28,20 @@
 #pragma once
 
 
-#include <ClanLib/Core/IOData/virtual_file_source.h>
+#include <ClanLib/Core/IOData/file_system.h>
 #include <ClanLib/Core/IOData/file.h>
 
 #include "FusionPhysFSIODeviceProvider.h"
 
-class clan::VirtualDirectoryListingEntry;
+class clan::DirectoryListingEntry;
 
 
-class VirtualFileSource_PhysFS : public clan::VirtualFileSource
+class VirtualFileSource_PhysFS : public clan::FileSystemProvider
 {
-//! \name Construction
-//! \{
-
 public:
 	VirtualFileSource_PhysFS();
 
 	~VirtualFileSource_PhysFS();
-
-//! \}
-//! \name Operations
-//! \{
 
 public:
 	//! \brief Open a zip file
@@ -67,14 +60,10 @@ public:
 
 	bool initialize_directory_listing(const std::string &path);
 
-	bool next_file(clan::VirtualDirectoryListingEntry &entry);
+	bool next_file(clan::DirectoryListingEntry &entry);
 
 	std::string get_path() const;
 	std::string get_identifier() const;
-
-//! \}
-//! \name Implementation
-//! \{
 
 private:
 	std::string m_Path;
@@ -85,5 +74,4 @@ private:
 	//  (why the ClanLib devs didn't give next_file() an 
 	//  iterator / index parameter is beyond me)
 	unsigned int m_Index;
-//! \}
 };

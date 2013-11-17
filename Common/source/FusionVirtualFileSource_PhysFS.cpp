@@ -33,7 +33,7 @@
 #include <sstream>
 
 #include <ClanLib/core.h>
-#include <ClanLib/Core/IOData/virtual_directory_listing_entry.h>
+#include <ClanLib/Core/IOData/directory_listing_entry.h>
 
 static std::string narrow(const std::wstring &str)
 {
@@ -103,7 +103,7 @@ bool VirtualFileSource_PhysFS::initialize_directory_listing(const std::string &p
 	return !m_FileList.empty();
 }
 
-bool VirtualFileSource_PhysFS::next_file(clan::VirtualDirectoryListingEntry &entry)
+bool VirtualFileSource_PhysFS::next_file(clan::DirectoryListingEntry &entry)
 {
 	if( m_FileList.empty() ) 
 		return false;

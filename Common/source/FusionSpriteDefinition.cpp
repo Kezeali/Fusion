@@ -342,7 +342,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadAnimationResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		FSN_ASSERT(!resource->IsLoaded());
 
@@ -354,7 +354,7 @@ namespace FusionEngine
 			const auto pathEnd = resource->GetPath().find(":");
 			const auto path = resource->GetPath().substr(0, pathEnd);
 			const auto animationName = pathEnd != std::string::npos ? resource->GetPath().substr(pathEnd + 1) : "";
-			auto dev = vdir.open_file(path, clan::File::open_existing, clan::File::access_read);
+			auto dev = fs.open_file(path, clan::File::open_existing, clan::File::access_read);
 			data->Load(dev, animationName);
 
 			resource->SetMetadata(CreateFileMetadata(path, IO::CLStream(dev)));
@@ -375,7 +375,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadAnimationResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadAnimationResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -398,7 +398,7 @@ namespace FusionEngine
 			dependencies.push_back(std::make_pair("TEXTURE", path));
 	}
 
-	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadSpriteDefinitionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -423,7 +423,7 @@ namespace FusionEngine
 		resource->setLoaded(true);
 	}
 
-	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadSpriteDefinitionResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -449,21 +449,26 @@ namespace FusionEngine
 
 	void SpriteDefinition::GenerateDescription()
 	{
+	}
+
+	clan::Sprite SpriteDefinition::CreateSprite(clan::Canvas &gc)
+	{
+		clan::Sprite sprite(gc);
 		if (m_Texture.IsLoaded() && !m_Texture.Get()->is_null())
 		{
 			if (!m_Animation.IsLoaded())
 			{
- 				m_Description.add_frame(*m_Texture.Get());
+ 				sprite.add_frame(*m_Texture.Get());
 			}
 			else
 			{
 				auto& frames = m_Animation->GetFrames();
-				m_Description.add_frames(*m_Texture.Get(), frames.data(), frames.size());
+				sprite.add_frames(*m_Texture.Get(), frames.data(), frames.size());
 
 				auto& frameDelays = m_Animation->GetFrameDelays();
 				for (auto it = frameDelays.begin(), end = frameDelays.end(); it != end; ++it)
 				{
-					m_Description.set_frame_delay(it->first, it->second);
+					sprite.set_frame_delay(it->first, it->second);
 				}
 			}
 		}
@@ -471,11 +476,6 @@ namespace FusionEngine
 		{
 			FSN_EXCEPT(InvalidArgumentException, "Tried to generate a sprite using an unloaded texture");
 		}
-	}
-
-	clan::Sprite SpriteDefinition::CreateSprite(clan::GraphicContext &gc)
-	{
-		clan::Sprite sprite(gc, m_Description);
 		if (m_Animation.IsLoaded())
 		{
 			sprite.set_delay((int)(m_Animation->GetDefaultDelay() * 1000 + 0.5));

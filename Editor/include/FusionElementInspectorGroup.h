@@ -128,7 +128,7 @@ namespace FusionEngine { namespace Inspectors
 		
 	};
 
-	Gwen::Controls::Base* ElementGroup::AddSubsection(Gwen::Controls::Base* parent, const std::string& name, Gwen::Controls::Base* inspector)
+	inline Gwen::Controls::Base* ElementGroup::AddSubsection(Gwen::Controls::Base* parent, const std::string& name, Gwen::Controls::Base* inspector)
 	{
 		Gwen::Controls::Base* subsection = nullptr;
 		//// Subsection

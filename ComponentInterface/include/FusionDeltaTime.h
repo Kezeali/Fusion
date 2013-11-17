@@ -39,7 +39,7 @@
 namespace FusionEngine
 {
 
-	typedef uint32_t Tick_t;
+	typedef std::uint32_t Tick_t;
 	
 	//! Global access to pacing data
 	class DeltaTime
@@ -51,7 +51,7 @@ namespace FusionEngine
 
 		//! Returns the actual amount of time that passed since the last frame
 		static float GetActualDeltaTime() { return m_ActualDTMS * 0.001f; }
-		static unsigned int GetActualDeltaTimeMS() { return m_ActualDTMS; }
+		static std::uint64_t GetActualDeltaTimeMS() { return m_ActualDTMS; }
 
 		//! Returns the percentage of a full fixed-time frame that has passed
 		static float GetInterpolationAlpha() { return m_Alpha; }
@@ -68,7 +68,7 @@ namespace FusionEngine
 
 	private:
 		static float m_DT;
-		static unsigned int m_ActualDTMS;
+		static std::uint64_t m_ActualDTMS;
 		static float m_Alpha;
 
 		static unsigned int m_FramesSkipped;

@@ -309,11 +309,11 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::CreateSpriteIfNecessary(clan::GraphicContext& gc)
+	void CLSprite::CreateSpriteIfNecessary(clan::Canvas& canvas)
 	{
 		if (m_RecreateSprite && m_SpriteDef)
 		{
-			m_Sprite = m_SpriteDef->CreateSprite(gc);
+			m_Sprite = m_SpriteDef->CreateSprite(canvas);
 
 			m_Sprite.set_alignment(m_AlignmentOrigin, m_AlignmentOffset.x, m_AlignmentOffset.y);
 			m_Sprite.set_rotation_hotspot(m_RotationOrigin, m_RotationOffset.x, m_RotationOffset.y);
@@ -332,7 +332,7 @@ namespace FusionEngine
 
 	void CLSprite::Draw(clan::Canvas& canvas, const Vector2& camera_pos)
 	{
-		CreateSpriteIfNecessary(canvas.get_gc());
+		CreateSpriteIfNecessary(canvas);
 
 		if (!m_Sprite.is_null())
 		{

@@ -50,7 +50,13 @@
 #include <queue>
 #include <unordered_map>
 
-namespace Gwen { namespace Controls { class Canvas; } }
+namespace Gwen
+{
+	namespace Controls { class Canvas; }
+	namespace Input { class ClanLib; }
+	namespace Renderer { class ClanLib; }
+	namespace Skin { class Base; }
+}
 
 void intrusive_ptr_add_ref(asIScriptFunction *ptr);
 void intrusive_ptr_release(asIScriptFunction *ptr);
@@ -117,6 +123,7 @@ namespace FusionEngine
 
 		void SetOptions(const ClientOptions& options);
 		void SetDisplay(const clan::DisplayWindow& display);
+		void SetCanvas(const clan::Canvas& canvas);
 		void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) { m_ComponentFactory = factory; }
 		void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) { m_EntityInstantiator = instantiator; }
 		void SetEntityManager(const std::shared_ptr<EntityManager>& manager) { m_EntityManager = manager; }
@@ -255,6 +262,10 @@ namespace FusionEngine
 		bool m_SaveMap;
 		bool m_LoadMap;
 
+		std::shared_ptr<Gwen::Renderer::ClanLib> m_GuiRenderer;
+		std::shared_ptr<Gwen::Skin::Base> m_GuiSkin;
+		std::shared_ptr<Gwen::Input::ClanLib> m_GuiInput;
+		std::vector<clan::Slot> m_InputSlots;
 		Gwen::Controls::Canvas* m_GUIContext;
 
 		std::string m_SaveName;

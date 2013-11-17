@@ -39,24 +39,24 @@
 namespace FusionEngine
 {
 	//! Image (pixel-buffer) resource loader callback
-	void LoadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadImageResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! Image resource unloader callback
-	void UnloadImageResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadImageResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 
 	//! Texture resource loader
 	/*
 	*  Just loads the image data into memory, them marks it as requiring GC load
 	*/
-	void LoadTextureResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadTextureResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! Texture resource unloader
-	void UnloadTexture2DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadTexture2DResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! Loads a texture resource (creates the, possibly GFX memory resident, texture object)
 	void LoadTexture2DResourceIntoGC(ResourceContainer* resource, clan::GraphicContext& gc, boost::any user_data);
 
 	//! 3D Texture resource unloader
-	void UnloadTexture3DResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadTexture3DResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 	//! 3D Texture resource loader callback
-	void LoadTexture3DResourceIntoGC(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void LoadTexture3DResourceIntoGC(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 
 }
 

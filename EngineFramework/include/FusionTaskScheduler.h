@@ -75,14 +75,14 @@ namespace FusionEngine
 
 	private:
 		tbb::tick_count m_LastTick;
-		unsigned int m_LastTime;
-		unsigned int m_Accumulator;
+		clan::ubyte64 m_LastTime;
+		clan::ubyte64 m_Accumulator;
 		unsigned int m_FramesSkipped;
 
 		unsigned int m_MaxFrameskip;
 
 		float m_DeltaTime;
-		unsigned int m_DeltaTimeMS;
+		clan::ubyte64 m_DeltaTimeMS;
 
 		bool m_FramerateLimiterEnabled;
 		bool m_Unlimited; // Update all tasks at an unlimited rate

@@ -18,10 +18,10 @@ class resource_manager_f;
 
 namespace FusionEngine { namespace Test
 {
-	void UnloadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
-	void LoadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
-	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
-	bool TextContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data);
+	void UnloadTextResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
+	void LoadTextResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
+	bool TextContentHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data);
 }}
 	
 using namespace FusionEngine;
@@ -205,7 +205,7 @@ namespace FusionEngine { namespace Test
 		return checksummer.checksum();
 	}
 
-	void UnloadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void UnloadTextResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		//ASSERT_TRUE(resource->IsLoaded());
 
@@ -217,10 +217,10 @@ namespace FusionEngine { namespace Test
 		resource->SetDataPtr(nullptr);
 	}
 
-	void LoadFakeTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadFakeTextResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		// TODO: should the resource manager be allowed to request reloads like this?
-		//UnloadTextResource(resource, vdir, userData);
+		//UnloadTextResource(resource, fs, userData);
 		// ... or should this be a valid assertion?
 		ASSERT_FALSE(resource->IsLoaded());
 
@@ -243,7 +243,7 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	void LoadTextResource(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	void LoadTextResource(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		// Resource manager should never attempt to load a resource that's already loaded
 		ASSERT_FALSE(resource->IsLoaded());
@@ -251,7 +251,7 @@ namespace FusionEngine { namespace Test
 		auto content = new std::string();
 		try
 		{
-			//auto file = vdir.open_file_read(resource->GetPath());
+			//auto file = fs.open_file_read(resource->GetPath());
 			//content->resize(file.get_size());
 			//file.read(&(*content)[0], content->length());
 			IO::PhysFSStream stream(resource->GetPath(), IO::Read);
@@ -280,7 +280,7 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	bool ResourceFileDateHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -295,7 +295,7 @@ namespace FusionEngine { namespace Test
 		}
 	}
 
-	bool TextContentHasChanged(ResourceContainer* resource, clan::VirtualDirectory vdir, boost::any user_data)
+	bool TextContentHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		if (resource->IsLoaded())
 		{

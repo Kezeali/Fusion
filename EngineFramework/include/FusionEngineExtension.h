@@ -82,6 +82,7 @@ namespace FusionEngine
 		//  this interface can be removed and getting the display can be done in OnWorldCreated
 		//  if an extension requires it
 		virtual void SetDisplay(const clan::DisplayWindow& display) {}
+		virtual void SetCanvas(const clan::Canvas& canvas) {}
 		virtual void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) {}
 		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
 		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}

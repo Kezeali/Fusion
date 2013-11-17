@@ -53,7 +53,7 @@
 #endif
 
 #include <ClanLib/Core/IOData/iodevice.h>
-#include <ClanLib/Core/IOData/virtual_directory.h>
+//#include <ClanLib/Core/IOData/virtual_directory.h>
 
 #include <physfs.h>
 
@@ -98,15 +98,15 @@ namespace FusionEngine
 	 * \brief
 	 * Opens an xml file using the given VirtualDirectory object
 	 */
-	ticpp::Document OpenXml(const std::string &filename, clan::VirtualDirectory vdir);
+	ticpp::Document OpenXml(const std::string &filename, clan::Directory vdir);
 
-	std::string &OpenString(std::string& content, const std::string &filename, clan::VirtualDirectory vdir);
+	std::string &OpenString(std::string& content, const std::string &filename, clan::Directory vdir);
 
-	std::string OpenString(const std::string &filename, clan::VirtualDirectory vdir);
+	std::string OpenString(const std::string &filename, clan::Directory vdir);
 	
-	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::VirtualDirectory vdir);
+	void SaveXml(const ticpp::Document& doc, const std::string &filename, clan::Directory vdir);
 
-	void SaveString(const std::string &content, const std::string &filename, clan::VirtualDirectory vdir);
+	void SaveString(const std::string &content, const std::string &filename, clan::Directory vdir);
 
 	/*!
 	 * \brief
