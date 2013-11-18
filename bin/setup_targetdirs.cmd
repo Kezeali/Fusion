@@ -10,7 +10,7 @@ robocopy "..\..\FusionDependencies\tbb_oss\bin\ia32\vc11" "..\release" tbb.* tbb
 robocopy "..\..\FusionDependencies\angelscriptDev\sdk\angelscript\lib" "..\debug" *d.dll *d.pdb
 robocopy "..\..\FusionDependencies\angelscriptDev\sdk\angelscript\lib" "..\release" *.dll /XF *d.dll
 
-robocopy "..\..\FusionDependencies\bin" "..\debug" physfs.dll FreeImage.dll *d.dll *d.pdb
+robocopy "..\..\FusionDependencies\bin" "..\debug" physfs.dll *d.dll *d.pdb
 robocopy "..\..\FusionDependencies\bin" "..\release" *.dll /XF *d.dll
 
 robocopy "..\..\RAS\library" "..\debug" *_d.dll *_d.pdb
