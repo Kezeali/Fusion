@@ -78,7 +78,8 @@ namespace FusionEngine
 			// Copy the object into the given reference
 			if (obj->GetImpl()->GetTypeId() == refTypeId)
 			{
-				engine->AssignScriptObject(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), obj->GetImpl()->GetTypeId());
+				auto scriptType = engine->GetObjectTypeById(obj->GetImpl()->GetTypeId());
+				engine->AssignScriptObject(gen->GetAddressOfReturnLocation(), obj->GetImpl()->GetRef(), scriptType);
 				return;
 			}
 		}

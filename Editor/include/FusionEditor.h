@@ -52,7 +52,11 @@
 
 namespace Gwen
 {
-	namespace Controls { class Canvas; }
+	namespace Controls
+	{
+		class Canvas;
+		class Menu;
+	}
 	namespace Input { class ClanLib; }
 	namespace Renderer { class ClanLib; }
 	namespace Skin { class Base; }
@@ -86,6 +90,8 @@ namespace FusionEngine
 	class SelectionDrawer;
 
 	//class PreviewFormatter;
+
+	class DynamicMenu;
 
 	class ResourceDatabase;
 	//class ResourceBrowserDataSource;
@@ -267,6 +273,7 @@ namespace FusionEngine
 		std::shared_ptr<Gwen::Input::ClanLib> m_GuiInput;
 		std::vector<clan::Slot> m_InputSlots;
 		Gwen::Controls::Canvas* m_GUIContext;
+		std::shared_ptr<DynamicMenu> m_ContextMenu;
 
 		std::string m_SaveName;
 

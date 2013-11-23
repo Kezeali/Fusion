@@ -13,7 +13,7 @@ robocopy "..\..\FusionDependencies\angelscriptDev\sdk\angelscript\lib" "..\relea
 robocopy "..\..\FusionDependencies\bin" "..\debug" physfs.dll FreeImage.dll *d.dll *d.pdb
 robocopy "..\..\FusionDependencies\bin" "..\release" *.dll /XF *d.dll
 
-robocopy "..\..\RAS\library" "..\debug" *_d.dll *_d.pdb
-robocopy "..\..\RAS\library" "..\release" *.dll /XF *_d.dll
+robocopy "..\..\FusionDependencies\GWEN\gwen\lib\windows\vs2010" "..\debug" gwend.dll gwend.pdb
+robocopy "..\..\FusionDependencies\GWEN\gwen\lib\windows\vs2010" "..\release" gwen.dll
 
 robocopy "..\..\FusionDependencies\Visual Leak Detector\bin\Win32" "..\debug" *

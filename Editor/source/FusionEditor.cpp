@@ -85,6 +85,7 @@
 #include <boost/lexical_cast.hpp>
 #include <Gwen/Controls/Canvas.h>
 #include <Gwen/Controls/ComboBox.h>
+#include <Gwen/Controls/Menu.h>
 #include <Gwen/Controls/Dialogs/Query.h>
 #include <Gwen/Controls/WindowControl.h>
 #include <Gwen/Skins/Simple.h>
@@ -1053,13 +1054,13 @@ namespace FusionEngine
 		m_GuiInput = std::make_shared<Gwen::Input::ClanLib>();
 		m_GuiInput->Initialize(pCanvas);
 
-		// Mouse Events
-		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseDown));
-		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseUp));
-		m_InputSlots.push_back(ic.get_mouse().sig_pointer_move().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseMove));
-		// KBD events
-		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyDown));
-		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyUp));
+		//// Mouse Events
+		//m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseDown));
+		//m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseUp));
+		//m_InputSlots.push_back(ic.get_mouse().sig_pointer_move().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseMove));
+		//// KBD events
+		//m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyDown));
+		//m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyUp));
 	}
 
 	void Editor::SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader)
@@ -2223,22 +2224,71 @@ namespace FusionEngine
 	//	menu->RemoveAllChildren();
 	//}
 
-	//boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, const std::string& value, std::function<void (const MenuItemEvent&)> on_clicked)
-	//{
-	//	boost::intrusive_ptr<MenuItem> item(new MenuItem(title, value), false);
-	//	item->SignalClicked.connect(on_clicked);
-	//	parent->AddChild(item.get());
-
-	//	return item;
-	//}
-
 	//boost::intrusive_ptr<MenuItem> AddMenuItem(MenuItem* parent, const std::string& title, std::function<void (const MenuItemEvent&)> on_clicked)
 	//{
 	//	return AddMenuItem(parent, title, "", on_clicked);
 	//}
 
+	class FunctorEventHandler : public Gwen::Event::Handler
+	{
+	public:
+		FunctorEventHandler(std::function<void (Gwen::Controls::Base* con)> fn)
+		{
+			m_Functor = fn;
+		}
+
+		void Call(Gwen::Controls::Base* con)
+		{
+			m_Functor(con);
+		}
+
+	private:
+		std::function<void (Gwen::Controls::Base* con)> m_Functor;
+	};
+
+	class DynamicMenu
+	{
+	public:
+		DynamicMenu(Gwen::Controls::Base* parent)
+			: m_Menu(std::make_shared<Gwen::Controls::Menu>(parent))
+		{
+		}
+
+		virtual ~DynamicMenu()
+		{
+			ClearItems();
+		}
+
+		Gwen::Controls::MenuItem* AddItem(const std::string& title, std::function<void (Gwen::Controls::Base*)> on_clicked)
+		{
+			auto clickHandler = std::make_shared<FunctorEventHandler>(on_clicked);
+			m_ActionHandlers.push_back(clickHandler);
+			auto item = m_Menu->AddItem(title)->SetAction(clickHandler.get(), &FunctorEventHandler::Call);
+			return item;
+		}
+
+		void ClearItems()
+		{
+			m_ActionHandlers.clear();
+			m_Menu->ClearItems();
+		}
+
+		void Show(const Vector2i& position)
+		{
+			m_Menu->SetPos(position.x, position.y);
+			m_Menu->Show();
+		}
+
+	private:
+		std::shared_ptr<Gwen::Controls::Menu> m_Menu;
+		std::vector<std::shared_ptr<Gwen::Event::Handler>> m_ActionHandlers;
+	};
+
 	void Editor::ShowContextMenu(const Vector2i& position, const std::set<EntityPtr>& entities)
 	{
+		m_ContextMenu = std::make_shared<DynamicMenu>(m_GUIContext);
+		m_ContextMenu->AddItem("fart", [](Gwen::Controls::Base* pControl) {SendToConsole("Fart");});
+		
 		//ClearCtxMenu(m_PropertiesMenu.get());
 		//ClearCtxMenu(m_EntitySelectionMenu.get());
 

@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>$(DXSDK_DIR)Lib\x86\XInput.lib;angelscriptd.lib;physfsd.lib;libyaml-cppmdd.lib;Box2Dd.lib;RakNetDLLd.lib;gwen_staticd.lib;ws2_32.lib;kyotocabinetd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(DXSDK_DIR)Lib\x86\XInput.lib;angelscriptd.lib;physfs.lib;libyaml-cppmdd.lib;Box2Dd.lib;RakNetDLLd.lib;gwend.lib;ws2_32.lib;kyotocabinetd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

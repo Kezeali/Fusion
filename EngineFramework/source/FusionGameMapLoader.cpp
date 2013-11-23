@@ -329,7 +329,7 @@ namespace FusionEngine
 					device.read(buffer.data(), buffer.size());
 					auto count = device.gcount();
 					if (count > 0)
-						crc.process_bytes(buffer.data(), count);
+						crc.process_bytes(buffer.data(), (std::size_t)count);
 				}
 
 				if (crc.checksum() == expectedChecksum)

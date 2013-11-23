@@ -518,8 +518,8 @@ namespace FusionEngine
 	void StreamingManager::StoreAllCells(bool refresh_next_update)
 	{
 		const unsigned int waitLimit = 60000;
-		unsigned int timeWaiting = 0;
-		unsigned int lastTick = clan::System::get_time();
+		std::uint64_t timeWaiting = 0;
+		std::uint64_t lastTick = clan::System::get_time();
 
 		while (!m_TheVoid.objects.empty())
 		{

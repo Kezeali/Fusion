@@ -90,7 +90,7 @@ namespace FusionEngine
 
 	struct ConditionalCoroutine
 	{
-		ConditionalCoroutine() : timeout_time(std::numeric_limits<unsigned int>::max()) {}
+		ConditionalCoroutine() : timeout_time(std::numeric_limits<std::uint64_t>::max()) {}
 		ConditionalCoroutine(ConditionalCoroutine&& other)
 			: new_ctx(std::move(other.new_ctx)),
 			condition(std::move(other.condition)),
@@ -125,23 +125,23 @@ namespace FusionEngine
 		//! new_ctx is an optional new context (used when this is created as a new co-routine, rather than for a yield)
 		boost::intrusive_ptr<asIScriptContext> new_ctx;
 		std::function<bool (void)> condition;
-		unsigned int timeout_time;
+		std::uint64_t timeout_time;
 
 		void SetTimeout(float seconds)
 		{
-			timeout_time = clan::System::get_time() + (unsigned int)(seconds * 1000);
+			timeout_time = clan::System::get_time() + (std::uint64_t)(seconds * 1000);
 		}
 
 		bool IsReady() const
 		{
 			if (!condition)
 			{
-				return timeout_time == std::numeric_limits<unsigned int>::max() || clan::System::get_time() >= timeout_time;
+				return timeout_time == std::numeric_limits<std::uint64_t>::max() || clan::System::get_time() >= timeout_time;
 			}
 			else
 			{
 				return condition()
-					|| (timeout_time != std::numeric_limits<unsigned int>::max() && clan::System::get_time() >= timeout_time);
+					|| (timeout_time != std::numeric_limits<std::uint64_t>::max() && clan::System::get_time() >= timeout_time);
 			}
 		}
 	};

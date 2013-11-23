@@ -429,7 +429,8 @@ namespace FusionEngine
 
 		// Alloc a wrapper
 		const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
-		asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+		auto scriptType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(entityWrapperObjectTypeId);
+		asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(scriptType));
 
 		// Init the wrapper
 		auto token = InitEntityPtr(parentEntity, entityReferenced);
@@ -903,7 +904,8 @@ namespace FusionEngine
 
 				// Alloc a wrapper
 				const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
-				asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+				auto scriptType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(entityWrapperObjectTypeId);
+				asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(scriptType));
 
 				// Init the wrapper
 				auto token = InitEntityPtr(parentEntity, lockedTarget);
@@ -1192,7 +1194,8 @@ namespace FusionEngine
 					auto scriptprop = static_cast<ScriptAnyTSP*>(m_ScriptProperties[propertyIndex].get());
 
 					const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
-					entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+					auto scriptType = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(entityWrapperObjectTypeId);
+					entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(scriptType));
 					FSN_ASSERT(entityWrapper);
 
 					auto prop = boost::intrusive_ptr<CScriptAny>(new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine), false);
