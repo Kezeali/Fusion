@@ -320,7 +320,7 @@ namespace FusionEngine
 		tasks.push_back(*m_RenderTask);
 		//tasks.push_back(*m_GUITask);
 		tasks.push_back(*m_GraphicalProfilerTask);
-		return tasks;
+		return std::move(tasks);
 	}
 
 }

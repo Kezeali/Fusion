@@ -560,7 +560,7 @@ namespace FusionEngine { namespace Inspectors
 					if (component->GetParent() == nullptr)
 					{
 						auto subsectionsToRemove = m_Subsections->GetSubsections(*cIt);
-						for (auto it = subsectionsToRemove.begin(), end = subsectionsToRemove.end(); it != end; ++it)
+						for (auto subit = subsectionsToRemove.begin(), subend = subsectionsToRemove.end(); subit != subend; ++subit)
 						{
 							//body->RemoveChild(it->get());
 						}

@@ -1197,7 +1197,7 @@ namespace FusionEngine
 		TaskList_t tasks;
 		tasks.push_back(*m_ASTask);
 		tasks.push_back(*m_InstantiateTask);
-		return tasks;
+		return std::move(tasks);
 	}
 
 	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo()

@@ -92,7 +92,7 @@ namespace FusionEngine { namespace Inspectors
 		Gwen::Controls::Base* GetSubsectionByChild(Gwen::Controls::Base* button)
 		{
 			Gwen::Controls::Base* parent = button->GetParent();
-			while (parent && std::string(parent->GetIdentifier()) != "inspector_section");
+			while (parent != nullptr && std::string(parent->GetIdentifier()) != "inspector_section");
 			{
 				parent = parent->GetParent();
 			} 

@@ -46,6 +46,7 @@ namespace Gwen
 			//sf::RenderStates m_RenderStates;
 			//clan::View m_OriginalView;
 			int m_Height;
+			clan::Font defaultFont;
 			clan::FileSystem m_FileSystem;
 		};
 	}

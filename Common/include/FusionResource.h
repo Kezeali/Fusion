@@ -34,6 +34,7 @@
 
 #include "FusionCommon.h"
 
+#include <boost/any.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/signals2/signal.hpp>
 

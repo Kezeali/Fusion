@@ -520,7 +520,7 @@ namespace FusionEngine
 		tasks.push_back(*m_B2DTask);
 		tasks.push_back(*m_B2DInterpTask);
 		tasks.push_back(*m_B2DSynchTask);
-		return tasks;
+		return std::move(tasks);
 	}
 
 	void Box2DWorld::DoSerialProcessing()

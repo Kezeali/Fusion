@@ -475,8 +475,10 @@ namespace FusionEngine
 				}
 				return completions;
 			});
-			std::vector<std::string> args; args.push_back("path"); args.push_back("type");
-			Console::getSingleton().SetCommandHelpText("resource_load", "Load the given resource. Can be used to populate the editor's resource-database", args);
+			{
+				std::vector<std::string> cmdargs; cmdargs.push_back("path"); cmdargs.push_back("type");
+				Console::getSingleton().SetCommandHelpText("resource_load", "Load the given resource. Can be used to populate the editor's resource-database", cmdargs);
+			}
 		}
 
 		m_ShapeTools[Tool::Polygon] = m_ShapeTools[Tool::Line] = m_PolygonTool = std::make_shared<EditorPolygonTool>();
@@ -1040,9 +1042,7 @@ namespace FusionEngine
 		auto skin = std::make_shared<Gwen::Skin::TexturedBase>(m_GuiRenderer.get());
 		skin->Init("Data/core/gui/DefaultSkin.png");
 		m_GuiSkin = skin;
-		//
-		// Create a Canvas (it's root, on which all other GWEN panels are created)
-		//
+
 		Gwen::Controls::Canvas* pCanvas = new Gwen::Controls::Canvas( skin.get() );
 		pCanvas->SetSize(canvas.get_width(), canvas.get_height());
 		pCanvas->SetDrawBackground( true );
@@ -1054,13 +1054,13 @@ namespace FusionEngine
 		m_GuiInput = std::make_shared<Gwen::Input::ClanLib>();
 		m_GuiInput->Initialize(pCanvas);
 
-		//// Mouse Events
-		//m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseDown));
-		//m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseUp));
-		//m_InputSlots.push_back(ic.get_mouse().sig_pointer_move().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseMove));
-		//// KBD events
-		//m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyDown));
-		//m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyUp));
+		// Mouse Events
+		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseDown));
+		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseUp));
+		m_InputSlots.push_back(ic.get_mouse().sig_pointer_move().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onMouseMove));
+		// KBD events
+		m_InputSlots.push_back(ic.get_mouse().sig_key_down().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyDown));
+		m_InputSlots.push_back(ic.get_mouse().sig_key_up().connect(m_GuiInput.get(), &Gwen::Input::ClanLib::onKeyUp));
 	}
 
 	void Editor::SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader)
@@ -1710,7 +1710,8 @@ namespace FusionEngine
 
 		if (m_Tool != Tool::None)
 		{
-			if (auto& tool = m_ShapeTools[m_Tool])
+			auto tool = m_ShapeTools[m_Tool];
+			if (tool)
 				tool->KeyChange(ev.shift, ev.ctrl, ev.alt);
 		}
 
@@ -1809,7 +1810,8 @@ namespace FusionEngine
 			case clan::keycode_return:
 				if (m_Tool != Tool::None)
 				{
-					if (auto& tool = m_ShapeTools[m_Tool])
+					auto tool = m_ShapeTools[m_Tool];
+					if (tool)
 						tool->Finish();
 				}
 				m_Tool = Tool::None;
@@ -1817,7 +1819,8 @@ namespace FusionEngine
 			case clan::keycode_escape:
 				if (m_Tool != Tool::None)
 				{
-					if (auto& tool = m_ShapeTools[m_Tool])
+					auto tool = m_ShapeTools[m_Tool];
+					if (tool)
 						tool->Cancel();
 				}
 				m_Tool = Tool::None;
@@ -1852,7 +1855,8 @@ namespace FusionEngine
 
 		if (m_Tool != Tool::None)
 		{
-			if (auto& tool = m_ShapeTools[m_Tool])
+			auto tool = m_ShapeTools[m_Tool];
+			if (tool)
 				tool->KeyChange(ev.shift, ev.ctrl, ev.alt);
 		}
 
@@ -2034,7 +2038,8 @@ namespace FusionEngine
 			}
 			else
 			{
-				if (auto& tool = m_ShapeTools[m_Tool])
+				auto tool = m_ShapeTools[m_Tool];
+				if (tool)
 				{
 					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 					const auto mouseInputType = GetMouseInputType(ev.id);
@@ -2078,7 +2083,8 @@ namespace FusionEngine
 				}
 				else
 				{
-					if (auto& tool = m_ShapeTools[m_Tool])
+					auto tool = m_ShapeTools[m_Tool];
+					if (tool)
 					{
 						Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 						const auto mouseInputType = GetMouseInputType(ev.id);
@@ -2134,7 +2140,8 @@ namespace FusionEngine
 		{
 			if (m_Tool != Tool::None)
 			{
-				if (auto& tool = m_ShapeTools[m_Tool])
+				auto tool = m_ShapeTools[m_Tool];
+				if (tool)
 				{
 					Vector2 mpos = Vector2i(ev.mouse_pos.x, ev.mouse_pos.y);
 					tool->MouseMove(ReturnScreenToWorld(mpos.x, mpos.y), ev.shift, ev.ctrl, ev.alt);
@@ -2288,6 +2295,7 @@ namespace FusionEngine
 	{
 		m_ContextMenu = std::make_shared<DynamicMenu>(m_GUIContext);
 		m_ContextMenu->AddItem("fart", [](Gwen::Controls::Base* pControl) {SendToConsole("Fart");});
+		m_ContextMenu->Show(position);
 		
 		//ClearCtxMenu(m_PropertiesMenu.get());
 		//ClearCtxMenu(m_EntitySelectionMenu.get());

@@ -24,7 +24,10 @@ namespace Gwen
 		};
 
 
-		ClanLib::ClanLib(const clan::Canvas& target, const clan::FileSystem& fileSystem) : m_Target(target), m_FileSystem(fileSystem)
+		ClanLib::ClanLib(const clan::Canvas& target, const clan::FileSystem& fileSystem)
+			: m_Target(target),
+			m_FileSystem(fileSystem),
+			defaultFont(clan::Canvas(target), "Tahoma", 11)
 		{
 		}
 
@@ -104,9 +107,8 @@ namespace Gwen
 				// Ideally here we should be setting the font to a system default font here.
 				delete pFont;
 
-				//static clan::Font defaultFont = clan::Font();
-				//pFont = &defaultFont;
-				pFont = NULL;
+				pFont = &defaultFont;
+				//pFont = NULL;
 			}
 
 			font->data = pFont;
@@ -135,9 +137,8 @@ namespace Gwen
 
 			if ( !pCLFont )
 			{
-				//static clan::Font defaultFont = clan::Font();
-				//pCLFont = &defaultFont;
-				pCLFont = NULL;
+				pCLFont = &defaultFont;
+				//pCLFont = NULL;
 			}
 
 			pCLFont->draw_text(m_Target, clan::Pointf(pos.x, pos.y), Gwen::Utility::UnicodeToString(text), clan::Colorf(m_Color));
@@ -156,9 +157,7 @@ namespace Gwen
 
 			if ( !pCLFont )
 			{
-				//static clan::Font defaultFont = clan::Font();
-				//pCLFont = &defaultFont;
-				pCLFont = NULL;
+				pCLFont = &defaultFont;
 			}
 
 			auto size = pCLFont->get_text_size(m_Target, Gwen::Utility::UnicodeToString(text));

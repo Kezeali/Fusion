@@ -8,6 +8,7 @@
     <CodeAnalysisRuleSet>ExtendedCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <IncludePath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -16,6 +17,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnablePREfast>true</EnablePREfast>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
