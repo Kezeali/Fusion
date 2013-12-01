@@ -18,6 +18,8 @@
     <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
+    <ClInclude Include="include\FusionDebugDrawImpl.h" />
+    <ClInclude Include="include\FusionDebugDraw.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

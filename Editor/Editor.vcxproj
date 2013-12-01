@@ -119,9 +119,11 @@
     <ClInclude Include="include\FusionResourceEditor.h" />
     <ClInclude Include="include\FusionResourceEditorFactory.h" />
     <ClInclude Include="include\FusionWindowDropTarget.h" />
+    <ClInclude Include="include\Gwen\DebugRenderer.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Gwen\DebugRenderer.cpp" />
     <ClCompile Include="source\FusionArchetypeResourceEditor.cpp" />
     <ClCompile Include="source\FusionEditor.cpp" />
     <ClCompile Include="source\FusionEditorCircleTool.cpp" />

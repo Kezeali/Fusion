@@ -239,17 +239,45 @@ namespace FusionEngine
 		}
 	};
 
-	class EditorOverlay : public CLRenderExtension
+	class EditorOverlay : public System::WorldBase
 	{
 	public:
-		EditorOverlay(const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorRectangleTool>& rect_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
-			: m_PolygonTool(poly_tool),
+		EditorOverlay(System::ISystem* system, const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorRectangleTool>& rect_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
+			: System::WorldBase(system),
+			m_PolygonTool(poly_tool),
 			m_RectangleTool(rect_tool),
 			m_CircleTool(circle_tool)
 		{
 		}
 
-		void Draw(clan::Canvas& canvas) override;
+		void Draw(clan::Canvas& canvas);
+
+		void ProcessMessage(Messaging::Message message) override
+		{
+		}
+
+		std::vector<std::string> GetTypes() const override
+		{
+			return std::vector<std::string>();
+		}
+
+		ComponentPtr InstantiateComponent(const std::string& type) override
+		{
+			return ComponentPtr();
+		}
+
+		void OnActivation(const ComponentPtr& component) override
+		{
+		}
+
+		void OnDeactivation(const ComponentPtr& component) override
+		{
+		}
+
+		System::TaskList_t MakeTasksList() const
+		{
+			return System::TaskList_t();
+		}
 
 		void SelectEntity(const EntityPtr& entity)
 		{
@@ -485,7 +513,8 @@ namespace FusionEngine
 		m_ShapeTools[Tool::Rectangle] = m_RectangleTool = std::make_shared<EditorRectangleTool>();
 		m_ShapeTools[Tool::Elipse] = m_CircleTool = std::make_shared<EditorCircleTool>();
 
-		m_EditorOverlay = std::make_shared<EditorOverlay>(m_PolygonTool, m_RectangleTool, m_CircleTool);
+		m_EditorSystem = std::make_shared<EditorSystem>();
+		m_EditorOverlay = std::make_shared<EditorOverlay>(m_EditorSystem.get(), m_PolygonTool, m_RectangleTool, m_CircleTool);
 		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
 
 		//m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
@@ -969,8 +998,9 @@ namespace FusionEngine
 		else
 			m_EditorOverlay->m_CamRange = m_EditCamRange;
 
-		m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
-		m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
+
+		//m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
+		//m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
 
 		//m_DockedWindows = std::make_shared<DockedWindowManager>(this);
 
