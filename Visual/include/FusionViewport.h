@@ -81,6 +81,9 @@ namespace FusionEngine
 		void SetCamera(const CameraPtr &camera);
 		const CameraPtr &GetCamera() const;
 
+		void CalculateScreenArea(const clan::GraphicContext& gc, clan::Rect &area, bool apply_camera_offset = false);
+		void CalculateScreenArea(const clan::GraphicContext& gc, clan::Rectf &area, bool apply_camera_offset = false);
+
 		static void Register(asIScriptEngine *engine);
 
 	protected:

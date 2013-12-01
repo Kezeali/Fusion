@@ -105,6 +105,59 @@ namespace FusionEngine
 		(*viewport)->SetSize(width, height);
 	}
 
+	void Viewport::CalculateScreenArea(const clan::GraphicContext& gc, clan::Rect &area, bool apply_camera_offset)
+	{
+		const clan::Rectf &proportions = GetArea();
+
+		area.left = (int)floor(proportions.left * gc.get_width());
+		area.top = (int)floor(proportions.top * gc.get_height());
+		area.right = (int)ceil(proportions.right * gc.get_width());
+		area.bottom = (int)ceil(proportions.bottom * gc.get_height());
+
+		if (apply_camera_offset)
+		{
+			const CameraPtr &camera = GetCamera();
+			if (!camera)
+				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
+
+			// Viewport offset is the top-left of the viewport in the game-world,
+			//  i.e. camera_offset - viewport_size * camera_origin
+			clan::Vec2i viewportOffset =
+				camera->GetPosition() - clan::Vec2f::calc_origin(clan::origin_center, clan::Sizef((float)area.get_width(), (float)area.get_height()));
+
+			area.translate(viewportOffset);
+		}
+	}
+
+	void Viewport::CalculateScreenArea(const clan::GraphicContext& gc, clan::Rectf &area, bool apply_camera_offset)
+	{
+		const clan::Rectf &proportions = GetArea();
+
+		area.left = proportions.left * gc.get_width();
+		area.top = proportions.top * gc.get_height();
+		area.right = proportions.right * gc.get_width();
+		area.bottom = proportions.bottom * gc.get_height();
+
+		if (apply_camera_offset)
+		{
+			const CameraPtr &camera = GetCamera();
+			if (!camera)
+				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
+
+			auto camZoom = (1.f / camera->GetZoom());
+			const clan::Sizef zoomedSize(area.get_width() * camZoom, area.get_height() * camZoom);
+
+			// Viewport offset is the top-left of the viewport in the game-world,
+			//  i.e. camera_offset - viewport_size * camera_origin
+			clan::Vec2f viewportOffset =
+				camera->GetPosition() - clan::Vec2f::calc_origin( clan::origin_center, zoomedSize);
+
+			area.left = viewportOffset.x;
+			area.top = viewportOffset.y;
+			area.set_size(zoomedSize);
+		}
+	}
+
 	void Viewport::Register(asIScriptEngine *engine)
 	{
 		int r;
