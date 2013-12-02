@@ -1,25 +1,21 @@
-**[Fusion Project Page][1]** 
-
-Build instructions for Windows with VC2010:
+Build instructions for Windows with VC2012:
 ===========================================
 1.  Create a "workspace" folder in which all the following folders will be created
-2.  Get **Fusion**, **[RAS][2]** and **[ScriptUtils][3]**
+2.  Get **Fusion** and **[ScriptUtils][2]**
 3.  Install the dependencies: 
     1.  Create a new folder called **FusionDependencies**
-    2.  Download and extract [FusionDependencies.7z][4] (headers and binaries compiled for VC2010) into the folder you just created 
-4.  Open and build *ScriptUtils\ScriptUtils.sln*
-5.  Open and build *RAS\libRocket_AngelScript.sln*
-6.  You can now open and build *Fusion\Fusion.sln*
+    2.  Download and extract [FusionDependencies.7z][3] (headers and binaries compiled for VC2012) into the folder you just created 
+5.  Open and build *Fusion\Fusion.sln*
+6.	Run ***bin/setup_targetdirs.cmd*** before debugging Fusion within Visual Studio: this should copy all the .dlls from the dependencies into each of the working directories used by the executable projects. 
 7.  Done!
-
-Oops, one last step: Run ***bin/setup_targetdirs.cmd*** before debugging Fusion within Visual Studio: this should copy all the .dlls from *FusionDependencies\bin*, *FusionDependencies\libRocket\bin*, *FusionDependencies\RakNet-x.x\Lib*, *RAS\library*, etc. into *Fusion\$(ConfigName)*, the working directory used by the executable projects. 
 
 Release builds:
 ====================
-Go [here][5] to download up-to-date builds.
+Go [here][4] to download up-to-date builds.
+
+**Old [Fusion Project Page][1] on sourceforge** 
 
  [1]: http://sourceforge.net/projects/steelfusion
- [2]: https://github.com/Kezeali/RAS
- [3]: https://github.com/Kezeali/ScriptUtils
- [4]: http://files.elliothayward.net/FusionDependencies.7z
- [5]: http://files.elliothayward.net/releases
+ [2]: https://github.com/Kezeali/ScriptUtils
+ [3]: http://files.elliothayward.net/FusionDependencies.7z
+ [4]: http://files.elliothayward.net/releases
