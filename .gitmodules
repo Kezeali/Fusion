@@ -1,3 +1,6 @@
 [submodule "external/EASTL"]
 	path = external/EASTL
 	url = git@github.com:Kezeali/EASTL.git
+[submodule "ScriptUtils"]
+	path = ScriptUtils
+	url = https://github.com/Kezeali/ScriptUtils.git
