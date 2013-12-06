@@ -50,6 +50,7 @@
 #include "FusionRakNetwork.h"
 #include <RakNet/RakNetStatistics.h>
 
+#include "ClanLibRenderer/FusionDebugDraw.h"
 #include "FusionPhysicsDebugDraw.h"
 
 #include <tbb/parallel_sort.h>

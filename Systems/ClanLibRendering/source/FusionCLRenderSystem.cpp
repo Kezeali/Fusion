@@ -31,6 +31,7 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionRenderer.h"
+#include "ClanLibRenderer/FusionDebugDraw.h"
 
 #include "FusionCLRenderComponent.h"
 #include "FusionCLRenderExtension.h"

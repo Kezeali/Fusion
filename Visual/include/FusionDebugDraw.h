@@ -38,9 +38,13 @@
 namespace FusionEngine
 {
 
+	class DebugDrawProvider;
+
 	class DebugDraw
 	{
 	public:
+		DebugDraw();
+
 		DebugDraw(DebugDraw&& other)
 			: m_Impl(std::move(other.m_Impl))
 		{
@@ -122,8 +126,13 @@ namespace FusionEngine
 		{
 		}
 
-		virtual DebugDraw Create() const = 0;
+		virtual std::shared_ptr<DebugDrawImpl> Create() = 0;
 	};
+
+	DebugDraw::DebugDraw()
+		: m_Impl(DebugDrawProvider::getSingleton().Create())
+	{
+	}
 
 }
 

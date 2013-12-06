@@ -28,7 +28,7 @@ namespace Gwen
 
 		DebugRenderer::DebugRenderer(const clan::Canvas& canvas, const clan::FileSystem& fileSystem)
 			: m_Canvas(canvas),
-			m_Target(FusionEngine::DebugDrawProvider::getSingleton().Create()),
+			m_Target(),
 			m_FileSystem(fileSystem),
 			defaultFont(clan::Canvas(canvas), "Tahoma", 11)
 		{

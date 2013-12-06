@@ -47,7 +47,11 @@
 
 namespace FusionEngine
 {
-	// forward decl.
+	namespace ClanLibRenderer
+	{
+		class DebugDraw;
+	}
+
 	class IDrawable;
 	class CLSprite;
 	class CLRenderTask;
