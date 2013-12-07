@@ -70,7 +70,7 @@ namespace FusionEngine
 		virtual bool MouseRelease(const Vector2& pos, MouseInput input, bool shift, bool ctrl, bool alt) = 0;
 
 		//! Should draw something useful
-		virtual void Draw(clan::Canvas& gc) = 0;
+		virtual void Draw() = 0;
 
 	};
 

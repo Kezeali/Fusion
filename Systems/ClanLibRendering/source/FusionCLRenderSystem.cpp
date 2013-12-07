@@ -43,6 +43,8 @@
 #include "FusionEntity.h"
 #include "FusionPlayerRegistry.h"
 
+#include "FusionDebugDraw.h"
+
 // TODO: move into StreamingSystem?
 #include "FusionStreamingCameraComponent.h"
 #include "FusionCameraSynchroniser.h"
@@ -72,6 +74,34 @@ namespace FusionEngine
 		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);
 	}
 
+	namespace ClanLibRenderer
+	{
+
+		class DebugDrawProvider : public FusionEngine::DebugDrawProvider
+		{
+		public:
+			std::shared_ptr<DebugDrawImpl> Create();
+
+			const std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>>& GetContexts() const;
+
+		private:
+			std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>> m_Contexts;
+		};
+
+		std::shared_ptr<DebugDrawImpl> DebugDrawProvider::Create()
+		{
+			auto newContext = std::make_shared<ClanLibRenderer::DebugDraw>();
+			m_Contexts.push_back(newContext);
+			return newContext;
+		}
+
+		const std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>>& DebugDrawProvider::GetContexts() const
+		{
+			return m_Contexts;
+		}
+
+	}
+
 	CLRenderWorld::CLRenderWorld(System::ISystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
 		: WorldBase(system),
 		m_PhysWorld(nullptr),
@@ -85,6 +115,8 @@ namespace FusionEngine
 		m_GraphicalProfilerTask = new GraphicalProfilerTask(this, canvas);
 
 		m_SpriteDefinitionCache = std::make_shared<SpriteDefinitionCache>();
+
+		m_DebugDrawProvider = std::make_shared<ClanLibRenderer::DebugDrawProvider>();
 
 		Console::getSingleton().BindCommand("phys_debug_draw", [this](const std::vector<std::string>& params)->std::string
 		{
@@ -140,26 +172,6 @@ namespace FusionEngine
 					m_Viewports.erase(entry);
 			}
 		}
-	}
-
-	void CLRenderWorld::AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& vp)
-	{
-		m_Extensions.insert(std::make_pair(vp, extension));
-	}
-
-	void CLRenderWorld::RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas)
-	{
-		std::vector<ViewportPtr> removed;
-		auto range = m_Extensions.equal_range(vp);
-		for (auto it = range.first; it != range.second; ++it)
-		{
-			if (auto extension = it->second.lock())
-				extension->Draw(canvas);
-			else
-				removed.push_back(vp);
-		}
-		for (auto it = removed.begin(), end = removed.end(); it != end; ++it)
-			m_Extensions.erase(*it);
 	}
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const

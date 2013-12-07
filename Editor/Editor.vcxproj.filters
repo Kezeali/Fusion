@@ -47,6 +47,7 @@
       <Filter>Inspectors</Filter>
     </ClInclude>
     <ClInclude Include="include\Gwen\DebugRenderer.h" />
+    <ClInclude Include="include\FusionEditorWorld.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">
@@ -93,5 +94,6 @@
       <Filter>Inspectors</Filter>
     </ClCompile>
     <ClCompile Include="Gwen\DebugRenderer.cpp" />
+    <ClCompile Include="source\FusionEditorWorld.cpp" />
   </ItemGroup>
 </Project>

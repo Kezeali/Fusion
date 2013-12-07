@@ -33,7 +33,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Network", "Network\Network.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Input", "Input\Input.vcxproj", "{A16CD0DB-0D43-4611-88E6-D2203CB9511B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Low Level Abstraction", "Low Level Abstraction", "{172373A8-AFB1-4E07-BB38-767B581ED49B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "General IO", "General IO", "{172373A8-AFB1-4E07-BB38-767B581ED49B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Editor", "Editor\Editor.vcxproj", "{C170AF60-D1CE-4485-924A-00186FBB6987}"
 EndProject

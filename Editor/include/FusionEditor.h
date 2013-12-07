@@ -32,6 +32,7 @@
 
 #include "FusionEngineExtension.h"
 #include "FusionResourceEditorFactory.h"
+#include "FusionComponentSystem.h"
 
 #include "FusionCellStreamTypes.h"
 #include "FusionTypes.h"
@@ -84,10 +85,7 @@ namespace FusionEngine
 	class WorldSaver;
 	class SaveDataArchive;
 
-	class EditorSystem;
-
-	class EditorOverlay;
-	class SelectionDrawer;
+	class EditorWorld;
 
 	//class PreviewFormatter;
 
@@ -111,13 +109,22 @@ namespace FusionEngine
 
 	class WindowDropTarget;
 
-	class Editor : public EngineExtension, public ResourceEditorFactory
+	class Editor : public EngineExtension, public ResourceEditorFactory, public System::ISystem
 	{
 	public:
 		Editor(const std::vector<std::string> &args);
 		virtual ~Editor();
 
-		std::string GetName() const { return "editor"; }
+		std::string GetName() const override { return "Editor"; }
+
+		System::SystemType GetType() const override
+		{
+			return System::Editor;
+		}
+
+		std::shared_ptr<System::WorldBase> CreateWorld() override;
+
+		void OnWorldCreated(const std::shared_ptr<System::WorldBase>& world);
 
 		void CleanUp();
 
@@ -140,8 +147,6 @@ namespace FusionEngine
 		void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) { m_DataArchiver = archiver; }
 
 		System::ISystem* GetSystem() const;
-
-		void OnWorldCreated(const std::shared_ptr<System::WorldBase>& world);
 
 		void SetAngelScriptWorld(const std::shared_ptr<AngelScriptWorld>& asw);
 
@@ -244,8 +249,6 @@ namespace FusionEngine
 		std::shared_ptr<EntityInstantiator> m_EntityInstantiator;
 		std::shared_ptr<EntityManager> m_EntityManager;
 
-		std::shared_ptr<EditorSystem> m_EditorSystem;
-
 		int m_NextFactoryId;
 		std::unordered_map<int, std::shared_ptr<boost::signals2::scoped_connection>> m_ArchetypeFactoryLoadConnections;
 
@@ -309,8 +312,7 @@ namespace FusionEngine
 		std::string m_DragData;
 		std::shared_ptr<WindowDropTarget> m_DropTarget;
 
-		std::shared_ptr<EditorOverlay> m_EditorOverlay;
-		std::shared_ptr<SelectionDrawer> m_SelectionDrawer;
+		std::shared_ptr<EditorWorld> m_EditorWorld;
 
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
 		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
@@ -387,7 +389,7 @@ namespace FusionEngine
 		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback = std::function<void (void)>());
 		void CreatePropertiesWindowForSelected();
 
-		void RegisterScriptType(asIScriptEngine* engine);
+		void RegisterScriptInterface(asIScriptEngine* engine);
 
 	};
 

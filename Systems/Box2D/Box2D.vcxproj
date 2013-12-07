@@ -122,33 +122,6 @@
     <ClInclude Include="include\FusionBox2DSystemMessageTypes.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\Common.vcxproj">
-      <Project>{182a4ce9-6a30-48a2-a72f-b9d0cfff56f0}</Project>
-      <Private>true</Private>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-    <ProjectReference Include="..\..\ComponentInterface\ComponentInterface.vcxproj">
-      <Project>{1f9d2082-7977-40a2-95a6-c254dd2cd660}</Project>
-      <Private>true</Private>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-    <ProjectReference Include="..\..\external\tinyxml\tinyxml.vcxproj">
-      <Project>{80eec939-ee99-4428-9c34-8d08f8d1940a}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Input\Input.vcxproj">
-      <Project>{a16cd0db-0d43-4611-88e6-d2203cb9511b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Network\Network.vcxproj">
-      <Project>{80cbb172-cb75-4b4e-aad8-ebce1301971b}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

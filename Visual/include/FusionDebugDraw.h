@@ -40,6 +40,7 @@ namespace FusionEngine
 
 	class DebugDrawProvider;
 
+	//! A context for drawing debug overlays
 	class DebugDraw
 	{
 	public:
@@ -55,6 +56,11 @@ namespace FusionEngine
 		{
 		}
 
+		void Flip() const
+		{
+			m_Impl->Flip();
+		}
+
 		void SetCliprect(const clan::Rect& rect)
 		{
 			m_Impl->SetCliprect(rect);
@@ -65,19 +71,29 @@ namespace FusionEngine
 			m_Impl->ResetCliprect();
 		}
 
+		void DrawRectangle(const clan::Rect& rect, const clan::Color& color) const
+		{
+			m_Impl->DrawRectangle(rect, color);
+		}
+
 		void DrawSolidRectangle(const clan::Rect& rect, const clan::Color& color) const
 		{
-			std::vector<Vector2> rectVerts;
-			rectVerts.push_back(Vector2(rect.left, rect.top));
-			rectVerts.push_back(Vector2(rect.right, rect.top));
-			rectVerts.push_back(Vector2(rect.right, rect.bottom));
-			rectVerts.push_back(Vector2(rect.left, rect.bottom));
-			m_Impl->DrawSolidPolygon(rectVerts, color);
+			m_Impl->DrawSolidRectangle(rect, color);
 		}
 
 		void DrawTexturedRectangle(clan::Image texture, clan::Rect source, clan::Rectf dest) const
 		{
 			m_Impl->DrawTexturedRectangle(texture, source, dest);
+		}
+
+		void DrawTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
+		{
+			m_Impl->DrawTriangle(vert_a, vert_b, vert_c, color);
+		}
+
+		void DrawSolidTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
+		{
+			m_Impl->DrawSolidTriangle(vert_a, vert_b, vert_c, color);
 		}
 
 		void DrawPolygon(std::vector<Vector2> vertices, const clan::Color& color) const
@@ -129,7 +145,7 @@ namespace FusionEngine
 		virtual std::shared_ptr<DebugDrawImpl> Create() = 0;
 	};
 
-	DebugDraw::DebugDraw()
+	inline DebugDraw::DebugDraw()
 		: m_Impl(DebugDrawProvider::getSingleton().Create())
 	{
 	}

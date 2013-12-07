@@ -27,6 +27,8 @@
 
 #include "PrecompiledHeaders.h"
 
+#include "ClanLibRenderer/FusionDebugDraw.h"
+
 namespace FusionEngine
 {
 }

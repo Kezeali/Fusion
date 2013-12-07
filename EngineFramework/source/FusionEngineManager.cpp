@@ -693,12 +693,6 @@ namespace FusionEngine
 				// Add the world's tasks to the scheduler
 				worlds.push_back(world);
 			}
-			for (auto& extension : m_Extensions)
-			{
-				auto world = extension->GetSystem()->CreateWorld();
-				m_ComponentUniverse->AddWorld(world);
-				worlds.push_back(world);
-			}
 			m_Scheduler->SetUniverse(worlds);
 
 			// Check for any messages posted during world creation

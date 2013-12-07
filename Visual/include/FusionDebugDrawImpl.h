@@ -45,11 +45,21 @@ namespace FusionEngine
 	public:
 		virtual ~DebugDrawImpl();
 
+		virtual void Flip() = 0;
+
 		virtual void SetCliprect(const clan::Rect& rect) = 0;
 
 		virtual void ResetCliprect() = 0;
+		
+		virtual void DrawRectangle(const clan::Rect& rect, const clan::Color& color) = 0;
+
+		virtual void DrawSolidRectangle(const clan::Rect& rect, const clan::Color& color) = 0;
 
 		virtual void DrawTexturedRectangle(clan::Image texture, clan::Rect source, clan::Rectf dest) = 0;
+
+		virtual void DrawTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) = 0;
+
+		virtual void DrawSolidTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) = 0;
 
 		virtual void DrawPolygon(std::vector<Vector2> vertices, const clan::Color& color) = 0;
 

@@ -45,6 +45,8 @@
 
 #include "FusionEditorShapeTool.h"
 
+#include "FusionDebugDraw.h"
+
 namespace Rocket { namespace Core {
 	class ElementDocument;
 } }
@@ -73,7 +75,7 @@ namespace FusionEngine
 		bool MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 		bool MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 
-		void Draw(clan::Canvas& canvas) override;
+		void Draw() override;
 
 	private:
 		Vector2 m_Center;
@@ -95,6 +97,8 @@ namespace FusionEngine
 		enum Action { None, Resize, ResizeRelative, Move } m_Action;
 		bool m_MouseDown;
 		Vector2 m_DragFrom;
+
+		DebugDraw m_DebugDraw;
 
 		void CreateGui();
 

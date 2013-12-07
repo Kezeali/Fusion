@@ -221,7 +221,12 @@ namespace FusionEngine
 			return false;
 	}
 
-	void EditorRectangleTool::Draw(clan::Canvas& canvas)
+	Vector2 clToFsn(const clan::Vec2f& vec)
+	{
+		return Vector2(vec.x, vec.y);
+	}
+
+	void EditorRectangleTool::Draw()
 	{
 		const clan::Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
 		const clan::Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
@@ -233,9 +238,9 @@ namespace FusionEngine
 			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
 			quad.rotate(clan::Vec2f(m_Center.x, m_Center.y), clan::Angle(m_Angle, clan::angle_radians));
 
-			canvas.fill_triangle(quad.p, quad.q, quad.s, currentShapeColour);
-			canvas.fill_triangle(quad.q, quad.r, quad.s, currentShapeColour);
-			canvas.draw_line(m_Center.x, m_Center.y, m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x, lineColour);
+			m_DebugDraw.DrawSolidTriangle(clToFsn(quad.p), clToFsn(quad.q), clToFsn(quad.s), currentShapeColour);
+			m_DebugDraw.DrawSolidTriangle(clToFsn(quad.q), clToFsn(quad.r), clToFsn(quad.s), currentShapeColour);
+			m_DebugDraw.DrawSegment(m_Center, Vector2(m_Center.x + std::cosf(m_Angle) * m_HalfSize.x, m_Center.y + std::sinf(m_Angle) * m_HalfSize.x), lineColour);
 		}
 
 		if (m_MouseDown && m_Action != Action::None)
@@ -245,9 +250,9 @@ namespace FusionEngine
 			clan::Quadf quad(clan::Rectf(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y));
 			quad.rotate(clan::Vec2f(m_FeedbackCenter.x, m_FeedbackCenter.y), clan::Angle(m_FeedbackAngle, clan::angle_radians));
 
-			canvas.fill_triangle(quad.p, quad.q, quad.s, modificationColour);
-			canvas.fill_triangle(quad.q, quad.r, quad.s, modificationColour);
-			canvas.draw_line(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x, lineColour);
+			m_DebugDraw.DrawSolidTriangle(clToFsn(quad.p), clToFsn(quad.q), clToFsn(quad.s), modificationColour);
+			m_DebugDraw.DrawSolidTriangle(clToFsn(quad.q), clToFsn(quad.r), clToFsn(quad.s), modificationColour);
+			m_DebugDraw.DrawSegment(m_FeedbackCenter, Vector2(m_FeedbackCenter.x + std::cosf(m_FeedbackAngle) * m_FeedbackHalfSize.x, m_FeedbackCenter.y + std::sinf(m_FeedbackAngle) * m_FeedbackHalfSize.x), lineColour);
 		}
 	}
 

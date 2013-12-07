@@ -70,7 +70,7 @@
     <ClInclude Include="include\FusionCLRenderSystemMessageTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionDebugDraw.h">
+    <ClInclude Include="include\ClanLibRenderer\FusionDebugDraw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

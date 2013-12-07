@@ -199,18 +199,18 @@ namespace FusionEngine
 			return false;
 	}
 
-	void EditorCircleTool::Draw(clan::Canvas& canvas)
+	void EditorCircleTool::Draw()
 	{
 		const clan::Colorf currentShapeColour(0.4f, 0.4f, 0.96f, 0.8f);
 		const clan::Colorf modificationColour(0.6f, 0.6f, 0.98f, 0.5f);
 
-		canvas.draw_line(m_Center.x - 4.f, m_Center.y, m_Center.x + 4.f, m_Center.y, clan::Colorf(1.f, 0.f, 0.f));
-		canvas.draw_line(m_Center.x, m_Center.y - 4.f, m_Center.x, m_Center.y + 4.f, clan::Colorf(0.f, 1.f, 0.f));
+		m_DebugDraw.DrawSegment(Vector2(m_Center.x - 4.f, m_Center.y), Vector2(m_Center.x + 4.f, m_Center.y), clan::Colorf(1.f, 0.f, 0.f));
+		m_DebugDraw.DrawSegment(Vector2(m_Center.x, m_Center.y - 4.f), Vector2(m_Center.x, m_Center.y + 4.f), clan::Colorf(0.f, 1.f, 0.f));
 		if (m_Radius > 0.f)
-			canvas.fill_circle(m_Center.x, m_Center.y, m_Radius, currentShapeColour);
+			m_DebugDraw.DrawCircle(m_Center, m_Radius, currentShapeColour);
 
 		if (m_MouseDown && m_Action != Action::None)
-			canvas.fill_circle(m_FeedbackCenter.x, m_FeedbackCenter.y, m_FeedbackRadius, modificationColour);
+			m_DebugDraw.DrawCircle(m_FeedbackCenter, m_FeedbackRadius, modificationColour);
 	}
 
 	void EditorCircleTool::CreateGui()

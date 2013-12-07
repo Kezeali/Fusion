@@ -98,8 +98,6 @@ namespace FusionEngine
 
 		virtual void Update(float time, float dt) = 0;
 
-		virtual System::ISystem* GetSystem() const = 0;
-
 		void RequestQuit() { m_Quit = true; }
 		bool HasRequestedQuit() const { return m_Quit; }
 

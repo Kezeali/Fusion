@@ -5,8 +5,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\FusionDependencies\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)FusionDependencies\Visual Leak Detector\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)FusionDependencies\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Release\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>

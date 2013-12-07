@@ -45,6 +45,8 @@
 
 #include "FusionEditorShapeTool.h"
 
+#include "FusionDebugDraw.h"
+
 #include <Gwen/Gwen.h>
 
 namespace FusionEngine
@@ -75,7 +77,7 @@ namespace FusionEngine
 		bool MousePress(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 		bool MouseRelease(const Vector2& pos, MouseInput key, bool shift, bool ctrl, bool alt);
 
-		void Draw(clan::Canvas& canvas) override;
+		void Draw() override;
 
 	private:
 		Mode m_Mode;
@@ -100,6 +102,8 @@ namespace FusionEngine
 
 		std::set<size_t> m_GrabbedVerts;
 		size_t m_TempGrabbedVert;
+
+		DebugDraw m_DebugDraw;
 		
 		//boost::intrusive_ptr<Rocket::Core::ElementDocument> m_GuiDoc;
 

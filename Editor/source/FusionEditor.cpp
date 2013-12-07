@@ -38,6 +38,7 @@
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"
+#include "FusionEditorWorld.h"
 #include "FusionEntityInstantiator.h"
 #include "FusionEntityManager.h"
 #include "FusionVirtualFileSource_PhysFS.h"
@@ -53,18 +54,16 @@
 #include "FusionWindowDropTarget.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionBinaryStream.h"
+#include "FusionCLRenderSystem.h"
 
 #include "FusionComponentSystem.h"
 
 #include "FusionAngelScriptSystem.h"
 #include "FusionBox2DSystem.h"
-#include "FusionCLRenderSystem.h"
-#include "FusionCLRenderExtension.h"
-#include "FusionRenderer.h"
 
 #include "FusionBox2DComponent.h"
 #include "FusionRender2DComponent.h"
-#include "FUsionScriptComponent.h"
+#include "FusionScriptComponent.h"
 
 #include "FusionElementInspectorGroup.h"
 
@@ -107,69 +106,29 @@ void intrusive_ptr_release(asIScriptFunction *ptr)
 namespace FusionEngine
 {
 
-	class EditorSystem : public System::ISystem
+	//class EditorSystem : public System::ISystem
+	//{
+	//	EditorSystem();
+
+	//	System::SystemType GetType() const override
+	//	{
+	//		return System::Editor;
+	//	}
+
+	//	std::string GetName() const override
+	//	{
+	//		return "Editor";
+	//	}
+
+	//	void RegisterScriptInterface(asIScriptEngine* engine) override;
+
+	//	std::shared_ptr<System::WorldBase> CreateWorld() override;
+	//};
+
+
+	std::shared_ptr<System::WorldBase> Editor::CreateWorld()
 	{
-		System::SystemType GetType() const override
-		{
-			return System::Editor;
-		}
-
-		std::string GetName() const override
-		{
-			return "Editor";
-		}
-
-		void RegisterScriptInterface(asIScriptEngine* engine) override;
-
-		std::shared_ptr<System::WorldBase> CreateWorld() override;
-	};
-
-	class EditorWorld : public System::WorldBase
-	{
-	public:
-		EditorWorld(System::ISystem* system)
-			: WorldBase(system)
-		{
-		}
-
-		void ProcessMessage(Messaging::Message message) override;
-
-		std::vector<std::string> GetTypes() const override
-		{
-			return std::vector<std::string>();
-		}
-		ComponentPtr InstantiateComponent(const std::string& type) override
-		{
-			return ComponentPtr();
-		}
-
-		void OnActivation(const ComponentPtr& component) override
-		{
-		}
-		void OnDeactivation(const ComponentPtr& component) override
-		{
-		}
-
-		System::TaskList_t MakeTasksList() const override;
-	};
-
-	void EditorSystem::RegisterScriptInterface(asIScriptEngine* engine)
-	{
-	}
-
-	std::shared_ptr<System::WorldBase> EditorSystem::CreateWorld()
-	{
-		return std::make_shared<EditorWorld>(this);
-	}
-
-	void EditorWorld::ProcessMessage(Messaging::Message message)
-	{
-	}
-
-	System::TaskList_t EditorWorld::MakeTasksList() const
-	{
-		System::TaskList_t taskList;
-		return std::move(taskList);
+		return m_EditorWorld;
 	}
 
 	inline void RemoveEqualElems(const boost::filesystem::path& base, boost::filesystem::path& subdir)
@@ -238,137 +197,6 @@ namespace FusionEngine
 			return *this;
 		}
 	};
-
-	class EditorOverlay : public System::WorldBase
-	{
-	public:
-		EditorOverlay(System::ISystem* system, const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorRectangleTool>& rect_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
-			: System::WorldBase(system),
-			m_PolygonTool(poly_tool),
-			m_RectangleTool(rect_tool),
-			m_CircleTool(circle_tool)
-		{
-		}
-
-		void Draw(clan::Canvas& canvas);
-
-		void ProcessMessage(Messaging::Message message) override
-		{
-		}
-
-		std::vector<std::string> GetTypes() const override
-		{
-			return std::vector<std::string>();
-		}
-
-		ComponentPtr InstantiateComponent(const std::string& type) override
-		{
-			return ComponentPtr();
-		}
-
-		void OnActivation(const ComponentPtr& component) override
-		{
-		}
-
-		void OnDeactivation(const ComponentPtr& component) override
-		{
-		}
-
-		System::TaskList_t MakeTasksList() const
-		{
-			return System::TaskList_t();
-		}
-
-		void SelectEntity(const EntityPtr& entity)
-		{
-			m_Selected.insert(entity);
-		}
-
-		void DeselectEntity(const EntityPtr& entity)
-		{
-			m_Selected.erase(entity);
-		}
-
-		void SetOffset(const Vector2& offset)
-		{
-			m_Offset = offset;
-		}
-
-		clan::Colorf GetColour(const std::set<EntityPtr>::const_iterator& it) const
-		{
-			const auto fraction = std::distance(it, m_Selected.end()) / (float)m_Selected.size();
-			return clan::ColorHSVf(fraction * 360.f, 0.8f, 0.8f, 1.0f);
-		}
-
-		clan::Colorf GetColour(const EntityPtr& entity) const
-		{
-			return GetColour(m_Selected.find(entity));
-		}
-
-		std::set<EntityPtr> m_Selected;
-		Vector2 m_Offset;
-
-		std::shared_ptr<Camera> m_EditCam;
-		float m_CamRange;
-
-		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
-		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
-		std::shared_ptr<EditorCircleTool> m_CircleTool;
-	};
-
-	void EditorOverlay::Draw(clan::Canvas& canvas)
-	{
-		for (auto it = m_Selected.begin(), end = m_Selected.end(); it != end; ++it)
-		{
-			const auto& entity = *it;
-
-			auto pos = entity->GetPosition();
-			pos.x = ToRenderUnits(pos.x), pos.y = ToRenderUnits(pos.y);
-			pos += m_Offset;
-
-			clan::Rectf box(clan::Sizef(50, 50));
-			box.translate(pos.x - box.get_width() * 0.5f, pos.y - box.get_height() * 0.5f);
-
-			canvas.draw_box(box, GetColour(it));
-		}
-
-		if (m_EditCam)
-		{
-			clan::Colorf rangeColour(1.0f, 0.6f, 0.6f, 0.95f);
-			auto center = m_EditCam->GetPosition();
-			auto radius = ToRenderUnits(m_CamRange);
-			clan::Rectf camRect(center.x - radius, center.y - radius, center.x + radius, center.y + radius);
-			canvas.draw_box(camRect, rangeColour);
-		}
-
-		if (m_PolygonTool && m_PolygonTool->IsActive())
-			m_PolygonTool->Draw(canvas);
-		if (m_RectangleTool && m_RectangleTool->IsActive())
-			m_RectangleTool->Draw(canvas);
-		if (m_CircleTool && m_CircleTool->IsActive())
-			m_CircleTool->Draw(canvas);
-	}
-
-	class SelectionDrawer : public CLRenderExtension
-	{
-	public:
-		void Draw(clan::Canvas& canvas) override;
-
-		void SetSelectionBox(const clan::Rectf& box) { m_SelectionBox = box; }
-
-		clan::Rectf m_SelectionBox;
-	};
-
-	void SelectionDrawer::Draw(clan::Canvas& canvas)
-	{
-		if (!fe_fzero(m_SelectionBox.get_width()) || !fe_fzero(m_SelectionBox.get_height()))
-		{
-			auto fillC = clan::Colorf::aquamarine;
-			fillC.set_alpha(0.20f);
-			canvas.draw_box(m_SelectionBox, clan::Colorf::white);
-			canvas.fill_rect(m_SelectionBox, fillC);
-		}
-	}
 
 	inline bool MouseOverUI(Gwen::Controls::Canvas* context)
 	{
@@ -513,9 +341,7 @@ namespace FusionEngine
 		m_ShapeTools[Tool::Rectangle] = m_RectangleTool = std::make_shared<EditorRectangleTool>();
 		m_ShapeTools[Tool::Elipse] = m_CircleTool = std::make_shared<EditorCircleTool>();
 
-		m_EditorSystem = std::make_shared<EditorSystem>();
-		m_EditorOverlay = std::make_shared<EditorOverlay>(m_EditorSystem.get(), m_PolygonTool, m_RectangleTool, m_CircleTool);
-		m_SelectionDrawer = std::make_shared<SelectionDrawer>();
+		m_EditorWorld = std::make_shared<EditorWorld>(this, m_PolygonTool, m_RectangleTool, m_CircleTool);
 
 		//m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
 		//{
@@ -634,8 +460,6 @@ namespace FusionEngine
 		//m_RightClickMenu->AddChild(m_EntitySelectionMenu.get());
 
 		//m_PropertiesMenu->SignalClicked.connect([this](const MenuItemEvent& e) { CreatePropertiesWindowForSelected(); });
-
-		m_EditorSystem = std::make_shared<EditorSystem>();
 	}
 
 	Editor::~Editor()
@@ -992,25 +816,13 @@ namespace FusionEngine
 
 		m_EditCam = camera;
 
-		m_EditorOverlay->m_EditCam = m_EditCam;
-		if (m_EditCamRange <= 0.f)
-			m_EditorOverlay->m_CamRange = m_StreamingManager->GetRange();
-		else
-			m_EditorOverlay->m_CamRange = m_EditCamRange;
-
-
-		//m_RenderWorld->AddRenderExtension(m_EditorOverlay, m_Viewport);
-		//m_RenderWorld->AddRenderExtension(m_SelectionDrawer, m_Viewport);
+		//m_EditorOverlay->m_EditCam = m_EditCam;
+		//if (m_EditCamRange <= 0.f)
+		//	m_EditorOverlay->m_CamRange = m_StreamingManager->GetRange();
+		//else
+		//	m_EditorOverlay->m_CamRange = m_EditCamRange;
 
 		//m_DockedWindows = std::make_shared<DockedWindowManager>(this);
-
-		//m_Background = m_GUIContext->LoadDocument("Data/core/gui/editor_background.rml");
-		//m_Background->RemoveReference();
-
-		//m_Background->SetProperty("width", Rocket::Core::Property(m_DisplayWindow.get_gc().get_width(), Rocket::Core::Property::PX));
-		//m_Background->SetProperty("height", Rocket::Core::Property(m_DisplayWindow.get_gc().get_height(), Rocket::Core::Property::PX));
-
-		//m_Background->Show();
 
 		m_DropTarget = std::make_shared<Win32DropTarget>(m_DisplayWindow);
 		m_DropTarget->GetSigDragEnter().connect([this](const Vector2i& drop_location)->bool
@@ -1034,7 +846,7 @@ namespace FusionEngine
 
 		//m_Background.reset();
 
-		m_EditorOverlay->m_EditCam.reset();
+		//m_EditorOverlay->m_EditCam.reset();
 
 		m_RenderWorld->RemoveViewport(m_Viewport);
 
@@ -1049,7 +861,7 @@ namespace FusionEngine
 		try
 		{
 			m_EditCamRange = boost::lexical_cast<float>(options.GetOption_str("editor_cam_range"));
-			m_EditorOverlay->m_CamRange = m_EditCamRange;
+			//m_EditorOverlay->m_CamRange = m_EditCamRange;
 		}
 		catch (boost::bad_lexical_cast&)
 		{}
@@ -1141,11 +953,6 @@ namespace FusionEngine
 				m_EditCam = camera;
 			}
 		}
-	}
-
-	System::ISystem* Editor::GetSystem() const
-	{
-		return m_EditorSystem.get();
 	}
 
 	class PhysVFS : public VirtualFilesystem
@@ -1700,7 +1507,7 @@ namespace FusionEngine
 
 		ForEachSelected([delta](const EntityPtr& entity) { entity->SetPosition(entity->GetPosition() + delta); });
 
-		m_EditorOverlay->SetOffset(Vector2());
+		//m_EditorOverlay->SetOffset(Vector2());
 	}
 
 	void Editor::QueueAction(const std::function<void (void)>& action)
@@ -1898,11 +1705,11 @@ namespace FusionEngine
 				case clan::keycode_t:
 				{
 						EntityPtr entity;
-						if (!m_EditorOverlay->m_Selected.empty())
-						{
-							entity = *m_EditorOverlay->m_Selected.begin();
-						}
-						else
+						//if (!m_EditorOverlay->m_Selected.empty())
+						//{
+						//	entity = *m_EditorOverlay->m_Selected.begin();
+						//}
+						//else
 						{
 							entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
 							//entity->SetName(m_EntityManager->GenerateName(entity));
@@ -1920,17 +1727,17 @@ namespace FusionEngine
 				case clan::keycode_y:
 				{
 						EntityPtr entity;
-						if (!m_EditorOverlay->m_Selected.empty())
-						{
-							entity = *m_EditorOverlay->m_Selected.begin();
-						}
-						else
+						//if (!m_EditorOverlay->m_Selected.empty())
+						//{
+						//	entity = *m_EditorOverlay->m_Selected.begin();
+						//}
+						//else
 						{
 							entity = createEntity(false, 3, Vector2::zero(), m_EntityInstantiator.get(), m_ComponentFactory.get(), m_EntityManager.get());
 							//entity->SetName(m_EntityManager->GenerateName(entity));
 						}
 
-						CreatePrefab("/Data/" + entity->GetName() + ".prefab", m_EditorOverlay->m_Selected);
+						//CreatePrefab("/Data/" + entity->GetName() + ".prefab", m_EditorOverlay->m_Selected);
 				}
 				break;
 			}
@@ -2099,7 +1906,7 @@ namespace FusionEngine
 
 						ForEachSelected([delta](const EntityPtr& entity) { entity->SetPosition(entity->GetPosition() + delta); });
 
-						m_EditorOverlay->SetOffset(Vector2());
+						//m_EditorOverlay->SetOffset(Vector2());
 					}
 					else
 					{
@@ -2127,9 +1934,9 @@ namespace FusionEngine
 					switch (ev.id)
 					{
 					case clan::mouse_right:
-						if (m_EditorOverlay->m_Selected.empty())
-							OnMouseUp_Selection(ev);
-						ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
+						//if (m_EditorOverlay->m_Selected.empty())
+						//	OnMouseUp_Selection(ev);
+						//ShowContextMenu(Vector2i(ev.mouse_pos.x, ev.mouse_pos.y), m_EditorOverlay->m_Selected);
 						break;
 					case clan::mouse_wheel_up:
 						if (ev.ctrl)
@@ -2244,7 +2051,7 @@ namespace FusionEngine
 		Vector2 mouseInWorld = mousePos;
 		TranslateScreenToWorld(&mouseInWorld.x, &mouseInWorld.y);
 
-		m_EditorOverlay->SetOffset(mouseInWorld - m_DragFrom);
+		//m_EditorOverlay->SetOffset(mouseInWorld - m_DragFrom);
 	}
 
 	void Editor::OnWindowResize(int x, int y)
@@ -2362,8 +2169,8 @@ namespace FusionEngine
 	bool Editor::TranslateScreenToWorld(ViewportPtr viewport, float* x, float* y) const
 	{
 		clan::Rectf worldArea, screenArea;
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, viewport, true);
-		Renderer::CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, viewport, false);
+		viewport->CalculateScreenArea(m_DisplayWindow.get_gc(), worldArea, true);
+		viewport->CalculateScreenArea(m_DisplayWindow.get_gc(), screenArea, false);
 
 		const bool withinViewport = *x >= screenArea.left && *y >= screenArea.top;
 		*x -= screenArea.left, *y -= screenArea.top;
@@ -2457,7 +2264,7 @@ namespace FusionEngine
 				SelectEntity(map_entity);
 		}
 
-		m_SelectionDrawer->SetSelectionBox(m_SelectionRectangle);
+		m_EditorWorld->SetSelectionBox(m_SelectionRectangle);
 	}
 
 	void Editor::SetFilebrowserOpenOverride(const Editor::FileBrowserOverrideFn_t& fn)
@@ -2473,13 +2280,13 @@ namespace FusionEngine
 	void Editor::SelectEntity(const EntityPtr& entity)
 	{
 		m_SelectedEntities.insert(entity);
-		m_EditorOverlay->SelectEntity(entity);
+		m_EditorWorld->SelectEntity(entity);
 	}
 
 	void Editor::DeselectEntity(const EntityPtr& entity)
 	{
 		m_SelectedEntities.erase(entity);
-		m_EditorOverlay->DeselectEntity(entity);
+		m_EditorWorld->DeselectEntity(entity);
 	}
 
 	void Editor::DeselectAll()
@@ -2505,23 +2312,24 @@ namespace FusionEngine
 
 	size_t Editor::GetNumSelected() const
 	{
-		return m_EditorOverlay->m_Selected.size();
+		//return m_Selected.size();
+		return -1;
 	}
 
 	void Editor::ForEachSelected(std::function<void (const EntityPtr&)> fn)
 	{
-		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
-		{
-			fn(*it);
-		}
+	//	for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
+	//	{
+	//		fn(*it);
+	//	}
 	}
 
 	void Editor::ForEachSelectedWithColours(std::function<void (const EntityPtr&, const clan::Colorf&)> fn)
 	{
-		for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
-		{
-			fn(*it, m_EditorOverlay->GetColour(it));
-		}
+	//	for (auto it = m_EditorOverlay->m_Selected.begin(), end = m_EditorOverlay->m_Selected.end(); it != end; ++it)
+	//	{
+	//		fn(*it, m_EditorOverlay->GetColour(it));
+	//	}
 	}
 
 	void Editor::DoWithArchetypeFactory(const std::string& archetype_name, std::function<void (const ResourcePointer<ArchetypeFactory>&)> fn)
@@ -2810,10 +2618,10 @@ namespace FusionEngine
 
 	void Editor::CopySelectedEntities()
 	{
-		if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))
-			SaveEntities(*file, m_EditorOverlay->m_Selected);
-		else
-			FSN_EXCEPT(FileSystemException, "Failed to create entity clipboard file");
+		//if (auto file = m_DataArchiver->CreateDataFile("editor.entity_clipboard"))
+		//	SaveEntities(*file, m_EditorOverlay->m_Selected);
+		//else
+		//	FSN_EXCEPT(FileSystemException, "Failed to create entity clipboard file");
 	}
 
 	void Editor::PasteEntities(const Vector2& offset, float base_angle)
@@ -3043,7 +2851,7 @@ namespace FusionEngine
 		return obj->GetViewport();
 	}
 
-	void Editor::RegisterScriptType(asIScriptEngine* engine)
+	void Editor::RegisterScriptInterface(asIScriptEngine* engine)
 	{
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);

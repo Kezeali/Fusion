@@ -62,6 +62,8 @@ namespace FusionEngine
 
 	class CLRenderExtension;
 
+	class DebugDrawProvider;
+
 	class CLRenderSystem : public System::ISystem
 	{
 	public:
@@ -92,9 +94,6 @@ namespace FusionEngine
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
 		void AddViewport(const ViewportPtr& viewport);
 		void RemoveViewport(const ViewportPtr& viewport);
-
-		void AddRenderExtension(const std::weak_ptr<CLRenderExtension>& extension, const ViewportPtr& viewport);
-		void RunExtensions(const ViewportPtr& vp, clan::Canvas& canvas);
 
 		void AddQueuedViewports();
 
@@ -131,6 +130,8 @@ namespace FusionEngine
 		CLRenderTask* m_RenderTask;
 		CLRenderGUITask* m_GUITask;
 		GraphicalProfilerTask* m_GraphicalProfilerTask;
+
+		std::shared_ptr<DebugDrawProvider> m_DebugDrawProvider;
 
 		// Drawables contains all drawable components (sprites, etc.) sorted for rendering
 		std::vector<boost::intrusive_ptr<IDrawable>> m_Drawables;

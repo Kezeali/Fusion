@@ -192,7 +192,7 @@ namespace FusionEngine
 			return false;
 	}
 
-	void EditorPolygonTool::Draw(clan::Canvas& canvas)
+	void EditorPolygonTool::Draw()
 	{
 		clan::Colorf lineColour(0.4f, 0.4f, 0.96f, 0.8f);
 		clan::Colorf pointColour(1.0f, 1.0f, 0.98f, 1.0f);
@@ -200,16 +200,16 @@ namespace FusionEngine
 		{
 			auto it2 = m_Verts.begin() + 1u;
 			for (auto it = m_Verts.begin(); it2 != m_Verts.end(); ++it, ++it2)
-				canvas.draw_line(it->x, it->y, it2->x, it2->y, lineColour);
+				m_DebugDraw.DrawSegment(*it, *it2, lineColour);
 			if (m_Mode != Mode::Line && m_Verts.size() > 2)
 			{
 				const auto& last = m_Verts.back();
 				const auto& first = m_Verts.front();
-				canvas.draw_line(last.x, last.y, first.x, first.y, lineColour);
+				m_DebugDraw.DrawSegment(last, first, lineColour);
 			}
 		}
 		for (auto it = m_Verts.begin(); it != m_Verts.end(); ++it)
-			canvas.fill_circle(it->x, it->y, 1.0f, pointColour);
+			m_DebugDraw.DrawPoint(*it, 1.0f, pointColour);
 
 		clan::Colorf feedbackColour;
 		if (m_FeedbackType == Add)
@@ -218,18 +218,18 @@ namespace FusionEngine
 			feedbackColour = clan::Colorf(0.98f, 0.6f, 0.6f);
 		else
 			feedbackColour = clan::Colorf(0.6f, 0.6f, 0.98f);
-		canvas.fill_circle(m_FeedbackPoint.x, m_FeedbackPoint.y, 1.0f, feedbackColour);
+		m_DebugDraw.DrawPoint(m_FeedbackPoint, 1.0f, feedbackColour);
 
 		if (m_DrawFeedbackTri)
 		{
 			clan::Colorf feedbackLineColour(0.96f, 0.96f, 0.96f, 0.8f);
 
-			canvas.fill_circle(m_FeedbackTri[0].x, m_FeedbackTri[0].y, 1.0f, feedbackColour);
+			m_DebugDraw.DrawPoint(m_FeedbackTri[0], 1.0f, feedbackColour);
 			auto it2 = m_FeedbackTri.begin() + 1u;
 			for (auto it = m_FeedbackTri.begin(); it2 != m_FeedbackTri.end(); ++it, ++it2)
 			{
-				canvas.fill_circle(it2->x, it2->y, 1.0f, feedbackColour);
-				canvas.draw_line(it->x, it->y, it2->x, it2->y, feedbackLineColour);
+				m_DebugDraw.DrawPoint(*it2, 1.0f, feedbackColour);
+				m_DebugDraw.DrawSegment(*it, *it2, feedbackLineColour);
 			}
 		}
 		
@@ -237,7 +237,7 @@ namespace FusionEngine
 		for (auto it = m_GrabbedVerts.begin(); it != m_GrabbedVerts.end(); ++it)
 		{
 			const Vector2& v = m_Verts[*it];
-			canvas.fill_circle(v.x, v.y, 0.5f, grabbedColour);
+			m_DebugDraw.DrawPoint(v, 0.5f, grabbedColour);
 		}
 	}
 

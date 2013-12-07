@@ -237,24 +237,6 @@
     <ClInclude Include="include\scriptstring.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\external\minizip\minizip.vcxproj">
-      <Project>{23b092d0-f753-463d-8fb7-ca5ad1b4b6b8}</Project>
-      <Private>false</Private>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-    <ProjectReference Include="..\external\tinyxml\tinyxml.vcxproj">
-      <Project>{80eec939-ee99-4428-9c34-8d08f8d1940a}</Project>
-      <Private>false</Private>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
