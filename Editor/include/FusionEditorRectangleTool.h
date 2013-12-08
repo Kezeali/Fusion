@@ -45,7 +45,7 @@
 
 #include "FusionEditorShapeTool.h"
 
-#include "FusionDebugDraw.h"
+#include "Visual/FusionDebugDraw.h"
 
 namespace Rocket { namespace Core {
 	class ElementDocument;

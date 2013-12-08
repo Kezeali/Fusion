@@ -35,7 +35,7 @@
     <ClCompile Include="source\FusionGraphicalProfilerTask.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\FusionDebugDraw.cpp">
+    <ClCompile Include="source\FusionDebugDrawImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,7 +70,10 @@
     <ClInclude Include="include\FusionCLRenderSystemMessageTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ClanLibRenderer\FusionDebugDraw.h">
+    <ClInclude Include="include\ClanLibRenderer\FusionDebugDrawProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ClanLibRenderer\FusionDebugDrawImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

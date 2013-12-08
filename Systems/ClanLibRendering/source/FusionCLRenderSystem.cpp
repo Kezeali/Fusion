@@ -31,7 +31,7 @@
 
 #include "FusionDeltaTime.h"
 #include "FusionRenderer.h"
-#include "ClanLibRenderer/FusionDebugDraw.h"
+#include "ClanLibRenderer/FusionDebugDrawImpl.h"
 
 #include "FusionCLRenderComponent.h"
 #include "FusionCLRenderExtension.h"
@@ -43,7 +43,8 @@
 #include "FusionEntity.h"
 #include "FusionPlayerRegistry.h"
 
-#include "FusionDebugDraw.h"
+#include "ClanLibRenderer/FusionDebugDrawImpl.h"
+#include "ClanLibRenderer/FusionDebugDrawProvider.h"
 
 // TODO: move into StreamingSystem?
 #include "FusionStreamingCameraComponent.h"
@@ -57,6 +58,46 @@ namespace FusionEngine
 {
 
 	using namespace System;
+
+	namespace ClanLibRenderer
+	{
+
+		DebugDrawProvider::DebugDrawProvider()
+			: m_PersistentDrawingContext(Create())
+		{
+		}
+
+		std::shared_ptr<FusionEngine::DebugDrawImpl> DebugDrawProvider::Create()
+		{
+			auto newContext = std::make_shared<ClanLibRenderer::DebugDrawImpl>();
+			m_Contexts.push_back(newContext);
+			return newContext;
+		}
+
+		std::shared_ptr<FusionEngine::DebugDrawImpl> DebugDrawProvider::GetPersistentDrawingContext() const
+		{
+			return m_PersistentDrawingContext;
+		}
+
+		void DebugDrawProvider::Draw(const clan::Canvas& canvas, const Vector2& camera_pos) const
+		{
+			for (auto contextWeakPtr : m_Contexts)
+			{
+				if (auto context = contextWeakPtr.lock())
+				{
+					ClanLibRenderer::DebugDrawImpl::RenderActionFrame_t frame;
+					if (context->TryGetFrame(frame))
+					{
+						for (auto action : frame)
+						{
+							action(canvas, camera_pos);
+						}
+					}
+				}
+			}
+		}
+
+	}
 
 	CLRenderSystem::CLRenderSystem(const clan::Canvas& canvas, CameraSynchroniser* camera_sync)
 		: m_Canvas(canvas),
@@ -72,34 +113,6 @@ namespace FusionEngine
 	std::shared_ptr<WorldBase> CLRenderSystem::CreateWorld()
 	{
 		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);
-	}
-
-	namespace ClanLibRenderer
-	{
-
-		class DebugDrawProvider : public FusionEngine::DebugDrawProvider
-		{
-		public:
-			std::shared_ptr<DebugDrawImpl> Create();
-
-			const std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>>& GetContexts() const;
-
-		private:
-			std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>> m_Contexts;
-		};
-
-		std::shared_ptr<DebugDrawImpl> DebugDrawProvider::Create()
-		{
-			auto newContext = std::make_shared<ClanLibRenderer::DebugDraw>();
-			m_Contexts.push_back(newContext);
-			return newContext;
-		}
-
-		const std::vector<std::shared_ptr<ClanLibRenderer::DebugDraw>>& DebugDrawProvider::GetContexts() const
-		{
-			return m_Contexts;
-		}
-
 	}
 
 	CLRenderWorld::CLRenderWorld(System::ISystem* system, const clan::Canvas& canvas, CameraSynchroniser* camera_sync)

@@ -106,6 +106,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionCamera.cpp" />
+    <ClCompile Include="source\FusionDebugDraw.cpp" />
     <ClCompile Include="source\FusionPhysicsDebugDraw.cpp" />
     <ClCompile Include="source\FusionRenderer.cpp" />
     <ClCompile Include="source\FusionViewport.cpp" />
@@ -117,12 +118,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionCamera.h" />
-    <ClInclude Include="include\FusionDebugDraw.h" />
-    <ClInclude Include="include\FusionDebugDrawImpl.h" />
     <ClInclude Include="include\FusionPhysicsDebugDraw.h" />
     <ClInclude Include="include\FusionRenderer.h" />
     <ClInclude Include="include\FusionViewport.h" />
     <ClInclude Include="include\FusionCameraManager.h" />
+    <ClInclude Include="include\Visual\FusionDebugDraw.h" />
+    <ClInclude Include="include\Visual\FusionDebugDrawImpl.h" />
     <ClInclude Include="source\PrecompiledHeaders.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

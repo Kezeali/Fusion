@@ -45,7 +45,7 @@
 
 #include "FusionEditorShapeTool.h"
 
-#include "FusionDebugDraw.h"
+#include "Visual/FusionDebugDraw.h"
 
 #include <Gwen/Gwen.h>
 

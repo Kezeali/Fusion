@@ -25,12 +25,11 @@
 		Elliot Hayward
 */
 
-#ifndef H_FusionEngine_DebugDrawImpl
-#define H_FusionEngine_DebugDrawImpl
-#if _MSC_VER > 1000
 #pragma once
-#endif
+#ifndef H_Fusion_Visual_DebugDrawImpl
+#define H_Fusion_Visual_DebugDrawImpl
 
+#include "FusionSingleton.h"
 #include "FusionVectorTypes.h"
 #include <ClanLib/Core/Math/rect.h>
 #include <ClanLib/Display/2D/color.h>
@@ -43,7 +42,7 @@ namespace FusionEngine
 	class DebugDrawImpl
 	{
 	public:
-		virtual ~DebugDrawImpl();
+		virtual ~DebugDrawImpl() {}
 
 		virtual void Flip() = 0;
 
@@ -51,9 +50,9 @@ namespace FusionEngine
 
 		virtual void ResetCliprect() = 0;
 		
-		virtual void DrawRectangle(const clan::Rect& rect, const clan::Color& color) = 0;
+		virtual void DrawRectangle(const clan::Rectf& rect, const clan::Color& color) = 0;
 
-		virtual void DrawSolidRectangle(const clan::Rect& rect, const clan::Color& color) = 0;
+		virtual void DrawSolidRectangle(const clan::Rectf& rect, const clan::Color& color) = 0;
 
 		virtual void DrawTexturedRectangle(clan::Image texture, clan::Rect source, clan::Rectf dest) = 0;
 
@@ -74,6 +73,19 @@ namespace FusionEngine
 		virtual void DrawPoint(const Vector2& p, float size, const clan::Color& color) = 0;
 
 		virtual void RenderText(clan::Font font, clan::Pointf pos, const std::string& text, const clan::Color& color) = 0;
+
+	};
+
+	class DebugDrawProvider : public Singleton<DebugDrawProvider>
+	{
+	public:
+		virtual ~DebugDrawProvider()
+		{
+		}
+
+		virtual std::shared_ptr<DebugDrawImpl> Create() = 0;
+
+		virtual std::shared_ptr<DebugDrawImpl> GetPersistentDrawingContext() const = 0;
 
 	};
 

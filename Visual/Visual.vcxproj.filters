@@ -8,6 +8,7 @@
     <ClCompile Include="source\PrecompiledHeaders.cpp">
       <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
+    <ClCompile Include="source\FusionDebugDraw.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionCamera.h" />
@@ -18,8 +19,8 @@
     <ClInclude Include="source\PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionDebugDrawImpl.h" />
-    <ClInclude Include="include\FusionDebugDraw.h" />
+    <ClInclude Include="include\Visual\FusionDebugDraw.h" />
+    <ClInclude Include="include\Visual\FusionDebugDrawImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="PrecompiledHeaders">

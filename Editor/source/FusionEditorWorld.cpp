@@ -32,7 +32,7 @@
 #include "FusionSystemTask.h"
 
 #include "FusionCamera.h"
-#include "FusionDebugDraw.h"
+#include "Visual/FusionDebugDraw.h"
 #include "FusionEditorCircleTool.h"
 #include "FusionEditorPolygonTool.h"
 #include "FusionEditorRectangleTool.h"

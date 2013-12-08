@@ -50,7 +50,8 @@
 #include "FusionRakNetwork.h"
 #include <RakNet/RakNetStatistics.h>
 
-#include "ClanLibRenderer/FusionDebugDraw.h"
+#include "ClanLibRenderer/FusionDebugDrawImpl.h"
+#include "ClanLibRenderer/FusionDebugDrawProvider.h"
 #include "FusionPhysicsDebugDraw.h"
 
 #include <tbb/parallel_sort.h>
@@ -194,13 +195,13 @@ namespace FusionEngine
 
 			const auto& p = camera->GetPosition();
 			
-			Vector2 camera_pos(p.x, p.y);
+			Vector2 cameraPos(p.x, p.y);
 			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
 			{
 				auto& drawable = *dit;
 				if (!drawable->HasAABB() || drawArea.is_overlapped(drawable->GetAABB()))
 				{
-					drawable->Draw(canvas, camera_pos);
+					drawable->Draw(canvas, cameraPos);
 				}
 			}
 
@@ -209,7 +210,7 @@ namespace FusionEngine
 			//	worldGUICtx->Render();
 			//}
 
-			m_RenderWorld->RunExtensions(vp, canvas);
+			m_RenderWorld->m_DebugDrawProvider->Draw(canvas, cameraPos);
 
 			m_Renderer->PostDraw();
 		}

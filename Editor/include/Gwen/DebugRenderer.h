@@ -32,7 +32,7 @@
 #include <Gwen/Gwen.h>
 #include <Gwen/BaseRender.h>
 #include <ClanLib/display.h>
-#include "FusionDebugDraw.h"
+#include "Visual/FusionDebugDraw.h"
 
 namespace Gwen
 {

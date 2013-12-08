@@ -109,7 +109,7 @@
     <ClCompile Include="source\FusionCLRenderComponent.cpp" />
     <ClCompile Include="source\FusionCLRenderSystem.cpp" />
     <ClCompile Include="source\FusionCLRenderTask.cpp" />
-    <ClCompile Include="source\FusionDebugDraw.cpp" />
+    <ClCompile Include="source\FusionDebugDrawImpl.cpp" />
     <ClCompile Include="source\FusionGraphicalProfilerTask.cpp" />
     <ClCompile Include="source\FusionStreamingCameraComponent.cpp" />
     <ClCompile Include="source\PrecompiledHeaders.cpp">
@@ -119,7 +119,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\ClanLibRenderer\FusionDebugDraw.h" />
+    <ClInclude Include="include\ClanLibRenderer\FusionDebugDrawImpl.h" />
+    <ClInclude Include="include\ClanLibRenderer\FusionDebugDrawProvider.h" />
     <ClInclude Include="include\FusionCameraSynchroniser.h" />
     <ClInclude Include="include\FusionCLRenderComponent.h" />
     <ClInclude Include="include\FusionCLRenderExtension.h" />
