@@ -97,7 +97,6 @@
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionSerialisationError.h" />
-    <ClInclude Include="..\EngineFramework\include\FusionRouterTask.h" />
     <ClInclude Include="include\Messaging\FusionAddress.h">
       <Filter>Messaging</Filter>
     </ClInclude>

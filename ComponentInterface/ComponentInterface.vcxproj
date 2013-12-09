@@ -123,7 +123,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\EngineFramework\include\FusionRouterTask.h" />
     <ClInclude Include="include\FusionArchetypalEntityManager.h" />
     <ClInclude Include="include\FusionCommandQueue.h" />
     <ClInclude Include="include\FusionComponentFactory.h" />

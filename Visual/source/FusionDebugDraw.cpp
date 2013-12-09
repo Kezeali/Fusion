@@ -39,77 +39,77 @@ namespace FusionEngine
 	{
 	}
 
-	inline void DebugDraw::Flip() const
+	void DebugDraw::Flip() const
 	{
 		m_Impl->Flip();
 	}
 
-	inline void DebugDraw::SetCliprect(const clan::Rect& rect)
+	void DebugDraw::SetCliprect(const clan::Rect& rect)
 	{
 		m_Impl->SetCliprect(rect);
 	}
 
-	inline void DebugDraw::ResetCliprect()
+	void DebugDraw::ResetCliprect()
 	{
 		m_Impl->ResetCliprect();
 	}
 
-	inline void DebugDraw::DrawRectangle(const clan::Rectf& rect, const clan::Color& color) const
+	void DebugDraw::DrawRectangle(const clan::Rectf& rect, const clan::Color& color) const
 	{
 		m_Impl->DrawRectangle(rect, color);
 	}
 
-	inline void DebugDraw::DrawSolidRectangle(const clan::Rectf& rect, const clan::Color& color) const
+	void DebugDraw::DrawSolidRectangle(const clan::Rectf& rect, const clan::Color& color) const
 	{
 		m_Impl->DrawSolidRectangle(rect, color);
 	}
 
-	inline void DebugDraw::DrawTexturedRectangle(clan::Image texture, clan::Rect source, clan::Rectf dest) const
+	void DebugDraw::DrawTexturedRectangle(clan::Image texture, clan::Rect source, clan::Rectf dest) const
 	{
 		m_Impl->DrawTexturedRectangle(texture, source, dest);
 	}
 
-	inline void DebugDraw::DrawTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
+	void DebugDraw::DrawTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
 	{
 		m_Impl->DrawTriangle(vert_a, vert_b, vert_c, color);
 	}
 
-	inline void DebugDraw::DrawSolidTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
+	void DebugDraw::DrawSolidTriangle(Vector2 vert_a, Vector2 vert_b, Vector2 vert_c, const clan::Color& color) const
 	{
 		m_Impl->DrawSolidTriangle(vert_a, vert_b, vert_c, color);
 	}
 
-	inline void DebugDraw::DrawPolygon(std::vector<Vector2> vertices, const clan::Color& color) const
+	void DebugDraw::DrawPolygon(std::vector<Vector2> vertices, const clan::Color& color) const
 	{
 		m_Impl->DrawPolygon(std::move(vertices), color);
 	}
 
-	inline void DebugDraw::DrawSolidPolygon(std::vector<Vector2> vertices, const clan::Color& color) const
+	void DebugDraw::DrawSolidPolygon(std::vector<Vector2> vertices, const clan::Color& color) const
 	{
 		m_Impl->DrawSolidPolygon(std::move(vertices), color);
 	}
 
-	inline void DebugDraw::DrawCircle(const Vector2& center, float radius, const clan::Color& color) const
+	void DebugDraw::DrawCircle(const Vector2& center, float radius, const clan::Color& color) const
 	{
 		m_Impl->DrawCircle(center, radius, color);
 	}
 
-	inline void DebugDraw::DrawSolidCircle(const Vector2& center, float radius, const Vector2& axis, const clan::Color& color) const
+	void DebugDraw::DrawSolidCircle(const Vector2& center, float radius, const Vector2& axis, const clan::Color& color) const
 	{
 		m_Impl->DrawSolidCircle(center, radius, axis, color);
 	}
 
-	inline void DebugDraw::DrawSegment(const Vector2& p1, const Vector2& p2, const clan::Color& color) const
+	void DebugDraw::DrawSegment(const Vector2& p1, const Vector2& p2, const clan::Color& color) const
 	{
 		m_Impl->DrawSegment(p1, p2, color);
 	}
 
-	inline void DebugDraw::DrawPoint(const Vector2& p, float size, const clan::Color& color) const
+	void DebugDraw::DrawPoint(const Vector2& p, float size, const clan::Color& color) const
 	{
 		m_Impl->DrawPoint(p, size, color);
 	}
 
-	inline void DebugDraw::RenderText(clan::Font font, clan::Pointf pos, const std::string& text, const clan::Color& color) const
+	void DebugDraw::RenderText(clan::Font font, clan::Pointf pos, const std::string& text, const clan::Color& color) const
 	{
 		m_Impl->RenderText(font, pos, text, color);
 	}
