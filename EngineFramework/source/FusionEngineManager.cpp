@@ -640,7 +640,7 @@ namespace FusionEngine
 
 			AddResourceLoaders();
 
-			for (auto systemEntry : m_Systems)
+			for (const auto& systemEntry : m_Systems)
 			{
 				auto loaders = systemEntry.second->GetResourceLoaders();
 				for (auto loader : loaders)
@@ -662,7 +662,7 @@ namespace FusionEngine
 				std::unique_ptr<ClientOptions> options(new ClientOptions("settings.xml", "settings"));
 				//m_ActiveExtensions.clear();
 				// Initialise extensions
-				for (auto systemEntry : m_Systems)
+				for (const auto& systemEntry : m_Systems)
 				{
 					systemEntry.second->SetDisplay(m_DisplayWindow);
 					systemEntry.second->SetCanvas(m_Canvas);

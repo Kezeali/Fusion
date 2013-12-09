@@ -125,6 +125,14 @@ namespace FusionEngine
 	//	std::shared_ptr<System::WorldBase> CreateWorld() override;
 	//};
 
+	void Editor::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+	}
+
+	std::vector<ResourceLoader> Editor::GetResourceLoaders()
+	{
+		return std::vector<ResourceLoader>();
+	}
 
 	std::shared_ptr<System::WorldBase> Editor::CreateWorld()
 	{
