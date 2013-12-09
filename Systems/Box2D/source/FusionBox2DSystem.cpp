@@ -100,6 +100,10 @@ namespace FusionEngine
 	{
 	}
 
+	void Box2DSystem::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+	}
+
 	std::vector<ResourceLoader> Box2DSystem::GetResourceLoaders()
 	{
 		return std::vector<ResourceLoader>();

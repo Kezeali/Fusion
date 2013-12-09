@@ -71,6 +71,8 @@ namespace FusionEngine
 
 		std::string GetName() const { return "Box2DSystem"; }
 
+		void RegisterScriptInterface(asIScriptEngine* engine) override;
+
 		std::vector<ResourceLoader> GetResourceLoaders() override;
 
 		void SetOptions(const ClientOptions& options) override {};
