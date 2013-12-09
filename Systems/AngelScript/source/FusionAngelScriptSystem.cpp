@@ -544,6 +544,11 @@ namespace FusionEngine
 			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 	}
 
+	std::vector<ResourceLoader> AngelScriptSystem::GetResourceLoaders()
+	{
+		return std::vector<ResourceLoader>();
+	}
+
 	std::shared_ptr<System::WorldBase> AngelScriptSystem::CreateWorld()
 	{
 		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager);

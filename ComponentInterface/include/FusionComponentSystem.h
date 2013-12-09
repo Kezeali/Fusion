@@ -41,13 +41,28 @@
 #include <memory>
 #include <string>
 
+namespace clan
+{
+	class DisplayWindow;
+	class Canvas;
+}
+
+namespace FusionEngine
+{
+
+	class ClientOptions;
+	class ArchetypeFactory;
+	class RegionCellArchivist;
+	class SaveDataArchive;
+	class WorldSaver;
+
+}
+
 namespace FusionEngine { namespace System
 {
 
 	class TaskBase;
 	class WorldBase;
-
-	class ClientOptions;
 
 	typedef std::shared_ptr<WorldBase> SystemWorldPtr;
 

@@ -110,6 +110,11 @@ namespace FusionEngine
 		CLRenderWorld::Register(engine);
 	}
 
+	std::vector<ResourceLoader> CLRenderSystem::GetResourceLoaders()
+	{
+		return std::vector<ResourceLoader>();
+	}
+
 	std::shared_ptr<WorldBase> CLRenderSystem::CreateWorld()
 	{
 		return std::make_shared<CLRenderWorld>(this, m_Canvas, m_CameraSynchroniser);

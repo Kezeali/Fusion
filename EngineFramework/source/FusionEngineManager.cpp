@@ -577,18 +577,18 @@ namespace FusionEngine
 
 	void EngineManager::AddResourceLoaders()
 	{
-		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, &FileMetadataResourceHasChanged));
-		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTexture2DResource, &LoadTexture2DResourceIntoGC, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, &FileMetadata_ResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTexture2DResource, &LoadTexture2DResourceIntoGC, &FileMetadata_ResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource, &FileMetadata_ResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, &FileMetadata_ResourceHasChanged));
 		// Note that this intentionally uses the same unload method
-		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, &FileMetadata_ResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("POLYGON", &LoadPolygonResource, &UnloadPolygonResource, &FileMetadata_ResourceHasChanged));
 
-		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource, &FileMetadataResourceHasChanged));
+		m_ResourceManager->AddResourceLoader(ResourceLoader("ArchetypeFactory", &LoadArchetypeResource, &UnloadArchetypeResource, &FileMetadata_ResourceHasChanged));
 	}
 
 	const clan::DisplayWindow& EngineManager::GetDisplayWindow() const

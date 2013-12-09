@@ -70,6 +70,10 @@ namespace FusionEngine
 		System::SystemType GetType() const { return System::Simulation; }
 
 		std::string GetName() const { return "Box2DSystem"; }
+
+		std::vector<ResourceLoader> GetResourceLoaders() override;
+
+		void SetOptions(const ClientOptions& options) override {};
 		
 		std::shared_ptr<System::WorldBase> CreateWorld();
 	};

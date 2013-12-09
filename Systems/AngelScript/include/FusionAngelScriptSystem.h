@@ -79,14 +79,18 @@ namespace FusionEngine
 		virtual ~AngelScriptSystem()
 		{}
 
-		std::shared_ptr<System::WorldBase> CreateWorld();
+		std::shared_ptr<System::WorldBase> CreateWorld() override;
 
 	private:
-		System::SystemType GetType() const { return System::Simulation; }
+		System::SystemType GetType() const override { return System::Simulation; }
 
-		std::string GetName() const { return "AngelScriptSystem"; }
+		std::string GetName() const override { return "AngelScriptSystem"; }
 
-		void RegisterScriptInterface(asIScriptEngine* engine);
+		void RegisterScriptInterface(asIScriptEngine* engine) override;
+
+		std::vector<ResourceLoader> GetResourceLoaders() override;
+
+		void SetOptions(const ClientOptions& options) override {};
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};

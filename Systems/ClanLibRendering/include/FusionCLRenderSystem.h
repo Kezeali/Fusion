@@ -77,6 +77,10 @@ namespace FusionEngine
 
 		std::string GetName() const { return "CLRenderSystem"; }
 
+		std::vector<ResourceLoader> GetResourceLoaders() override;
+
+		void SetOptions(const ClientOptions& options) override {};
+
 		void RegisterScriptInterface(asIScriptEngine* engine);
 
 		clan::Canvas m_Canvas;

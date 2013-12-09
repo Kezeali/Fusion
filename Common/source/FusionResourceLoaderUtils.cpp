@@ -102,7 +102,7 @@ namespace FusionEngine
 		return newChecksum != metadata.checksum;
 	}
 
-	bool FileMetadataResourceHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
+	bool FileMetadata_ResourceHasChanged(ResourceContainer* resource, clan::FileSystem fs, boost::any user_data)
 	{
 		FileMetadata metadata;
 		if (resource->TryGetMetadata(metadata))

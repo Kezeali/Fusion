@@ -100,6 +100,11 @@ namespace FusionEngine
 	{
 	}
 
+	std::vector<ResourceLoader> Box2DSystem::GetResourceLoaders()
+	{
+		return std::vector<ResourceLoader>();
+	}
+
 	std::shared_ptr<WorldBase> Box2DSystem::CreateWorld()
 	{
 		return std::make_shared<Box2DWorld>(this);

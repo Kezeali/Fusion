@@ -59,7 +59,7 @@ namespace Gwen
 		class Menu;
 	}
 	namespace Input { class ClanLib; }
-	namespace Renderer { class ClanLib; }
+	namespace Renderer { class DebugRenderer; }
 	namespace Skin { class Base; }
 }
 
@@ -271,7 +271,7 @@ namespace FusionEngine
 		bool m_SaveMap;
 		bool m_LoadMap;
 
-		std::shared_ptr<Gwen::Renderer::ClanLib> m_GuiRenderer;
+		std::shared_ptr<Gwen::Renderer::DebugRenderer> m_GuiRenderer;
 		std::shared_ptr<Gwen::Skin::Base> m_GuiSkin;
 		std::shared_ptr<Gwen::Input::ClanLib> m_GuiInput;
 		std::vector<clan::Slot> m_InputSlots;
