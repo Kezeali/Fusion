@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEditor
-#define H_FusionEditor
+#ifndef H_Fusion_Editor
+#define H_Fusion_Editor
 
 #include "FusionPrerequisites.h"
 
@@ -109,7 +109,7 @@ namespace FusionEngine
 
 	class WindowDropTarget;
 
-	class Editor : public EngineExtension, public ResourceEditorFactory, public System::ISystem
+	class Editor : public ResourceEditorFactory, public System::ISystem
 	{
 	public:
 		Editor(const std::vector<std::string> &args);

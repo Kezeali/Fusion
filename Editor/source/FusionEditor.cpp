@@ -77,7 +77,7 @@
 
 #include "FusionEntityInspector.h"
 
-#include <Gwen/Renderers/ClanLib.h>
+#include "Gwen/DebugRenderer.h"
 #include <Gwen/Input/ClanLib.h>
 
 #include <boost/filesystem.hpp>
@@ -880,7 +880,7 @@ namespace FusionEngine
 
 	void Editor::SetCanvas(const clan::Canvas& canvas)
 	{
-		m_GuiRenderer = std::make_shared<Gwen::Renderer::ClanLib>(canvas, clan::FileSystem(new VirtualFileSource_PhysFS()));
+		m_GuiRenderer = std::make_shared<Gwen::Renderer::DebugRenderer>(canvas, clan::FileSystem(new VirtualFileSource_PhysFS()));
 		auto skin = std::make_shared<Gwen::Skin::TexturedBase>(m_GuiRenderer.get());
 		skin->Init("Data/core/gui/DefaultSkin.png");
 		m_GuiSkin = skin;

@@ -50,9 +50,6 @@ public:
 		{
 			EngineManager manager(args);
 
-			auto editor = std::make_shared<Editor>(args);
-			manager.AddExtension(editor);
-
 			manager.AddSystem(std::unique_ptr<Editor>());
 			manager.AddSystem(std::unique_ptr<AngelScriptSystem>(new AngelScriptSystem(manager.GetScriptManager())));
 			manager.AddSystem(std::unique_ptr<Box2DSystem>(new Box2DSystem));

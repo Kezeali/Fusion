@@ -638,8 +638,16 @@ namespace FusionEngine
 		{
 			//Initialise();
 
-			// TODO: add resource loaders from systems
 			AddResourceLoaders();
+
+			for (auto systemEntry : m_Systems)
+			{
+				auto loaders = systemEntry.second->GetResourceLoaders();
+				for (auto loader : loaders)
+				{
+					m_ResourceManager->AddResourceLoader(loader);
+				}
+			}
 
 			for (auto it = m_Extensions.begin(), end = m_Extensions.end(); it != end; ++it)
 				(*it)->RegisterScriptType(m_ScriptManager->GetEnginePtr());
@@ -652,26 +660,21 @@ namespace FusionEngine
 
 			{
 				std::unique_ptr<ClientOptions> options(new ClientOptions("settings.xml", "settings"));
-				m_ActiveExtensions.clear();
+				//m_ActiveExtensions.clear();
 				// Initialise extensions
-				for (auto exit = m_Extensions.begin(), exend = m_Extensions.end(); exit != exend; ++exit)
+				for (auto systemEntry : m_Systems)
 				{
-					(*exit)->SetDisplay(m_DisplayWindow);
-					(*exit)->SetCanvas(m_Canvas);
-					(*exit)->SetComponentFactory(m_ComponentUniverse);
-					(*exit)->SetEntityInstantiator(m_EntityInstantiator);
-					(*exit)->SetEntityManager(m_EntityManager);
-					(*exit)->SetArchetypeFactory(m_ArchetypeFactory);
-					(*exit)->SetMapLoader(m_CellArchivist);
-					(*exit)->SetStreamingManager(m_StreamingManager);
-					(*exit)->SetWorldSaver(this);
-					(*exit)->SetDataArchiver(m_CellArchivist);
-					(*exit)->SetOptions(*options);
-
-					if (m_EnabledExtensions.find((*exit)->GetName()) != m_EnabledExtensions.end())
-					{
-						m_ActiveExtensions.push_back(*exit);
-					}
+					systemEntry.second->SetDisplay(m_DisplayWindow);
+					systemEntry.second->SetCanvas(m_Canvas);
+					systemEntry.second->SetComponentFactory(m_ComponentUniverse);
+					systemEntry.second->SetEntityInstantiator(m_EntityInstantiator);
+					systemEntry.second->SetEntityManager(m_EntityManager);
+					systemEntry.second->SetArchetypeFactory(m_ArchetypeFactory);
+					systemEntry.second->SetMapLoader(m_CellArchivist);
+					systemEntry.second->SetStreamingManager(m_StreamingManager);
+					systemEntry.second->SetWorldSaver(this);
+					systemEntry.second->SetDataArchiver(m_CellArchivist);
+					systemEntry.second->SetOptions(*options);
 				}
 			}
 			

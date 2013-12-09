@@ -26,8 +26,8 @@
 */
 
 #pragma once
-#ifndef H_FusionEngine_Editor_Gwen_Renderer_DebugRenderer
-#define H_FusionEngine_Editor_Gwen_Renderer_DebugRenderer
+#ifndef H_Fusion_Editor_Gwen_DebugRenderer
+#define H_Fusion_Editor_Gwen_DebugRenderer
 
 #include <Gwen/Gwen.h>
 #include <Gwen/BaseRender.h>

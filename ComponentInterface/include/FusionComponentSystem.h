@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionSystemType.h"
+#include "FusionResourceLoader.h"
 
 #include <angelscript.h>
 #include <memory>
@@ -45,6 +46,8 @@ namespace FusionEngine { namespace System
 
 	class TaskBase;
 	class WorldBase;
+
+	class ClientOptions;
 
 	typedef std::shared_ptr<WorldBase> SystemWorldPtr;
 
@@ -58,9 +61,23 @@ namespace FusionEngine { namespace System
 
 		virtual std::string GetName() const = 0;
 
-		virtual void RegisterScriptInterface(asIScriptEngine* engine) {}
+		virtual void RegisterScriptInterface(asIScriptEngine* engine) = 0;
+
+		virtual std::vector<ResourceLoader> GetResourceLoaders() = 0;
 
 		virtual std::shared_ptr<WorldBase> CreateWorld() = 0;
+
+		virtual void SetOptions(const ClientOptions& options) = 0;
+		virtual void SetDisplay(const clan::DisplayWindow& display) {}
+		virtual void SetCanvas(const clan::Canvas& canvas) {}
+		virtual void SetComponentFactory(const std::shared_ptr<ComponentFactory>& factory) {}
+		virtual void SetEntityInstantiator(const std::shared_ptr<EntityInstantiator>& instantiator) {}
+		virtual void SetEntityManager(const std::shared_ptr<EntityManager>& manager) {}
+		virtual void SetArchetypeFactory(const std::shared_ptr<ArchetypeFactory>& factory) {}
+		virtual void SetMapLoader(const std::shared_ptr<RegionCellArchivist>& map_loader) {}
+		virtual void SetStreamingManager(const std::shared_ptr<StreamingManager>& manager) {}
+		virtual void SetDataArchiver(const std::shared_ptr<SaveDataArchive>& archiver) {}
+		virtual void SetWorldSaver(WorldSaver* saver) {}
 	};
 
 } }
