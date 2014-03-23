@@ -53,19 +53,19 @@ namespace FusionEngine
 	class EditorRectangleTool;
 	class EditorCircleTool;
 
+	class ResourceDatabase;
+
+	class ResourceEditor;
+
+	class InspectorGenerator;
+
 	class OverlayTask;
 	class SelectionDrawerTask;
 
 	class EditorWorld : public System::WorldBase
 	{
 	public:
-		EditorWorld(System::ISystem* system, const std::shared_ptr<EditorPolygonTool>& poly_tool, const std::shared_ptr<EditorRectangleTool>& rect_tool, const std::shared_ptr<EditorCircleTool>& circle_tool)
-			: System::WorldBase(system),
-			m_PolygonTool(poly_tool),
-			m_RectangleTool(rect_tool),
-			m_CircleTool(circle_tool)
-		{
-		}
+		EditorWorld(System::ISystem* system);
 
 		void ProcessMessage(Messaging::Message message) override
 		{
@@ -99,6 +99,18 @@ namespace FusionEngine
 
 		void SetOffset(const Vector2& offset);
 
+		void ForEachSelected(std::function<void (const EntityPtr&)> fn);
+
+		enum Tool
+		{
+			None,
+			Polygon,
+			Line,
+			Rectangle,
+			Elipse,
+			NumTools
+		};
+
 	private:
 		std::shared_ptr<OverlayTask> m_OverlayTask;
 		std::shared_ptr<SelectionDrawerTask> m_SelectionDrawerTask;
@@ -106,6 +118,20 @@ namespace FusionEngine
 		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
 		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
 		std::shared_ptr<EditorCircleTool> m_CircleTool;
+
+		Tool m_Tool;
+
+		std::array<std::shared_ptr<ShapeTool>, Tool::NumTools> m_ShapeTools;
+
+		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
+		std::map<std::string, std::shared_ptr<ResourceEditor>> m_ResourceEditors;
+
+		void InitInspectorGenerator(InspectorGenerator& generator, const std::function<void (void)>& close_callback);
+
+		void CreatePropertiesWindow(const EntityPtr& entity, const std::function<void (void)>& close_callback = std::function<void (void)>());
+		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback = std::function<void (void)>());
+		void CreatePropertiesWindowForSelected();
+
 	};
 
 }

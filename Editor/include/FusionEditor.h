@@ -78,21 +78,14 @@ namespace FusionEngine
 	class CLRenderWorld;
 	class Viewport;
 
-	//class DialogListener;
-
-	//class DockedWindowManager;
-
 	class WorldSaver;
 	class SaveDataArchive;
 
 	class EditorWorld;
 
-	//class PreviewFormatter;
-
 	class DynamicMenu;
 
 	class ResourceDatabase;
-	//class ResourceBrowserDataSource;
 
 	class ResourceEditor;
 
@@ -218,16 +211,6 @@ namespace FusionEngine
 
 		typedef std::function<std::shared_ptr<Inspectors::ComponentInspector> (void)> InspectorFactory;
 
-		enum Tool
-		{
-			None,
-			Polygon,
-			Line,
-			Rectangle,
-			Elipse,
-			NumTools
-		};
-
 	private:
 		enum QueryType
 		{
@@ -296,9 +279,6 @@ namespace FusionEngine
 		boost::intrusive_ptr<asIScriptFunction> m_CreateEntityFn;
 
 		std::shared_ptr<ResourceDatabase> m_ResourceDatabase;
-		//std::shared_ptr<ResourceBrowserDataSource> m_ResourceBrowserDataSource;
-
-		std::map<std::string, std::shared_ptr<ResourceEditor>> m_ResourceEditors;
 
 		Vector2 m_CamVelocity;
 
@@ -311,18 +291,10 @@ namespace FusionEngine
 		bool m_ReceivedMouseDown;
 		bool m_Dragging;
 
-		Tool m_Tool;
-
 		std::string m_DragData;
 		std::shared_ptr<WindowDropTarget> m_DropTarget;
 
 		std::shared_ptr<EditorWorld> m_EditorWorld;
-
-		std::shared_ptr<EditorPolygonTool> m_PolygonTool;
-		std::shared_ptr<EditorRectangleTool> m_RectangleTool;
-		std::shared_ptr<EditorCircleTool> m_CircleTool;
-
-		std::array<std::shared_ptr<ShapeTool>, Tool::NumTools> m_ShapeTools;
 
 		std::list<EntityPtr> m_ToDelete;
 
@@ -392,8 +364,6 @@ namespace FusionEngine
 		void CreatePropertiesWindow(const EntityPtr& entity, const std::function<void (void)>& close_callback = std::function<void (void)>());
 		void CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback = std::function<void (void)>());
 		void CreatePropertiesWindowForSelected();
-
-		void RegisterScriptInterface(asIScriptEngine* engine);
 
 	};
 

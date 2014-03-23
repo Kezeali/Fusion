@@ -44,7 +44,6 @@
 #include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionClientOptions.h"
 #include "FusionPhysFS.h"
-#include "FusionPolygonResourceEditor.h"
 #include "FusionRegionCellCache.h"
 #include "FusionRegionMapLoader.h"
 #include "FusionResource.h"
@@ -125,10 +124,6 @@ namespace FusionEngine
 	//	std::shared_ptr<System::WorldBase> CreateWorld() override;
 	//};
 
-	void Editor::RegisterScriptInterface(asIScriptEngine* engine)
-	{
-	}
-
 	std::vector<ResourceLoader> Editor::GetResourceLoaders()
 	{
 		return std::vector<ResourceLoader>();
@@ -136,6 +131,7 @@ namespace FusionEngine
 
 	std::shared_ptr<System::WorldBase> Editor::CreateWorld()
 	{
+		m_EditorWorld = std::make_shared<EditorWorld>(this);
 		return m_EditorWorld;
 	}
 
@@ -221,8 +217,7 @@ namespace FusionEngine
 		m_ShiftSelect(false),
 		m_AltSelect(false),
 		m_ReceivedMouseDown(false),
-		m_Dragging(false),
-		m_Tool(Tool::None)
+		m_Dragging(false)
 	{
 		//auto& context = GUI::getSingleton().CreateContext("editor");
 		//context->SetMouseShowPeriod(500);
@@ -345,12 +340,6 @@ namespace FusionEngine
 			}
 		}
 
-		m_ShapeTools[Tool::Polygon] = m_ShapeTools[Tool::Line] = m_PolygonTool = std::make_shared<EditorPolygonTool>();
-		m_ShapeTools[Tool::Rectangle] = m_RectangleTool = std::make_shared<EditorRectangleTool>();
-		m_ShapeTools[Tool::Elipse] = m_CircleTool = std::make_shared<EditorCircleTool>();
-
-		m_EditorWorld = std::make_shared<EditorWorld>(this, m_PolygonTool, m_RectangleTool, m_CircleTool);
-
 		//m_SaveDialogListener = std::make_shared<DialogListener>([this](const std::map<std::string, std::string>& params)
 		//{
 		//	if (params.at("result") == "ok")
@@ -390,29 +379,7 @@ namespace FusionEngine
 		//	}
 		//});
 
-		{
-			auto polygonResourceEditor = std::make_shared<PolygonResourceEditor>();
-			m_ResourceEditors["POLYGON"] = polygonResourceEditor;
-			polygonResourceEditor->SetPolygonToolExecutor([this](const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_cb)
-			{
-				this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Freeform);
-				this->m_Tool = Editor::Tool::Polygon;
-			});
-			//using namespace std::placeholders;
-			//polygonResourceEditor->SetPolygonToolExecutor(std::bind(&EditorPolygonTool::Start, m_PolygonTool, _1, _2, EditorPolygonTool::Freeform));
-		}
-
-		{
-			auto archetypeResourceEditor = std::make_shared<ArchetypeResourceEditor>();
-			m_ResourceEditors["ArchetypeFactory"] = archetypeResourceEditor;
-			archetypeResourceEditor->SetEntityInspectorExecutor([this](const EntityPtr& entity, const std::function<void (void)>& done_cb)
-			{
-				this->CreatePropertiesWindow(entity, done_cb);
-			});
-		}
-
 		m_ResourceDatabase = std::make_shared<ResourceDatabase>();
-		//m_ResourceBrowserDataSource = std::make_shared<ResourceBrowserDataSource>(m_ResourceDatabase);
 
 		/*{
 			auto tag = "inspector_" + ITransform::GetTypeName();
@@ -2640,213 +2607,16 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, "Failed to open data file");
 	}
 
-	class InspectorGenerator
-	{
-	public:
-		Gwen::Controls::WindowControl* window;
-		Gwen::Controls::Base* body;
-
-		//boost::intrusive_ptr<EntitySelector> entity_selector;
-		Inspectors::ElementEntityInspector* entity_inspector;
-		Inspectors::ElementGroup* inspector_group;
-
-		Gwen::Controls::ComboBox* entitySelector;
-
-		std::vector<EntityPtr> entities;
-
-		std::function<void (const EntityPtr& entity)> entitySelectorCallback;
-
-		InspectorGenerator(Gwen::Controls::Canvas* gui_canvas)
-		{
-			window = new Gwen::Controls::WindowControl(gui_canvas);
-
-			window->SetTitle(L"Properties");
-			window->SetSize(200, 200);
-			window->SetPos(0, 0);
-			window->SetDeleteOnClose(true);
-
-			entitySelector = new Gwen::Controls::ComboBox(window);
-			//entitySelector->onSelection.Add(this, &InspectorGenerator::EntitySelector_OnSelection);
-			/*
-			auto element = doc->CreateElement("entity_selector"); FSN_ASSERT(element);
-			if (entity_selector = dynamic_cast<EntitySelector*>(element))
-			{
-				auto body = doc->GetFirstChild()->GetElementById("content");
-				Rocket::Core::Factory::InstanceElementText(body, "Go To:");
-				body->AppendChild(entity_selector.get());
-			}
-			else
-			{
-				FSN_EXCEPT(Exception, "Failed to create entity_selector element.");
-			}
-			element->RemoveReference();
-
-			element = Rocket::Core::Factory::InstanceElement(doc, "inspector_entity", "inspector", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
-			if (entity_inspector = dynamic_cast<Inspectors::ElementEntityInspector*>(element))
-			{
-				entity_inspector->SetClass("entity", true);
-				Inspectors::ElementGroup::AddSubsection(body, "Entity", entity_inspector.get());
-			}
-			element->RemoveReference();
-
-			element = Rocket::Core::Factory::InstanceElement(doc, "inspector_group", "inspector_group", Rocket::Core::XMLAttributes()); FSN_ASSERT(element);
-			if (inspector_group = dynamic_cast<Inspectors::ElementGroup*>(element))
-			{
-				body->AppendChild(inspector_group.get());
-			}
-			else
-			{
-				FSN_EXCEPT(Exception, "Failed to create inspector_group element.");
-			}
-			element->RemoveReference();
-			*/
-		}
-
-		void ProcessEntity(const EntityPtr& entity)
-		{
-			entities.push_back(entity);
-
-			inspector_group->AddEntity(entity);
-		}
-
-		void SetEntitySelectorCallback(std::function<void (const EntityPtr& entity)> fn)
-		{
-			entitySelectorCallback = fn;
-		}
-
-		void EntitySelector_OnSelection()
-		{
-			EntityPtr entitySelected;
-			entitySelectorCallback(entitySelected);
-		}
-
-		void Generate()
-		{
-			// Generate title
-			{
-				std::string title;
-				if (entities.size() > 1)
-				{
-					title = boost::lexical_cast<std::string>(entities.size()) + " entities";
-				}
-				else if (!entities.empty())
-				{
-					auto front = entities.front();
-					if (front->GetName().empty())
-						title = "Unnamed";
-					else
-						title = front->GetName();
-					if (front->IsPseudoEntity())
-						title += " Pseudo-Entity";
-					else
-						title += " - ID: " + boost::lexical_cast<std::string>(front->GetID());
-
-					entity_inspector->SetEntity(front);
-				}
-				if (!title.empty())
-					window->SetTitle(Gwen::Utility::Format(L"Properties: %s", title));
-			}
-
-			inspector_group->AddFooter();
-
-			inspector_group->DoneAddingEntities();
-
-			// Set entities
-			for (auto entity : entities)
-			{
-				entitySelector->AddItem(Gwen::Utility::StringToUnicode(entity->GetName()));
-			}
-		}
-	};
-
-	void Editor::InitInspectorGenerator(InspectorGenerator& generator, const std::function<void (void)>& close_callback)
-	{
-		generator.inspector_group->SetCircleToolExecutor([this](const Vector2& c, float r, const CircleToolCallback_t& done_cb)
-		{
-			this->m_CircleTool->Start(c, r, done_cb);
-			this->m_Tool = Editor::Tool::Elipse;
-		});
-		generator.inspector_group->SetRectangleToolExecutor([this](const Vector2& size, const Vector2& c, float r, const RectangleToolCallback_t& done_cb)
-		{
-			this->m_RectangleTool->Start(size, c, r, done_cb);
-			this->m_Tool = Editor::Tool::Rectangle;
-		});
-		generator.inspector_group->SetPolygonToolExecutor([this](const std::vector<Vector2>& verts, const PolygonToolCallback_t& done_cb)
-		{
-			this->m_PolygonTool->Start(verts, done_cb, EditorPolygonTool::Freeform);
-			this->m_Tool = Editor::Tool::Polygon;
-		});
-		generator.inspector_group->SetResourceEditorFactory(this);
-		
-		generator.SetEntitySelectorCallback([this](const EntityPtr& entity) { this->GoToEntity(entity); });
-		generator.inspector_group->SetAddCallback([this](const EntityPtr& entity, const std::string& type, const std::string& id)->ComponentPtr
-		{
-			if (!entity->GetArchetypeDefinitionAgent())
-				return this->m_EntityInstantiator->AddComponent(entity, type, id);
-			else
-			{
-				// Don't activate components being added to the arc definition
-				auto com = this->m_ComponentFactory->InstantiateComponent(type);
-				entity->AddComponent(com, id);
-				return com;
-			}
-		});
-		generator.inspector_group->SetRemoveCallback([this](const EntityPtr& entity, const ComponentPtr& component)
-		{
-			this->m_EntityInstantiator->RemoveComponent(entity, component);
-		});
-
-		generator.entity_inspector->SetCloseCallback(close_callback);
-	}
-
 	void Editor::CreatePropertiesWindow(const EntityPtr& entity, const std::function<void (void)>& close_callback)
 	{
-		std::vector<EntityPtr> e;
-		e.push_back(entity);
-		CreatePropertiesWindow(e, close_callback);
 	}
 
 	void Editor::CreatePropertiesWindow(const std::vector<EntityPtr>& entities, const std::function<void (void)>& close_callback)
 	{
-		//auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
-
-		//{
-		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
-		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
-		//	doc->LoadScript(strm, "/Data/core/gui/gui_base.as");
-		//	strm->RemoveReference();
-		//}
-
-		InspectorGenerator generator(m_GUIContext);
-		InitInspectorGenerator(generator, close_callback);
-
-		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
-			generator.ProcessEntity(*it);
-		generator.Generate();
-
-		//doc->Show();
-		//doc->RemoveReference();
 	}
 
 	void Editor::CreatePropertiesWindowForSelected()
 	{
-		//auto doc = m_GUIContext->LoadDocument("/Data/core/gui/properties.rml");
-
-		//{
-		//	auto script = OpenString_PhysFS("/Data/core/gui/gui_base.as");
-		//	auto strm = new Rocket::Core::StreamMemory((const Rocket::Core::byte*)script.c_str(), script.size());
-		//	doc->LoadScript(strm, "/Data/core/gui/gui_base.as");
-		//	strm->RemoveReference();
-		//}
-
-		InspectorGenerator generator(m_GUIContext);
-		InitInspectorGenerator(generator, std::function<void (void)>());
-
-		ForEachSelected([&generator](const EntityPtr& entity) { generator.ProcessEntity(entity); });
-		generator.Generate();
-		
-		//doc->Show();
-		//doc->RemoveReference();
 	}
 
 	void Editor_StartResourceEditor(const std::string& path, Editor* obj)
