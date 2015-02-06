@@ -4,3 +4,6 @@
 [submodule "ScriptUtils"]
 	path = ScriptUtils
 	url = https://github.com/Kezeali/ScriptUtils.git
+[submodule "external/imgui"]
+	path = external/imgui
+	url = https://github.com/Kezeali/imgui.git
